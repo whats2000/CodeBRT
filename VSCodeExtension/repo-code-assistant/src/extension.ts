@@ -1,12 +1,20 @@
 import * as vscode from "vscode";
 import { ViewKey } from "./views";
 import { viewRegistration } from "./api/viewRegistration";
-import { ViewApi, ViewApiError, ViewApiEvent, ViewApiRequest, ViewApiResponse, ViewEvents, } from "./api/viewApi";
+import { ViewApi, ViewApiError, ViewApiEvent, ViewApiRequest, ViewApiResponse, ViewEvents, } from "./types/viewApi";
 import fs from "node:fs/promises";
+import SettingsManager from "./api/settingsManager";
+import { ExtensionSettings } from "./types/extensionSettings";
 
 export const activate = async (ctx: vscode.ExtensionContext) => {
   const connectedViews: Partial<Record<ViewKey, vscode.WebviewView>> = {};
+  const settingsManager = SettingsManager.getInstance();
 
+  /**
+   * Trigger an event on all connected views
+   * @param key - The event key
+   * @param params - The event parameters
+   */
   const triggerEvent = <E extends keyof ViewEvents>(
     key: E,
     ...params: Parameters<ViewEvents[E]>
@@ -20,6 +28,9 @@ export const activate = async (ctx: vscode.ExtensionContext) => {
     });
   };
 
+  /**
+   * Register and connect views to the extension
+   */
   const api: ViewApi = {
     getFileContents: async () => {
       const uris = await vscode.window.showOpenDialog({
@@ -36,9 +47,30 @@ export const activate = async (ctx: vscode.ExtensionContext) => {
 
       return await fs.readFile(uris[0].fsPath, "utf-8");
     },
-    showExampleViewB: () => {
-      connectedViews?.workPanel?.show?.(true);
-      vscode.commands.executeCommand(`exampleViewB.focus`);
+    showSettingsView: () => {
+      connectedViews?.settingsBar?.show?.(true);
+      vscode.commands.executeCommand(`settingsView.focus`);
+    },
+    updateSetting: async (key: keyof ExtensionSettings, value: ExtensionSettings[typeof key]) => {
+      return settingsManager.set(key, value);
+    },
+    getSetting: (key: keyof ExtensionSettings) => {
+      return settingsManager.get(key)
+    },
+    alertMessage: (msg: string, type: "info" | "warning" | "error") => {
+      switch (type) {
+        case "info":
+          vscode.window.showInformationMessage(msg);
+          break;
+        case "warning":
+          vscode.window.showWarningMessage(msg);
+          break;
+        case "error":
+          vscode.window.showErrorMessage(msg);
+          break;
+        default:
+          vscode.window.showInformationMessage(msg);
+      }
     },
     sendMessageToExampleB: (msg: string) => {
       triggerEvent("exampleBMessage", msg);
@@ -83,8 +115,15 @@ export const activate = async (ctx: vscode.ExtensionContext) => {
     view.webview.onDidReceiveMessage(onMessage);
   };
 
-  registerAndConnectView("chatActivityBar").catch((e) => { console.error(e); });
-  registerAndConnectView("workPanel").catch((e) => { console.error(e); });
+  registerAndConnectView("chatActivityBar").catch((e) => {
+    console.error(e);
+  });
+  registerAndConnectView("workPanel").catch((e) => {
+    console.error(e);
+  });
+  registerAndConnectView("settingsBar").catch((e) => {
+    console.error(e);
+  });
 };
 
 export const deactivate = () => {

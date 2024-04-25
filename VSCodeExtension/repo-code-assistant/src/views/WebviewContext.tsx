@@ -8,7 +8,7 @@ import {
   ViewApiRequest,
   ViewApiResponse,
   ViewEvents,
-} from "../api/viewApi";
+} from "../types/viewApi";
 
 /**
  * Type definitions for context values of the Webview.

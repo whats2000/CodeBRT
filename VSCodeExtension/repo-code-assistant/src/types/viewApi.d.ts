@@ -1,3 +1,5 @@
+import { ExtensionSettings } from "./extensionSettings";
+
 export type ViewApiRequest<K extends keyof ViewApi = keyof ViewApi> = {
   type: "request";
   id: string;
@@ -25,7 +27,10 @@ export type ViewApiEvent<K extends keyof ViewEvents = keyof ViewEvents> = {
 
 export type ViewApi = {
   getFileContents: () => Promise<string>;
-  showExampleViewB: () => void;
+  showSettingsView: () => void;
+  updateSetting: (key: keyof ExtensionSettings, value: ExtensionSettings[typeof key]) => Promise<void>;
+  getSetting: (key: keyof ExtensionSettings) => string;
+  alertMessage: (msg: string, type: "info" | "warning" | "error") => void;
   sendMessageToExampleB: (msg: string) => void;
 };
 

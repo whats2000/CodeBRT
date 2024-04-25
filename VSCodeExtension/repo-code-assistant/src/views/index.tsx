@@ -3,10 +3,12 @@ import { WebviewApi, WithWebviewContext } from "./WebviewContext";
 import { ChatActivityBar } from "./ChatActivityBar";
 import { WorkPanel } from "./WorkPanel";
 import React from "react";
+import { SettingsBar } from "./SettingsBar";
 
 export const Views = {
   chatActivityBar: ChatActivityBar,
   workPanel: WorkPanel,
+  settingsBar: SettingsBar,
 } as const;
 
 export type ViewKey = keyof typeof Views;

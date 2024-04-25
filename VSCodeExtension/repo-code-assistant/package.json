@@ -12,7 +12,7 @@
   "license": "LGPL-3.0-or-later",
   "tags": [],
   "categories": [],
-  "publisher": "example",
+  "publisher": "whats2000_",
   "main": "extension.js",
   "scripts": {
     "bundle": "webpack --mode production && webpack --mode production --config ./webpack.config.views.js",
@@ -72,6 +72,10 @@
           "id": "chatActivityBar",
           "type": "webview",
           "name": "Chat"
+        }, {
+          "id": "settingsBar",
+          "type": "webview",
+          "name": "Settings"
         }
       ],
       "workingPanelContainer": [
@@ -81,9 +85,25 @@
           "name": "Working Panel"
         }
       ]
+    },
+    "configuration": {
+      "title": "Repo Code Assistant",
+      "properties": {
+        "repo-code-assistant.geminiApiKey": {
+          "type": "string",
+          "default": "",
+          "description": "Gemini API Key"
+        },
+        "repo-code-assistant.openAIApiKey": {
+          "type": "string",
+          "default": "",
+          "description": "OpenAI API Key"
+        }
+      }
     }
   },
   "dependencies": {
+    "@google/generative-ai": "^0.8.0",
     "styled-components": "^6.1.8"
   }
 }
