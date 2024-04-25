@@ -52,32 +52,32 @@
     "viewsContainers": {
       "activitybar": [
         {
-          "id": "exampleActivityBarContainer",
-          "title": "example",
-          "icon": "static/jersey.svg"
+          "id": "chatActivityBarContainer",
+          "title": "Repo Assistant Chat",
+          "icon": "static/logo.svg"
         }
       ],
       "panel": [
         {
-          "id": "examplePanelContainer",
-          "title": "example",
-          "icon": "static/jersey.svg"
+          "id": "workingPanelContainer",
+          "title": "Repo Assistant Working Panel",
+          "icon": "static/logo.svg"
         }
       ]
     },
     "views": {
-      "exampleActivityBarContainer": [
+      "chatActivityBarContainer": [
         {
-          "id": "exampleViewA",
+          "id": "chatActivityBar",
           "type": "webview",
-          "name": "View A"
+          "name": "Chat"
         }
       ],
-      "examplePanelContainer": [
+      "workingPanelContainer": [
         {
-          "id": "exampleViewB",
+          "id": "workPanel",
           "type": "webview",
-          "name": "View B"
+          "name": "Working Panel"
         }
       ]
     }

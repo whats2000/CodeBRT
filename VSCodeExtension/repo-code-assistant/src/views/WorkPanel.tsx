@@ -1,7 +1,7 @@
 import { useContext, useEffect, useState } from "react";
 import { WebviewContext } from "./WebviewContext";
 
-export const ExampleViewB = () => {
+export const WorkPanel = () => {
   const { callApi, addListener, removeListener } = useContext(WebviewContext);
   const [messages, setMessages] = useState<string[]>([]);
   const [fileContent, setFileContent] = useState<string>();

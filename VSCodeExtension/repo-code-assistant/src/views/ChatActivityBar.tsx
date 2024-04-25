@@ -1,7 +1,7 @@
 import { useContext, useState } from "react";
 import { WebviewContext } from "./WebviewContext";
 
-export const ExampleViewA = () => {
+export const ChatActivityBar = () => {
   const { callApi } = useContext(WebviewContext);
   const [bMessage, setBMessage] = useState<string>("");
 

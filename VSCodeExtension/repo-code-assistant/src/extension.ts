@@ -1,7 +1,7 @@
 import * as vscode from "vscode";
 import { ViewKey } from "./views";
-import { registerView } from "./registerView";
-import { ViewApi, ViewApiError, ViewApiEvent, ViewApiRequest, ViewApiResponse, ViewEvents, } from "./viewApi";
+import { viewRegistration } from "./api/viewRegistration";
+import { ViewApi, ViewApiError, ViewApiEvent, ViewApiRequest, ViewApiResponse, ViewEvents, } from "./api/viewApi";
 import fs from "node:fs/promises";
 
 export const activate = async (ctx: vscode.ExtensionContext) => {
@@ -37,7 +37,7 @@ export const activate = async (ctx: vscode.ExtensionContext) => {
       return await fs.readFile(uris[0].fsPath, "utf-8");
     },
     showExampleViewB: () => {
-      connectedViews?.exampleViewB?.show?.(true);
+      connectedViews?.workPanel?.show?.(true);
       vscode.commands.executeCommand(`exampleViewB.focus`);
     },
     sendMessageToExampleB: (msg: string) => {
@@ -54,7 +54,7 @@ export const activate = async (ctx: vscode.ExtensionContext) => {
     msg.type === "request";
 
   const registerAndConnectView = async <V extends ViewKey>(key: V) => {
-    const view = await registerView(ctx, key);
+    const view = await viewRegistration(ctx, key);
     connectedViews[key] = view;
     const onMessage = async (msg: Record<string, unknown>) => {
       if (!isViewApiRequest(msg)) {
@@ -83,8 +83,8 @@ export const activate = async (ctx: vscode.ExtensionContext) => {
     view.webview.onDidReceiveMessage(onMessage);
   };
 
-  registerAndConnectView("exampleViewA").catch((e) => { console.error(e); });
-  registerAndConnectView("exampleViewB").catch((e) => { console.error(e); });
+  registerAndConnectView("chatActivityBar").catch((e) => { console.error(e); });
+  registerAndConnectView("workPanel").catch((e) => { console.error(e); });
 };
 
 export const deactivate = () => {

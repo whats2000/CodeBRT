@@ -1,7 +1,7 @@
 import * as vscode from "vscode";
 import { randomBytes } from "crypto";
 import path from "node:path";
-import { ViewKey } from "./views";
+import { ViewKey } from "../views";
 
 const DEV_SERVER_HOST = "http://localhost:18080";
 
@@ -105,7 +105,7 @@ const setViewHtml = <V extends ViewKey>(
   return webview;
 };
 
-export const registerView = async <V extends ViewKey>(
+export const viewRegistration = async <V extends ViewKey>(
   ctx: vscode.ExtensionContext,
   viewId: V
 ) => {

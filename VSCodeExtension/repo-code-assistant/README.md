@@ -32,3 +32,4 @@ The architecture of the project is as follows:
 ## Contributing
 
 - [The Starter Framework For VSCode Extension](https://github.com/sfc-gh-tkojima/vscode-react-webviews) by [sfc-gh-tkojima](https://github.com/sfc-gh-tkojima)
+- [Free SVG Icons](https://www.svgrepo.com/svg/532181/indent) from [SVG Repo](https://www.svgrepo.com/) under CC Attribution License
