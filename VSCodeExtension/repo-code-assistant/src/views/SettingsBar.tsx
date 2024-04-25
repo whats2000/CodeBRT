@@ -1,13 +1,14 @@
 import React, { useState, useEffect, useContext } from 'react';
+import styled from 'styled-components';
+
 import { WebviewContext } from './WebviewContext';
 import { ExtensionSettings } from "../types/extensionSettings";
-import styled from 'styled-components';
 
 // Styled components
 const Container = styled.div`
   padding: 20px;
   border-radius: 8px;
-  box-shadow: 0 2px 15px rgba(0,0,0,0.1);
+  box-shadow: 0 2px 15px rgba(0, 0, 0, 0.1);
 `;
 
 const Title = styled.h1`
@@ -25,16 +26,30 @@ const FormGroup = styled.div`
 `;
 
 const Label = styled.label`
-  margin-bottom: 5px;
+  margin-bottom: 20px;
   font-weight: bold;
 `;
 
 const Input = styled.input`
-  color: lightgrey;
   padding: 8px;
-  background-color: transparent;
   border: 1px solid #ccc;
   border-radius: 4px;
+  margin-bottom: 10px;
+`;
+
+const CheckboxContainer = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+`;
+
+const CheckboxLabel = styled.label`
+  display: flex;
+  align-items: center;
+  
+  label {
+    margin-bottom: 10px;
+  }
 `;
 
 const Button = styled.button`
@@ -52,25 +67,44 @@ const Button = styled.button`
 `;
 
 export const SettingsBar = () => {
-  const { callApi } = useContext(WebviewContext);
-  const [settings, setSettings] = useState<Partial<ExtensionSettings>>({
+  const {callApi} = useContext(WebviewContext);
+  const [settings, setSettings] = useState({
     geminiApiKey: '',
-    openAIApiKey: '',
+    openAiApiKey: '',
+    enableModel: {
+      gemini: false,
+      gpt3: false,
+      gpt4: false
+    }
   });
 
   useEffect(() => {
     Object.keys(settings).forEach(key => {
-      callApi("getSetting", key as keyof ExtensionSettings)
+      callApi("getSetting", key as keyof typeof settings)
         .then((value: any) => {
+          if (key === 'enableModel' && Object.keys(value).length === 0) {
+            value = settings.enableModel;
+          }
           setSettings(prev => ({ ...prev, [key]: value }));
         })
         .catch(e => console.error(`Failed to fetch setting ${key}:`, e));
     });
   }, []);
 
-  const handleSettingChange = (key: keyof ExtensionSettings) => (event: React.ChangeEvent<HTMLInputElement>) => {
-    setSettings(prev => ({ ...prev, [key]: event.target.value }));
-  };
+  const handleSettingChange = (key: keyof Partial<ExtensionSettings> | keyof typeof settings.enableModel) =>
+    (event: React.ChangeEvent<HTMLInputElement>) => {
+      if (key in settings.enableModel) {
+        setSettings(prev => ({
+          ...prev,
+          enableModel: {
+            ...prev.enableModel,
+            [key]: event.target.checked
+          }
+        }));
+      } else {
+        setSettings(prev => ({...prev, [key]: event.target.value}));
+      }
+    };
 
   const saveSettings = () => {
     Object.entries(settings).forEach(([key, value]) => {
@@ -87,17 +121,41 @@ export const SettingsBar = () => {
         e.preventDefault();
         saveSettings();
       }}>
-        {Object.entries(settings).map(([key, value]) => (
-          <FormGroup key={key}>
-            <Label htmlFor={key}>{key.replace(/([A-Z])/g, ' $1').charAt(0).toUpperCase() + key.replace(/([A-Z])/g, ' $1').slice(1)}:</Label>
-            <Input
-              id={key}
-              type="text"
-              value={value as string || ''}
-              onChange={handleSettingChange(key as keyof ExtensionSettings)}
-            />
-          </FormGroup>
-        ))}
+        {Object.entries(settings).map(([key, value]) => {
+          if (key === "enableModel") {
+            return (
+              <FormGroup key={key}>
+                <Label>{key.replace(/([A-Z])/g, ' $1').charAt(0).toUpperCase() + key.replace(/([A-Z])/g, ' $1').slice(1)}</Label>
+                <CheckboxContainer>
+                  {Object.entries(value).map(([modelKey, modelValue]) => (
+                    <CheckboxLabel key={modelKey}>
+                      <Input
+                        type="checkbox"
+                        id={modelKey}
+                        checked={modelValue}
+                        onChange={handleSettingChange(modelKey as keyof typeof settings.enableModel)}
+                      />
+                      <label htmlFor={modelKey}>{modelKey.charAt(0).toUpperCase() + modelKey.slice(1)}</label>
+                    </CheckboxLabel>
+                  ))}
+                </CheckboxContainer>
+              </FormGroup>
+            );
+          } else {
+            return (
+              <FormGroup key={key}>
+                <Label
+                  htmlFor={key}>{key.charAt(0).toUpperCase() + key.slice(1).replace(/([A-Z])/g, ' $1').slice(1)}:</Label>
+                <Input
+                  id={key}
+                  type="text"
+                  value={value as string || ''}
+                  onChange={handleSettingChange(key as keyof typeof settings)}
+                />
+              </FormGroup>
+            );
+          }
+        })}
         <Button type="submit">Save Settings</Button>
       </Form>
     </Container>

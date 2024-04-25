@@ -94,10 +94,30 @@
           "default": "",
           "description": "Gemini API Key"
         },
-        "repo-code-assistant.openAIApiKey": {
+        "repo-code-assistant.openAiApiKey": {
           "type": "string",
           "default": "",
           "description": "OpenAI API Key"
+        },
+        "repo-code-assistant.enableModel": {
+          "type": "object",
+          "properties": {
+            "gemini": {
+              "type": "boolean",
+              "default": false,
+              "description": "Enable Gemini model"
+            },
+            "gpt3": {
+              "type": "boolean",
+              "default": false,
+              "description": "Enable GPT-3 model"
+            },
+            "gpt4": {
+              "type": "boolean",
+              "default": false,
+              "description": "Enable GPT-4 model"
+            }
+          }
         }
       }
     }

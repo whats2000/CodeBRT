@@ -1,4 +1,9 @@
 export interface ExtensionSettings {
   geminiApiKey: string;
-  openAIApiKey: string;
+  openAiApiKey: string;
+  enableModel: {
+    gemini: boolean;
+    gpt3: boolean;
+    gpt4: boolean;
+  }
 }

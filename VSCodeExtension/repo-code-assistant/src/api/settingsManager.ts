@@ -29,7 +29,13 @@ class SettingsManager {
   // Default settings values
   private defaultSettings(): ExtensionSettings {
     return {
-      geminiApiKey: '',
+      enableModel: {
+        gemini: false,
+        gpt3: false,
+        gpt4: false
+      },
+      openAiApiKey: '',
+      geminiApiKey: ''
     };
   }
 }

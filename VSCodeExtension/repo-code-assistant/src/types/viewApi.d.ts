@@ -29,7 +29,7 @@ export type ViewApi = {
   getFileContents: () => Promise<string>;
   showSettingsView: () => void;
   updateSetting: (key: keyof ExtensionSettings, value: ExtensionSettings[typeof key]) => Promise<void>;
-  getSetting: (key: keyof ExtensionSettings) => string;
+  getSetting: (key: keyof ExtensionSettings) => ExtensionSettings[typeof key];
   alertMessage: (msg: string, type: "info" | "warning" | "error") => void;
   sendMessageToExampleB: (msg: string) => void;
 };
