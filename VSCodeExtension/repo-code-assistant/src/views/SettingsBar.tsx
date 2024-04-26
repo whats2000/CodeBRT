@@ -145,7 +145,7 @@ export const SettingsBar = () => {
             return (
               <FormGroup key={key}>
                 <Label
-                  htmlFor={key}>{key.charAt(0).toUpperCase() + key.slice(1).replace(/([A-Z])/g, ' $1').slice(1)}:</Label>
+                  htmlFor={key}>{key.replace(/([A-Z])/g, ' $1').charAt(0).toUpperCase() + key.replace(/([A-Z])/g, ' $1').slice(1)}:</Label>
                 <Input
                   id={key}
                   type="text"

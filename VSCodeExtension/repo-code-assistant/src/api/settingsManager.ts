@@ -3,17 +3,16 @@ import { ExtensionSettings } from '../types/extensionSettings';
 
 class SettingsManager {
   private static instance: SettingsManager;
-  private settings: vscode.WorkspaceConfiguration;
-
-  private constructor() {
-    this.settings = vscode.workspace.getConfiguration('repo-code-assistant');
-  }
 
   public static getInstance(): SettingsManager {
     if (!this.instance) {
       this.instance = new SettingsManager();
     }
     return this.instance;
+  }
+
+  private get settings(): vscode.WorkspaceConfiguration {
+    return vscode.workspace.getConfiguration('repo-code-assistant');
   }
 
   // Generic getter
