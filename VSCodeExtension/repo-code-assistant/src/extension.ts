@@ -4,11 +4,14 @@ import { viewRegistration } from "./api/viewRegistration";
 import { ViewApi, ViewApiError, ViewApiEvent, ViewApiRequest, ViewApiResponse, ViewEvents, } from "./types/viewApi";
 import fs from "node:fs/promises";
 import SettingsManager from "./api/settingsManager";
+
 import { ExtensionSettings } from "./types/extensionSettings";
+import { GeminiService } from "./services/languageModel/geminiService";
 
 export const activate = async (ctx: vscode.ExtensionContext) => {
   const connectedViews: Partial<Record<ViewKey, vscode.WebviewView>> = {};
   const settingsManager = SettingsManager.getInstance();
+  const geminiService = new GeminiService(ctx, settingsManager);
 
   /**
    * Trigger an event on all connected views
@@ -30,6 +33,7 @@ export const activate = async (ctx: vscode.ExtensionContext) => {
 
   /**
    * Register and connect views to the extension
+   * This uses for communication messages channel
    */
   const api: ViewApi = {
     getFileContents: async () => {
@@ -74,6 +78,13 @@ export const activate = async (ctx: vscode.ExtensionContext) => {
     },
     sendMessageToExampleB: (msg: string) => {
       triggerEvent("exampleBMessage", msg);
+    },
+    getGeminiResponse: async (query: string) => {
+      try {
+        return await geminiService.getResponseForQuery(query);
+      } catch (error) {
+        return `Failed to get response from Gemini Service: ${error}`;
+      }
     },
   };
 

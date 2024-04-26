@@ -44,12 +44,15 @@ export const ChatActivityBar = () => {
 
   const sendMessage = () => {
     if (bMessage.trim() !== "") {
-      callApi("sendMessageToExampleB", bMessage)
-        .then(() => {
-          setMessages((prevMessages) => [...prevMessages, `You: ${bMessage}`]);
+      callApi("getGeminiResponse", bMessage)  // Assuming 'getGeminiResponse' is the correct API call
+        .then((response) => {
+          setMessages((prevMessages) => [...prevMessages, `You: ${bMessage}`, `Bot: ${response}`]);
           setBMessage("");
         })
-        .catch((error) => console.error("Failed to send message:", error));
+        .catch((error) => {
+          console.error("Failed to send message:", error);
+          setMessages((prevMessages) => [...prevMessages, `Failed to send message: ${error.message}`]);
+        });
     }
   };
 

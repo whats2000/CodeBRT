@@ -32,6 +32,7 @@ export type ViewApi = {
   getSetting: (key: keyof ExtensionSettings) => ExtensionSettings[typeof key];
   alertMessage: (msg: string, type: "info" | "warning" | "error") => void;
   sendMessageToExampleB: (msg: string) => void;
+  getGeminiResponse: (query: string) => Promise<string>;
 };
 
 export type ViewEvents = {
