@@ -1,6 +1,7 @@
 import React, { useContext, useState, useEffect, useRef } from "react";
 import { WebviewContext } from "./WebviewContext";
 import styled from "styled-components";
+import { ConversationHistory } from "../types/conversationHistory";
 
 // Styled components
 const Container = styled.div`
@@ -33,9 +34,23 @@ const SendButton = styled.button``;
 
 export const ChatActivityBar = () => {
   const { callApi } = useContext(WebviewContext);
-  const [bMessage, setBMessage] = useState<string>("");
-  const [messages, setMessages] = useState<string[]>([]);
+  const [inputMessage, setInputMessage] = useState<string>("");
+  const [messages, setMessages] = useState<ConversationHistory>({
+    entries: []
+  });
   const messageEndRef = useRef<null | HTMLDivElement>(null);
+
+  useEffect(() => {
+    callApi("getConversationHistory")
+      .then((history) => {
+        if ((history as ConversationHistory).entries.length < 0) return;
+        setMessages(history as ConversationHistory);
+      })
+      .catch((error) => {
+        callApi("alertMessage", `Failed to get conversation history: ${error}`, error)
+          .catch(console.error);
+      });
+  }, []);
 
   const OpenSettings = () => {
     callApi("showSettingsView")
@@ -43,15 +58,24 @@ export const ChatActivityBar = () => {
   }
 
   const sendMessage = () => {
-    if (bMessage.trim() !== "") {
-      callApi("getGeminiResponse", bMessage)  // Assuming 'getGeminiResponse' is the correct API call
+    if (inputMessage.trim() !== "") {
+      callApi("getGeminiResponse", inputMessage)
         .then((response) => {
-          setMessages((prevMessages) => [...prevMessages, `You: ${bMessage}`, `Bot: ${response}`]);
-          setBMessage("");
+          if (typeof response !== "string") return;
+
+          setMessages((prevMessages) => ({
+              entries: [
+                ...prevMessages.entries,
+                { role: "user", message: inputMessage },
+                { role: "AI", message: response },
+              ],
+            })
+          );
+          setInputMessage("");
         })
         .catch((error) => {
-          console.error("Failed to send message:", error);
-          setMessages((prevMessages) => [...prevMessages, `Failed to send message: ${error.message}`]);
+          callApi("alertMessage", `Failed to get response: ${error}`, error)
+            .catch(console.error);
         });
     }
   };
@@ -69,16 +93,19 @@ export const ChatActivityBar = () => {
   return (
     <Container>
       <MessagesContainer>
-        {messages.map((msg, index) => (
-          <div key={index}>{msg}</div>
+        {messages.entries.map((_entry, index) => (
+          <>
+            <div key={index}>{_entry.role}:</div>
+            <div key={index}>{_entry.message}</div>
+          </>
         ))}
-        <div ref={messageEndRef} />
+        <div ref={messageEndRef}/>
       </MessagesContainer>
       <InputContainer>
-        <MessageInput
+      <MessageInput
           type="text"
-          value={bMessage}
-          onChange={(e) => setBMessage(e.target.value)}
+          value={inputMessage}
+          onChange={(e) => setInputMessage(e.target.value)}
           onKeyDown={handleKeyDown}
           placeholder="Type your message..."
         />

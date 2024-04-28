@@ -33,7 +33,7 @@ export type WebviewApi = ReturnType<typeof acquireVsCodeApi>;
  * @returns A Promise containing the result of the API call.
  */
 type CallAPI = <K extends keyof ViewApi>(
-  key: K,
+  key: string,
   ...params: Parameters<ViewApi[K]>
 ) => Promise<ReturnType<ViewApi[K]>>;
 

@@ -1,4 +1,5 @@
 import { ExtensionSettings } from "./extensionSettings";
+import { ConversationHistory } from "./conversationHistory";
 
 export type ViewApiRequest<K extends keyof ViewApi = keyof ViewApi> = {
   type: "request";
@@ -33,6 +34,7 @@ export type ViewApi = {
   alertMessage: (msg: string, type: "info" | "warning" | "error") => void;
   sendMessageToExampleB: (msg: string) => void;
   getGeminiResponse: (query: string) => Promise<string>;
+  getGeminiConversationHistory: () => ConversationHistory;
 };
 
 export type ViewEvents = {

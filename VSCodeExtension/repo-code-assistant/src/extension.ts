@@ -86,6 +86,9 @@ export const activate = async (ctx: vscode.ExtensionContext) => {
         return `Failed to get response from Gemini Service: ${error}`;
       }
     },
+    getGeminiConversationHistory: () => {
+      return geminiService.getConversationHistory();
+    },
   };
 
   const isViewApiRequest = <K extends keyof ViewApi>(

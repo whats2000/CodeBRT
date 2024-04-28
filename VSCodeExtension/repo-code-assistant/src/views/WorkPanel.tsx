@@ -18,7 +18,9 @@ export const WorkPanel = () => {
   }, [messages]);
 
   const getFileContents = async () => {
-    setFileContent(await callApi("getFileContents"));
+    callApi("getFileContents")
+      .then((content) => setFileContent(content as string))
+      .catch((error) => console.error("Failed to get file contents:", error));
   };
 
   return (
