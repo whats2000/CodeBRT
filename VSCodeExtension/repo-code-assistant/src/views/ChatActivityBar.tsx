@@ -12,7 +12,7 @@ import { RendererCode } from "./common/RenderCode";
 const Toolbar = styled.div`
   display: flex;
   justify-content: flex-end;
-  padding: 5px;
+  padding: 5px 15px 5px 5px;
 `;
 
 const ToolbarButton = styled.button`
@@ -40,16 +40,18 @@ const Container = styled.div`
 
 
 const MessagesContainer = styled.div`
-  flex-grow: 1; // Take available space
-  overflow-y: auto; // Allow scrolling
-  padding: 10px;
+  flex-grow: 1;
+  overflow-y: auto;
+  padding-right: 35px;
+  padding-top: 10px;
+  padding-bottom: 10px;
   border-top: 1px solid #ccc;
   border-bottom: 1px solid #ccc;
 `;
 
 const InputContainer = styled.div`
   display: flex;
-  padding: 5px;
+  padding: 10px 15px 10px 5px;
 `;
 
 const MessageInput = styled.input`
@@ -104,15 +106,14 @@ const MessageBubble = styled.div<{ $user: string }>`
   background-color: ${({$user}) => $user === "user" ? "#666" : "#333"};
   border-radius: 15px;
   padding: 8px 10px;
-  margin: 5px;
+  margin: 10px;
   align-self: ${({$user}) => $user === "user" ? "flex-end" : "flex-start"};
-  color: white; // Ensures text is readable on dark backgrounds
-  max-width: 80%; // Optional: Restricts maximum width of message bubbles
+  color: white;
 `;
 
 // Use RespondCharacter if needed, or modify as follows for better markdown display:
 const MessageText = styled.span`
-  word-wrap: break-word; // Ensures long texts do not overflow their container
+  word-wrap: break-word;
 `;
 
 const RespondCharacter = styled.span<{ $user: string }>`
