@@ -89,6 +89,9 @@ export const activate = async (ctx: vscode.ExtensionContext) => {
     getGeminiConversationHistory: () => {
       return geminiService.getConversationHistory();
     },
+    clearGeminiConversationHistory: () => {
+      geminiService.clearConversationHistory();
+    }
   };
 
   const isViewApiRequest = <K extends keyof ViewApi>(

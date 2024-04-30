@@ -90,4 +90,11 @@ export class GeminiService extends AbstractLanguageModelService {
   public getConversationHistory(): ConversationHistory {
     return this.history;
   }
+
+  public clearConversationHistory(): void {
+    this.history = {entries: []};
+    this.saveHistory(this.history).catch(
+      (error) => vscode.window.showErrorMessage('Failed to clear conversation history: ' + error)
+    );
+  }
 }

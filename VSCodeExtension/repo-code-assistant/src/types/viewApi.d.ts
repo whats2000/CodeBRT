@@ -35,6 +35,7 @@ export type ViewApi = {
   sendMessageToExampleB: (msg: string) => void;
   getGeminiResponse: (query: string) => Promise<string>;
   getGeminiConversationHistory: () => ConversationHistory;
+  clearGeminiConversationHistory: () => void;
 };
 
 export type ViewEvents = {

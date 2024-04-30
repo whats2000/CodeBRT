@@ -44,7 +44,6 @@ export abstract class AbstractLanguageModelService {
     try {
       const data = JSON.stringify(history, null, 2);
       await fs.promises.writeFile(this.historyFilePath, data, 'utf8');
-      vscode.window.showInformationMessage('History saved successfully!');
     } catch (error) {
       vscode.window.showErrorMessage('Failed to save history: ' + error);
     }
