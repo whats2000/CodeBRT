@@ -8,7 +8,15 @@ export abstract class AbstractLanguageModelService {
   protected context: vscode.ExtensionContext;
   protected historyFilePath: string | null;
   protected settingsManager: SettingsManager;
+  protected history: ConversationHistory = {entries: []};
 
+  /**
+   * Constructor for the AbstractLanguageModelService
+   * @param context - The extension context
+   * @param historyFileName - The name of the history file
+   * @param settingsManager - The settings manager
+   * @protected
+   */
   protected constructor(context: vscode.ExtensionContext, historyFileName: string, settingsManager: SettingsManager) {
     this.context = context;
     this.settingsManager = settingsManager;
@@ -24,6 +32,9 @@ export abstract class AbstractLanguageModelService {
     }
   }
 
+  /**
+   * Load the conversation history from the history file
+   */
   public async loadHistory(): Promise<void> {
     if (!this.historyFilePath) {
       return;
@@ -37,6 +48,10 @@ export abstract class AbstractLanguageModelService {
     }
   }
 
+  /**
+   * Save the conversation history to the history file
+   * @param history - The conversation history to save
+   */
   public async saveHistory(history: ConversationHistory): Promise<void> {
     if (!this.historyFilePath) {
       return;
@@ -49,7 +64,26 @@ export abstract class AbstractLanguageModelService {
     }
   }
 
+  /**
+   * Post process the loaded history, this will be called after the history is loaded
+   * @param history - The loaded history
+   * @protected
+   */
   protected abstract processLoadedHistory(history: ConversationHistory): void;
 
+  /**
+   * Get the response for a query
+   * @param query - The query to get a response for
+   */
   public abstract getResponseForQuery(query: string): Promise<string>;
+
+  /**
+   * Get the conversation history
+   */
+  public abstract getConversationHistory(): ConversationHistory;
+
+  /**
+   * Clear the conversation history
+   */
+  public abstract clearConversationHistory(): void;
 }

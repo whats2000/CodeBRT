@@ -7,7 +7,6 @@ import SettingsManager from "../../api/settingsManager";
 
 export class GeminiService extends AbstractLanguageModelService {
   private modelName: string = "gemini-1.5-pro-latest";
-  private history: ConversationHistory = {entries: []};
   private apiKey: string;
   private readonly settingsListener: vscode.Disposable;
 
