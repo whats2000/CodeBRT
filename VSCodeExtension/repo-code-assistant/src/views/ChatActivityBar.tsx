@@ -6,7 +6,7 @@ import ReactMarkdown from 'react-markdown';
 import { ConversationHistory } from "../types/conversationHistory";
 
 import { SettingIcon, CleanHistoryIcon, SendIcon } from "../icons";
-import { renderers } from "../utils/renderCode";
+import { RendererCode } from "./common/RenderCode";
 
 // Styled components
 const Toolbar = styled.div`
@@ -206,7 +206,7 @@ export const ChatActivityBar = () => {
             </RespondCharacter>
             <MessageText>
               <ReactMarkdown
-                components={renderers}
+                components={RendererCode}
                 children={entry.message}
               />
             </MessageText>
