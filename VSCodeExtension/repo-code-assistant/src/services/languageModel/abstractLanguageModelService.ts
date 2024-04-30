@@ -14,7 +14,11 @@ export abstract class AbstractLanguageModelService {
     this.settingsManager = settingsManager;
     const workspaceFolders = vscode.workspace.workspaceFolders;
     if (workspaceFolders) {
-      this.historyFilePath = path.join(workspaceFolders[0].uri.fsPath, historyFileName);
+      if (!fs.existsSync(path.join(workspaceFolders[0].uri.fsPath, '.vscode'))) {
+        fs.mkdirSync(path.join(workspaceFolders[0].uri.fsPath, '.vscode'));
+      }
+
+      this.historyFilePath = path.join(workspaceFolders[0].uri.fsPath, '.vscode', historyFileName);
     } else {
       this.historyFilePath = null;
     }
