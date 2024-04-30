@@ -1,15 +1,17 @@
 import React, { useContext, useState, useEffect, useRef } from "react";
 import { WebviewContext } from "./WebviewContext";
 import styled from "styled-components";
+import ReactMarkdown from 'react-markdown';
 
 import { ConversationHistory } from "../types/conversationHistory";
 
-import { SettingIcon, CleanHistoryIcon } from "../icons";
+import { SettingIcon, CleanHistoryIcon, SendIcon } from "../icons";
+import { renderers } from "../utils/renderCode";
 
 // Styled components
 const Toolbar = styled.div`
   display: flex;
-  justify-content: end;
+  justify-content: flex-end;
   padding: 5px;
 `;
 
@@ -21,7 +23,7 @@ const ToolbarButton = styled.button`
   align-items: center;
   border: none;
   border-radius: 4px;
-  
+
   &:hover {
     background-color: #333;
   }
@@ -31,34 +33,36 @@ const Container = styled.div`
   display: flex;
   flex-direction: column;
   justify-content: space-between;
-  height: 100%;
-  padding: 10px;
+  height: 100vh;
+  overflow: hidden;
   font-family: Arial, sans-serif;
 `;
 
+
 const MessagesContainer = styled.div`
-  overflow-y: auto;
+  flex-grow: 1; // Take available space
+  overflow-y: auto; // Allow scrolling
+  padding: 10px;
   border-top: 1px solid #ccc;
   border-bottom: 1px solid #ccc;
-  padding: 10px;
-  margin-bottom: 10px;
-  flex-grow: 1;
 `;
 
 const InputContainer = styled.div`
   display: flex;
+  padding: 5px;
 `;
 
 const MessageInput = styled.input`
   flex-grow: 1;
   margin-right: 10px;
+  padding: 5px;
+  border-radius: 4px;
 `;
 
 const SendButton = styled.button`
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 5px 10px;
   background-color: #0056b3;
   color: white;
   border: none;
@@ -102,6 +106,13 @@ const MessageBubble = styled.div<{ $user: string }>`
   padding: 8px 10px;
   margin: 5px;
   align-self: ${({$user}) => $user === "user" ? "flex-end" : "flex-start"};
+  color: white; // Ensures text is readable on dark backgrounds
+  max-width: 80%; // Optional: Restricts maximum width of message bubbles
+`;
+
+// Use RespondCharacter if needed, or modify as follows for better markdown display:
+const MessageText = styled.span`
+  word-wrap: break-word; // Ensures long texts do not overflow their container
 `;
 
 const RespondCharacter = styled.span<{ $user: string }>`
@@ -177,30 +188,31 @@ export const ChatActivityBar = () => {
 
   useEffect(() => {
     if (messageEndRef.current) {
-      messageEndRef.current.scrollIntoView({ behavior: "smooth" });
+      messageEndRef.current.scrollIntoView({behavior: "smooth"});
     }
   }, [messages]);
 
   return (
     <Container>
       <Toolbar>
-        <ToolbarButton onClick={openSettings}>
-          <SettingIcon />
-        </ToolbarButton>
-        <ToolbarButton onClick={clearHistory}>
-          <CleanHistoryIcon />
-        </ToolbarButton>
+        <ToolbarButton onClick={openSettings}><SettingIcon /></ToolbarButton>
+        <ToolbarButton onClick={clearHistory}><CleanHistoryIcon /></ToolbarButton>
       </Toolbar>
       <MessagesContainer>
-        {messages.entries.map((msg, index) => (
-          <MessageBubble key={index} $user={msg.role}>
-            <RespondCharacter $user={msg.role}>
-              {msg.role === "AI" ? "AI" : "You"}
+        {messages.entries.map((entry, index) => (
+          <MessageBubble key={index} $user={entry.role}>
+            <RespondCharacter $user={entry.role}>
+              {entry.role === "user" ? "You" : "AI"}
             </RespondCharacter>
-            <span>{msg.message}</span>
+            <MessageText>
+              <ReactMarkdown
+                components={renderers}
+                children={entry.message}
+              />
+            </MessageText>
           </MessageBubble>
         ))}
-        <div ref={messageEndRef}/>
+        <div ref={messageEndRef} />
       </MessagesContainer>
       <InputContainer>
         <MessageInput
@@ -212,7 +224,7 @@ export const ChatActivityBar = () => {
           disabled={isLoading}
         />
         <SendButton onClick={sendMessage} disabled={isLoading}>
-          {isLoading ? <Spinner/> : 'Send'}
+          {isLoading ? <Spinner /> : <SendIcon />}
         </SendButton>
       </InputContainer>
     </Container>
