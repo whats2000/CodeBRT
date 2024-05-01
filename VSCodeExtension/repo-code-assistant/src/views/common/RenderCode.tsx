@@ -12,7 +12,13 @@ const CodeBlockContainer = styled.div`
 const CodeBlock = styled(SyntaxHighlighter)`
   background-color: #3C3C3C !important;
   border-radius: 4px;
-  margin: 0; // Removes default margins
+  margin: 0;
+`;
+
+const OtherCodeBlock = styled.code`
+  display: block;
+  padding: 10px;
+  overflow-x: scroll;
 `;
 
 const CopyButton = styled.button<{ $copied: boolean }>`
@@ -56,6 +62,10 @@ export const RendererCode: { [nodeType: string]: React.ElementType } = {
           {copied ? <CopySuccessIcon /> : <CopyIcon />}
         </CopyButton>
       </CodeBlockContainer>
+    ) : children.includes('\n') ? (
+      <OtherCodeBlock className={className} {...props}>
+        {children}
+      </OtherCodeBlock>
     ) : (
       <code className={className} {...props}>
         {children}

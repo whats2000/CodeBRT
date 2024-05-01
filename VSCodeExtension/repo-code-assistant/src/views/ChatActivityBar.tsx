@@ -17,7 +17,7 @@ const Toolbar = styled.div`
 
 const ToolbarButton = styled.button`
   padding: 5px;
-  color: white;
+  color: #f0f0f0;
   background-color: transparent;
   display: flex;
   align-items: center;
@@ -54,11 +54,22 @@ const InputContainer = styled.div`
   padding: 10px 15px 10px 5px;
 `;
 
-const MessageInput = styled.input`
+const MessageInput = styled.textarea`
   flex-grow: 1;
   margin-right: 10px;
   padding: 5px;
   border-radius: 4px;
+  background-color: lightgrey;
+  min-height: 18px;
+  max-height: 50vh;
+  height: 18px;
+
+  &:disabled {
+    color: #333;
+    background-color: #666;
+    border: none;
+    cursor: not-allowed;
+  }
 `;
 
 const SendButton = styled.button`
@@ -108,7 +119,7 @@ const MessageBubble = styled.div<{ $user: string }>`
   padding: 8px 10px;
   margin: 10px;
   align-self: ${({$user}) => $user === "user" ? "flex-end" : "flex-start"};
-  color: white;
+  color: lightgrey;
 `;
 
 // Use RespondCharacter if needed, or modify as follows for better markdown display:
@@ -181,10 +192,8 @@ export const ChatActivityBar = () => {
     }
   };
 
-  const handleKeyDown = (event: React.KeyboardEvent<HTMLInputElement>) => {
-    if (event.key === 'Enter' && !isLoading) {
-      sendMessage();
-    }
+  const handleKeyDown = (event: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    event.preventDefault();
   };
 
   useEffect(() => {
@@ -196,8 +205,8 @@ export const ChatActivityBar = () => {
   return (
     <Container>
       <Toolbar>
-        <ToolbarButton onClick={openSettings}><SettingIcon /></ToolbarButton>
-        <ToolbarButton onClick={clearHistory}><CleanHistoryIcon /></ToolbarButton>
+        <ToolbarButton onClick={openSettings}><SettingIcon/></ToolbarButton>
+        <ToolbarButton onClick={clearHistory}><CleanHistoryIcon/></ToolbarButton>
       </Toolbar>
       <MessagesContainer>
         {messages.entries.map((entry, index) => (
@@ -213,11 +222,10 @@ export const ChatActivityBar = () => {
             </MessageText>
           </MessageBubble>
         ))}
-        <div ref={messageEndRef} />
+        <div ref={messageEndRef}/>
       </MessagesContainer>
       <InputContainer>
         <MessageInput
-          type="text"
           value={inputMessage}
           onChange={e => setInputMessage(e.target.value)}
           onKeyDown={handleKeyDown}
@@ -225,7 +233,7 @@ export const ChatActivityBar = () => {
           disabled={isLoading}
         />
         <SendButton onClick={sendMessage} disabled={isLoading}>
-          {isLoading ? <Spinner /> : <SendIcon />}
+          {isLoading ? <Spinner/> : <SendIcon/>}
         </SendButton>
       </InputContainer>
     </Container>
