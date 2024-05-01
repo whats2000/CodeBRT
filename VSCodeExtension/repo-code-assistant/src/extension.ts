@@ -7,11 +7,18 @@ import SettingsManager from "./api/settingsManager";
 
 import { ExtensionSettings } from "./types/extensionSettings";
 import { GeminiService } from "./services/languageModel/geminiService";
+import { Models, ModelType } from "./types/modelType";
+import { ConversationHistory } from "./types/conversationHistory";
 
 export const activate = async (ctx: vscode.ExtensionContext) => {
   const connectedViews: Partial<Record<ViewKey, vscode.WebviewView>> = {};
   const settingsManager = SettingsManager.getInstance();
-  const geminiService = new GeminiService(ctx, settingsManager);
+  const models: Models = {
+    gemini: {
+      service: new GeminiService(ctx, settingsManager),
+      enabled: settingsManager.get("enableModel").gemini,
+    }
+  }
 
   /**
    * Trigger an event on all connected views
@@ -53,7 +60,6 @@ export const activate = async (ctx: vscode.ExtensionContext) => {
     },
     showSettingsView: () => {
       connectedViews?.settingsBar?.show?.(true);
-      vscode.commands.executeCommand(`settingsView.focus`);
     },
     updateSetting: async (key: keyof ExtensionSettings, value: ExtensionSettings[typeof key]) => {
       return settingsManager.set(key, value);
@@ -79,18 +85,44 @@ export const activate = async (ctx: vscode.ExtensionContext) => {
     sendMessageToExampleB: (msg: string) => {
       triggerEvent("exampleBMessage", msg);
     },
-    getGeminiResponse: async (query: string) => {
+    getLanguageModelResponse: async (
+      query: string,
+      modelType: ModelType,
+    ) => {
+      const modelService = models[modelType].service;
+      if (!modelService) {
+        vscode.window.showErrorMessage(`Failed to get response for unknown model type: ${modelType}`);
+        return `Model service not found for type: ${modelType}`;
+      }
+
       try {
-        return await geminiService.getResponseForQuery(query);
+        return await modelService.getResponseForQuery(query);
       } catch (error) {
         return `Failed to get response from Gemini Service: ${error}`;
       }
     },
-    getGeminiConversationHistory: () => {
-      return geminiService.getConversationHistory();
+    getLanguageModelConversationHistory: (
+      modelType: ModelType,
+    ) => {
+      const modelService = models[modelType].service;
+      if (!modelService) {
+        vscode.window.showErrorMessage(`Failed to get conversation history for unknown model type: ${modelType}`);
+        return {entries: []} as ConversationHistory;
+      }
+
+      return modelService.getConversationHistory();
     },
-    clearGeminiConversationHistory: () => {
-      geminiService.clearConversationHistory();
+    clearLanguageConversationHistory: (
+      modelType: ModelType,
+    ) => {
+      const modelService = models[modelType].service;
+
+      if (!modelService) {
+        vscode.window.showErrorMessage(`Failed to clear conversation history for unknown model type: ${modelType}`);
+        return;
+      }
+
+      modelService.clearConversationHistory();
     }
   };
 

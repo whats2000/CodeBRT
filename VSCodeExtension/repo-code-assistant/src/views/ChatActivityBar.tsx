@@ -131,7 +131,7 @@ export const ChatActivityBar = () => {
   const messageEndRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    callApi("getGeminiConversationHistory")
+    callApi("getLanguageModelConversationHistory", "gemini")
       .then((history) => {
         if (history) {
           setMessages(history as ConversationHistory);
@@ -152,7 +152,7 @@ export const ChatActivityBar = () => {
   }
 
   const clearHistory = () => {
-    callApi("clearGeminiConversationHistory")
+    callApi("clearLanguageConversationHistory", "gemini")
       .then(() => setMessages({entries: []}))
       .catch((error) => console.error("Failed to clear conversation history:", error));
   }
@@ -160,7 +160,7 @@ export const ChatActivityBar = () => {
   const sendMessage = () => {
     if (inputMessage.trim() !== "") {
       setIsLoading(true);
-      callApi("getGeminiResponse", inputMessage)
+      callApi("getLanguageModelResponse", inputMessage, "gemini")
         .then((response) => {
           setMessages((prevMessages) => ({
             entries: [

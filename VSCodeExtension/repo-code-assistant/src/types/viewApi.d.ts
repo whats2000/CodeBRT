@@ -1,5 +1,6 @@
 import { ExtensionSettings } from "./extensionSettings";
 import { ConversationHistory } from "./conversationHistory";
+import { ModelType } from "./modelType";
 
 export type ViewApiRequest<K extends keyof ViewApi = keyof ViewApi> = {
   type: "request";
@@ -33,9 +34,9 @@ export type ViewApi = {
   getSetting: (key: keyof ExtensionSettings) => ExtensionSettings[typeof key];
   alertMessage: (msg: string, type: "info" | "warning" | "error") => void;
   sendMessageToExampleB: (msg: string) => void;
-  getGeminiResponse: (query: string) => Promise<string>;
-  getGeminiConversationHistory: () => ConversationHistory;
-  clearGeminiConversationHistory: () => void;
+  getLanguageModelResponse: (query: string, modelType: ModelType) => Promise<string>;
+  getLanguageModelConversationHistory: (modelType: ModelType) => ConversationHistory;
+  clearLanguageConversationHistory: (modelType: ModelType) => void;
 };
 
 export type ViewEvents = {

@@ -4,10 +4,32 @@ import * as path from 'path';
 import { ConversationHistory } from '../../types/conversationHistory';
 import SettingsManager from "../../api/settingsManager";
 
+/**
+ * Abstract class for the Language Model Service
+ */
 export abstract class AbstractLanguageModelService {
+  /**
+   * The extension context
+   * @protected
+   */
   protected context: vscode.ExtensionContext;
+
+  /**
+   * The path to the history file
+   * @protected
+   */
   protected historyFilePath: string | null;
+
+  /**
+   * The settings manager
+   * @protected
+   */
   protected settingsManager: SettingsManager;
+
+  /**
+   * The conversation history
+   * @protected
+   */
   protected history: ConversationHistory = {entries: []};
 
   /**
@@ -65,6 +87,23 @@ export abstract class AbstractLanguageModelService {
   }
 
   /**
+   * Get the conversation history
+   */
+  public getConversationHistory(): ConversationHistory {
+    return this.history;
+  }
+
+  /**
+   * Clear the conversation history
+   */
+  public clearConversationHistory(): void {
+    this.history = {entries: []};
+    this.saveHistory(this.history).catch(
+      (error) => vscode.window.showErrorMessage('Failed to clear conversation history: ' + error)
+    );
+  }
+
+  /**
    * Post process the loaded history, this will be called after the history is loaded
    * @param history - The loaded history
    * @protected
@@ -76,14 +115,4 @@ export abstract class AbstractLanguageModelService {
    * @param query - The query to get a response for
    */
   public abstract getResponseForQuery(query: string): Promise<string>;
-
-  /**
-   * Get the conversation history
-   */
-  public abstract getConversationHistory(): ConversationHistory;
-
-  /**
-   * Clear the conversation history
-   */
-  public abstract clearConversationHistory(): void;
 }
