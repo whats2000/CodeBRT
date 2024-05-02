@@ -2,7 +2,7 @@ import * as vscode from "vscode";
 import { randomBytes } from "crypto";
 import path from "node:path";
 
-import { ViewKey } from "../types/view";
+import { ViewKey } from "../views";
 
 const DEV_SERVER_HOST = "http://localhost:18080";
 

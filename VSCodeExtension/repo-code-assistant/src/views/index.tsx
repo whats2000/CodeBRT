@@ -1,8 +1,25 @@
 import React from "react";
 import { createRoot } from "react-dom/client";
 
-import { ViewKey, Views } from "../types/view";
 import { WebviewApi, WithWebviewContext } from "./WebviewContext";
+import { ChatActivityBar } from "./ChatActivityBar";
+import { WorkPanel } from "./WorkPanel";
+import { SettingsBar } from "./SettingsBar";
+
+/**
+ * Views that can be connected to the extension
+ * If a new view is added, it should be added here as well.
+ */
+export const Views = {
+  chatActivityBar: ChatActivityBar,
+  workPanel: WorkPanel,
+  settingsBar: SettingsBar,
+} as const;
+
+/**
+ * Represents the key for the view.
+ */
+export type ViewKey = keyof typeof Views;
 
 export function render<V extends ViewKey>(
   key: V,

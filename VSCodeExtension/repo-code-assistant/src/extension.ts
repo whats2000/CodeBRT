@@ -2,7 +2,7 @@ import fs from "node:fs/promises";
 
 import * as vscode from "vscode";
 
-import { ViewKey } from "./types/view";
+import { ViewKey } from "./views";
 import { ViewApi, ViewApiError, ViewApiEvent, ViewApiRequest, ViewApiResponse, ViewEvents, } from "./types/viewApi";
 import { ExtensionSettings } from "./types/extensionSettings";
 import { LoadedModels, ModelType } from "./types/modelType";
