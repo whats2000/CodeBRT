@@ -50,9 +50,10 @@ export type ViewApi = {
   getSetting: (key: keyof ExtensionSettings) => ExtensionSettings[typeof key];
   alertMessage: (msg: string, type: "info" | "warning" | "error") => void;
   sendMessageToExampleB: (msg: string) => void;
-  getLanguageModelResponse: (query: string, modelType: ModelType) => Promise<string>;
+  getLanguageModelResponse: (query: string, modelType: ModelType, useStream?: boolean) => Promise<string>;
   getLanguageModelConversationHistory: (modelType: ModelType) => ConversationHistory;
   clearLanguageConversationHistory: (modelType: ModelType) => void;
+  sendStreamResponse: (msg: string) => void;
 };
 
 /**
@@ -60,4 +61,5 @@ export type ViewApi = {
  */
 export type ViewEvents = {
   exampleBMessage: (a: string) => void;
+  streamResponse: (a: string) => void;
 };

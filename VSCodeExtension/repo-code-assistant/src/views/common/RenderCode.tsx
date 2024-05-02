@@ -62,7 +62,7 @@ export const RendererCode: { [nodeType: string]: React.ElementType } = {
           {copied ? <CopySuccessIcon /> : <CopyIcon />}
         </CopyButton>
       </CodeBlockContainer>
-    ) : children.includes('\n') ? (
+    ) : children?.includes('\n') ? (
       <OtherCodeBlock className={className} {...props}>
         {children}
       </OtherCodeBlock>

@@ -117,4 +117,11 @@ export abstract class AbstractLanguageModelService {
    * @param query - The query to get a response for
    */
   public abstract getResponseForQuery(query: string): Promise<string>;
+
+  /**
+   * Get the response for a query and also fire a view event to send the response in chunks
+   * @param query - The query to get a response for
+   * @param sendStreamResponse - The callback to send chunks of the response to
+   */
+  public abstract getResponseChunksForQuery(query: string, sendStreamResponse: (msg: string) => void): Promise<string>
 }

@@ -85,4 +85,35 @@ export class GeminiService extends AbstractLanguageModelService {
       return "Failed to connect to the language model service.";
     }
   }
+
+  public async getResponseChunksForQuery(query: string, sendStreamResponse: (msg: string) => void): Promise<string> {
+    const genAI = new GoogleGenerativeAI(this.apiKey);
+    const model = genAI.getGenerativeModel({model: this.modelName});
+
+    try {
+      const chat = model.startChat({
+        generationConfig: this.generationConfig,
+        safetySettings: this.safetySettings,
+        history: this.conversationHistoryToContent(this.history.entries),
+      });
+
+      const result = await chat.sendMessageStream(query);
+      let responseText = '';
+      for await (const item of result.stream) {
+        const partText = item.text();
+        sendStreamResponse(partText);
+        responseText += partText;
+      }
+
+      // Update conversation history
+      this.history.entries.push({role: 'user', message: query});
+      this.history.entries.push({role: 'AI', message: responseText});
+      await this.saveHistory(this.history);
+
+      return responseText;
+    } catch (error) {
+      vscode.window.showErrorMessage('Failed to get response from Gemini Service: ' + error);
+      return "Failed to connect to the language model service.";
+    }
+  }
 }

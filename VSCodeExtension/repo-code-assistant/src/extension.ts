@@ -90,6 +90,7 @@ export const activate = async (ctx: vscode.ExtensionContext) => {
     getLanguageModelResponse: async (
       query: string,
       modelType: ModelType,
+      useStream?: boolean
     ) => {
       const modelService = models[modelType].service;
       if (!modelService) {
@@ -98,7 +99,9 @@ export const activate = async (ctx: vscode.ExtensionContext) => {
       }
 
       try {
-        return await modelService.getResponseForQuery(query);
+        return useStream ?
+          modelService.getResponseChunksForQuery(query, api.sendStreamResponse) :
+          modelService.getResponseForQuery(query);
       } catch (error) {
         return `Failed to get response from Gemini Service: ${error}`;
       }
@@ -125,7 +128,10 @@ export const activate = async (ctx: vscode.ExtensionContext) => {
       }
 
       modelService.clearConversationHistory();
-    }
+    },
+    sendStreamResponse: (msg: string) => {
+      triggerEvent("streamResponse", msg);
+    },
   };
 
   const isViewApiRequest = <K extends keyof ViewApi>(

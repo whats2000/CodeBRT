@@ -6,6 +6,7 @@ import { ConversationHistory } from "../types/conversationHistory";
 import { WebviewContext } from "./WebviewContext";
 import { SettingIcon, CleanHistoryIcon, SendIcon } from "../icons";
 import { RendererCode } from "./common/RenderCode";
+import TypingAnimation from "./common/TypingAnimation";
 
 // Styled components
 const Toolbar = styled.div`
@@ -134,11 +135,52 @@ const RespondCharacter = styled.span<{ $user: string }>`
 `;
 
 export const ChatActivityBar = () => {
-  const {callApi} = useContext(WebviewContext);
+  const {callApi, addListener, removeListener} = useContext(WebviewContext);
   const [inputMessage, setInputMessage] = useState("");
   const [messages, setMessages] = useState<ConversationHistory>({entries: []});
   const [isLoading, setIsLoading] = useState(false);
   const messageEndRef = useRef<HTMLDivElement>(null);
+  const messagesContainerRef = useRef<HTMLDivElement>(null);
+
+  const isNearBottom = () => {
+    const threshold = 300;
+    if (!messagesContainerRef.current) return false;
+
+    const { scrollTop, scrollHeight, clientHeight } = messagesContainerRef.current;
+    const position = scrollHeight - scrollTop - clientHeight;
+
+    return position < threshold;
+  };
+
+  const scrollToBottom = () => {
+    if (messagesContainerRef.current && isNearBottom()) {
+      messagesContainerRef.current.scrollTop = messagesContainerRef.current.scrollHeight;
+    }
+  };
+
+
+  // Function to handle incoming streamed responses
+  const handleStreamResponse = (responseFromMessage: string) => {
+    // Append streamed responses to the latest AI message
+    setMessages(prevMessages => {
+      const newEntries = [...prevMessages.entries];
+      if (newEntries.length > 0 && newEntries[newEntries.length - 1].role === "AI") {
+        newEntries[newEntries.length - 1].message += responseFromMessage;
+      } else {
+        newEntries.push({role: "AI", message: responseFromMessage});
+      }
+
+      return {entries: newEntries};
+    });
+    scrollToBottom();
+  };
+
+  useEffect(() => {
+    addListener("streamResponse", handleStreamResponse);
+    return () => {
+      removeListener("streamResponse", handleStreamResponse);
+    };
+  }, []);
 
   useEffect(() => {
     callApi("getLanguageModelConversationHistory", "gemini")
@@ -146,6 +188,9 @@ export const ChatActivityBar = () => {
         if (history) {
           setMessages(history as ConversationHistory);
         }
+      })
+      .then(() => {
+        setTimeout(() => messageEndRef.current?.scrollIntoView({behavior: "smooth"}), 100);
       })
       .catch((error) =>
         callApi("alertMessage", `Failed to get conversation history: ${error}`, "error")
@@ -167,42 +212,31 @@ export const ChatActivityBar = () => {
       .catch((error) => console.error("Failed to clear conversation history:", error));
   }
 
+  // Function to send messages and handle responses
   const sendMessage = () => {
-    if (inputMessage.trim() !== "") {
-      setIsLoading(true);
-      callApi("getLanguageModelResponse", inputMessage, "gemini")
-        .then((response) => {
-          setMessages((prevMessages) => ({
-            entries: [
-              ...prevMessages.entries,
-              {role: "user", message: inputMessage},
-              {role: "AI", message: response},
-            ],
-          }) as ConversationHistory);
-          setInputMessage("");
-          setIsLoading(false);
-        })
-        .catch((error) => {
-          callApi("alertMessage", `Failed to get response: ${error}`, error)
-            .catch(console.error);
+    if (!inputMessage.trim()) return;
+    setIsLoading(true);
+    setMessages(prevMessages => ({
+      entries: [...prevMessages.entries, {role: "user", message: inputMessage}],
+    }));
 
-          setIsLoading(false);
-        });
-    }
+    callApi("getLanguageModelResponse", inputMessage, "gemini", true)
+      .then(() => {
+        setInputMessage("");
+        setTimeout(() => setIsLoading(false), 1000);
+      })
+      .catch(error => {
+        callApi("alertMessage", `Failed to get response: ${error}`, error).catch(console.error);
+        setIsLoading(false);
+      });
   };
 
   const handleKeyDown = (event: React.KeyboardEvent<HTMLTextAreaElement>) => {
     // Prevent send behavior
-    if (event.key === "Enter") {
+    if (event.key === "Enter" && !event.shiftKey) {
       event.preventDefault();
     }
   };
-
-  useEffect(() => {
-    if (messageEndRef.current) {
-      messageEndRef.current.scrollIntoView({behavior: "smooth"});
-    }
-  }, [messages]);
 
   return (
     <Container>
@@ -210,17 +244,18 @@ export const ChatActivityBar = () => {
         <ToolbarButton onClick={openSettings}><SettingIcon/></ToolbarButton>
         <ToolbarButton onClick={clearHistory}><CleanHistoryIcon/></ToolbarButton>
       </Toolbar>
-      <MessagesContainer>
+      <MessagesContainer ref={messagesContainerRef}>
         {messages.entries.map((entry, index) => (
           <MessageBubble key={index} $user={entry.role}>
             <RespondCharacter $user={entry.role}>
               {entry.role === "user" ? "You" : "AI"}
             </RespondCharacter>
             <MessageText>
-              <ReactMarkdown
-                components={RendererCode}
-                children={entry.message}
-              />
+              {entry.role === "AI" && index === messages.entries.length - 1 && isLoading ? (
+                <TypingAnimation message={entry.message} isLoading={isLoading} scrollToBottom={scrollToBottom}/>
+              ) : (
+                <ReactMarkdown components={RendererCode} children={entry.message}/>
+              )}
             </MessageText>
           </MessageBubble>
         ))}
