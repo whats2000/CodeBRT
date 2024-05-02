@@ -1,8 +1,8 @@
 import React, { useState, useEffect, useContext } from 'react';
 import styled from 'styled-components';
 
-import { WebviewContext } from './WebviewContext';
 import { ExtensionSettings } from "../types/extensionSettings";
+import { WebviewContext } from './WebviewContext';
 
 // Styled components
 const Container = styled.div`

@@ -1,6 +1,9 @@
 import { ModelType } from "./modelType";
 
-export interface ExtensionSettings {
+/**
+ * Represents the settings for the extension.
+ */
+export type ExtensionSettings = {
   geminiApiKey: string;
   openAiApiKey: string;
   enableModel: {

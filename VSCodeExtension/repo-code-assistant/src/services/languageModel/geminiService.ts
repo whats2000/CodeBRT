@@ -1,6 +1,6 @@
 import * as vscode from "vscode";
-
 import { GoogleGenerativeAI, HarmCategory, HarmBlockThreshold, Content } from "@google/generative-ai";
+
 import { ConversationEntry, ConversationHistory } from "../../types/conversationHistory";
 import { AbstractLanguageModelService } from "./abstractLanguageModelService";
 import SettingsManager from "../../api/settingsManager";
@@ -9,6 +9,20 @@ export class GeminiService extends AbstractLanguageModelService {
   private modelName: string = "gemini-1.5-pro-latest";
   private apiKey: string;
   private readonly settingsListener: vscode.Disposable;
+
+  private readonly generationConfig = {
+    temperature: 1,
+    topK: 0,
+    topP: 0.95,
+    maxOutputTokens: 8192,
+  };
+
+  private readonly safetySettings = [
+    {category: HarmCategory.HARM_CATEGORY_HARASSMENT, threshold: HarmBlockThreshold.BLOCK_MEDIUM_AND_ABOVE},
+    {category: HarmCategory.HARM_CATEGORY_HATE_SPEECH, threshold: HarmBlockThreshold.BLOCK_MEDIUM_AND_ABOVE},
+    {category: HarmCategory.HARM_CATEGORY_SEXUALLY_EXPLICIT, threshold: HarmBlockThreshold.BLOCK_MEDIUM_AND_ABOVE},
+    {category: HarmCategory.HARM_CATEGORY_DANGEROUS_CONTENT, threshold: HarmBlockThreshold.BLOCK_MEDIUM_AND_ABOVE},
+  ];
 
   constructor(context: vscode.ExtensionContext, settingsManager: SettingsManager) {
     super(context, 'geminiConversationHistory.json', settingsManager);
@@ -32,20 +46,6 @@ export class GeminiService extends AbstractLanguageModelService {
       vscode.window.showErrorMessage('Failed to initialize Gemini Service: ' + error);
     }
   }
-
-  private generationConfig = {
-    temperature: 1,
-    topK: 0,
-    topP: 0.95,
-    maxOutputTokens: 8192,
-  };
-
-  private safetySettings = [
-    {category: HarmCategory.HARM_CATEGORY_HARASSMENT, threshold: HarmBlockThreshold.BLOCK_MEDIUM_AND_ABOVE},
-    {category: HarmCategory.HARM_CATEGORY_HATE_SPEECH, threshold: HarmBlockThreshold.BLOCK_MEDIUM_AND_ABOVE},
-    {category: HarmCategory.HARM_CATEGORY_SEXUALLY_EXPLICIT, threshold: HarmBlockThreshold.BLOCK_MEDIUM_AND_ABOVE},
-    {category: HarmCategory.HARM_CATEGORY_DANGEROUS_CONTENT, threshold: HarmBlockThreshold.BLOCK_MEDIUM_AND_ABOVE},
-  ];
 
   protected processLoadedHistory(history: ConversationHistory): void {
     this.history = history;

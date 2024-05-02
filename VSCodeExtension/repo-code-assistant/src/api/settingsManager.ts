@@ -1,4 +1,5 @@
 import * as vscode from 'vscode';
+
 import { ExtensionSettings } from '../types/extensionSettings';
 
 class SettingsManager {

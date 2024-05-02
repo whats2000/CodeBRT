@@ -1,19 +1,20 @@
-import * as vscode from "vscode";
-import { ViewKey } from "./views";
-import { viewRegistration } from "./api/viewRegistration";
-import { ViewApi, ViewApiError, ViewApiEvent, ViewApiRequest, ViewApiResponse, ViewEvents, } from "./types/viewApi";
 import fs from "node:fs/promises";
-import SettingsManager from "./api/settingsManager";
 
+import * as vscode from "vscode";
+
+import { ViewKey } from "./types/view";
+import { ViewApi, ViewApiError, ViewApiEvent, ViewApiRequest, ViewApiResponse, ViewEvents, } from "./types/viewApi";
 import { ExtensionSettings } from "./types/extensionSettings";
-import { GeminiService } from "./services/languageModel/geminiService";
-import { Models, ModelType } from "./types/modelType";
+import { LoadedModels, ModelType } from "./types/modelType";
 import { ConversationHistory } from "./types/conversationHistory";
+import { viewRegistration } from "./api/viewRegistration";
+import SettingsManager from "./api/settingsManager";
+import { GeminiService } from "./services/languageModel/geminiService";
 
 export const activate = async (ctx: vscode.ExtensionContext) => {
   const connectedViews: Partial<Record<ViewKey, vscode.WebviewView>> = {};
   const settingsManager = SettingsManager.getInstance();
-  const models: Models = {
+  const models: LoadedModels = {
     gemini: {
       service: new GeminiService(ctx, settingsManager),
       enabled: settingsManager.get("enableModel").gemini,
@@ -60,6 +61,7 @@ export const activate = async (ctx: vscode.ExtensionContext) => {
     },
     showSettingsView: () => {
       connectedViews?.settingsBar?.show?.(true);
+      vscode.commands.executeCommand("settingsBar.focus");
     },
     updateSetting: async (key: keyof ExtensionSettings, value: ExtensionSettings[typeof key]) => {
       return settingsManager.set(key, value);

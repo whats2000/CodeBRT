@@ -1,6 +1,7 @@
 import React, { createContext } from "react";
 import DeferredPromise from "promise-deferred";
 import { v4 as uuid } from "uuid";
+
 import {
   ViewApi,
   ViewApiError,
@@ -23,7 +24,6 @@ export type WebviewContextValue = {
  * Type definition for acquiring VSCode API.
  */
 export type WebviewApi = ReturnType<typeof acquireVsCodeApi>;
-
 
 /**
  * Generic function type for API calls.
@@ -55,11 +55,7 @@ type AddRemoveListener = <K extends keyof ViewEvents>(
  */
 export const webviewContextValue = (
   postMessage: (message: unknown) => void
-): {
-  callApi: CallAPI;
-  addListener: AddRemoveListener;
-  removeListener: AddRemoveListener;
-} => {
+): WebviewContextValue => {
   const pendingRequests: Record<string, DeferredPromise.Deferred<unknown>> = {};
   const listeners: Record<string, Set<(...args: unknown[]) => void>> = {};
 

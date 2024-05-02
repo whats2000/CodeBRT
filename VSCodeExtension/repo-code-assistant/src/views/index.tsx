@@ -1,17 +1,8 @@
-import { createRoot } from "react-dom/client";
-import { WebviewApi, WithWebviewContext } from "./WebviewContext";
-import { ChatActivityBar } from "./ChatActivityBar";
-import { WorkPanel } from "./WorkPanel";
 import React from "react";
-import { SettingsBar } from "./SettingsBar";
+import { createRoot } from "react-dom/client";
 
-export const Views = {
-  chatActivityBar: ChatActivityBar,
-  workPanel: WorkPanel,
-  settingsBar: SettingsBar,
-} as const;
-
-export type ViewKey = keyof typeof Views;
+import { ViewKey, Views } from "../types/view";
+import { WebviewApi, WithWebviewContext } from "./WebviewContext";
 
 export function render<V extends ViewKey>(
   key: V,

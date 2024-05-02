@@ -1,8 +1,8 @@
-export interface ConversationEntry {
+export type ConversationEntry = {
   role: 'user' | 'AI';
   message: string;
 }
 
-export interface ConversationHistory {
+export type ConversationHistory = {
   entries: ConversationEntry[];
 }
