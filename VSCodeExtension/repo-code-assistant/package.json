@@ -16,7 +16,7 @@
   "main": "extension.js",
   "scripts": {
     "bundle": "webpack --mode production && webpack --mode production --config ./webpack.config.views.js",
-    "build": "if exist dist rd /s /q dist && mkdir dist && copy LICENSE.md dist\\ && if exist build rd /s /q build && mkdir build && npm run bundle && node scripts/build.js",
+    "build": "rd /s /q dist 2>nul & mkdir dist & copy LICENSE.md dist\\ & rd /s /q build 2>nul & mkdir build & npm run bundle & node scripts/build.js",
     "watch": "webpack --mode development --watch",
     "devserver": "webpack serve --mode development --config ./webpack.config.views.js",
     "format": "prettier 'src/**/*.js' 'src/**/*.jsx' 'src/**/*.ts' 'src/**/*.tsx' './package.json' '.swcrc' './*.js' --no-error-on-unmatched-pattern --write"
