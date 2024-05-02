@@ -16,7 +16,7 @@
   "main": "extension.js",
   "scripts": {
     "bundle": "webpack --mode production && webpack --mode production --config ./webpack.config.views.js",
-    "build": "rmdir /s /q dist && mkdir dist && mkdir build && npm run bundle && node scripts/build.js",
+    "build": "if exist dist rd /s /q dist && mkdir dist && copy LICENSE.md dist\\ && if exist build rd /s /q build && mkdir build && npm run bundle && node scripts/build.js",
     "watch": "webpack --mode development --watch",
     "devserver": "webpack serve --mode development --config ./webpack.config.views.js",
     "format": "prettier 'src/**/*.js' 'src/**/*.jsx' 'src/**/*.ts' 'src/**/*.tsx' './package.json' '.swcrc' './*.js' --no-error-on-unmatched-pattern --write"
@@ -45,7 +45,12 @@
     "uuid": "^9.0.1",
     "webpack": "^5.89.0",
     "webpack-cli": "^5.1.4",
-    "webpack-dev-server": "^4.15.1"
+    "webpack-dev-server": "^4.15.1",
+    "@google/generative-ai": "^0.8.0",
+    "@types/react-syntax-highlighter": "^15.5.11",
+    "react-markdown": "^9.0.1",
+    "react-syntax-highlighter": "^15.5.0",
+    "styled-components": "^6.1.8"
   },
   "activationEvents": [],
   "contributes": {
@@ -124,10 +129,5 @@
     }
   },
   "dependencies": {
-    "@google/generative-ai": "^0.8.0",
-    "@types/react-syntax-highlighter": "^15.5.11",
-    "react-markdown": "^9.0.1",
-    "react-syntax-highlighter": "^15.5.0",
-    "styled-components": "^6.1.8"
   }
 }

@@ -192,7 +192,10 @@ export const ChatActivityBar = () => {
   };
 
   const handleKeyDown = (event: React.KeyboardEvent<HTMLTextAreaElement>) => {
-    event.preventDefault();
+    // Prevent send behavior
+    if (event.key === "Enter") {
+      event.preventDefault();
+    }
   };
 
   useEffect(() => {
