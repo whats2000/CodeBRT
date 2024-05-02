@@ -71,10 +71,12 @@ export const SettingsBar = () => {
   const [settings, setSettings] = useState({
     geminiApiKey: '',
     openAiApiKey: '',
+    cohereApiKey: '',
     enableModel: {
       gemini: false,
       gpt3: false,
-      gpt4: false
+      gpt4: false,
+      cohere: false,
     }
   });
 

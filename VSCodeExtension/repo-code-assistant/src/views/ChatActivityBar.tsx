@@ -7,6 +7,7 @@ import { WebviewContext } from "./WebviewContext";
 import { SettingIcon, CleanHistoryIcon, SendIcon } from "../icons";
 import { RendererCode } from "./common/RenderCode";
 import TypingAnimation from "./common/TypingAnimation";
+import { ModelType } from "../types/modelType";
 
 // Styled components
 const Toolbar = styled.div`
@@ -141,7 +142,7 @@ export const ChatActivityBar = () => {
   const [isLoading, setIsLoading] = useState(false);
   const messageEndRef = useRef<HTMLDivElement>(null);
   const messagesContainerRef = useRef<HTMLDivElement>(null);
-
+  const activeModel: ModelType = "cohere";
   const isNearBottom = () => {
     const threshold = 300;
     if (!messagesContainerRef.current) return false;
@@ -183,7 +184,7 @@ export const ChatActivityBar = () => {
   }, []);
 
   useEffect(() => {
-    callApi("getLanguageModelConversationHistory", "gemini")
+    callApi("getLanguageModelConversationHistory", activeModel)
       .then((history) => {
         if (history) {
           setMessages(history as ConversationHistory);
@@ -207,7 +208,7 @@ export const ChatActivityBar = () => {
   }
 
   const clearHistory = () => {
-    callApi("clearLanguageConversationHistory", "gemini")
+    callApi("clearLanguageConversationHistory", activeModel)
       .then(() => setMessages({entries: []}))
       .catch((error) => console.error("Failed to clear conversation history:", error));
   }
@@ -220,7 +221,7 @@ export const ChatActivityBar = () => {
       entries: [...prevMessages.entries, {role: "user", message: inputMessage}],
     }));
 
-    callApi("getLanguageModelResponse", inputMessage, "gemini", true)
+    callApi("getLanguageModelResponse", inputMessage, activeModel, true)
       .then(() => {
         setInputMessage("");
         setTimeout(() => setIsLoading(false), 1000);

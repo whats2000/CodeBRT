@@ -105,6 +105,11 @@
           "default": "",
           "description": "OpenAI API Key"
         },
+        "repo-code-assistant.cohereApiKey": {
+          "type": "string",
+          "default": "",
+          "description": "Cohere API Key"
+        },
         "repo-code-assistant.enableModel": {
           "type": "object",
           "properties": {
@@ -122,6 +127,11 @@
               "type": "boolean",
               "default": false,
               "description": "Enable GPT-4 model"
+            },
+            "cohere": {
+              "type": "boolean",
+              "default": false,
+              "description": "Enable Cohere model"
             }
           }
         }

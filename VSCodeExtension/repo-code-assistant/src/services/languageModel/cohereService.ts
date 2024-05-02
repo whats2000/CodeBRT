@@ -1,10 +1,7 @@
 import * as vscode from "vscode";
 import { Cohere, CohereClient } from "cohere-ai";
 
-import {
-  ConversationEntry,
-  ConversationHistory,
-} from "../../types/conversationHistory";
+import { ConversationEntry, ConversationHistory } from "../../types/conversationHistory";
 import { AbstractLanguageModelService } from "./abstractLanguageModelService";
 import SettingsManager from "../../api/settingsManager";
 
@@ -18,7 +15,7 @@ export class CohereService extends AbstractLanguageModelService {
     settingsManager: SettingsManager,
   ) {
     super(context, "cohereConversationHistory.json", settingsManager);
-    this.apiKey = settingsManager.get("geminiApiKey");
+    this.apiKey = settingsManager.get("cohereApiKey");
     this.initialize().catch((error) =>
       vscode.window.showErrorMessage(
         "Failed to initialize Cohere Service: " + error,
@@ -28,7 +25,7 @@ export class CohereService extends AbstractLanguageModelService {
     // Listen for settings changes
     this.settingsListener = vscode.workspace.onDidChangeConfiguration((e) => {
       if (e.affectsConfiguration("repo-code-assistant.geminiApiKey")) {
-        this.apiKey = settingsManager.get("geminiApiKey");
+        this.apiKey = settingsManager.get("cohereApiKey");
       }
     });
 

@@ -32,10 +32,12 @@ class SettingsManager {
       enableModel: {
         gemini: false,
         gpt3: false,
-        gpt4: false
+        gpt4: false,
+        cohere: false
       },
       openAiApiKey: '',
-      geminiApiKey: ''
+      geminiApiKey: '',
+      cohereApiKey: ''
     };
   }
 }

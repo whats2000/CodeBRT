@@ -10,6 +10,7 @@ import { ConversationHistory } from "./types/conversationHistory";
 import { viewRegistration } from "./api/viewRegistration";
 import SettingsManager from "./api/settingsManager";
 import { GeminiService } from "./services/languageModel/geminiService";
+import { CohereService } from "./services/languageModel/cohereService";
 
 export const activate = async (ctx: vscode.ExtensionContext) => {
   const connectedViews: Partial<Record<ViewKey, vscode.WebviewView>> = {};
@@ -18,7 +19,11 @@ export const activate = async (ctx: vscode.ExtensionContext) => {
     gemini: {
       service: new GeminiService(ctx, settingsManager),
       enabled: settingsManager.get("enableModel").gemini,
-    }
+    },
+    cohere: {
+      service: new CohereService(ctx, settingsManager),
+      enabled: settingsManager.get("enableModel").cohere,
+    },
   }
 
   /**
@@ -103,7 +108,7 @@ export const activate = async (ctx: vscode.ExtensionContext) => {
           modelService.getResponseChunksForQuery(query, api.sendStreamResponse) :
           modelService.getResponseForQuery(query);
       } catch (error) {
-        return `Failed to get response from Gemini Service: ${error}`;
+        return `Failed to get response from ${modelType} service: ${error}`;
       }
     },
     getLanguageModelConversationHistory: (

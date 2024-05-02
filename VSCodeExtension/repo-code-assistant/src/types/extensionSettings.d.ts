@@ -6,6 +6,7 @@ import { ModelType } from "./modelType";
 export type ExtensionSettings = {
   geminiApiKey: string;
   openAiApiKey: string;
+  cohereApiKey: string;
   enableModel: {
     [key in ModelType]: boolean;
   }
