@@ -55,6 +55,8 @@ export type ViewApi = {
   clearLanguageConversationHistory: (modelType: ModelType) => void;
   editLanguageModelConversationHistory: (modelType: ModelType, historyIndex: number, newMessage: string) => void;
   sendStreamResponse: (msg: string) => void;
+  saveLastUsedModel: (modelType: ModelType) => void;
+  getLastUsedModel: () => ModelType;
 };
 
 /**

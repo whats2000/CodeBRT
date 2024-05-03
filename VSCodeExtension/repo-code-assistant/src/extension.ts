@@ -151,6 +151,12 @@ export const activate = async (ctx: vscode.ExtensionContext) => {
     sendStreamResponse: (msg: string) => {
       triggerEvent("streamResponse", msg);
     },
+    saveLastUsedModel: (modelType: ModelType) => {
+      settingsManager.set("lastUsedModel", modelType);
+    },
+    getLastUsedModel: () => {
+      return settingsManager.get("lastUsedModel");
+    },
   };
 
   const isViewApiRequest = <K extends keyof ViewApi>(

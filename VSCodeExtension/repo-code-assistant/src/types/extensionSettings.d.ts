@@ -9,5 +9,6 @@ export type ExtensionSettings = {
   cohereApiKey: string;
   enableModel: {
     [key in ModelType]: boolean;
-  }
+  },
+  lastUsedModel: ModelType;
 }

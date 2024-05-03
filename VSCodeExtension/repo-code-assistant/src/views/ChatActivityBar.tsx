@@ -60,6 +60,11 @@ export const ChatActivityBar = () => {
   }, []);
 
   useEffect(() => {
+    callApi("saveLastUsedModel", activeModel)
+      .catch(error =>
+        callApi("alertMessage", `Failed to save last used model: ${error}`, "error")
+          .catch(console.error)
+      );
     callApi("getLanguageModelConversationHistory", activeModel)
       .then((history) => {
         if (history) {
@@ -74,6 +79,19 @@ export const ChatActivityBar = () => {
           .catch(console.error)
       );
   }, [activeModel]);
+
+  useEffect(() => {
+    callApi("getLastUsedModel")
+      .then((lastUsedModel) => {
+        if (lastUsedModel) {
+          setActiveModel(lastUsedModel as ModelType);
+        }
+      })
+      .catch((error) =>
+        callApi("alertMessage", `Failed to get last used model: ${error}`, "error")
+          .catch(console.error)
+      );
+  }, []);
 
   const scrollToBottom = () => {
     if (messagesContainerRef.current && isNearBottom()) {

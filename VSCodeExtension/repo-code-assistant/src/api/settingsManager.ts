@@ -37,7 +37,8 @@ class SettingsManager {
       },
       openAiApiKey: '',
       geminiApiKey: '',
-      cohereApiKey: ''
+      cohereApiKey: '',
+      lastUsedModel: 'gemini'
     };
   }
 }

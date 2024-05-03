@@ -135,6 +135,11 @@
               "description": "Enable Cohere model"
             }
           }
+        },
+        "repo-code-assistant.lastUsedModel": {
+          "type": "string",
+          "default": "gemini",
+          "description": "Last used model"
         }
       }
     }
