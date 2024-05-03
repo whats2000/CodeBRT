@@ -22,9 +22,10 @@ export const ChatActivityBar = () => {
   const [inputMessage, setInputMessage] = useState("");
   const [messages, setMessages] = useState<ConversationHistory>({entries: []});
   const [isLoading, setIsLoading] = useState(false);
+  const [activeModel, setActiveModel] = useState<ModelType>("gemini");
   const messageEndRef = useRef<HTMLDivElement>(null);
   const messagesContainerRef = useRef<HTMLDivElement>(null);
-  const activeModel: ModelType = "cohere";
+
   const isNearBottom = () => {
     const threshold = 300;
     if (!messagesContainerRef.current) return false;
@@ -72,7 +73,7 @@ export const ChatActivityBar = () => {
         callApi("alertMessage", `Failed to get conversation history: ${error}`, "error")
           .catch(console.error)
       );
-  }, []);
+  }, [activeModel]);
 
   const scrollToBottom = () => {
     if (messagesContainerRef.current && isNearBottom()) {
@@ -101,7 +102,7 @@ export const ChatActivityBar = () => {
 
   return (
     <Container>
-      <Toolbar activeModel={activeModel} setMessages={setMessages}/>
+      <Toolbar activeModel={activeModel} setMessages={setMessages} setActiveModel={setActiveModel}/>
       <MessagesContainer
         modelType={activeModel}
         messagesContainerRef={messagesContainerRef}

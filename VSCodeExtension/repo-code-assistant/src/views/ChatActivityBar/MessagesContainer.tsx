@@ -168,7 +168,8 @@ export const MessagesContainer: React.FC<MessagesContainerProps> = (
           </EditButton>
           <CopyButton copied={copied[index]} handleCopy={() => handleCopy(entry.message, index)}/>
           <RespondCharacter $user={entry.role}>
-            {entry.role === "AI" ? "AI" : "You"}
+            {/* Use First character uppercase */}
+            {entry.role === "AI" ? modelType.charAt(0).toUpperCase() + modelType.slice(1) : "You"}
           </RespondCharacter>
           {index === editingIndex ? (
             <>

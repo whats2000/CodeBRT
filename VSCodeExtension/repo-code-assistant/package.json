@@ -22,6 +22,7 @@
     "format": "prettier 'src/**/*.js' 'src/**/*.jsx' 'src/**/*.ts' 'src/**/*.tsx' './package.json' '.swcrc' './*.js' --no-error-on-unmatched-pattern --write"
   },
   "devDependencies": {
+    "cohere-ai": "^7.9.5",
     "@google/generative-ai": "^0.8.0",
     "@pmmmwh/react-refresh-webpack-plugin": "^0.5.11",
     "@swc/cli": "^0.1.62",
