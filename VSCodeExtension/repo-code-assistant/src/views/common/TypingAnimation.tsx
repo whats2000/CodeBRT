@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import ReactMarkdown from "react-markdown";
 import { RendererCode } from "./RenderCode";
 
-const TypingAnimation = (
+export const TypingAnimation = (
   {
     message,
     isLoading,
@@ -42,6 +42,3 @@ const TypingAnimation = (
 
   return <ReactMarkdown components={RendererCode}>{displayedMessage}</ReactMarkdown>;
 };
-
-export default TypingAnimation;
-

@@ -3,7 +3,7 @@ import SyntaxHighlighter from "react-syntax-highlighter";
 import { darcula } from "react-syntax-highlighter/dist/cjs/styles/hljs";
 import styled from "styled-components";
 
-import { CopyIcon, CopySuccessIcon } from "../../icons";
+import { CopyButton } from "./CopyButton";
 
 const CodeBlockContainer = styled.div`
   position: relative;
@@ -19,24 +19,6 @@ const OtherCodeBlock = styled.code`
   display: block;
   padding: 10px;
   overflow-x: scroll;
-`;
-
-const CopyButton = styled.button<{ $copied: boolean }>`
-  color: white;
-  position: absolute;
-  top: 5px;
-  right: 5px;
-  background-color: #3C3C3C;
-  border: none;
-  border-radius: 4px;
-  padding: 5px 8px;
-  cursor: pointer;
-  outline: none;
-
-  &:hover {
-    color: #3C3C3C;
-    background-color: #ffffff90;
-  }
 `;
 
 export const RendererCode: { [nodeType: string]: React.ElementType } = {
@@ -58,9 +40,7 @@ export const RendererCode: { [nodeType: string]: React.ElementType } = {
         <CodeBlock style={darcula} language={match[1]} PreTag="div" {...props}>
           {String(children).replace(/\n$/, '')}
         </CodeBlock>
-        <CopyButton onClick={handleCopy} $copied={copied}>
-          {copied ? <CopySuccessIcon /> : <CopyIcon />}
-        </CopyButton>
+        <CopyButton copied={copied} handleCopy={handleCopy}/>
       </CodeBlockContainer>
     ) : children?.includes('\n') ? (
       <OtherCodeBlock className={className} {...props}>

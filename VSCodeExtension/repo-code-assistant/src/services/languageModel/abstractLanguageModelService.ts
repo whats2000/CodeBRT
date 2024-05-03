@@ -73,6 +73,13 @@ export abstract class AbstractLanguageModelService {
   }
 
   /**
+   * Get the conversation history
+   */
+  public getConversationHistory(): ConversationHistory {
+    return this.history;
+  }
+
+  /**
    * Save the conversation history to the history file
    * @param history - The conversation history to save
    */
@@ -89,13 +96,6 @@ export abstract class AbstractLanguageModelService {
   }
 
   /**
-   * Get the conversation history
-   */
-  public getConversationHistory(): ConversationHistory {
-    return this.history;
-  }
-
-  /**
    * Clear the conversation history
    */
   public clearConversationHistory(): void {
@@ -103,6 +103,23 @@ export abstract class AbstractLanguageModelService {
     this.saveHistory(this.history).catch(
       (error) => vscode.window.showErrorMessage('Failed to clear conversation history: ' + error)
     );
+  }
+
+  /**
+   * Edit the conversation history
+   * @param historyIndex - The index of the history to edit
+   * @param newMessage - The new message to replace the history with
+   */
+  public editConversationHistory(historyIndex: number, newMessage: string): void {
+    if (historyIndex >= 0 && historyIndex < this.history.entries.length) {
+      this.history.entries[historyIndex].message = newMessage;
+      this.saveHistory(this.history).catch(
+        (error) => vscode.window.showErrorMessage('Failed to edit conversation history: ' + error)
+      );
+    } else {
+      vscode.window.showErrorMessage('Invalid history index: ' + historyIndex)
+        .then(() => console.error('Invalid history index: ' + historyIndex));
+    }
   }
 
   /**

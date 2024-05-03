@@ -134,6 +134,20 @@ export const activate = async (ctx: vscode.ExtensionContext) => {
 
       modelService.clearConversationHistory();
     },
+    editLanguageModelConversationHistory: (
+      modelType: ModelType,
+      historyIndex: number,
+      newMessage: string,
+    ) => {
+      const modelService = models[modelType].service;
+
+      if (!modelService) {
+        vscode.window.showErrorMessage(`Failed to edit conversation history for unknown model type: ${modelType}`);
+        return;
+      }
+
+      modelService.editConversationHistory(historyIndex, newMessage);
+    },
     sendStreamResponse: (msg: string) => {
       triggerEvent("streamResponse", msg);
     },
