@@ -23,6 +23,7 @@ export const ChatActivityBar = () => {
   const [messages, setMessages] = useState<ConversationHistory>({entries: []});
   const [isLoading, setIsLoading] = useState(false);
   const [activeModel, setActiveModel] = useState<ModelType>("gemini");
+
   const messageEndRef = useRef<HTMLDivElement>(null);
   const messagesContainerRef = useRef<HTMLDivElement>(null);
 

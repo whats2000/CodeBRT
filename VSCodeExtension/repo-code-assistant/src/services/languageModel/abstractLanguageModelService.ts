@@ -63,6 +63,9 @@ export abstract class AbstractLanguageModelService {
     if (!this.historyFilePath) {
       return;
     }
+    if (!fs.existsSync(this.historyFilePath)) {
+      return;
+    }
     try {
       const data = await fs.promises.readFile(this.historyFilePath, 'utf8');
       const history: ConversationHistory = JSON.parse(data);
