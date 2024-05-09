@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import { SendIcon } from "../../icons";
 import styled from "styled-components";
 
@@ -74,10 +74,23 @@ interface InputContainerProps {
 export const InputContainer = (
   { inputMessage, setInputMessage, sendMessage, isLoading }: InputContainerProps
 ) => {
+  const [enterPressCount, setEnterPressCount] = useState(0);
+  const resetEnterPressCount = () => setEnterPressCount(0);
+
   const handleKeyDown = (event: React.KeyboardEvent<HTMLTextAreaElement>) => {
-    // Prevent send behavior
     if (event.key === "Enter" && !event.shiftKey) {
       event.preventDefault();
+      if (enterPressCount === 0) {
+        setTimeout(resetEnterPressCount, 500);
+      }
+      setEnterPressCount(prev => prev + 1);
+
+      if (enterPressCount + 1 === 2) {
+        sendMessage();
+        resetEnterPressCount();
+      }
+    } else {
+      resetEnterPressCount();
     }
   };
 
