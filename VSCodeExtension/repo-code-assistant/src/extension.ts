@@ -1,9 +1,7 @@
 import fs from "node:fs/promises";
-
 import * as vscode from "vscode";
-
 import { ViewKey } from "./views";
-import { ViewApi, ViewApiError, ViewApiEvent, ViewApiRequest, ViewApiResponse, ViewEvents, } from "./types/viewApi";
+import { ViewApi, ViewApiError, ViewApiEvent, ViewApiRequest, ViewApiResponse, ViewEvents } from "./types/viewApi";
 import { ExtensionSettings } from "./types/extensionSettings";
 import { LoadedModels, ModelType } from "./types/modelType";
 import { ConversationHistory } from "./types/conversationHistory";
@@ -24,7 +22,7 @@ export const activate = async (ctx: vscode.ExtensionContext) => {
       service: new CohereService(ctx, settingsManager),
       enabled: settingsManager.get("enableModel").cohere,
     },
-  }
+  };
 
   /**
    * Trigger an event on all connected views
@@ -72,7 +70,7 @@ export const activate = async (ctx: vscode.ExtensionContext) => {
       return settingsManager.set(key, value);
     },
     getSetting: (key: keyof ExtensionSettings) => {
-      return settingsManager.get(key)
+      return settingsManager.get(key);
     },
     alertMessage: (msg: string, type: "info" | "warning" | "error") => {
       switch (type) {
@@ -117,7 +115,14 @@ export const activate = async (ctx: vscode.ExtensionContext) => {
       const modelService = models[modelType].service;
       if (!modelService) {
         vscode.window.showErrorMessage(`Failed to get conversation history for unknown model type: ${modelType}`);
-        return {entries: []} as ConversationHistory;
+        return {
+          title: "",
+          create_time: 0,
+          update_time: 0,
+          root: "",
+          current: "",
+          entries: {},
+        } as ConversationHistory;
       }
 
       return modelService.getConversationHistory();
@@ -136,7 +141,7 @@ export const activate = async (ctx: vscode.ExtensionContext) => {
     },
     editLanguageModelConversationHistory: (
       modelType: ModelType,
-      historyIndex: number,
+      entryID: string,
       newMessage: string,
     ) => {
       const modelService = models[modelType].service;
@@ -146,7 +151,7 @@ export const activate = async (ctx: vscode.ExtensionContext) => {
         return;
       }
 
-      modelService.editConversationHistory(historyIndex, newMessage);
+      modelService.editConversationEntry(entryID, newMessage);
     },
     sendStreamResponse: (msg: string) => {
       triggerEvent("streamResponse", msg);
@@ -157,6 +162,16 @@ export const activate = async (ctx: vscode.ExtensionContext) => {
     getLastUsedModel: () => {
       return settingsManager.get("lastUsedModel");
     },
+    addConversationEntry: async (modelType: ModelType, parentID: string, sender: "user" | "AI", message: string) => {
+      const modelService = models[modelType].service;
+
+      if (!modelService) {
+        vscode.window.showErrorMessage(`Failed to add conversation entry for unknown model type: ${modelType}`);
+        return "";
+      }
+
+      return modelService.addConversationEntry(parentID, sender, message);
+    }
   };
 
   const isViewApiRequest = <K extends keyof ViewApi>(

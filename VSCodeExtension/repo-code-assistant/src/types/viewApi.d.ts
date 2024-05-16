@@ -53,10 +53,11 @@ export type ViewApi = {
   getLanguageModelResponse: (query: string, modelType: ModelType, useStream?: boolean) => Promise<string>;
   getLanguageModelConversationHistory: (modelType: ModelType) => ConversationHistory;
   clearLanguageConversationHistory: (modelType: ModelType) => void;
-  editLanguageModelConversationHistory: (modelType: ModelType, historyIndex: number, newMessage: string) => void;
+  editLanguageModelConversationHistory: (modelType: ModelType, entryID: string, newMessage: string) => void;
   sendStreamResponse: (msg: string) => void;
   saveLastUsedModel: (modelType: ModelType) => void;
   getLastUsedModel: () => ModelType;
+  addConversationEntry: (modelType: ModelType, parentID: string, sender: "user" | "AI", message: string) => Promise<string>;
 };
 
 /**

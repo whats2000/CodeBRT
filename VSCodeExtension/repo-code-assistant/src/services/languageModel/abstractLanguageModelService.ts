@@ -1,9 +1,8 @@
 import * as fs from 'fs';
 import * as path from 'path';
-
 import * as vscode from 'vscode';
-
-import { ConversationHistory } from '../../types/conversationHistory';
+import { v4 as uuidv4 } from 'uuid';
+import { ConversationHistory, ConversationEntry } from '../../types/conversationHistory';
 import SettingsManager from "../../api/settingsManager";
 
 /**
@@ -32,18 +31,34 @@ export abstract class AbstractLanguageModelService {
    * The conversation history
    * @protected
    */
-  protected history: ConversationHistory = {entries: []};
+  protected history: ConversationHistory = {
+    title: '',
+    root: '',
+    current: '',
+    create_time: Date.now(),
+    update_time: Date.now(),
+    entries: {}
+  };
+
+  /**
+   * The current in-use model
+   * @protected
+   */
+  protected currentModel: string = '';
 
   /**
    * Constructor for the AbstractLanguageModelService
    * @param context - The extension context
    * @param historyFileName - The name of the history file
    * @param settingsManager - The settings manager
+   * @param currentModel - The current in-use model
    * @protected
    */
-  protected constructor(context: vscode.ExtensionContext, historyFileName: string, settingsManager: SettingsManager) {
+  protected constructor(context: vscode.ExtensionContext, historyFileName: string, settingsManager: SettingsManager, currentModel: string) {
     this.context = context;
     this.settingsManager = settingsManager;
+    this.currentModel = currentModel;
+
     const workspaceFolders = vscode.workspace.workspaceFolders;
     if (workspaceFolders) {
       if (!fs.existsSync(path.join(workspaceFolders[0].uri.fsPath, '.vscode'))) {
@@ -70,6 +85,7 @@ export abstract class AbstractLanguageModelService {
       const data = await fs.promises.readFile(this.historyFilePath, 'utf8');
       const history: ConversationHistory = JSON.parse(data);
       this.processLoadedHistory(history);
+      this.history = history;
     } catch (error) {
       vscode.window.showErrorMessage('Failed to load history: ' + error);
     }
@@ -102,26 +118,69 @@ export abstract class AbstractLanguageModelService {
    * Clear the conversation history
    */
   public clearConversationHistory(): void {
-    this.history = {entries: []};
+    this.history = {
+      title: '',
+      root: '',
+      current: '',
+      create_time: Date.now(),
+      update_time: Date.now(),
+      entries: {}
+    };
     this.saveHistory(this.history).catch(
       (error) => vscode.window.showErrorMessage('Failed to clear conversation history: ' + error)
     );
   }
 
   /**
-   * Edit the conversation history
-   * @param historyIndex - The index of the history to edit
-   * @param newMessage - The new message to replace the history with
+   * Add a new entry to the conversation history
+   * @param parentID - The parent ID of the new entry
+   * @param role - The role of the new entry ('user' or 'AI')
+   * @param message - The message of the new entry
+   * @returns The ID of the newly created entry
    */
-  public editConversationHistory(historyIndex: number, newMessage: string): void {
-    if (historyIndex >= 0 && historyIndex < this.history.entries.length) {
-      this.history.entries[historyIndex].message = newMessage;
+  public addConversationEntry(parentID: string | null, role: 'user' | 'AI', message: string): string {
+    const newID = uuidv4();
+    const newEntry: ConversationEntry = {
+      id: newID,
+      role,
+      message,
+      parent: parentID,
+      children: []
+    };
+
+    if (parentID) {
+      if (!this.history.entries[parentID]) {
+        vscode.window.showErrorMessage('Parent entry not found: ' + parentID);
+        return '';
+      }
+      this.history.entries[parentID].children.push(newID);
+    }
+
+    this.history.entries[newID] = newEntry;
+    this.history.update_time = Date.now();
+    this.history.current = newID;
+    this.saveHistory(this.history).catch(
+      (error) => vscode.window.showErrorMessage('Failed to add conversation entry: ' + error)
+    );
+
+    return newID;
+  }
+
+  /**
+   * Edit the conversation history
+   * @param entryID - The ID of the entry to edit
+   * @param newMessage - The new message to replace the entry with
+   */
+  public editConversationEntry(entryID: string, newMessage: string): void {
+    if (this.history.entries[entryID]) {
+      this.history.entries[entryID].message = newMessage;
+      this.history.update_time = Date.now();
       this.saveHistory(this.history).catch(
-        (error) => vscode.window.showErrorMessage('Failed to edit conversation history: ' + error)
+        (error) => vscode.window.showErrorMessage('Failed to edit conversation entry: ' + error)
       );
     } else {
-      vscode.window.showErrorMessage('Invalid history index: ' + historyIndex)
-        .then(() => console.error('Invalid history index: ' + historyIndex));
+      vscode.window.showErrorMessage('Entry not found: ' + entryID)
+        .then(() => console.error('Entry not found: ' + entryID));
     }
   }
 
@@ -143,5 +202,5 @@ export abstract class AbstractLanguageModelService {
    * @param query - The query to get a response for
    * @param sendStreamResponse - The callback to send chunks of the response to
    */
-  public abstract getResponseChunksForQuery(query: string, sendStreamResponse: (msg: string) => void): Promise<string>
+  public abstract getResponseChunksForQuery(query: string, sendStreamResponse: (msg: string) => void): Promise<string>;
 }

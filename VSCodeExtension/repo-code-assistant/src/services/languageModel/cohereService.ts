@@ -6,7 +6,7 @@ import { AbstractLanguageModelService } from "./abstractLanguageModelService";
 import SettingsManager from "../../api/settingsManager";
 
 export class CohereService extends AbstractLanguageModelService {
-  private modelName: string = "command";
+  static aviaryModelName: string[] = ["command"];
   private apiKey: string;
   private readonly settingsListener: vscode.Disposable;
 
@@ -14,7 +14,7 @@ export class CohereService extends AbstractLanguageModelService {
     context: vscode.ExtensionContext,
     settingsManager: SettingsManager,
   ) {
-    super(context, "cohereConversationHistory.json", settingsManager);
+    super(context, "cohereConversationHistory.json", settingsManager, CohereService.aviaryModelName[0]);
     this.apiKey = settingsManager.get("cohereApiKey");
     this.initialize().catch((error) =>
       vscode.window.showErrorMessage(
@@ -24,7 +24,7 @@ export class CohereService extends AbstractLanguageModelService {
 
     // Listen for settings changes
     this.settingsListener = vscode.workspace.onDidChangeConfiguration((e) => {
-      if (e.affectsConfiguration("repo-code-assistant.geminiApiKey")) {
+      if (e.affectsConfiguration("repo-code-assistant.cohereApiKey")) {
         this.apiKey = settingsManager.get("cohereApiKey");
       }
     });
@@ -47,9 +47,9 @@ export class CohereService extends AbstractLanguageModelService {
   }
 
   private conversationHistoryToContent(
-    history: ConversationEntry[],
+    entries: { [key: string]: ConversationEntry },
   ): Cohere.ChatMessage[] {
-    return history.map((entry) => {
+    return Object.values(entries).map((entry) => {
       return {
         role: entry.role === "AI" ? "CHATBOT" : "USER",
         message: entry.message,
@@ -63,18 +63,11 @@ export class CohereService extends AbstractLanguageModelService {
     try {
       const response = await model.chat({
         chatHistory: this.conversationHistoryToContent(this.history.entries),
-        model: this.modelName,
+        model: this.currentModel,
         message: query,
       });
 
-      const responseText = response.text;
-
-      // Update conversation history
-      this.history.entries.push({ role: "user", message: query });
-      this.history.entries.push({ role: "AI", message: responseText });
-      await this.saveHistory(this.history);
-
-      return responseText;
+      return response.text;
     } catch (error) {
       vscode.window.showErrorMessage(
         "Failed to get response from Cohere Service: " + error,
@@ -94,7 +87,7 @@ export class CohereService extends AbstractLanguageModelService {
     try {
       const result = await model.chatStream({
         chatHistory: this.conversationHistoryToContent(this.history.entries),
-        model: this.modelName,
+        model: this.currentModel,
         message: query,
       });
       let responseText = "";
@@ -105,11 +98,6 @@ export class CohereService extends AbstractLanguageModelService {
         sendStreamResponse(partText);
         responseText += partText;
       }
-
-      // Update conversation history
-      this.history.entries.push({ role: "user", message: query });
-      this.history.entries.push({ role: "AI", message: responseText });
-      await this.saveHistory(this.history);
 
       return responseText;
     } catch (error) {

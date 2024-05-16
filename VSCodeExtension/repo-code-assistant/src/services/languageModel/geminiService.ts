@@ -1,12 +1,12 @@
 import * as vscode from "vscode";
-import { GoogleGenerativeAI, HarmCategory, HarmBlockThreshold, Content } from "@google/generative-ai";
+import { Content, GoogleGenerativeAI, HarmBlockThreshold, HarmCategory } from "@google/generative-ai";
 
 import { ConversationEntry, ConversationHistory } from "../../types/conversationHistory";
 import { AbstractLanguageModelService } from "./abstractLanguageModelService";
 import SettingsManager from "../../api/settingsManager";
 
 export class GeminiService extends AbstractLanguageModelService {
-  private modelName: string = "gemini-1.5-pro-latest";
+  static aviaryModelName: string[] = ["gemini-1.5-pro-latest"];
   private apiKey: string;
   private readonly settingsListener: vscode.Disposable;
 
@@ -25,7 +25,7 @@ export class GeminiService extends AbstractLanguageModelService {
   ];
 
   constructor(context: vscode.ExtensionContext, settingsManager: SettingsManager) {
-    super(context, 'geminiConversationHistory.json', settingsManager);
+    super(context, 'geminiConversationHistory.json', settingsManager, GeminiService.aviaryModelName[0]);
     this.apiKey = settingsManager.get('geminiApiKey');
     this.initialize().catch((error) => vscode.window.showErrorMessage('Failed to initialize Gemini Service: ' + error));
 
@@ -51,18 +51,16 @@ export class GeminiService extends AbstractLanguageModelService {
     this.history = history;
   }
 
-  private conversationHistoryToContent(history: ConversationEntry[]): Content[] {
-    return history.map((entry) => {
-      return {
-        role: entry.role === 'AI' ? 'model' : 'user',
-        parts: [{text: entry.message}],
-      };
-    });
+  private conversationHistoryToContent(entries: { [key: string]: ConversationEntry }): Content[] {
+    return Object.values(entries).map((entry) => ({
+      role: entry.role === 'AI' ? 'model' : 'user',
+      parts: [{ text: entry.message }],
+    }));
   }
 
   public async getResponseForQuery(query: string): Promise<string> {
     const genAI = new GoogleGenerativeAI(this.apiKey);
-    const model = genAI.getGenerativeModel({model: this.modelName});
+    const model = genAI.getGenerativeModel({ model: this.currentModel });
 
     try {
       const chat = model.startChat({
@@ -72,14 +70,7 @@ export class GeminiService extends AbstractLanguageModelService {
       });
 
       const result = await chat.sendMessage(query);
-      const responseText = result.response.text();
-
-      // Update conversation history
-      this.history.entries.push({role: 'user', message: query});
-      this.history.entries.push({role: 'AI', message: responseText});
-      await this.saveHistory(this.history);
-
-      return responseText;
+      return result.response.text();
     } catch (error) {
       vscode.window.showErrorMessage('Failed to get response from Gemini Service: ' + error);
       return "Failed to connect to the language model service.";
@@ -88,7 +79,7 @@ export class GeminiService extends AbstractLanguageModelService {
 
   public async getResponseChunksForQuery(query: string, sendStreamResponse: (msg: string) => void): Promise<string> {
     const genAI = new GoogleGenerativeAI(this.apiKey);
-    const model = genAI.getGenerativeModel({model: this.modelName});
+    const model = genAI.getGenerativeModel({ model: this.currentModel });
 
     try {
       const chat = model.startChat({
@@ -97,18 +88,13 @@ export class GeminiService extends AbstractLanguageModelService {
         history: this.conversationHistoryToContent(this.history.entries),
       });
 
-      const result = await chat.sendMessageStream(query);
       let responseText = '';
+      const result = await chat.sendMessageStream(query);
       for await (const item of result.stream) {
         const partText = item.text();
         sendStreamResponse(partText);
         responseText += partText;
       }
-
-      // Update conversation history
-      this.history.entries.push({role: 'user', message: query});
-      this.history.entries.push({role: 'AI', message: responseText});
-      await this.saveHistory(this.history);
 
       return responseText;
     } catch (error) {

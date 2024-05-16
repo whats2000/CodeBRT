@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useContext } from "react";
 import ReactMarkdown from "react-markdown";
 import { RendererCode } from "../common/RenderCode";
 import styled from "styled-components";
@@ -31,7 +31,6 @@ const MessageBubble = styled.div<{ $user: string }>`
   position: relative;
 `;
 
-// Use RespondCharacter if needed, or modify as follows for better markdown display:
 const MessageText = styled.span`
   word-wrap: break-word;
 `;
@@ -94,16 +93,18 @@ const Button = styled.button<{ $user: string }>`
 `;
 
 interface MessagesContainerProps {
+  setMessages: React.Dispatch<React.SetStateAction<ConversationHistory>>;
   modelType: ModelType;
   messagesContainerRef: React.RefObject<HTMLDivElement>;
   messages: ConversationHistory;
   isLoading: boolean;
-  scrollToBottom: () => void;
+  scrollToBottom: (smooth?: boolean) => void;
   messageEndRef: React.RefObject<HTMLDivElement>;
 }
 
 export const MessagesContainer: React.FC<MessagesContainerProps> = (
   {
+    setMessages,
     modelType,
     messagesContainerRef,
     messages,
@@ -112,16 +113,16 @@ export const MessagesContainer: React.FC<MessagesContainerProps> = (
     messageEndRef,
   }
 ) => {
-  const [copied, setCopied] = useState<Record<number, boolean>>({});
-  const [editingIndex, setEditingIndex] = useState<number | null>(null);
+  const [copied, setCopied] = useState<Record<string, boolean>>({});
+  const [editingEntryId, setEditingEntryId] = useState<string | null>(null);
   const [editedMessage, setEditedMessage] = useState("");
-  const {callApi} = React.useContext(WebviewContext);
+  const { callApi } = useContext(WebviewContext);
 
-  const handleCopy = (text: string, index: number) => {
+  const handleCopy = (text: string, entryId: string) => {
     navigator.clipboard.writeText(text)
       .then(() => {
-        setCopied(prevState => ({...prevState, [index]: true}));
-        setTimeout(() => setCopied(prevState => ({...prevState, [index]: false})), 2000);
+        setCopied(prevState => ({...prevState, [entryId]: true}));
+        setTimeout(() => setCopied(prevState => ({...prevState, [entryId]: false})), 2000);
       })
       .catch(err => console.error('Failed to copy text: ', err));
   }
@@ -133,67 +134,69 @@ export const MessagesContainer: React.FC<MessagesContainerProps> = (
     input.style.height = `${input.scrollHeight}px`;
   };
 
-
-  const handleEdit = (index: number, message: string) => {
-    setEditingIndex(index);
+  const handleEdit = (entryId: string, message: string) => {
+    setEditingEntryId(entryId);
     setEditedMessage(message);
     setTimeout(() => {
-      const input: HTMLTextAreaElement | null = document.querySelector(`#edit-input-${index}`);
+      const input: HTMLTextAreaElement | null = document.querySelector(`#edit-input-${entryId}`);
       if (input) {
         input.style.height = `${input.scrollHeight}px`;
       }
     }, 0);
   };
 
-  const handleSaveEdit = (index: number) => {
-    callApi("editLanguageModelConversationHistory", modelType, index, editedMessage)
+  const handleSaveEdit = (entryId: string) => {
+    callApi("editLanguageModelConversationHistory", modelType, entryId, editedMessage)
       .then(() => {
-        const updatedMessages = [...messages.entries];
-        updatedMessages[index].message = editedMessage;
-        setEditingIndex(null);
+        const updatedEntries = { ...messages.entries };
+        updatedEntries[entryId].message = editedMessage;
+        setMessages(prevMessages => ({
+          ...prevMessages,
+          entries: updatedEntries,
+        }));
+        setEditingEntryId(null);
       })
       .catch(err => console.error('Failed to save edited message:', err));
   };
 
   const handleCancelEdit = () => {
-    setEditingIndex(null);
+    setEditingEntryId(null);
   };
 
   return (
     <StyledMessagesContainer ref={messagesContainerRef}>
-      {messages.entries.map((entry, index) => (
-        <MessageBubble key={index} $user={entry.role}>
-          <EditButton onClick={() => editingIndex === index ? handleCancelEdit() : handleEdit(index, entry.message)}>
-            <EditIcon/>
+      {Object.values(messages.entries).map((entry) => (
+        <MessageBubble key={entry.id} $user={entry.role}>
+          <EditButton onClick={() => editingEntryId === entry.id ? handleCancelEdit() : handleEdit(entry.id, entry.message)}>
+            <EditIcon />
           </EditButton>
-          <CopyButton copied={copied[index]} handleCopy={() => handleCopy(entry.message, index)}/>
+          <CopyButton copied={copied[entry.id]} handleCopy={() => handleCopy(entry.message, entry.id)} />
           <RespondCharacter $user={entry.role}>
-            {/* Use First character uppercase */}
             {entry.role === "AI" ? modelType.charAt(0).toUpperCase() + modelType.slice(1) : "You"}
           </RespondCharacter>
-          {index === editingIndex ? (
+          {entry.id === editingEntryId ? (
             <>
               <EditInput
-                id={`edit-input-${index}`}
+                id={`edit-input-${entry.id}`}
                 value={editedMessage}
                 onChange={handleInput}
                 autoFocus
               />
-              <Button $user={entry.role} onClick={() => handleSaveEdit(index)}>Save</Button>
+              <Button $user={entry.role} onClick={() => handleSaveEdit(entry.id)}>Save</Button>
               <Button $user={entry.role} onClick={handleCancelEdit}>Cancel</Button>
             </>
           ) : (
             <MessageText>
-              {entry.role === "AI" && index === messages.entries.length - 1 && isLoading ? (
-                <TypingAnimation message={entry.message} isLoading={isLoading} scrollToBottom={scrollToBottom}/>
+              {entry.role === "AI" && entry.id === messages.current && isLoading ? (
+                <TypingAnimation message={entry.message} isLoading={isLoading} scrollToBottom={scrollToBottom} />
               ) : (
-                <ReactMarkdown components={RendererCode} children={entry.message}/>
+                <ReactMarkdown components={RendererCode} children={entry.message} />
               )}
             </MessageText>
           )}
         </MessageBubble>
       ))}
-      <div ref={messageEndRef}/>
+      <div ref={messageEndRef} />
     </StyledMessagesContainer>
   );
 }
