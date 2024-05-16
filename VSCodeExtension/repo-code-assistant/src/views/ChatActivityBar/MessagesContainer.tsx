@@ -127,6 +127,7 @@ interface MessagesContainerProps {
   isLoading: boolean;
   scrollToBottom: (smooth?: boolean) => void;
   messageEndRef: React.RefObject<HTMLDivElement>;
+  handleEditUserMessageSave: (entryId: string, editedMessage: string) => Promise<void>;  // New prop
 }
 
 const traverseHistory = (entries: { [key: string]: ConversationEntry }, current: string) => {
@@ -154,6 +155,7 @@ export const MessagesContainer: React.FC<MessagesContainerProps> = (
     isLoading,
     scrollToBottom,
     messageEndRef,
+    handleEditUserMessageSave  // Receive the new handler
   }) => {
   const [copied, setCopied] = useState<Record<string, boolean>>({});
   const [editingEntryId, setEditingEntryId] = useState<string | null>(null);
@@ -188,38 +190,12 @@ export const MessagesContainer: React.FC<MessagesContainerProps> = (
   };
 
   const handleSaveEdit = async (entryId: string) => {
-    const entry = messages.entries[entryId];
-    if (entry.role === "user") {
-      // Create a new entry for the edited message
-      const newEntryId = await callApi("addConversationEntry", modelType, entry.parent ?? '', "user", editedMessage);
-      // Update the current state with the new entry
-      setMessages((prevMessages): ConversationHistory => {
-        const updatedEntries = {
-          ...prevMessages.entries,
-          [newEntryId]: {
-            id: newEntryId,
-            role: "user",
-            message: editedMessage,
-            parent: entry.parent,
-            children: [],
-          },
-        };
-
-        if (entry.parent) {
-          const parentEntry = updatedEntries[entry.parent];
-          parentEntry.children = [...parentEntry.children, newEntryId];
-        }
-
-        return {
-          ...prevMessages,
-          entries: updatedEntries as { [key: string]: ConversationEntry },
-          current: newEntryId,
-        };
-      });
+    if (messages.entries[entryId].role === "user") {
+      await handleEditUserMessageSave(entryId, editedMessage);
     } else {
       callApi("editLanguageModelConversationHistory", modelType, entryId, editedMessage)
         .then(() => {
-          const updatedEntries = { ...messages.entries };
+          const updatedEntries = {...messages.entries};
           updatedEntries[entryId].message = editedMessage;
           setMessages((prevMessages) => ({
             ...prevMessages,
@@ -234,8 +210,6 @@ export const MessagesContainer: React.FC<MessagesContainerProps> = (
   const handleCancelEdit = () => {
     setEditingEntryId(null);
   };
-
-  const conversationHistory = traverseHistory(messages.entries, messages.current);
 
   const handleGoForward = (entry: ConversationEntry, direction: 'next' | 'prev') => {
     const parent = entry.parent ? messages.entries[entry.parent] : null;
@@ -263,6 +237,8 @@ export const MessagesContainer: React.FC<MessagesContainerProps> = (
       }));
     }
   };
+
+  const conversationHistory = traverseHistory(messages.entries, messages.current);
 
   return (
     <StyledMessagesContainer ref={messagesContainerRef}>
@@ -294,11 +270,13 @@ export const MessagesContainer: React.FC<MessagesContainerProps> = (
                 <GoForwardIcon/>
               </NavigationButton>
             )}
-            <EditButton
-              onClick={() => (editingEntryId === entry.id ? handleCancelEdit() : handleEdit(entry.id, entry.message))}
-            >
-              <EditIcon/>
-            </EditButton>
+            {(messages.root !== entry.id && messages.root !== "") && (
+              <EditButton
+                onClick={() => (editingEntryId === entry.id ? handleCancelEdit() : handleEdit(entry.id, entry.message))}>
+                <EditIcon/>
+              </EditButton>
+            )}
+
             <CopyButton copied={copied[entry.id]} handleCopy={() => handleCopy(entry.message, entry.id)}/>
             <RespondCharacter $user={entry.role}>
               {entry.role === "AI" ? modelType.charAt(0).toUpperCase() + modelType.slice(1) : "You"}

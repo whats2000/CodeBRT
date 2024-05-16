@@ -19,7 +19,7 @@ const Container = styled.div`
 `;
 
 export const ChatActivityBar = () => {
-  const { callApi, addListener, removeListener } = useContext(WebviewContext);
+  const {callApi, addListener, removeListener} = useContext(WebviewContext);
   const [inputMessage, setInputMessage] = useState("");
   const [messages, setMessages] = useState<ConversationHistory>({
     title: '',
@@ -38,7 +38,7 @@ export const ChatActivityBar = () => {
   const scrollToBottom = (smooth: boolean = true) => {
     if (messagesContainerRef.current) {
       if (smooth) {
-        messageEndRef.current?.scrollIntoView({ behavior: "smooth" });
+        messageEndRef.current?.scrollIntoView({behavior: "smooth"});
       } else {
         messageEndRef.current?.scrollIntoView();
       }
@@ -49,7 +49,7 @@ export const ChatActivityBar = () => {
     const threshold = 300;
     if (!messagesContainerRef.current) return false;
 
-    const { scrollTop, scrollHeight, clientHeight } = messagesContainerRef.current;
+    const {scrollTop, scrollHeight, clientHeight} = messagesContainerRef.current;
     const position = scrollHeight - scrollTop - clientHeight;
 
     return position < threshold;
@@ -58,7 +58,7 @@ export const ChatActivityBar = () => {
   // Function to handle incoming streamed responses
   const handleStreamResponse = (responseFromMessage: string) => {
     setMessages(prevMessages => {
-      const newEntries = { ...prevMessages.entries };
+      const newEntries = {...prevMessages.entries};
       const currentID = prevMessages.current;
 
       if (newEntries[currentID] && newEntries[currentID].role === "AI") {
@@ -77,7 +77,7 @@ export const ChatActivityBar = () => {
         };
         prevMessages.current = tempId;
       }
-      return { ...prevMessages, entries: newEntries };
+      return {...prevMessages, entries: newEntries};
     });
     if (isNearBottom()) {
       scrollToBottom(false);
@@ -132,9 +132,8 @@ export const ChatActivityBar = () => {
 
     // Add a user message to conversation history
     const userEntryId = await callApi("addConversationEntry", activeModel, messages.current, "user", inputMessage);
-    setMessages(prevMessages => ({
-      ...prevMessages,
-      entries: {
+    setMessages((prevMessages): ConversationHistory => {
+      const updatedEntries = {
         ...prevMessages.entries,
         [userEntryId]: {
           id: userEntryId,
@@ -143,9 +142,20 @@ export const ChatActivityBar = () => {
           parent: messages.current,
           children: [],
         },
-      },
-      current: userEntryId,
-    }));
+      };
+
+      const parentEntry = updatedEntries[messages.current];
+      if (parentEntry) {
+        parentEntry.children = [...parentEntry.children, userEntryId];
+      }
+
+      return {
+        ...prevMessages,
+        entries: updatedEntries as ConversationHistory["entries"],
+        current: userEntryId,
+        root: prevMessages.root === '' ? userEntryId : prevMessages.root,
+      };
+    });
 
     // Create a temporary AI response entry
     const tempId = `temp-${uuidv4()}`;
@@ -171,7 +181,7 @@ export const ChatActivityBar = () => {
       // Add AI response to conversation history and replace the temporary ID
       const aiEntryId = await callApi("addConversationEntry", activeModel, userEntryId, "AI", responseText);
       setMessages(prevMessages => {
-        const newEntries = { ...prevMessages.entries };
+        const newEntries = {...prevMessages.entries};
         // Update the temporary AI message entry with the actual AI response
         if (newEntries[tempId]) {
           delete newEntries[tempId];
@@ -183,6 +193,12 @@ export const ChatActivityBar = () => {
           parent: userEntryId,
           children: [],
         };
+
+        const userEntry = newEntries[userEntryId];
+        if (userEntry) {
+          userEntry.children = [...userEntry.children, aiEntryId];
+        }
+
         return {
           ...prevMessages,
           entries: newEntries,
@@ -201,9 +217,97 @@ export const ChatActivityBar = () => {
     }
   };
 
+  // Function to handle saving an edited user message and generating a new AI response
+  const handleEditUserMessageSave = async (entryId: string, editedMessage: string) => {
+    const entry = messages.entries[entryId];
+    const newEntryId = await callApi("addConversationEntry", activeModel, entry.parent ?? '', "user", editedMessage);
+
+    setMessages((prevMessages): ConversationHistory => {
+      const updatedEntries = {
+        ...prevMessages.entries,
+        [newEntryId]: {
+          id: newEntryId,
+          role: "user",
+          message: editedMessage,
+          parent: entry.parent,
+          children: [],
+        },
+      };
+
+      if (entry.parent) {
+        const parentEntry = updatedEntries[entry.parent];
+        parentEntry.children = [...parentEntry.children, newEntryId];
+      }
+
+      return {
+        ...prevMessages,
+        entries: updatedEntries as ConversationHistory["entries"],
+        current: newEntryId,
+      };
+    });
+
+    // Create a temporary AI response entry
+    const tempId = `temp-${uuidv4()}`;
+    setMessages(prevMessages => ({
+      ...prevMessages,
+      entries: {
+        ...prevMessages.entries,
+        [tempId]: {
+          id: tempId,
+          role: "AI",
+          message: "",
+          parent: newEntryId,
+          children: [],
+        },
+      },
+      current: tempId,
+    }));
+    scrollToBottom(false);
+
+    try {
+      const responseText = await callApi("getLanguageModelResponse", editedMessage, activeModel, true, newEntryId) as string;
+
+      // Add AI response to conversation history and replace the temporary ID
+      const aiEntryId = await callApi("addConversationEntry", activeModel, newEntryId, "AI", responseText);
+      setMessages(prevMessages => {
+        const newEntries = {...prevMessages.entries};
+        // Update the temporary AI message entry with the actual AI response
+        if (newEntries[tempId]) {
+          delete newEntries[tempId];
+        }
+        newEntries[aiEntryId] = {
+          id: aiEntryId,
+          role: "AI",
+          message: responseText,
+          parent: newEntryId,
+          children: [],
+        };
+
+        const userEntry = newEntries[newEntryId];
+        if (userEntry) {
+          userEntry.children = [...userEntry.children, aiEntryId];
+        }
+
+        return {
+          ...prevMessages,
+          entries: newEntries,
+          current: aiEntryId,
+        };
+      });
+
+      setTimeout(() => {
+        setIsLoading(false);
+        scrollToBottom(true);
+      }, 1000);
+    } catch (error) {
+      callApi("alertMessage", `Failed to get response: ${error}`, "error").catch(console.error);
+      setIsLoading(false);
+    }
+  };
+
   return (
     <Container>
-      <Toolbar activeModel={activeModel} setMessages={setMessages} setActiveModel={setActiveModel} />
+      <Toolbar activeModel={activeModel} setMessages={setMessages} setActiveModel={setActiveModel}/>
       <MessagesContainer
         setMessages={setMessages}
         modelType={activeModel}
@@ -212,6 +316,7 @@ export const ChatActivityBar = () => {
         isLoading={isLoading}
         scrollToBottom={scrollToBottom}
         messageEndRef={messageEndRef}
+        handleEditUserMessageSave={handleEditUserMessageSave}
       />
       <InputContainer
         inputMessage={inputMessage}

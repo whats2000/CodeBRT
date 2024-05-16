@@ -150,10 +150,14 @@ export abstract class AbstractLanguageModelService {
 
     if (parentID) {
       if (!this.history.entries[parentID]) {
-        vscode.window.showErrorMessage('Parent entry not found: ' + parentID);
+        vscode.window.showErrorMessage('Parent entry not found: ' + parentID).then();
         return '';
       }
       this.history.entries[parentID].children.push(newID);
+    }
+
+    if (this.history.root === '') {
+      this.history.root = newID;
     }
 
     this.history.entries[newID] = newEntry;
@@ -200,10 +204,20 @@ export abstract class AbstractLanguageModelService {
     };
 
     let currentEntry = this.history.entries[currentEntryID];
-    while (currentEntry && currentEntry.parent) {
-      currentEntry = this.history.entries[currentEntry.parent];
-      newHistory.entries[currentEntry.id] = currentEntry;
+    const entryStack: ConversationEntry[] = [];
+
+    while (currentEntry) {
+      entryStack.push(currentEntry);
+      if (currentEntry.parent) {
+        currentEntry = this.history.entries[currentEntry.parent];
+      } else {
+        break;
+      }
     }
+
+    entryStack.reverse().forEach(entry => {
+      newHistory.entries[entry.id] = entry;
+    });
 
     return newHistory;
   }

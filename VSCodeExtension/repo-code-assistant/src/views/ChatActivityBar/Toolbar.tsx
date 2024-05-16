@@ -66,7 +66,14 @@ export const Toolbar: React.FC<ToolbarProps> = (
 
   const clearHistory = () => {
     callApi("clearLanguageConversationHistory", activeModel)
-      .then(() => setMessages({entries: []}))
+      .then(() => setMessages({
+        title: "",
+        create_time: 0,
+        update_time: 0,
+        root: "",
+        current: "",
+        entries: {},
+      }))
       .catch((error) => console.error("Failed to clear conversation history:", error));
   }
 
