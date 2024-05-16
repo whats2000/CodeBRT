@@ -34,7 +34,7 @@ export class CohereService extends AbstractLanguageModelService {
 
   private async initialize() {
     try {
-      await this.loadHistory();
+      await this.loadHistories();
     } catch (error) {
       vscode.window.showErrorMessage(
         "Failed to initialize Cohere Service: " + error,

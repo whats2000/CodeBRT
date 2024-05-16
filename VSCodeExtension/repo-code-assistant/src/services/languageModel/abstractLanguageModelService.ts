@@ -2,7 +2,7 @@ import * as fs from 'fs';
 import * as path from 'path';
 import * as vscode from 'vscode';
 import { v4 as uuidv4 } from 'uuid';
-import { ConversationHistory, ConversationEntry } from '../../types/conversationHistory';
+import { ConversationHistory, ConversationEntry, ConversationHistoryList } from '../../types/conversationHistory';
 import SettingsManager from "../../api/settingsManager";
 
 /**
@@ -28,7 +28,7 @@ export abstract class AbstractLanguageModelService {
   protected settingsManager: SettingsManager;
 
   /**
-   * The conversation history
+   * The current conversation history
    * @protected
    */
   protected history: ConversationHistory = {
@@ -39,6 +39,12 @@ export abstract class AbstractLanguageModelService {
     update_time: Date.now(),
     entries: {}
   };
+
+  /**
+   * The list of conversation histories
+   * @protected
+   */
+  protected histories: ConversationHistoryList = {};
 
   /**
    * The current in-use model
@@ -72,9 +78,9 @@ export abstract class AbstractLanguageModelService {
   }
 
   /**
-   * Load the conversation history from the history file
+   * Load all conversation histories from the history file
    */
-  public async loadHistory(): Promise<void> {
+  public async loadHistories(): Promise<void> {
     if (!this.historyFilePath) {
       return;
     }
@@ -83,39 +89,40 @@ export abstract class AbstractLanguageModelService {
     }
     try {
       const data = await fs.promises.readFile(this.historyFilePath, 'utf8');
-      const history: ConversationHistory = JSON.parse(data);
-      this.processLoadedHistory(history);
-      this.history = history;
+      const histories: ConversationHistoryList = JSON.parse(data);
+      this.histories = histories;
+      if (Object.keys(histories).length > 0) {
+        this.history = histories[Object.keys(histories)[0]];
+      }
     } catch (error) {
-      vscode.window.showErrorMessage('Failed to load history: ' + error);
+      vscode.window.showErrorMessage('Failed to load histories: ' + error);
     }
   }
 
   /**
-   * Get the conversation history
+   * Save all conversation histories to the history file
+   */
+  public async saveHistories(): Promise<void> {
+    if (!this.historyFilePath) {
+      return;
+    }
+    try {
+      const data = JSON.stringify(this.histories, null, 2);
+      await fs.promises.writeFile(this.historyFilePath, data, 'utf8');
+    } catch (error) {
+      vscode.window.showErrorMessage('Failed to save histories: ' + error);
+    }
+  }
+
+  /**
+   * Get the current conversation history
    */
   public getConversationHistory(): ConversationHistory {
     return this.history;
   }
 
   /**
-   * Save the conversation history to the history file
-   * @param history - The conversation history to save
-   */
-  public async saveHistory(history: ConversationHistory): Promise<void> {
-    if (!this.historyFilePath) {
-      return;
-    }
-    try {
-      const data = JSON.stringify(history, null, 2);
-      await fs.promises.writeFile(this.historyFilePath, data, 'utf8');
-    } catch (error) {
-      vscode.window.showErrorMessage('Failed to save history: ' + error);
-    }
-  }
-
-  /**
-   * Clear the conversation history
+   * Clear the current conversation history
    */
   public clearConversationHistory(): void {
     this.history = {
@@ -126,7 +133,8 @@ export abstract class AbstractLanguageModelService {
       update_time: Date.now(),
       entries: {}
     };
-    this.saveHistory(this.history).catch(
+    this.histories[this.history.root] = this.history;
+    this.saveHistories().catch(
       (error) => vscode.window.showErrorMessage('Failed to clear conversation history: ' + error)
     );
   }
@@ -158,12 +166,14 @@ export abstract class AbstractLanguageModelService {
 
     if (this.history.root === '') {
       this.history.root = newID;
+      this.history.title = `${message.substring(0, 20)}...`;
     }
 
     this.history.entries[newID] = newEntry;
     this.history.update_time = Date.now();
     this.history.current = newID;
-    this.saveHistory(this.history).catch(
+    this.histories[this.history.root] = this.history;
+    this.saveHistories().catch(
       (error) => vscode.window.showErrorMessage('Failed to add conversation entry: ' + error)
     );
 
@@ -179,7 +189,8 @@ export abstract class AbstractLanguageModelService {
     if (this.history.entries[entryID]) {
       this.history.entries[entryID].message = newMessage;
       this.history.update_time = Date.now();
-      this.saveHistory(this.history).catch(
+      this.histories[this.history.root] = this.history;
+      this.saveHistories().catch(
         (error) => vscode.window.showErrorMessage('Failed to edit conversation entry: ' + error)
       );
     } else {
@@ -220,6 +231,28 @@ export abstract class AbstractLanguageModelService {
     });
 
     return newHistory;
+  }
+
+  /**
+   * Switch to a different conversation history
+   * @param historyID - The ID of the history to switch to
+   */
+  public switchHistory(historyID: string): void {
+    if (this.histories[historyID]) {
+      this.history = this.histories[historyID];
+      this.saveHistories().catch(
+        (error) => vscode.window.showErrorMessage('Failed to switch history: ' + error)
+      );
+    } else {
+      vscode.window.showErrorMessage('History not found: ' + historyID).then();
+    }
+  }
+
+  /**
+   * Get the list of conversation histories
+   */
+  public getHistories(): ConversationHistoryList {
+    return this.histories;
   }
 
   /**
