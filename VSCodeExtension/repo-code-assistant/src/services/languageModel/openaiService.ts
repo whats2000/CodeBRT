@@ -41,7 +41,7 @@ export class OpenAIService extends AbstractLanguageModelService {
 
   private async initialize() {
     try {
-      await this.loadHistory();
+      await this.loadHistories();
     } catch (error) {
       vscode.window.showErrorMessage(
         "Failed to initialize OpenAI Service: " + error,
@@ -79,8 +79,7 @@ export class OpenAIService extends AbstractLanguageModelService {
 
   public async getResponseChunksForQuery(
     query: string,
-    sendStreamResponse: (msg: string) => void,
-    currentEntryID?: string,
+    sendStreamResponse: (msg: string) => void,currentEntryID?: string,
   ): Promise<string> {
     const openai = new OpenAI({
       apiKey: this.apiKey,
