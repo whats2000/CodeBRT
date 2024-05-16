@@ -185,6 +185,30 @@ export abstract class AbstractLanguageModelService {
   }
 
   /**
+   * Get the history before a given entry id
+   * @param currentEntryID - The entry id to get the history before
+   * @returns The conversation history before the given entry id
+   */
+  protected getHistoryBeforeEntry(currentEntryID: string): ConversationHistory {
+    const newHistory: ConversationHistory = {
+      title: this.history.title,
+      root: this.history.root,
+      current: currentEntryID,
+      create_time: this.history.create_time,
+      update_time: Date.now(),
+      entries: {}
+    };
+
+    let currentEntry = this.history.entries[currentEntryID];
+    while (currentEntry && currentEntry.parent) {
+      currentEntry = this.history.entries[currentEntry.parent];
+      newHistory.entries[currentEntry.id] = currentEntry;
+    }
+
+    return newHistory;
+  }
+
+  /**
    * Post process the loaded history, this will be called after the history is loaded
    * @param history - The loaded history
    * @protected
@@ -192,15 +216,20 @@ export abstract class AbstractLanguageModelService {
   protected abstract processLoadedHistory(history: ConversationHistory): void;
 
   /**
-   * Get the response for a query
+   * Get the response for a query, if the currentEntryID is provided, the history will be used from that point
    * @param query - The query to get a response for
+   * @param currentEntryID - The current entry ID
+   * @returns The response for the query
    */
-  public abstract getResponseForQuery(query: string): Promise<string>;
+  public abstract getResponseForQuery(query: string, currentEntryID?: string): Promise<string>;
 
   /**
-   * Get the response for a query and also fire a view event to send the response in chunks
+   * Get the response for a query and also fire a view event to send the response in chunks.
+   * If the currentEntryID is provided, the history will be used from that point
    * @param query - The query to get a response for
    * @param sendStreamResponse - The callback to send chunks of the response to
+   * @param currentEntryID - The current entry ID
+   * @returns The response for the query
    */
-  public abstract getResponseChunksForQuery(query: string, sendStreamResponse: (msg: string) => void): Promise<string>;
+  public abstract getResponseChunksForQuery(query: string, sendStreamResponse: (msg: string) => void, currentEntryID?: string): Promise<string>;
 }

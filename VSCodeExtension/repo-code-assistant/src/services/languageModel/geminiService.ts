@@ -58,15 +58,17 @@ export class GeminiService extends AbstractLanguageModelService {
     }));
   }
 
-  public async getResponseForQuery(query: string): Promise<string> {
+  public async getResponseForQuery(query: string, currentEntryID?: string): Promise<string> {
     const genAI = new GoogleGenerativeAI(this.apiKey);
     const model = genAI.getGenerativeModel({ model: this.currentModel });
+
+    const history = currentEntryID ? this.getHistoryBeforeEntry(currentEntryID) : this.history;
 
     try {
       const chat = model.startChat({
         generationConfig: this.generationConfig,
         safetySettings: this.safetySettings,
-        history: this.conversationHistoryToContent(this.history.entries),
+        history: this.conversationHistoryToContent(history.entries),
       });
 
       const result = await chat.sendMessage(query);
@@ -77,15 +79,17 @@ export class GeminiService extends AbstractLanguageModelService {
     }
   }
 
-  public async getResponseChunksForQuery(query: string, sendStreamResponse: (msg: string) => void): Promise<string> {
+  public async getResponseChunksForQuery(query: string, sendStreamResponse: (msg: string) => void, currentEntryID?: string): Promise<string> {
     const genAI = new GoogleGenerativeAI(this.apiKey);
     const model = genAI.getGenerativeModel({ model: this.currentModel });
+
+    const history = currentEntryID ? this.getHistoryBeforeEntry(currentEntryID) : this.history;
 
     try {
       const chat = model.startChat({
         generationConfig: this.generationConfig,
         safetySettings: this.safetySettings,
-        history: this.conversationHistoryToContent(this.history.entries),
+        history: this.conversationHistoryToContent(history.entries),
       });
 
       let responseText = '';

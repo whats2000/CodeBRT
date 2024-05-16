@@ -93,7 +93,8 @@ export const activate = async (ctx: vscode.ExtensionContext) => {
     getLanguageModelResponse: async (
       query: string,
       modelType: ModelType,
-      useStream?: boolean
+      useStream?: boolean,
+      currentEntryID?: string,
     ) => {
       const modelService = models[modelType].service;
       if (!modelService) {
@@ -103,8 +104,8 @@ export const activate = async (ctx: vscode.ExtensionContext) => {
 
       try {
         return useStream ?
-          modelService.getResponseChunksForQuery(query, api.sendStreamResponse) :
-          modelService.getResponseForQuery(query);
+          modelService.getResponseChunksForQuery(query, api.sendStreamResponse, currentEntryID) :
+          modelService.getResponseForQuery(query, currentEntryID);
       } catch (error) {
         return `Failed to get response from ${modelType} service: ${error}`;
       }

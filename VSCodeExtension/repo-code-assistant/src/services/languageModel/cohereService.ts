@@ -57,12 +57,14 @@ export class CohereService extends AbstractLanguageModelService {
     });
   }
 
-  public async getResponseForQuery(query: string): Promise<string> {
+  public async getResponseForQuery(query: string, currentEntryID?: string): Promise<string> {
     const model = new CohereClient({ token: this.apiKey });
+
+    const history = currentEntryID ? this.getHistoryBeforeEntry(currentEntryID) : this.history;
 
     try {
       const response = await model.chat({
-        chatHistory: this.conversationHistoryToContent(this.history.entries),
+        chatHistory: this.conversationHistoryToContent(history.entries),
         model: this.currentModel,
         message: query,
       });
@@ -79,14 +81,17 @@ export class CohereService extends AbstractLanguageModelService {
   public async getResponseChunksForQuery(
     query: string,
     sendStreamResponse: (msg: string) => void,
+    currentEntryID?: string,
   ): Promise<string> {
     const model = new CohereClient({
       token: this.apiKey,
     });
 
+    const history = currentEntryID ? this.getHistoryBeforeEntry(currentEntryID) : this.history;
+
     try {
       const result = await model.chatStream({
-        chatHistory: this.conversationHistoryToContent(this.history.entries),
+        chatHistory: this.conversationHistoryToContent(history.entries),
         model: this.currentModel,
         message: query,
       });

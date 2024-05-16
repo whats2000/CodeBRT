@@ -1,14 +1,14 @@
-import React, { useState, useContext } from "react";
+import React, { useContext, useState } from "react";
 import ReactMarkdown from "react-markdown";
 import { RendererCode } from "../common/RenderCode";
 import styled from "styled-components";
 
-import { ConversationHistory } from "../../types/conversationHistory";
+import { ConversationEntry, ConversationHistory } from "../../types/conversationHistory";
 import { ModelType } from "../../types/modelType";
 import { WebviewContext } from "../WebviewContext";
 import { TypingAnimation } from "../common/TypingAnimation";
 import { CopyButton } from "../common/CopyButton";
-import { EditIcon } from "../../icons";
+import { EditIcon, GoForwardIcon, GoBackIcon } from "../../icons";
 
 const StyledMessagesContainer = styled.div`
   flex-grow: 1;
@@ -23,7 +23,7 @@ const StyledMessagesContainer = styled.div`
 const MessageBubble = styled.div<{ $user: string }>`
   display: flex;
   flex-direction: column;
-  background-color: ${({$user}) => $user === "user" ? "#666" : "#333"};
+  background-color: ${({$user}) => ($user === "user" ? "#666" : "#333")};
   border-radius: 15px;
   padding: 8px 10px;
   margin: 10px;
@@ -36,7 +36,7 @@ const MessageText = styled.span`
 `;
 
 const RespondCharacter = styled.span<{ $user: string }>`
-  color: ${({$user}) => $user === "user" ? "#f0f0f0" : "#09f"};
+  color: ${({$user}) => ($user === "user" ? "#f0f0f0" : "#09f")};
   font-weight: bold;
   margin-bottom: 5px;
   display: inline-block;
@@ -55,9 +55,36 @@ const EditButton = styled.button`
   outline: none;
 
   &:hover {
-    color: #3C3C3C;
+    color: #3c3c3c;
     background-color: #ffffff90;
   }
+`;
+
+const NavigationButton = styled.button`
+  color: white;
+  position: absolute;
+  top: 5px;
+  background-color: transparent;
+  border: none;
+  border-radius: 4px;
+  padding: 5px 8px;
+  cursor: pointer;
+  outline: none;
+
+  &:hover {
+    color: #3c3c3c;
+    background-color: #ffffff90;
+  }
+`;
+
+const BranchCount = styled.span`
+  color: white;
+  position: absolute;
+  top: 5px;
+  background-color: transparent;
+  border: none;
+  border-radius: 4px;
+  padding: 5px 8px;
 `;
 
 const EditInput = styled.textarea`
@@ -79,7 +106,7 @@ const EditInput = styled.textarea`
 
 const Button = styled.button<{ $user: string }>`
   color: white;
-  background-color: ${({$user}) => $user === "user" ? "#333" : "#666"};
+  background-color: ${({$user}) => ($user === "user" ? "#333" : "#666")};
   border: none;
   border-radius: 4px;
   padding: 5px 8px;
@@ -102,6 +129,22 @@ interface MessagesContainerProps {
   messageEndRef: React.RefObject<HTMLDivElement>;
 }
 
+const traverseHistory = (entries: { [key: string]: ConversationEntry }, current: string) => {
+  const history = [];
+  let currentEntry = entries[current];
+
+  while (currentEntry) {
+    history.push(currentEntry);
+    if (currentEntry.parent) {
+      currentEntry = entries[currentEntry.parent];
+    } else {
+      break;
+    }
+  }
+
+  return history.reverse();
+};
+
 export const MessagesContainer: React.FC<MessagesContainerProps> = (
   {
     setMessages,
@@ -111,26 +154,25 @@ export const MessagesContainer: React.FC<MessagesContainerProps> = (
     isLoading,
     scrollToBottom,
     messageEndRef,
-  }
-) => {
+  }) => {
   const [copied, setCopied] = useState<Record<string, boolean>>({});
   const [editingEntryId, setEditingEntryId] = useState<string | null>(null);
   const [editedMessage, setEditedMessage] = useState("");
-  const { callApi } = useContext(WebviewContext);
+  const {callApi} = useContext(WebviewContext);
 
   const handleCopy = (text: string, entryId: string) => {
     navigator.clipboard.writeText(text)
       .then(() => {
-        setCopied(prevState => ({...prevState, [entryId]: true}));
-        setTimeout(() => setCopied(prevState => ({...prevState, [entryId]: false})), 2000);
+        setCopied((prevState) => ({...prevState, [entryId]: true}));
+        setTimeout(() => setCopied((prevState) => ({...prevState, [entryId]: false})), 2000);
       })
-      .catch(err => console.error('Failed to copy text: ', err));
-  }
+      .catch((err) => console.error("Failed to copy text: ", err));
+  };
 
   const handleInput = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     const input = e.target;
     setEditedMessage(input.value);
-    input.style.height = 'auto';
+    input.style.height = "auto";
     input.style.height = `${input.scrollHeight}px`;
   };
 
@@ -145,58 +187,146 @@ export const MessagesContainer: React.FC<MessagesContainerProps> = (
     }, 0);
   };
 
-  const handleSaveEdit = (entryId: string) => {
-    callApi("editLanguageModelConversationHistory", modelType, entryId, editedMessage)
-      .then(() => {
-        const updatedEntries = { ...messages.entries };
-        updatedEntries[entryId].message = editedMessage;
-        setMessages(prevMessages => ({
+  const handleSaveEdit = async (entryId: string) => {
+    const entry = messages.entries[entryId];
+    if (entry.role === "user") {
+      // Create a new entry for the edited message
+      const newEntryId = await callApi("addConversationEntry", modelType, entry.parent ?? '', "user", editedMessage);
+      // Update the current state with the new entry
+      setMessages((prevMessages): ConversationHistory => {
+        const updatedEntries = {
+          ...prevMessages.entries,
+          [newEntryId]: {
+            id: newEntryId,
+            role: "user",
+            message: editedMessage,
+            parent: entry.parent,
+            children: [],
+          },
+        };
+
+        if (entry.parent) {
+          const parentEntry = updatedEntries[entry.parent];
+          parentEntry.children = [...parentEntry.children, newEntryId];
+        }
+
+        return {
           ...prevMessages,
-          entries: updatedEntries,
-        }));
-        setEditingEntryId(null);
-      })
-      .catch(err => console.error('Failed to save edited message:', err));
+          entries: updatedEntries as { [key: string]: ConversationEntry },
+          current: newEntryId,
+        };
+      });
+    } else {
+      callApi("editLanguageModelConversationHistory", modelType, entryId, editedMessage)
+        .then(() => {
+          const updatedEntries = { ...messages.entries };
+          updatedEntries[entryId].message = editedMessage;
+          setMessages((prevMessages) => ({
+            ...prevMessages,
+            entries: updatedEntries,
+          }));
+        })
+        .catch((err) => console.error("Failed to save edited message:", err));
+    }
+    setEditingEntryId(null);
   };
 
   const handleCancelEdit = () => {
     setEditingEntryId(null);
   };
 
+  const conversationHistory = traverseHistory(messages.entries, messages.current);
+
+  const handleGoForward = (entry: ConversationEntry, direction: 'next' | 'prev') => {
+    const parent = entry.parent ? messages.entries[entry.parent] : null;
+    if (parent && parent.children.length > 0) {
+      const currentIndex = parent.children.indexOf(entry.id);
+      let nextIndex = currentIndex;
+
+      if (direction === 'next') {
+        nextIndex = (currentIndex + 1) % parent.children.length;
+      } else if (direction === 'prev') {
+        nextIndex = (currentIndex - 1 + parent.children.length) % parent.children.length;
+      }
+
+      const nextChildId = parent.children[nextIndex];
+      let nextEntry = messages.entries[nextChildId];
+
+      // Navigate to the leftmost leaf node
+      while (nextEntry.children.length > 0) {
+        nextEntry = messages.entries[nextEntry.children[0]];
+      }
+
+      setMessages((prevMessages) => ({
+        ...prevMessages,
+        current: nextEntry.id,
+      }));
+    }
+  };
+
   return (
     <StyledMessagesContainer ref={messagesContainerRef}>
-      {Object.values(messages.entries).map((entry) => (
-        <MessageBubble key={entry.id} $user={entry.role}>
-          <EditButton onClick={() => editingEntryId === entry.id ? handleCancelEdit() : handleEdit(entry.id, entry.message)}>
-            <EditIcon />
-          </EditButton>
-          <CopyButton copied={copied[entry.id]} handleCopy={() => handleCopy(entry.message, entry.id)} />
-          <RespondCharacter $user={entry.role}>
-            {entry.role === "AI" ? modelType.charAt(0).toUpperCase() + modelType.slice(1) : "You"}
-          </RespondCharacter>
-          {entry.id === editingEntryId ? (
-            <>
-              <EditInput
-                id={`edit-input-${entry.id}`}
-                value={editedMessage}
-                onChange={handleInput}
-                autoFocus
-              />
-              <Button $user={entry.role} onClick={() => handleSaveEdit(entry.id)}>Save</Button>
-              <Button $user={entry.role} onClick={handleCancelEdit}>Cancel</Button>
-            </>
-          ) : (
-            <MessageText>
-              {entry.role === "AI" && entry.id === messages.current && isLoading ? (
-                <TypingAnimation message={entry.message} isLoading={isLoading} scrollToBottom={scrollToBottom} />
-              ) : (
-                <ReactMarkdown components={RendererCode} children={entry.message} />
-              )}
-            </MessageText>
-          )}
-        </MessageBubble>
-      ))}
-      <div ref={messageEndRef} />
+      {conversationHistory.map((entry) => {
+        const parent = entry.parent ? messages.entries[entry.parent] : null;
+        const siblingCount = parent ? parent.children.length : 0;
+        const currentIndex = parent ? parent.children.indexOf(entry.id) + 1 : 0;
+
+        return (
+          <MessageBubble key={entry.id} $user={entry.role}>
+            {parent && currentIndex > 1 && (
+              <NavigationButton
+                onClick={() => handleGoForward(entry, 'prev')}
+                style={{right: 120}}
+              >
+                <GoBackIcon/>
+              </NavigationButton>
+            )}
+            {parent && siblingCount > 1 && (
+              <BranchCount style={{right: 90}}>
+                {`${currentIndex}/${siblingCount}`}
+              </BranchCount>
+            )}
+            {parent && currentIndex < siblingCount && (
+              <NavigationButton
+                onClick={() => handleGoForward(entry, 'next')}
+                style={{right: 65}}
+              >
+                <GoForwardIcon/>
+              </NavigationButton>
+            )}
+            <EditButton
+              onClick={() => (editingEntryId === entry.id ? handleCancelEdit() : handleEdit(entry.id, entry.message))}
+            >
+              <EditIcon/>
+            </EditButton>
+            <CopyButton copied={copied[entry.id]} handleCopy={() => handleCopy(entry.message, entry.id)}/>
+            <RespondCharacter $user={entry.role}>
+              {entry.role === "AI" ? modelType.charAt(0).toUpperCase() + modelType.slice(1) : "You"}
+            </RespondCharacter>
+            {entry.id === editingEntryId ? (
+              <>
+                <EditInput
+                  id={`edit-input-${entry.id}`}
+                  value={editedMessage}
+                  onChange={handleInput}
+                  autoFocus
+                />
+                <Button $user={entry.role} onClick={() => handleSaveEdit(entry.id)}>Save</Button>
+                <Button $user={entry.role} onClick={handleCancelEdit}>Cancel</Button>
+              </>
+            ) : (
+              <MessageText>
+                {entry.role === "AI" && entry.id === messages.current && isLoading ? (
+                  <TypingAnimation message={entry.message} isLoading={isLoading} scrollToBottom={scrollToBottom}/>
+                ) : (
+                  <ReactMarkdown components={RendererCode} children={entry.message}/>
+                )}
+              </MessageText>
+            )}
+          </MessageBubble>
+        );
+      })}
+      <div ref={messageEndRef}/>
     </StyledMessagesContainer>
   );
-}
+};

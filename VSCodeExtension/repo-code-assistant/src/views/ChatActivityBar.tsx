@@ -104,7 +104,7 @@ export const ChatActivityBar = () => {
         }
       })
       .then(() => {
-        setTimeout(() => scrollToBottom(false), 100);
+        setTimeout(() => scrollToBottom(), 100);
       })
       .catch((error) =>
         callApi("alertMessage", `Failed to get conversation history: ${error}`, "error")
