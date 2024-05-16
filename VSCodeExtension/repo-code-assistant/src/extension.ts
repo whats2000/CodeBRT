@@ -172,6 +172,26 @@ export const activate = async (ctx: vscode.ExtensionContext) => {
       }
 
       return modelService.addConversationEntry(parentID, sender, message);
+    },
+    getHistories: (modelType: ModelType) => {
+      const modelService = models[modelType].service;
+
+      if (!modelService) {
+        vscode.window.showErrorMessage(`Failed to load conversation histories for unknown model type: ${modelType}`);
+        return {};
+      }
+
+      return modelService.getHistories();
+    },
+    switchHistory: (modelType: ModelType, historyID: string) => {
+      const modelService = models[modelType].service;
+
+      if (!modelService) {
+        vscode.window.showErrorMessage(`Failed to switch conversation history for unknown model type: ${modelType}`);
+        return;
+      }
+
+      modelService.switchHistory(historyID);
     }
   };
 

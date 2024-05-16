@@ -1,5 +1,5 @@
 import { ExtensionSettings } from "./extensionSettings";
-import { ConversationHistory } from "./conversationHistory";
+import { ConversationHistory, ConversationHistoryList } from "./conversationHistory";
 import { ModelType } from "./modelType";
 
 /**
@@ -58,6 +58,8 @@ export type ViewApi = {
   saveLastUsedModel: (modelType: ModelType) => void;
   getLastUsedModel: () => ModelType;
   addConversationEntry: (modelType: ModelType, parentID: string, sender: "user" | "AI", message: string) => Promise<string>;
+  getHistories: (modelType: ModelType) => ConversationHistoryList;
+  switchHistory: (modelType: ModelType, historyID: string) => void;
 };
 
 /**

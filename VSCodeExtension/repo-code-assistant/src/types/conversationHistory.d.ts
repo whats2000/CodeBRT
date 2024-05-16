@@ -14,3 +14,7 @@ export type ConversationHistory = {
   current: string;
   entries: { [key: string]: ConversationEntry };
 }
+
+export type ConversationHistoryList = {
+  [key: string]: ConversationHistory;
+}
