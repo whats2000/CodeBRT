@@ -10,8 +10,8 @@ const StyledToolbar = styled.div`
   display: flex;
   justify-content: space-between;
   padding: 5px 15px 5px 5px;
-  
-  &> div {
+
+  & > div {
     display: flex;
   }
 `;
@@ -50,46 +50,62 @@ interface ToolbarProps {
   setActiveModel: React.Dispatch<React.SetStateAction<ModelType>>;
 }
 
-export const Toolbar: React.FC<ToolbarProps> = (
-  {activeModel, setMessages, setActiveModel}
-) => {
-  const {callApi} = useContext(WebviewContext);
-  const options: ModelType[] = ["gemini", "cohere"];
+export const Toolbar: React.FC<ToolbarProps> = ({
+  activeModel,
+  setMessages,
+  setActiveModel,
+}) => {
+  const { callApi } = useContext(WebviewContext);
+  const options: ModelType[] = ["gemini", "cohere", "gpt3", "gpt4"];
 
   const openSettings = () => {
-    callApi("showSettingsView")
-      .catch((error) =>
-        callApi("alertMessage", `Failed to open settings: ${error}`, "error")
-          .catch(console.error)
-      );
-  }
+    callApi("showSettingsView").catch((error) =>
+      callApi(
+        "alertMessage",
+        `Failed to open settings: ${error}`,
+        "error",
+      ).catch(console.error),
+    );
+  };
 
   const clearHistory = () => {
     callApi("clearLanguageConversationHistory", activeModel)
-      .then(() => setMessages({
-        title: "",
-        create_time: 0,
-        update_time: 0,
-        root: "",
-        current: "",
-        entries: {},
-      }))
-      .catch((error) => console.error("Failed to clear conversation history:", error));
-  }
+      .then(() =>
+        setMessages({
+          title: "",
+          create_time: 0,
+          update_time: 0,
+          root: "",
+          current: "",
+          entries: {},
+        }),
+      )
+      .catch((error) =>
+        console.error("Failed to clear conversation history:", error),
+      );
+  };
 
   const handleModelChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
     setActiveModel(event.target.value as ModelType);
-  }
+  };
 
   return (
     <StyledToolbar>
       <ModelSelect value={activeModel} onChange={handleModelChange}>
-        {options.map((model) => <option key={model} value={model}>{model}</option>)}
+        {options.map((model) => (
+          <option key={model} value={model}>
+            {model}
+          </option>
+        ))}
       </ModelSelect>
       <div>
-        <ToolbarButton onClick={openSettings}><SettingIcon/></ToolbarButton>
-        <ToolbarButton onClick={clearHistory}><CleanHistoryIcon/></ToolbarButton>
+        <ToolbarButton onClick={openSettings}>
+          <SettingIcon />
+        </ToolbarButton>
+        <ToolbarButton onClick={clearHistory}>
+          <CleanHistoryIcon />
+        </ToolbarButton>
       </div>
     </StyledToolbar>
   );
-}
+};

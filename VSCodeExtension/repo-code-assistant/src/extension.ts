@@ -1,7 +1,14 @@
 import fs from "node:fs/promises";
 import * as vscode from "vscode";
 import { ViewKey } from "./views";
-import { ViewApi, ViewApiError, ViewApiEvent, ViewApiRequest, ViewApiResponse, ViewEvents } from "./types/viewApi";
+import {
+  ViewApi,
+  ViewApiError,
+  ViewApiEvent,
+  ViewApiRequest,
+  ViewApiResponse,
+  ViewEvents,
+} from "./types/viewApi";
 import { ExtensionSettings } from "./types/extensionSettings";
 import { LoadedModels, ModelType } from "./types/modelType";
 import { ConversationHistory } from "./types/conversationHistory";
@@ -9,6 +16,7 @@ import { viewRegistration } from "./api/viewRegistration";
 import SettingsManager from "./api/settingsManager";
 import { GeminiService } from "./services/languageModel/geminiService";
 import { CohereService } from "./services/languageModel/cohereService";
+import { OpenAIService } from "./services/languageModel/openaiService";
 
 export const activate = async (ctx: vscode.ExtensionContext) => {
   const connectedViews: Partial<Record<ViewKey, vscode.WebviewView>> = {};
@@ -20,6 +28,14 @@ export const activate = async (ctx: vscode.ExtensionContext) => {
     },
     cohere: {
       service: new CohereService(ctx, settingsManager),
+      enabled: settingsManager.get("enableModel").cohere,
+    },
+    gpt3: {
+      service: new OpenAIService(ctx, settingsManager),
+      enabled: settingsManager.get("enableModel").cohere,
+    },
+    gpt4: {
+      service: new OpenAIService(ctx, settingsManager),
       enabled: settingsManager.get("enableModel").cohere,
     },
   };
@@ -66,7 +82,10 @@ export const activate = async (ctx: vscode.ExtensionContext) => {
       connectedViews?.settingsBar?.show?.(true);
       vscode.commands.executeCommand("settingsBar.focus");
     },
-    updateSetting: async (key: keyof ExtensionSettings, value: ExtensionSettings[typeof key]) => {
+    updateSetting: async (
+      key: keyof ExtensionSettings,
+      value: ExtensionSettings[typeof key],
+    ) => {
       return settingsManager.set(key, value);
     },
     getSetting: (key: keyof ExtensionSettings) => {
@@ -98,24 +117,30 @@ export const activate = async (ctx: vscode.ExtensionContext) => {
     ) => {
       const modelService = models[modelType].service;
       if (!modelService) {
-        vscode.window.showErrorMessage(`Failed to get response for unknown model type: ${modelType}`);
+        vscode.window.showErrorMessage(
+          `Failed to get response for unknown model type: ${modelType}`,
+        );
         return `Model service not found for type: ${modelType}`;
       }
 
       try {
-        return useStream ?
-          modelService.getResponseChunksForQuery(query, api.sendStreamResponse, currentEntryID) :
-          modelService.getResponseForQuery(query, currentEntryID);
+        return useStream
+          ? modelService.getResponseChunksForQuery(
+              query,
+              api.sendStreamResponse,
+              currentEntryID,
+            )
+          : modelService.getResponseForQuery(query, currentEntryID);
       } catch (error) {
         return `Failed to get response from ${modelType} service: ${error}`;
       }
     },
-    getLanguageModelConversationHistory: (
-      modelType: ModelType,
-    ) => {
+    getLanguageModelConversationHistory: (modelType: ModelType) => {
       const modelService = models[modelType].service;
       if (!modelService) {
-        vscode.window.showErrorMessage(`Failed to get conversation history for unknown model type: ${modelType}`);
+        vscode.window.showErrorMessage(
+          `Failed to get conversation history for unknown model type: ${modelType}`,
+        );
         return {
           title: "",
           create_time: 0,
@@ -128,13 +153,13 @@ export const activate = async (ctx: vscode.ExtensionContext) => {
 
       return modelService.getConversationHistory();
     },
-    clearLanguageConversationHistory: (
-      modelType: ModelType,
-    ) => {
+    clearLanguageConversationHistory: (modelType: ModelType) => {
       const modelService = models[modelType].service;
 
       if (!modelService) {
-        vscode.window.showErrorMessage(`Failed to clear conversation history for unknown model type: ${modelType}`);
+        vscode.window.showErrorMessage(
+          `Failed to clear conversation history for unknown model type: ${modelType}`,
+        );
         return;
       }
 
@@ -148,7 +173,9 @@ export const activate = async (ctx: vscode.ExtensionContext) => {
       const modelService = models[modelType].service;
 
       if (!modelService) {
-        vscode.window.showErrorMessage(`Failed to edit conversation history for unknown model type: ${modelType}`);
+        vscode.window.showErrorMessage(
+          `Failed to edit conversation history for unknown model type: ${modelType}`,
+        );
         return;
       }
 
@@ -163,20 +190,27 @@ export const activate = async (ctx: vscode.ExtensionContext) => {
     getLastUsedModel: () => {
       return settingsManager.get("lastUsedModel");
     },
-    addConversationEntry: async (modelType: ModelType, parentID: string, sender: "user" | "AI", message: string) => {
+    addConversationEntry: async (
+      modelType: ModelType,
+      parentID: string,
+      sender: "user" | "AI",
+      message: string,
+    ) => {
       const modelService = models[modelType].service;
 
       if (!modelService) {
-        vscode.window.showErrorMessage(`Failed to add conversation entry for unknown model type: ${modelType}`);
+        vscode.window.showErrorMessage(
+          `Failed to add conversation entry for unknown model type: ${modelType}`,
+        );
         return "";
       }
 
       return modelService.addConversationEntry(parentID, sender, message);
-    }
+    },
   };
 
   const isViewApiRequest = <K extends keyof ViewApi>(
-    msg: unknown
+    msg: unknown,
   ): msg is ViewApiRequest<K> =>
     msg != null &&
     typeof msg === "object" &&
