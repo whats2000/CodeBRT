@@ -152,6 +152,13 @@ export type ViewApi = {
    * @param historyID - The ID of the history to switch to.
    */
   switchHistory: (modelType: ModelType, historyID: string) => void;
+
+  /**
+   * Delete a conversation history for a language model.
+   * @param modelType - The type of the model to delete the conversation history for.
+   * @param historyID - The ID of the history to delete.
+   */
+  deleteHistory: (modelType: ModelType, historyID: string) => void;
 };
 
 /**

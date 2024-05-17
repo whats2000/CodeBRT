@@ -223,6 +223,16 @@ export const activate = async (ctx: vscode.ExtensionContext) => {
       }
 
       modelService.switchHistory(historyID);
+    },
+    deleteHistory: (modelType: ModelType, historyID: string) => {
+      const modelService: LanguageModelService = models[modelType].service;
+
+      if (!modelService) {
+        vscode.window.showErrorMessage(`Failed to delete conversation history for unknown model type: ${modelType}`);
+        return;
+      }
+
+      modelService.deleteHistory(historyID);
     }
   };
 

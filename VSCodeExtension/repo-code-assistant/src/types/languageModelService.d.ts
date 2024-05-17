@@ -49,6 +49,12 @@ export interface LanguageModelService {
   getHistories: () => ConversationHistoryList;
 
   /**
+   * Delete a conversation history
+   * @param historyID - The ID of the history to delete
+   */
+  deleteHistory: (historyID: string) => void;
+
+  /**
    * Get the response for a query, if the currentEntryID is provided, the history will be used from that point
    * @param query - The query to get a response for
    * @param currentEntryID - The current entry ID

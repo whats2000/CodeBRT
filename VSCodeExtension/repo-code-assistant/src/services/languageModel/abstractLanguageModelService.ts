@@ -262,6 +262,33 @@ export abstract class AbstractLanguageModelService implements LanguageModelServi
   }
 
   /**
+   * Delete a history
+   * @param historyID - The ID of the history to delete
+   */
+  public deleteHistory(historyID: string): void {
+    if (this.histories[historyID]) {
+      delete this.histories[historyID];
+      if (Object.keys(this.histories).length > 0) {
+        this.history = this.histories[Object.keys(this.histories)[0]];
+      } else {
+        this.history = {
+          title: '',
+          root: '',
+          current: '',
+          create_time: Date.now(),
+          update_time: Date.now(),
+          entries: {}
+        };
+      }
+      this.saveHistories().catch(
+        (error) => vscode.window.showErrorMessage('Failed to delete history: ' + error)
+      );
+    } else {
+      vscode.window.showErrorMessage('History not found: ' + historyID).then();
+    }
+  }
+
+  /**
    * Post process the loaded history, this will be called after the history is loaded
    * @param history - The loaded history
    * @protected
