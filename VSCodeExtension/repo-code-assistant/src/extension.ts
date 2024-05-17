@@ -30,13 +30,9 @@ export const activate = async (ctx: vscode.ExtensionContext) => {
       service: new CohereService(ctx, settingsManager),
       enabled: settingsManager.get("enableModel").cohere,
     },
-    gpt3: {
+    openai: {
       service: new OpenAIService(ctx, settingsManager),
-      enabled: settingsManager.get("enableModel").cohere,
-    },
-    gpt4: {
-      service: new OpenAIService(ctx, settingsManager),
-      enabled: settingsManager.get("enableModel").cohere,
+      enabled: settingsManager.get("enableModel").openai,
     },
   };
 

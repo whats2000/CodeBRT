@@ -52,10 +52,23 @@ export class GeminiService extends AbstractLanguageModelService {
   }
 
   private conversationHistoryToContent(entries: { [key: string]: ConversationEntry }): Content[] {
-    return Object.values(entries).map((entry) => ({
-      role: entry.role === 'AI' ? 'model' : 'user',
-      parts: [{ text: entry.message }],
-    }));
+    let result: Content[] = [];
+    let currentEntry = entries[this.history.current];
+
+    while (currentEntry) {
+      result.unshift({
+        role: currentEntry.role === 'AI' ? 'model' : 'user',
+        parts: [{ text: currentEntry.message }],
+      });
+
+      if (currentEntry.parent) {
+        currentEntry = entries[currentEntry.parent];
+      } else {
+        break;
+      }
+    }
+
+    return result;
   }
 
   public async getResponseForQuery(query: string, currentEntryID?: string): Promise<string> {

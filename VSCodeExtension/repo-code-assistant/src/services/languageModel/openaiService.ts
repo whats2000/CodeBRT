@@ -1,14 +1,17 @@
 import * as vscode from "vscode";
 import { OpenAI } from "openai";
-import { ConversationHistory } from "../../types/conversationHistory";
+import ChatCompletionMessageParam = OpenAI.Chat.Completions.ChatCompletionMessageParam;
+import ChatCompletionCreateParamsNonStreaming = OpenAI.Chat.Completions.ChatCompletionCreateParamsNonStreaming;
+import ChatCompletionCreateParamsStreaming = OpenAI.Chat.Completions.ChatCompletionCreateParamsStreaming;
+
+import { ConversationEntry, ConversationHistory } from "../../types/conversationHistory";
 import { AbstractLanguageModelService } from "./abstractLanguageModelService";
 import SettingsManager from "../../api/settingsManager";
 
 export class OpenAIService extends AbstractLanguageModelService {
   private apiKey: string;
-  static aviaryModelName: string = "gpt-3.5-turbo";
+  static availableModelName: string[] = ["gpt-3.5-turbo"];
   private readonly settingsListener: vscode.Disposable;
-  // private readonly historyLimit: number = 100;
 
   constructor(
     context: vscode.ExtensionContext,
@@ -18,7 +21,7 @@ export class OpenAIService extends AbstractLanguageModelService {
       context,
       "openAIConversationHistory.json",
       settingsManager,
-      OpenAIService.aviaryModelName[0],
+      OpenAIService.availableModelName[0],
     );
     this.apiKey = settingsManager.get("openAiApiKey");
 
@@ -31,7 +34,7 @@ export class OpenAIService extends AbstractLanguageModelService {
 
     // Listen for settings changes
     this.settingsListener = vscode.workspace.onDidChangeConfiguration((e) => {
-      if (e.affectsConfiguration("repo-code-assistant.openAIApiKey")) {
+      if (e.affectsConfiguration("repo-code-assistant.openAiApiKey")) {
         this.apiKey = settingsManager.get("openAiApiKey");
       }
     });
@@ -53,22 +56,44 @@ export class OpenAIService extends AbstractLanguageModelService {
     this.history = history;
   }
 
-  public async getResponseForQuery(query: string): Promise<string> {
+  private conversationHistoryToContent(entries: { [key: string]: ConversationEntry }): ChatCompletionMessageParam[] {
+    const result: OpenAI.Chat.Completions.ChatCompletionMessageParam[] = [];
+    let currentEntry = entries[this.history.current];
+
+    while (currentEntry) {
+      result.unshift({
+        role: currentEntry.role === "user" ? "user" : "assistant",
+        content: currentEntry.message,
+      });
+
+      if (currentEntry.parent) {
+        currentEntry = entries[currentEntry.parent];
+      } else {
+        break;
+      }
+    }
+
+    return result;
+  }
+
+  public async getResponseForQuery(query: string, currentEntryID?: string): Promise<string> {
     const openai = new OpenAI({
       apiKey: this.apiKey,
     });
+
+    const history = currentEntryID ? this.getHistoryBeforeEntry(currentEntryID) : this.history;
+    const conversationHistory = this.conversationHistoryToContent(history.entries);
+
+    // Append the current query to the conversation history
+    conversationHistory.push({ role: "user", content: query });
+
     try {
       const chatCompletion = await openai.chat.completions.create({
-        messages: [{ role: "user", content: query }],
-        model: OpenAIService.aviaryModelName,
-      });
+        messages: conversationHistory,
+        model: OpenAIService.availableModelName[0],
+      } as ChatCompletionCreateParamsNonStreaming);
 
-      const responseText: string = chatCompletion.choices[0]?.message?.content!;
-
-      // Update conversation history
-      this.addConversationEntry(null, "user", responseText);
-
-      return responseText;
+      return chatCompletion.choices[0]?.message?.content!;
     } catch (error) {
       vscode.window.showErrorMessage(
         "Failed to get response from OpenAI Service: " + error,
@@ -79,28 +104,34 @@ export class OpenAIService extends AbstractLanguageModelService {
 
   public async getResponseChunksForQuery(
     query: string,
-    sendStreamResponse: (msg: string) => void,currentEntryID?: string,
+    sendStreamResponse: (msg: string) => void,
+    currentEntryID?: string,
   ): Promise<string> {
     const openai = new OpenAI({
       apiKey: this.apiKey,
     });
+
+    const history = currentEntryID ? this.getHistoryBeforeEntry(currentEntryID) : this.history;
+    const conversationHistory = this.conversationHistoryToContent(history.entries);
+
+    // Append the current query to the conversation history
+    conversationHistory.push({ role: "user", content: query });
+
     try {
       const stream = await openai.chat.completions.create({
-        messages: [{ role: "user", content: query }],
-        model: OpenAIService.aviaryModelName,
+        messages: conversationHistory,
+        model: OpenAIService.availableModelName[0],
         stream: true,
-      });
+      } as ChatCompletionCreateParamsStreaming);
 
       let responseText: string = "";
-      // update streamming response
+
+      // Update streaming response
       for await (const chunk of stream) {
         const partText = chunk.choices[0]?.delta?.content || "";
         sendStreamResponse(partText);
         responseText += partText;
       }
-
-      // Update conversation history
-      this.addConversationEntry(null, "user", responseText);
 
       return responseText;
     } catch (error) {

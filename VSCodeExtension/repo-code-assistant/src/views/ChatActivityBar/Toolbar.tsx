@@ -53,7 +53,7 @@ interface ToolbarProps {
 
 export const Toolbar: React.FC<ToolbarProps> = ({ activeModel, setMessages, setActiveModel }) => {
   const { callApi } = useContext(WebviewContext);
-  const options: ModelType[] = ["gemini", "cohere"];
+  const options: ModelType[] = ["gemini", "cohere", "openai"];
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
   const openSettings = () => {
