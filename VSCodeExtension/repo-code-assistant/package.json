@@ -120,15 +120,10 @@
               "default": false,
               "description": "Enable Gemini model"
             },
-            "gpt3": {
+            "openai": {
               "type": "boolean",
               "default": false,
-              "description": "Enable GPT-3 model"
-            },
-            "gpt4": {
-              "type": "boolean",
-              "default": false,
-              "description": "Enable GPT-4 model"
+              "description": "Enable OpenAI model"
             },
             "cohere": {
               "type": "boolean",

@@ -68,14 +68,14 @@ const Button = styled.button`
 
 export const SettingsBar = () => {
   const {callApi} = useContext(WebviewContext);
-  const [settings, setSettings] = useState({
+  const [settings, setSettings] = useState<ExtensionSettings>({
+    lastUsedModel: 'gemini',
     geminiApiKey: '',
     openAiApiKey: '',
     cohereApiKey: '',
     enableModel: {
       gemini: false,
-      gpt3: false,
-      gpt4: false,
+      openai: false,
       cohere: false,
     }
   });

@@ -49,12 +49,23 @@ export class CohereService extends AbstractLanguageModelService {
   private conversationHistoryToContent(
     entries: { [key: string]: ConversationEntry },
   ): Cohere.ChatMessage[] {
-    return Object.values(entries).map((entry) => {
-      return {
-        role: entry.role === "AI" ? "CHATBOT" : "USER",
-        message: entry.message,
-      };
-    });
+    let result: Cohere.ChatMessage[] = [];
+    let currentEntry = entries[this.history.current];
+
+    while (currentEntry) {
+      result.unshift({
+        role: currentEntry.role === "AI" ? "CHATBOT" : "USER",
+        message: currentEntry.message,
+      });
+
+      if (currentEntry.parent) {
+        currentEntry = entries[currentEntry.parent];
+      } else {
+        break;
+      }
+    }
+
+    return result;
   }
 
   public async getResponseForQuery(query: string, currentEntryID?: string): Promise<string> {

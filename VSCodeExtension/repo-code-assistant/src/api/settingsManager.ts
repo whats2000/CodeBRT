@@ -31,8 +31,7 @@ class SettingsManager {
     return {
       enableModel: {
         gemini: false,
-        gpt3: false,
-        gpt4: false,
+        openai: false,
         cohere: false
       },
       openAiApiKey: '',

@@ -3,7 +3,7 @@ import { AbstractLanguageModelService } from "../services/abstractLanguageModelS
 /**
  * Represents the type of models supported by the system.
  */
-export type ModelType = "gemini" | "gpt3" | "gpt4" | "cohere";
+export type ModelType = "gemini" | "openai" | "cohere";
 
 /**
  * Defines a structure for loaded models with detailed service and enabled status.
