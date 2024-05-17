@@ -4,11 +4,12 @@ import * as vscode from 'vscode';
 import { v4 as uuidv4 } from 'uuid';
 import { ConversationHistory, ConversationEntry, ConversationHistoryList } from '../../types/conversationHistory';
 import SettingsManager from "../../api/settingsManager";
+import { LanguageModelService } from "../../types/languageModelService";
 
 /**
  * Abstract class for the Language Model Service
  */
-export abstract class AbstractLanguageModelService {
+export abstract class AbstractLanguageModelService implements LanguageModelService {
   /**
    * The extension context
    * @protected

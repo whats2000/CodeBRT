@@ -17,6 +17,7 @@ import SettingsManager from "./api/settingsManager";
 import { GeminiService } from "./services/languageModel/geminiService";
 import { CohereService } from "./services/languageModel/cohereService";
 import { OpenAIService } from "./services/languageModel/openaiService";
+import { LanguageModelService } from "./types/languageModelService";
 
 export const activate = async (ctx: vscode.ExtensionContext) => {
   const connectedViews: Partial<Record<ViewKey, vscode.WebviewView>> = {};
@@ -132,7 +133,7 @@ export const activate = async (ctx: vscode.ExtensionContext) => {
       }
     },
     getLanguageModelConversationHistory: (modelType: ModelType) => {
-      const modelService = models[modelType].service;
+      const modelService: LanguageModelService = models[modelType].service;
       if (!modelService) {
         vscode.window.showErrorMessage(
           `Failed to get conversation history for unknown model type: ${modelType}`,
@@ -150,7 +151,7 @@ export const activate = async (ctx: vscode.ExtensionContext) => {
       return modelService.getConversationHistory();
     },
     clearLanguageConversationHistory: (modelType: ModelType) => {
-      const modelService = models[modelType].service;
+      const modelService: LanguageModelService = models[modelType].service;
 
       if (!modelService) {
         vscode.window.showErrorMessage(
@@ -166,7 +167,7 @@ export const activate = async (ctx: vscode.ExtensionContext) => {
       entryID: string,
       newMessage: string,
     ) => {
-      const modelService = models[modelType].service;
+      const modelService: LanguageModelService = models[modelType].service;
 
       if (!modelService) {
         vscode.window.showErrorMessage(
@@ -192,7 +193,7 @@ export const activate = async (ctx: vscode.ExtensionContext) => {
       sender: "user" | "AI",
       message: string,
     ) => {
-      const modelService = models[modelType].service;
+      const modelService: LanguageModelService = models[modelType].service;
 
       if (!modelService) {
         vscode.window.showErrorMessage(
@@ -204,7 +205,7 @@ export const activate = async (ctx: vscode.ExtensionContext) => {
       return modelService.addConversationEntry(parentID, sender, message);
     },
     getHistories: (modelType: ModelType) => {
-      const modelService = models[modelType].service;
+      const modelService: LanguageModelService = models[modelType].service;
 
       if (!modelService) {
         vscode.window.showErrorMessage(`Failed to load conversation histories for unknown model type: ${modelType}`);
@@ -214,7 +215,7 @@ export const activate = async (ctx: vscode.ExtensionContext) => {
       return modelService.getHistories();
     },
     switchHistory: (modelType: ModelType, historyID: string) => {
-      const modelService = models[modelType].service;
+      const modelService: LanguageModelService = models[modelType].service;
 
       if (!modelService) {
         vscode.window.showErrorMessage(`Failed to switch conversation history for unknown model type: ${modelType}`);

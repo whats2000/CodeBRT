@@ -1,4 +1,4 @@
-import { AbstractLanguageModelService } from "../services/abstractLanguageModelService";
+import { LanguageModelService } from "./languageModelService";
 
 /**
  * Represents the type of models supported by the system.
@@ -10,7 +10,14 @@ export type ModelType = "gemini" | "openai" | "cohere";
  */
 export type LoadedModels = {
   [key in modelType]: {
-    service: AbstractLanguageModelService;
+    /**
+     * The service for the model
+     */
+    service: LanguageModelService;
+
+    /**
+     * Determines if the model is enabled for code generation
+     */
     enabled: boolean;
   };
 }
