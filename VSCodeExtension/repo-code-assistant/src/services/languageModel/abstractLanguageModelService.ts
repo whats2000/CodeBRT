@@ -53,6 +53,11 @@ export abstract class AbstractLanguageModelService {
   protected currentModel: string = '';
 
   /**
+   * The list of available model names
+   */
+  static availableModelName: string[] = [];
+
+  /**
    * Constructor for the AbstractLanguageModelService
    * @param context - The extension context
    * @param historyFileName - The name of the history file

@@ -6,7 +6,7 @@ import { AbstractLanguageModelService } from "./abstractLanguageModelService";
 import SettingsManager from "../../api/settingsManager";
 
 export class GeminiService extends AbstractLanguageModelService {
-  static aviaryModelName: string[] = ["gemini-1.5-pro-latest"];
+  static availableModelName: string[] = ["gemini-1.5-pro-latest"];
   private apiKey: string;
   private readonly settingsListener: vscode.Disposable;
 
@@ -25,7 +25,7 @@ export class GeminiService extends AbstractLanguageModelService {
   ];
 
   constructor(context: vscode.ExtensionContext, settingsManager: SettingsManager) {
-    super(context, 'geminiConversationHistory.json', settingsManager, GeminiService.aviaryModelName[0]);
+    super(context, 'geminiConversationHistory.json', settingsManager, GeminiService.availableModelName[0]);
     this.apiKey = settingsManager.get('geminiApiKey');
     this.initialize().catch((error) => vscode.window.showErrorMessage('Failed to initialize Gemini Service: ' + error));
 

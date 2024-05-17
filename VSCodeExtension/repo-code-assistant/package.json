@@ -23,6 +23,7 @@
   },
   "devDependencies": {
     "cohere-ai": "^7.9.5",
+    "openai": "^4.47.1",
     "@google/generative-ai": "^0.8.0",
     "@pmmmwh/react-refresh-webpack-plugin": "^0.5.11",
     "@swc/cli": "^0.1.62",
@@ -146,6 +147,7 @@
   },
   "dependencies": {
     "@google/generative-ai": "^0.8.0",
+    "openai": "^4.47.1",
     "@types/react-syntax-highlighter": "^15.5.11",
     "cohere-ai": "^7.9.5",
     "react-markdown": "^9.0.1",
