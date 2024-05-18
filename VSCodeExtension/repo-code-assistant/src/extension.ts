@@ -157,10 +157,10 @@ export const activate = async (ctx: vscode.ExtensionContext) => {
         vscode.window.showErrorMessage(
           `Failed to clear conversation history for unknown model type: ${modelType}`,
         );
-        return;
+        return { title: "", create_time: 0, update_time: 0, root: "", current: "", entries: {} } as ConversationHistory;
       }
 
-      modelService.addNewConversationHistory();
+      return modelService.addNewConversationHistory();
     },
     editLanguageModelConversationHistory: (
       modelType: ModelType,
@@ -229,10 +229,10 @@ export const activate = async (ctx: vscode.ExtensionContext) => {
 
       if (!modelService) {
         vscode.window.showErrorMessage(`Failed to delete conversation history for unknown model type: ${modelType}`);
-        return;
+        return { title: "", create_time: 0, update_time: 0, root: "", current: "", entries: {} } as ConversationHistory;
       }
 
-      modelService.deleteHistory(historyID);
+      return modelService.deleteHistory(historyID);
     }
   };
 

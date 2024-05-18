@@ -99,10 +99,11 @@ export type ViewApi = {
   getLanguageModelConversationHistory: (modelType: ModelType) => ConversationHistory;
 
   /**
-   * Clear the conversation history for a language model.
-   * @param modelType - The type of the model to clear the conversation history for.
+   * Add a new conversation history for a language model.
+   * @param modelType - The type of the model to add the conversation history for.
+   * @returns The new conversation history.
    */
-  addNewConversationHistory: (modelType: ModelType) => void;
+  addNewConversationHistory: (modelType: ModelType) => ConversationHistory;
 
   /**
    * Edit the conversation history for a language model.
@@ -157,8 +158,9 @@ export type ViewApi = {
    * Delete a conversation history for a language model.
    * @param modelType - The type of the model to delete the conversation history for.
    * @param historyID - The ID of the history to delete.
+   * @returns The new conversation history.
    */
-  deleteHistory: (modelType: ModelType, historyID: string) => void;
+  deleteHistory: (modelType: ModelType, historyID: string) => ConversationHistory;
 };
 
 /**

@@ -120,22 +120,14 @@ export const HistorySidebar: React.FC<HistorySidebarProps> = ({isOpen, onClose, 
 
   const deleteHistory = (historyID: string) => {
     callApi('deleteHistory', activeModel, historyID)
-      .then(() => {
+      .then((newConversationHistory) => {
         setHistories((prevHistories) => {
           const updatedHistories = { ...prevHistories };
           delete updatedHistories[historyID];
           return updatedHistories;
         });
 
-        // Clear the current messages if the deleted history was the current one
-        setMessages({
-          title: "",
-          create_time: 0,
-          update_time: 0,
-          root: "",
-          current: "",
-          entries: {},
-        });
+        setMessages(newConversationHistory);
       })
       .catch((error) => callApi('alertMessage', `Failed to delete history: ${error}`, 'error')
         .catch((error) => console.error(error)));
@@ -146,7 +138,7 @@ export const HistorySidebar: React.FC<HistorySidebarProps> = ({isOpen, onClose, 
       <CloseBtn onClick={onClose}>&times;</CloseBtn>
       {isLoading ? (
         <LoadingSpinner/>
-      ) : Object.keys(histories).length === 0 ? (
+      ) : Object.keys(histories).length - Object.keys(histories).filter((historyID) => historyID === "").length === 0 ? (
         <NoHistoryMessageContainer>
           <NoHistoryMessage>Nothing Currently</NoHistoryMessage>
         </NoHistoryMessageContainer>
@@ -156,7 +148,7 @@ export const HistorySidebar: React.FC<HistorySidebarProps> = ({isOpen, onClose, 
             <HistoryItem key={historyID} onClick={() => switchHistory(historyID)}>
               <span>{histories[historyID].title}</span>
               <DeleteButton onClick={(e) => {
-                e.stopPropagation(); // Prevent the switch history event
+                e.stopPropagation();
                 deleteHistory(historyID);
               }}>
                 <DeleteIcon />

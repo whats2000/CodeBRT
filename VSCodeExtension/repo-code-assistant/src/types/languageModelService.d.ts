@@ -17,9 +17,10 @@ export interface LanguageModelService {
   getConversationHistory: () => ConversationHistory;
 
   /**
-   * Clear the current conversation history
+   * Add a new conversation history
+   * @returns The new conversation history
    */
-  addNewConversationHistory: () => void;
+  addNewConversationHistory: () => ConversationHistory;
 
   /**
    * Add a new entry to the conversation history
@@ -51,8 +52,9 @@ export interface LanguageModelService {
   /**
    * Delete a conversation history
    * @param historyID - The ID of the history to delete
+   * @returns The deleted conversation history
    */
-  deleteHistory: (historyID: string) => void;
+  deleteHistory: (historyID: string) => ConversationHistory;
 
   /**
    * Get the response for a query, if the currentEntryID is provided, the history will be used from that point

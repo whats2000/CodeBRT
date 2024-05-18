@@ -305,7 +305,6 @@ export const MessagesContainer: React.FC<MessagesContainerProps> = (
         );
       })}
       <div ref={messageEndRef}/>
-      <div>{JSON.stringify(messages)}</div>
     </StyledMessagesContainer>
   );
 };

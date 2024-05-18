@@ -130,8 +130,8 @@ export abstract class AbstractLanguageModelService implements LanguageModelServi
   /**
    * Add a new conversation history
    */
-  public addNewConversationHistory(): void {
-    this.history = {
+  public addNewConversationHistory(): ConversationHistory {
+    const newHistory: ConversationHistory = {
       title: '',
       root: '',
       current: '',
@@ -140,11 +140,14 @@ export abstract class AbstractLanguageModelService implements LanguageModelServi
       entries: {}
     };
 
-    this.histories[this.history.root] = this.history;
+    this.histories[newHistory.root] = newHistory;
+    this.history = newHistory;
 
     this.saveHistories().catch(
       (error) => vscode.window.showErrorMessage('Failed to add new conversation history: ' + error)
     );
+
+    return newHistory;
   }
 
   /**
@@ -267,26 +270,17 @@ export abstract class AbstractLanguageModelService implements LanguageModelServi
    * Delete a history
    * @param historyID - The ID of the history to delete
    */
-  public deleteHistory(historyID: string): void {
+  public deleteHistory(historyID: string): ConversationHistory {
     if (this.histories[historyID]) {
       delete this.histories[historyID];
-      if (Object.keys(this.histories).length > 0) {
-        this.history = this.histories[Object.keys(this.histories)[0]];
-      } else {
-        this.history = {
-          title: '',
-          root: '',
-          current: '',
-          create_time: Date.now(),
-          update_time: Date.now(),
-          entries: {}
-        };
-      }
+      const newHistory = this.addNewConversationHistory();
       this.saveHistories().catch(
         (error) => vscode.window.showErrorMessage('Failed to delete history: ' + error)
       );
+      return newHistory;
     } else {
       vscode.window.showErrorMessage('History not found: ' + historyID).then();
+      return this.history;
     }
   }
 

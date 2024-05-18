@@ -66,14 +66,7 @@ export const Toolbar: React.FC<ToolbarProps> = ({ activeModel, setMessages, setA
 
   const createNewChat = () => {
     callApi("addNewConversationHistory", activeModel)
-      .then(() => setMessages({
-        title: "",
-        create_time: 0,
-        update_time: 0,
-        root: "",
-        current: "",
-        entries: {},
-      }))
+      .then((newConversationHistory) => setMessages(newConversationHistory))
       .catch((error) => console.error("Failed to clear conversation history:", error));
   };
 
