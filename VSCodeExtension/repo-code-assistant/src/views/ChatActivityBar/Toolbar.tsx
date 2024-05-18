@@ -92,8 +92,8 @@ export const Toolbar: React.FC<ToolbarProps> = (
           {options.map((model) => <option key={model} value={model}>{model}</option>)}
         </ModelSelect>
         <div>
-          <ToolbarButton onClick={createNewChat}><NewChat /></ToolbarButton>
           <ToolbarButton onClick={toggleSidebar}><HistoryIcon /></ToolbarButton>
+          <ToolbarButton onClick={createNewChat}><NewChat /></ToolbarButton>
           <ToolbarButton onClick={openSettings}><SettingIcon /></ToolbarButton>
         </div>
       </StyledToolbar>
