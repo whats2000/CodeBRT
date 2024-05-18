@@ -307,7 +307,12 @@ export const ChatActivityBar = () => {
 
   return (
     <Container>
-      <Toolbar activeModel={activeModel} setMessages={setMessages} setActiveModel={setActiveModel}/>
+      <Toolbar
+        messages={messages}
+        activeModel={activeModel}
+        setMessages={setMessages}
+        setActiveModel={setActiveModel}
+      />
       <MessagesContainer
         setMessages={setMessages}
         modelType={activeModel}

@@ -211,6 +211,24 @@ export abstract class AbstractLanguageModelService implements LanguageModelServi
   }
 
   /**
+   * Update the title of a specified conversation history by its ID
+   * @param historyID - The ID of the history to update
+   * @param newTitle - The new title for the conversation history
+   */
+  public updateHistoryTitleById(historyID: string, newTitle: string): void {
+    if (this.histories[historyID]) {
+      this.histories[historyID].title = newTitle;
+      this.histories[historyID].update_time = Date.now();
+      this.saveHistories().catch(
+        (error) => vscode.window.showErrorMessage('Failed to update conversation title: ' + error)
+      );
+    } else {
+      vscode.window.showErrorMessage('History not found: ' + historyID).then();
+    }
+  }
+
+
+  /**
    * Get the history before a given entry id
    * @param currentEntryID - The entry id to get the history before
    * @returns The conversation history before the given entry id

@@ -233,6 +233,16 @@ export const activate = async (ctx: vscode.ExtensionContext) => {
       }
 
       return modelService.deleteHistory(historyID);
+    },
+    updateHistoryTitleById: (modelType: ModelType, historyID: string, title: string) => {
+      const modelService: LanguageModelService = models[modelType].service;
+
+      if (!modelService) {
+        vscode.window.showErrorMessage(`Failed to update conversation history title for unknown model type: ${modelType}`);
+        return;
+      }
+
+      modelService.updateHistoryTitleById(historyID, title);
     }
   };
 

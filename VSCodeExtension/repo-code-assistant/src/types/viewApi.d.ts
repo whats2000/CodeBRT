@@ -161,6 +161,14 @@ export type ViewApi = {
    * @returns The new conversation history.
    */
   deleteHistory: (modelType: ModelType, historyID: string) => ConversationHistory;
+
+  /**
+   * Edit the specified history title.
+   * @param modelType - The type of the model to edit the history title for.
+   * @param historyID - The ID of the history to edit.
+   * @param title - The new title.
+   */
+  updateHistoryTitleById: (modelType: ModelType, historyID: string, title: string) => void;
 };
 
 /**

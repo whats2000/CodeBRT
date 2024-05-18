@@ -39,6 +39,13 @@ export interface LanguageModelService {
   editConversationEntry: (entryID: string, newMessage: string) => void;
 
   /**
+   * Update the title of the specified history
+   * @param historyID - The ID of the history to update
+   * @param title - The new title
+   */
+  updateHistoryTitleById: (historyID: string, title: string) => void;
+
+  /**
    * Switch to a different conversation history
    * @param historyID - The ID of the history to switch to
    */

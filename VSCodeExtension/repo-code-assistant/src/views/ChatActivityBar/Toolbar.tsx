@@ -47,11 +47,18 @@ const ModelSelect = styled.select`
 
 interface ToolbarProps {
   activeModel: ModelType;
+  messages: ConversationHistory;
   setMessages: React.Dispatch<React.SetStateAction<ConversationHistory>>;
   setActiveModel: React.Dispatch<React.SetStateAction<ModelType>>;
 }
 
-export const Toolbar: React.FC<ToolbarProps> = ({ activeModel, setMessages, setActiveModel }) => {
+export const Toolbar: React.FC<ToolbarProps> = (
+  {
+    activeModel,
+    messages,
+    setMessages,
+    setActiveModel
+  }) => {
   const { callApi } = useContext(WebviewContext);
   const options: ModelType[] = ["gemini", "cohere", "openai"];
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
@@ -85,12 +92,18 @@ export const Toolbar: React.FC<ToolbarProps> = ({ activeModel, setMessages, setA
           {options.map((model) => <option key={model} value={model}>{model}</option>)}
         </ModelSelect>
         <div>
+          <ToolbarButton onClick={createNewChat}><NewChat /></ToolbarButton>
           <ToolbarButton onClick={toggleSidebar}><HistoryIcon /></ToolbarButton>
           <ToolbarButton onClick={openSettings}><SettingIcon /></ToolbarButton>
-          <ToolbarButton onClick={createNewChat}><NewChat /></ToolbarButton>
         </div>
       </StyledToolbar>
-      <HistorySidebar isOpen={isSidebarOpen} onClose={toggleSidebar} activeModel={activeModel} setMessages={setMessages} />
+      <HistorySidebar
+        isOpen={isSidebarOpen}
+        onClose={toggleSidebar}
+        messages={messages}
+        activeModel={activeModel}
+        setMessages={setMessages}
+      />
     </>
   );
 };

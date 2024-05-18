@@ -34,7 +34,7 @@ const HistoryList = styled.ul`
   padding: 0;
 `;
 
-const HistoryItem = styled.li`
+const HistoryItem = styled.li<{ $active: boolean }>`
   padding: 10px 15px;
   text-decoration: none;
   font-size: 20px;
@@ -44,6 +44,7 @@ const HistoryItem = styled.li`
   align-items: center;
   transition: 0.3s;
   cursor: pointer;
+  background-color: ${({ $active }) => ($active ? '#333' : 'transparent')};
 
   &:hover {
     background-color: #575757;
@@ -74,17 +75,41 @@ const NoHistoryMessage = styled.div`
   text-align: center;
 `;
 
+const Title = styled.span`
+  font-size: 20px;
+`;
+
+const EditableTitle = styled.textarea`
+  background: transparent;
+  border: none;
+  color: white;
+  font-size: 20px;
+  padding: 0;
+  margin: 0;
+  outline: white;
+`;
+
 interface HistorySidebarProps {
   isOpen: boolean;
   onClose: () => void;
   activeModel: ModelType;
+  messages: ConversationHistory;
   setMessages: React.Dispatch<React.SetStateAction<ConversationHistory>>;
 }
 
-export const HistorySidebar: React.FC<HistorySidebarProps> = ({isOpen, onClose, activeModel, setMessages}) => {
-  const {callApi} = useContext(WebviewContext);
+export const HistorySidebar: React.FC<HistorySidebarProps> = (
+  {
+    isOpen,
+    onClose,
+    activeModel,
+    messages,
+    setMessages
+  }) => {
+  const { callApi } = useContext(WebviewContext);
   const [histories, setHistories] = useState<ConversationHistoryList>({});
   const [isLoading, setIsLoading] = useState(false);
+  const [editingHistoryID, setEditingHistoryID] = useState<string | null>(null);
+  const [titleInput, setTitleInput] = useState('');
 
   useEffect(() => {
     if (isOpen) {
@@ -103,6 +128,8 @@ export const HistorySidebar: React.FC<HistorySidebarProps> = ({isOpen, onClose, 
   }, [isOpen, activeModel]);
 
   const switchHistory = (historyID: string) => {
+    if (historyID === messages.root) return;
+
     setIsLoading(true);
     callApi('switchHistory', activeModel, historyID)
       .then(() => callApi('getLanguageModelConversationHistory', activeModel))
@@ -133,11 +160,36 @@ export const HistorySidebar: React.FC<HistorySidebarProps> = ({isOpen, onClose, 
         .catch((error) => console.error(error)));
   };
 
+  const handleTitleDoubleClick = (historyID: string, title: string) => {
+    setEditingHistoryID(historyID);
+    setTitleInput(title);
+  };
+
+  const handleTitleChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    setTitleInput(e.target.value);
+  };
+
+  const handleTitleBlur = (historyID: string) => {
+    callApi('updateHistoryTitleById', activeModel, historyID, titleInput)
+      .then(() => {
+        setHistories((prevHistories) => ({
+          ...prevHistories,
+          [historyID]: {
+            ...prevHistories[historyID],
+            title: titleInput,
+          }
+        }));
+      })
+      .catch((error) => callApi('alertMessage', `Failed to update title: ${error}`, 'error')
+        .catch((error) => console.error(error)));
+    setEditingHistoryID(null);
+  };
+
   return (
     <SidebarContainer isOpen={isOpen}>
       <CloseBtn onClick={onClose}>&times;</CloseBtn>
       {isLoading ? (
-        <LoadingSpinner/>
+        <LoadingSpinner />
       ) : Object.keys(histories).length - Object.keys(histories).filter((historyID) => historyID === "").length === 0 ? (
         <NoHistoryMessageContainer>
           <NoHistoryMessage>Nothing Currently</NoHistoryMessage>
@@ -145,8 +197,21 @@ export const HistorySidebar: React.FC<HistorySidebarProps> = ({isOpen, onClose, 
       ) : (
         <HistoryList>
           {Object.keys(histories).map((historyID) => historyID !== "" && (
-            <HistoryItem key={historyID} onClick={() => switchHistory(historyID)}>
-              <span>{histories[historyID].title}</span>
+            <HistoryItem key={historyID} onClick={() => switchHistory(historyID)} $active={historyID === messages.root}>
+              {editingHistoryID === historyID ? (
+                <EditableTitle
+                  value={titleInput}
+                  onChange={handleTitleChange}
+                  onBlur={() => handleTitleBlur(historyID)}
+                  onSubmit={() => handleTitleBlur(historyID)}
+                  autoFocus
+                />
+              ) : (
+                <Title onDoubleClick={(e) => {
+                  e.stopPropagation();
+                  handleTitleDoubleClick(historyID, histories[historyID].title);
+                }}>{histories[historyID].title}</Title>
+              )}
               <DeleteButton onClick={(e) => {
                 e.stopPropagation();
                 deleteHistory(historyID);
