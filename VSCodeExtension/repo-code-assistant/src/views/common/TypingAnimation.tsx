@@ -12,7 +12,7 @@ export const TypingAnimation = (
     isLoading: boolean;
     scrollToBottom: (smooth: boolean) => void;
   }) => {
-  const [displayedMessage, setDisplayedMessage] = useState("");
+  const [displayedMessage, setDisplayedMessage] = useState(message);
 
   useEffect(() => {
     const length = displayedMessage.length;
