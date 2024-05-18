@@ -85,7 +85,7 @@ export const InputContainer = (
       }
       setEnterPressCount(prev => prev + 1);
 
-      if (enterPressCount + 1 === 2) {
+      if (enterPressCount + 1 >= 2 && !isLoading) {
         sendMessage();
         resetEnterPressCount();
       }
