@@ -19,7 +19,7 @@ export interface LanguageModelService {
   /**
    * Clear the current conversation history
    */
-  clearConversationHistory: () => void;
+  addNewConversationHistory: () => void;
 
   /**
    * Add a new entry to the conversation history

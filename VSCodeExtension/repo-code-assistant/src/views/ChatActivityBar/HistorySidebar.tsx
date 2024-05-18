@@ -3,6 +3,7 @@ import styled from 'styled-components';
 
 import { WebviewContext } from '../WebviewContext';
 import { ModelType } from '../../types/modelType';
+import { DeleteIcon } from "../../icons";
 import { ConversationHistory, ConversationHistoryList } from '../../types/conversationHistory';
 import LoadingSpinner from '../common/LoadingSpinner';
 
@@ -23,7 +24,7 @@ const SidebarContainer = styled.div<{ isOpen: boolean }>`
 const CloseBtn = styled.span`
   position: absolute;
   top: 10px;
-  right: 25px;
+  right: 15px;
   font-size: 36px;
   cursor: pointer;
 `;
@@ -38,12 +39,26 @@ const HistoryItem = styled.li`
   text-decoration: none;
   font-size: 20px;
   color: white;
-  display: block;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
   transition: 0.3s;
   cursor: pointer;
 
   &:hover {
     background-color: #575757;
+  }
+`;
+
+const DeleteButton = styled.button`
+  background: none;
+  border: none;
+  color: white;
+  cursor: pointer;
+  padding: 5px;
+
+  &:hover {
+    color: red;
   }
 `;
 
@@ -93,7 +108,7 @@ export const HistorySidebar: React.FC<HistorySidebarProps> = ({isOpen, onClose, 
       .then(() => callApi('getLanguageModelConversationHistory', activeModel))
       .then((history) => {
         setMessages(history);
-        setIsLoading(false);
+        setIsLoading(false);  // End loading after switching history
       })
       .catch((error) => {
         callApi('alertMessage', `Failed to switch history: ${error}`, 'error')
@@ -101,6 +116,29 @@ export const HistorySidebar: React.FC<HistorySidebarProps> = ({isOpen, onClose, 
         setIsLoading(false);
       });
     onClose();
+  };
+
+  const deleteHistory = (historyID: string) => {
+    callApi('deleteHistory', activeModel, historyID)
+      .then(() => {
+        setHistories((prevHistories) => {
+          const updatedHistories = { ...prevHistories };
+          delete updatedHistories[historyID];
+          return updatedHistories;
+        });
+
+        // Clear the current messages if the deleted history was the current one
+        setMessages({
+          title: "",
+          create_time: 0,
+          update_time: 0,
+          root: "",
+          current: "",
+          entries: {},
+        });
+      })
+      .catch((error) => callApi('alertMessage', `Failed to delete history: ${error}`, 'error')
+        .catch((error) => console.error(error)));
   };
 
   return (
@@ -114,9 +152,15 @@ export const HistorySidebar: React.FC<HistorySidebarProps> = ({isOpen, onClose, 
         </NoHistoryMessageContainer>
       ) : (
         <HistoryList>
-          {Object.keys(histories).map((historyID) => (
+          {Object.keys(histories).map((historyID) => historyID !== "" && (
             <HistoryItem key={historyID} onClick={() => switchHistory(historyID)}>
-              {histories[historyID].title}
+              <span>{histories[historyID].title}</span>
+              <DeleteButton onClick={(e) => {
+                e.stopPropagation(); // Prevent the switch history event
+                deleteHistory(historyID);
+              }}>
+                <DeleteIcon />
+              </DeleteButton>
             </HistoryItem>
           ))}
         </HistoryList>

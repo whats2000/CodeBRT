@@ -3,7 +3,7 @@ import styled from "styled-components";
 
 import { ModelType } from "../../types/modelType";
 import { ConversationHistory } from "../../types/conversationHistory";
-import { CleanHistoryIcon, SettingIcon, HistoryIcon } from "../../icons";
+import { NewChat, SettingIcon, HistoryIcon } from "../../icons";
 import { WebviewContext } from "../WebviewContext";
 import { HistorySidebar } from "./HistorySidebar";
 
@@ -64,8 +64,8 @@ export const Toolbar: React.FC<ToolbarProps> = ({ activeModel, setMessages, setA
       );
   };
 
-  const clearHistory = () => {
-    callApi("clearLanguageConversationHistory", activeModel)
+  const createNewChat = () => {
+    callApi("addNewConversationHistory", activeModel)
       .then(() => setMessages({
         title: "",
         create_time: 0,
@@ -94,7 +94,7 @@ export const Toolbar: React.FC<ToolbarProps> = ({ activeModel, setMessages, setA
         <div>
           <ToolbarButton onClick={toggleSidebar}><HistoryIcon /></ToolbarButton>
           <ToolbarButton onClick={openSettings}><SettingIcon /></ToolbarButton>
-          <ToolbarButton onClick={clearHistory}><CleanHistoryIcon /></ToolbarButton>
+          <ToolbarButton onClick={createNewChat}><NewChat /></ToolbarButton>
         </div>
       </StyledToolbar>
       <HistorySidebar isOpen={isSidebarOpen} onClose={toggleSidebar} activeModel={activeModel} setMessages={setMessages} />

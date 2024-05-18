@@ -128,9 +128,9 @@ export abstract class AbstractLanguageModelService implements LanguageModelServi
   }
 
   /**
-   * Clear the current conversation history
+   * Add a new conversation history
    */
-  public clearConversationHistory(): void {
+  public addNewConversationHistory(): void {
     this.history = {
       title: '',
       root: '',
@@ -139,9 +139,11 @@ export abstract class AbstractLanguageModelService implements LanguageModelServi
       update_time: Date.now(),
       entries: {}
     };
+
     this.histories[this.history.root] = this.history;
+
     this.saveHistories().catch(
-      (error) => vscode.window.showErrorMessage('Failed to clear conversation history: ' + error)
+      (error) => vscode.window.showErrorMessage('Failed to add new conversation history: ' + error)
     );
   }
 

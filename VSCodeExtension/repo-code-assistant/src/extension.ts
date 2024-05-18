@@ -150,7 +150,7 @@ export const activate = async (ctx: vscode.ExtensionContext) => {
 
       return modelService.getConversationHistory();
     },
-    clearLanguageConversationHistory: (modelType: ModelType) => {
+    addNewConversationHistory: (modelType: ModelType) => {
       const modelService: LanguageModelService = models[modelType].service;
 
       if (!modelService) {
@@ -160,7 +160,7 @@ export const activate = async (ctx: vscode.ExtensionContext) => {
         return;
       }
 
-      modelService.clearConversationHistory();
+      modelService.addNewConversationHistory();
     },
     editLanguageModelConversationHistory: (
       modelType: ModelType,
