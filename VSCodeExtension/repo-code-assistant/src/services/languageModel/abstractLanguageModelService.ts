@@ -165,14 +165,16 @@ export abstract class AbstractLanguageModelService implements LanguageModelServi
    * @param parentID - The parent ID of the new entry
    * @param role - The role of the new entry ('user' or 'AI')
    * @param message - The message of the new entry
+   * @param images - The images referenced by the entry
    * @returns The ID of the newly created entry
    */
-  public addConversationEntry(parentID: string | null, role: 'user' | 'AI', message: string): string {
+  public addConversationEntry(parentID: string | null, role: 'user' | 'AI', message: string, images?: string[]): string {
     const newID = uuidv4();
     const newEntry: ConversationEntry = {
       id: newID,
-      role,
-      message,
+      role: role,
+      message: message,
+      images: images,
       parent: parentID,
       children: []
     };

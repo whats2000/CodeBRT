@@ -1,5 +1,8 @@
 import fs from "node:fs/promises";
+import path from "node:path";
+
 import * as vscode from "vscode";
+
 import { ViewKey } from "./views";
 import {
   ViewApi,
@@ -192,6 +195,7 @@ export const activate = async (ctx: vscode.ExtensionContext) => {
       parentID: string,
       sender: "user" | "AI",
       message: string,
+      images?: string[],
     ) => {
       const modelService: LanguageModelService = models[modelType].service;
 
@@ -202,7 +206,7 @@ export const activate = async (ctx: vscode.ExtensionContext) => {
         return "";
       }
 
-      return modelService.addConversationEntry(parentID, sender, message);
+      return modelService.addConversationEntry(parentID, sender, message, images);
     },
     getHistories: (modelType: ModelType) => {
       const modelService: LanguageModelService = models[modelType].service;
@@ -263,7 +267,60 @@ export const activate = async (ctx: vscode.ExtensionContext) => {
       }
 
       modelService.updateHistoryTitleById(historyID, title);
-    }
+    },
+    getLanguageModelResponseWithImage: async (
+      query: string,
+      modelType: ModelType,
+      images: string[],
+      currentEntryID?: string,
+    ) => {
+      const modelService: LanguageModelService = models[modelType].service;
+
+      if (!modelService) {
+        vscode.window.showErrorMessage(
+          `Failed to get response for unknown model type: ${modelType}`,
+        );
+        return `Model service not found for type: ${modelType}`;
+      }
+
+      try {
+        return modelService.getResponseChunksForQueryWithImage(query, images, api.sendStreamResponse, currentEntryID);
+      } catch (error) {
+        return `Failed to get response from ${modelType} service: ${error}`;
+      }
+    },
+    uploadImage: async (base64Data: string) => {
+      const matches = base64Data.match(/^data:([A-Za-z-+/]+);base64,(.+)$/);
+      if (!matches || matches.length !== 3) {
+        throw new Error('Invalid input string');
+      }
+
+      if (!vscode.workspace.workspaceFolders) {
+        throw new Error('No workspace folder is opened');
+      }
+
+      const buffer = Buffer.from(matches[2], 'base64');
+      const workspacePath = vscode.workspace.workspaceFolders[0].uri.fsPath;
+      const imagesDir = path.join(workspacePath, '.vscode', 'images');
+
+      // Create the .vscode/images directory if it does not exist
+      try {
+        await fs.mkdir(imagesDir, { recursive: true });
+      } catch (error) {
+        throw new Error('Failed to create images directory: ' + error);
+      }
+
+      // Generate a unique filename to avoid conflicts
+      const filename = path.join(imagesDir, `uploaded_image_${Date.now()}.png`);
+
+      try {
+        await fs.writeFile(filename, buffer);
+      } catch (error) {
+        throw new Error('Failed to write image file: ' + error);
+      }
+
+      return filename;
+    },
   };
 
   const isViewApiRequest = <K extends keyof ViewApi>(

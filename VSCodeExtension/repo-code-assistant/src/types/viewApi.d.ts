@@ -114,8 +114,8 @@ export type ViewApi = {
   editLanguageModelConversationHistory: (modelType: ModelType, entryID: string, newMessage: string) => void;
 
   /**
-   * Add a conversation entry to the conversation history for a language model.
-   * @param msg - The message to add.
+   * Send a stream response chunk.
+   * @param msg - The message chunk to add.
    */
   sendStreamResponse: (msg: string) => void;
 
@@ -137,9 +137,10 @@ export type ViewApi = {
    * @param parentID - The ID of the parent entry.
    * @param sender - The sender of the message.
    * @param message - The message to add.
+   * @param images - The images to add.
    * @returns The ID of the new entry.
    */
-  addConversationEntry: (modelType: ModelType, parentID: string, sender: "user" | "AI", message: string) => Promise<string>;
+  addConversationEntry: (modelType: ModelType, parentID: string, sender: "user" | "AI", message: string, images?: string[]) => Promise<string>;
 
   /**
    * Edit a conversation entry in the conversation history for a language model.
@@ -181,6 +182,23 @@ export type ViewApi = {
    * @param modelName - The name of the model to switch to.
    */
   switchModel: (modelType: ModelType, modelName: string) => void;
+
+  /**
+   * Get the response for a query with an image.
+   * @param query - The query to get a response for.
+   * @param modelType - The type of the model to use.
+   * @param images - The images paths to use.
+   * @param currentEntryID - The current entry ID.
+   * @returns The response.
+   */
+  getLanguageModelResponseWithImage: (query: string, modelType: ModelType, images: string[], currentEntryID?: string) => Promise<string>;
+
+  /**
+   * Get the response for a query with a file.
+   * @param base64Data - The base64 data of the file.
+   * @returns The file saved path.
+   */
+  uploadImage: (base64Data: string) => Promise<string>;
 };
 
 /**
@@ -194,8 +212,8 @@ export type ViewEvents = {
   exampleBMessage: (a: string) => void;
 
   /**
-   * Example event B.
-   * @param a - Example parameter A.
+   * Stream response event.
+   * @param a - The message chunk to stream.
    */
   streamResponse: (a: string) => void;
 };

@@ -18,6 +18,11 @@ export type ConversationEntry = {
   message: string;
 
   /**
+   * The images referenced by the entry
+   */
+  images?: string[];
+
+  /**
    * The parent ID of the entry
    */
   parent: string | null;

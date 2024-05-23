@@ -31,6 +31,7 @@ export const ChatActivityBar = () => {
   });
   const [isLoading, setIsLoading] = useState(false);
   const [activeModel, setActiveModel] = useState<ModelType>("gemini");
+  const [uploadedImages, setUploadedImages] = useState<string[]>([]);
 
   const messageEndRef = useRef<HTMLDivElement>(null);
   const messagesContainerRef = useRef<HTMLDivElement>(null);
@@ -176,7 +177,9 @@ export const ChatActivityBar = () => {
     scrollToBottom(false);
 
     try {
-      const responseText = await callApi("getLanguageModelResponse", inputMessage, activeModel, true) as string;
+      const responseText = uploadedImages.length > 0
+        ? await callApi("getLanguageModelResponseWithImage", inputMessage, activeModel, uploadedImages) as string
+        : await callApi("getLanguageModelResponse", inputMessage, activeModel, true) as string;
 
       // Add AI response to conversation history and replace the temporary ID
       const aiEntryId = await callApi("addConversationEntry", activeModel, userEntryId, "AI", responseText);
@@ -207,6 +210,7 @@ export const ChatActivityBar = () => {
       });
 
       setInputMessage("");
+      setUploadedImages([]);
       setTimeout(() => {
         setIsLoading(false);
         scrollToBottom(true);
@@ -305,6 +309,25 @@ export const ChatActivityBar = () => {
     }
   };
 
+  // Modified handleImageUpload function
+  const handleImageUpload = (files: FileList | null) => {
+    if (files && files.length > 0) {
+      const fileArray = Array.from(files);
+      fileArray.map(file => {
+        const reader = new FileReader();
+        reader.readAsDataURL(file);
+        reader.onload = async () => {
+          if (reader.result) {
+            // Sending the file data as base64 string
+            const fileName = await callApi("uploadImage", reader.result as string)
+
+            setUploadedImages(prevImages => [...prevImages, fileName]);
+          }
+        };
+      });
+    }
+  };
+
   return (
     <Container>
       <Toolbar
@@ -324,6 +347,7 @@ export const ChatActivityBar = () => {
         handleEditUserMessageSave={handleEditUserMessageSave}
       />
       <InputContainer
+        handleImageUpload={handleImageUpload}
         inputMessage={inputMessage}
         setInputMessage={setInputMessage}
         sendMessage={sendMessage}

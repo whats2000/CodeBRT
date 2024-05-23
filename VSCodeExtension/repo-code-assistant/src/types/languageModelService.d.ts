@@ -27,9 +27,10 @@ export interface LanguageModelService {
    * @param parentID - The parent ID of the new entry
    * @param role - The role of the new entry ('user' or 'AI')
    * @param message - The message of the new entry
+   * @param images - The images of the new entry
    * @returns The ID of the newly created entry
    */
-  addConversationEntry: (parentID: string | null, role: 'user' | 'AI', message: string) => string;
+  addConversationEntry: (parentID: string | null, role: 'user' | 'AI', message: string, images?: string[]) => string;
 
   /**
    * Edit the conversation history
@@ -91,4 +92,14 @@ export interface LanguageModelService {
    * @returns The response for the query
    */
   getResponseChunksForQuery: (query: string, sendStreamResponse: (msg: string) => void, currentEntryID?: string) => Promise<string>;
+
+  /**
+   * Get the response for a query with an image
+   * @param query - The query to get a response for
+   * @param images - The images paths to use
+   * @param sendStreamResponse - The callback to send chunks of the response to
+   * @param currentEntryID - The current entry ID
+   * @returns The response for the query
+   */
+  getResponseChunksForQueryWithImage: (query: string, images: string[], sendStreamResponse: (msg: string) => void, currentEntryID?: string) => Promise<string>;
 }

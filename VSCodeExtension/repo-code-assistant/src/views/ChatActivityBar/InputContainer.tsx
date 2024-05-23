@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { SendIcon } from "../../icons";
+import { SendIcon, UploadIcon } from "../../icons";
 import styled from "styled-components";
 
 const StyledInputContainer = styled.div`
@@ -45,13 +45,33 @@ const SendButton = styled.button`
   }
 `;
 
+const UploadButton = styled.label`
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: #444;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  padding: 5px;
+  margin-right: 10px;
+
+  &:hover {
+    background-color: #333;
+  }
+
+  input {
+    display: none;
+  }
+`;
+
 const Spinner = styled.div`
   border: 4px solid rgba(0, 0, 0, 0.1);
   width: 10px;
   height: 10px;
   border-radius: 50%;
   border-left-color: #09f;
-
   animation: spin 1s infinite linear;
 
   @keyframes spin {
@@ -69,10 +89,11 @@ interface InputContainerProps {
   setInputMessage: (message: string) => void;
   sendMessage: () => void;
   isLoading: boolean;
+  handleImageUpload: (files: FileList | null) => void;
 }
 
 export const InputContainer = (
-  { inputMessage, setInputMessage, sendMessage, isLoading }: InputContainerProps
+  { inputMessage, setInputMessage, sendMessage, isLoading, handleImageUpload }: InputContainerProps
 ) => {
   const [enterPressCount, setEnterPressCount] = useState(0);
   const resetEnterPressCount = () => setEnterPressCount(0);
@@ -94,8 +115,16 @@ export const InputContainer = (
     }
   };
 
+  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    handleImageUpload(event.target.files);
+  };
+
   return (
     <StyledInputContainer>
+      <UploadButton>
+        <input type="file" accept="image/*" onChange={handleFileChange} />
+        <UploadIcon />
+      </UploadButton>
       <MessageInput
         value={inputMessage}
         onChange={e => setInputMessage(e.target.value)}
