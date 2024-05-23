@@ -271,6 +271,7 @@ export const ChatActivityBar = () => {
       entry.parent ?? '',
       'user',
       editedMessage,
+      entry.images,
     );
 
     setMessages((prevMessages): ConversationHistory => {
@@ -280,6 +281,7 @@ export const ChatActivityBar = () => {
           id: newEntryId,
           role: 'user',
           message: editedMessage,
+          images: entry.images,
           parent: entry.parent,
           children: [],
         },
@@ -316,13 +318,21 @@ export const ChatActivityBar = () => {
     scrollToBottom(false);
 
     try {
-      const responseText = (await callApi(
-        'getLanguageModelResponse',
-        editedMessage,
-        activeModel,
-        true,
-        newEntryId,
-      )) as string;
+      const responseText =
+        entry.images && entry.images.length > 0
+          ? ((await callApi(
+              'getLanguageModelResponseWithImage',
+              editedMessage,
+              activeModel,
+              entry.images as string[],
+              newEntryId,
+            )) as string)
+          : ((await callApi(
+              'getLanguageModelResponse',
+              editedMessage,
+              activeModel,
+              true,
+            )) as string);
 
       // Add AI response to conversation history and replace the temporary ID
       const aiEntryId = await callApi(
