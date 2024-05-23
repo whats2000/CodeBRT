@@ -68,13 +68,13 @@ interface ToolbarProps {
 }
 
 export const Toolbar: React.FC<ToolbarProps> = ({
-                                                  activeModel,
-                                                  messages,
-                                                  setMessages,
-                                                  setActiveModel,
-                                                }) => {
+  activeModel,
+  messages,
+  setMessages,
+  setActiveModel,
+}) => {
   const { callApi } = useContext(WebviewContext);
-  const modelServices: ModelType[] = ["gemini", "cohere", "openai"];
+  const modelServices: ModelType[] = ["gemini", "cohere", "openai", "groq"];
   const [availableModels, setAvailableModels] = useState<string[]>([]);
   const [selectedModel, setSelectedModel] = useState<string>("");
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
@@ -83,26 +83,35 @@ export const Toolbar: React.FC<ToolbarProps> = ({
     callApi("getAvailableModels", activeModel)
       .then((models: string[]) => setAvailableModels(models))
       .catch((error) =>
-        callApi("alertMessage", `Failed to load available models: ${error}`, "error")
-          .catch(console.error)
+        callApi(
+          "alertMessage",
+          `Failed to load available models: ${error}`,
+          "error",
+        ).catch(console.error),
       );
   }, [activeModel]);
 
   const openSettings = () => {
-    callApi("showSettingsView")
-      .catch((error) =>
-        callApi("alertMessage", `Failed to open settings: ${error}`, "error")
-          .catch(console.error)
-      );
+    callApi("showSettingsView").catch((error) =>
+      callApi(
+        "alertMessage",
+        `Failed to open settings: ${error}`,
+        "error",
+      ).catch(console.error),
+    );
   };
 
   const createNewChat = () => {
     callApi("addNewConversationHistory", activeModel)
       .then((newConversationHistory) => setMessages(newConversationHistory))
-      .catch((error) => console.error("Failed to clear conversation history:", error));
+      .catch((error) =>
+        console.error("Failed to clear conversation history:", error),
+      );
   };
 
-  const handleModelServiceChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
+  const handleModelServiceChange = (
+    event: React.ChangeEvent<HTMLSelectElement>,
+  ) => {
     setActiveModel(event.target.value as ModelType);
   };
 
@@ -110,7 +119,11 @@ export const Toolbar: React.FC<ToolbarProps> = ({
     const newModel = event.target.value;
     setSelectedModel(newModel);
     callApi("switchModel", activeModel, newModel).catch((error) =>
-      callApi("alertMessage", `Failed to switch model: ${error}`, "error").catch(console.error)
+      callApi(
+        "alertMessage",
+        `Failed to switch model: ${error}`,
+        "error",
+      ).catch(console.error),
     );
   };
 
@@ -129,7 +142,10 @@ export const Toolbar: React.FC<ToolbarProps> = ({
               </option>
             ))}
           </ModelSelect>
-          <AvailableModelSelect value={selectedModel} onChange={handleModelChange}>
+          <AvailableModelSelect
+            value={selectedModel}
+            onChange={handleModelChange}
+          >
             {availableModels.map((model) => (
               <option key={model} value={model}>
                 {model}
@@ -138,9 +154,15 @@ export const Toolbar: React.FC<ToolbarProps> = ({
           </AvailableModelSelect>
         </div>
         <div>
-          <ToolbarButton onClick={toggleSidebar}><HistoryIcon /></ToolbarButton>
-          <ToolbarButton onClick={createNewChat}><NewChat /></ToolbarButton>
-          <ToolbarButton onClick={openSettings}><SettingIcon /></ToolbarButton>
+          <ToolbarButton onClick={toggleSidebar}>
+            <HistoryIcon />
+          </ToolbarButton>
+          <ToolbarButton onClick={createNewChat}>
+            <NewChat />
+          </ToolbarButton>
+          <ToolbarButton onClick={openSettings}>
+            <SettingIcon />
+          </ToolbarButton>
         </div>
       </StyledToolbar>
       <HistorySidebar

@@ -17,13 +17,25 @@ class SettingsManager {
   }
 
   // Generic getter
-  public get<T extends keyof ExtensionSettings>(setting: T): ExtensionSettings[T] {
-    return this.settings.get<ExtensionSettings[T]>(setting, this.defaultSettings()[setting]);
+  public get<T extends keyof ExtensionSettings>(
+    setting: T,
+  ): ExtensionSettings[T] {
+    return this.settings.get<ExtensionSettings[T]>(
+      setting,
+      this.defaultSettings()[setting],
+    );
   }
 
   // Generic setter
-  public set<T extends keyof ExtensionSettings>(setting: T, value: ExtensionSettings[T]): Thenable<void> {
-    return this.settings.update(setting, value, vscode.ConfigurationTarget.Global);
+  public set<T extends keyof ExtensionSettings>(
+    setting: T,
+    value: ExtensionSettings[T],
+  ): Thenable<void> {
+    return this.settings.update(
+      setting,
+      value,
+      vscode.ConfigurationTarget.Global,
+    );
   }
 
   // Default settings values
@@ -32,12 +44,14 @@ class SettingsManager {
       enableModel: {
         gemini: false,
         openai: false,
-        cohere: false
+        cohere: false,
+        groq: false,
       },
       openAiApiKey: '',
       geminiApiKey: '',
       cohereApiKey: '',
-      lastUsedModel: 'gemini'
+      groqApiKey: '',
+      lastUsedModel: 'gemini',
     };
   }
 }

@@ -31,7 +31,7 @@ export type ConversationEntry = {
    * The children of the entry
    */
   children: string[];
-}
+};
 
 /**
  * A conversation history
@@ -66,7 +66,7 @@ export type ConversationHistory = {
    * The entries of the conversation history
    */
   entries: { [key: string]: ConversationEntry };
-}
+};
 
 /**
  * A list of conversation histories
@@ -76,4 +76,4 @@ export type ConversationHistoryList = {
    * The conversation histories
    */
   [key: string]: ConversationHistory;
-}
+};
