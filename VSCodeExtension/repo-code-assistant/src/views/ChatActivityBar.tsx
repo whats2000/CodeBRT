@@ -374,24 +374,26 @@ export const ChatActivityBar = () => {
 
   // Modified handleImageUpload function
   const handleImageUpload = (files: FileList | null) => {
-    if (files && files.length > 0) {
-      const fileArray = Array.from(files);
-      fileArray.map((file) => {
-        const reader = new FileReader();
-        reader.readAsDataURL(file);
-        reader.onload = async () => {
-          if (reader.result) {
-            // Sending the file data as base64 string
-            const fileName = await callApi(
-              'uploadImage',
-              reader.result as string,
-            );
-
-            setUploadedImages((prevImages) => [...prevImages, fileName]);
-          }
-        };
-      });
+    if (!(files && files.length > 0)) {
+      return;
     }
+
+    const fileArray = Array.from(files);
+    fileArray.map((file) => {
+      const reader = new FileReader();
+      reader.readAsDataURL(file);
+      reader.onload = async () => {
+        if (reader.result) {
+          // Sending the file data as base64 string
+          const fileName = await callApi(
+            'uploadImage',
+            reader.result as string,
+          );
+
+          setUploadedImages((prevImages) => [...prevImages, fileName]);
+        }
+      };
+    });
   };
 
   const handleImageRemove = async (imagePath: string) => {

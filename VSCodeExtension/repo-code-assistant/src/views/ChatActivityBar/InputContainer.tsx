@@ -6,7 +6,7 @@ import { WebviewContext } from '../WebviewContext';
 const StyledInputContainer = styled.div`
   display: flex;
   flex-direction: column;
-  padding: 10px 15px;
+  padding: 10px 15px 10px 10px;
 `;
 
 const InputRow = styled.div`
@@ -176,6 +176,7 @@ export const InputContainer = ({
 
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     handleImageUpload(event.target.files);
+    event.target.value = '';
   };
 
   useEffect(() => {
@@ -207,7 +208,7 @@ export const InputContainer = ({
       </UploadedImageContainer>
       <InputRow>
         <UploadButton>
-          <input type='file' accept='image/*' onChange={handleFileChange} />
+          <input type='file' accept='image/*' onInput={handleFileChange} />
           <UploadIcon />
         </UploadButton>
         <MessageInput
