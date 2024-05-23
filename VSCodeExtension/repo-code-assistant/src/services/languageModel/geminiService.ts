@@ -1,19 +1,16 @@
-import * as vscode from 'vscode';
-import fs from 'fs';
+import * as vscode from "vscode";
+import fs from "fs";
 import {
   Content,
   GoogleGenerativeAI,
   HarmBlockThreshold,
   HarmCategory,
-  InlineDataPart,
-} from '@google/generative-ai';
+  InlineDataPart
+} from "@google/generative-ai";
 
-import {
-  ConversationEntry,
-  ConversationHistory,
-} from '../../types/conversationHistory';
-import { AbstractLanguageModelService } from './abstractLanguageModelService';
-import SettingsManager from '../../api/settingsManager';
+import { ConversationEntry, ConversationHistory } from "../../types/conversationHistory";
+import { AbstractLanguageModelService } from "./abstractLanguageModelService";
+import SettingsManager from "../../api/settingsManager";
 
 export class GeminiService extends AbstractLanguageModelService {
   private apiKey: string;
@@ -27,31 +24,16 @@ export class GeminiService extends AbstractLanguageModelService {
   };
 
   private readonly safetySettings = [
-    {
-      category: HarmCategory.HARM_CATEGORY_HARASSMENT,
-      threshold: HarmBlockThreshold.BLOCK_NONE,
-    },
-    {
-      category: HarmCategory.HARM_CATEGORY_HATE_SPEECH,
-      threshold: HarmBlockThreshold.BLOCK_NONE,
-    },
-    {
-      category: HarmCategory.HARM_CATEGORY_SEXUALLY_EXPLICIT,
-      threshold: HarmBlockThreshold.BLOCK_NONE,
-    },
-    {
-      category: HarmCategory.HARM_CATEGORY_DANGEROUS_CONTENT,
-      threshold: HarmBlockThreshold.BLOCK_NONE,
-    },
+    {category: HarmCategory.HARM_CATEGORY_HARASSMENT, threshold: HarmBlockThreshold.BLOCK_NONE},
+    {category: HarmCategory.HARM_CATEGORY_HATE_SPEECH, threshold: HarmBlockThreshold.BLOCK_NONE},
+    {category: HarmCategory.HARM_CATEGORY_SEXUALLY_EXPLICIT, threshold: HarmBlockThreshold.BLOCK_NONE},
+    {category: HarmCategory.HARM_CATEGORY_DANGEROUS_CONTENT, threshold: HarmBlockThreshold.BLOCK_NONE},
   ];
 
   constructor(
     context: vscode.ExtensionContext,
     settingsManager: SettingsManager,
-    availableModelName: string[] = [
-      'gemini-1.5-pro-latest',
-      'gemini-1.5-flash-latest',
-    ],
+    availableModelName: string[] = ["gemini-1.5-pro-latest", "gemini-pro-vision"],
   ) {
     super(
       context,
@@ -61,14 +43,10 @@ export class GeminiService extends AbstractLanguageModelService {
       availableModelName,
     );
     this.apiKey = settingsManager.get('geminiApiKey');
-    this.initialize().catch((error) =>
-      vscode.window.showErrorMessage(
-        'Failed to initialize Gemini Service: ' + error,
-      ),
-    );
+    this.initialize().catch((error) => vscode.window.showErrorMessage('Failed to initialize Gemini Service: ' + error));
 
     // Listen for settings changes
-    this.settingsListener = vscode.workspace.onDidChangeConfiguration((e) => {
+    this.settingsListener = vscode.workspace.onDidChangeConfiguration(e => {
       if (e.affectsConfiguration('repo-code-assistant.geminiApiKey')) {
         this.apiKey = settingsManager.get('geminiApiKey');
       }
@@ -81,9 +59,7 @@ export class GeminiService extends AbstractLanguageModelService {
     try {
       await this.loadHistories();
     } catch (error) {
-      vscode.window.showErrorMessage(
-        'Failed to initialize Gemini Service: ' + error,
-      );
+      vscode.window.showErrorMessage('Failed to initialize Gemini Service: ' + error);
     }
   }
 
@@ -91,9 +67,7 @@ export class GeminiService extends AbstractLanguageModelService {
     this.history = history;
   }
 
-  private conversationHistoryToContent(entries: {
-    [key: string]: ConversationEntry;
-  }): Content[] {
+  private conversationHistoryToContent(entries: { [key: string]: ConversationEntry }): Content[] {
     let result: Content[] = [];
     let currentEntry = entries[this.history.current];
 
@@ -116,22 +90,17 @@ export class GeminiService extends AbstractLanguageModelService {
   private fileToGenerativePart(path: string, mimeType: string): InlineDataPart {
     return {
       inlineData: {
-        data: Buffer.from(fs.readFileSync(path)).toString('base64'),
-        mimeType,
+        data: Buffer.from(fs.readFileSync(path)).toString("base64"),
+        mimeType
       },
     };
   }
 
-  public async getResponseForQuery(
-    query: string,
-    currentEntryID?: string,
-  ): Promise<string> {
+  public async getResponseForQuery(query: string, currentEntryID?: string): Promise<string> {
     const genAI = new GoogleGenerativeAI(this.apiKey);
     const model = genAI.getGenerativeModel({ model: this.currentModel });
 
-    const history = currentEntryID
-      ? this.getHistoryBeforeEntry(currentEntryID)
-      : this.history;
+    const history = currentEntryID ? this.getHistoryBeforeEntry(currentEntryID) : this.history;
 
     try {
       const chat = model.startChat({
@@ -143,24 +112,16 @@ export class GeminiService extends AbstractLanguageModelService {
       const result = await chat.sendMessage(query);
       return result.response.text();
     } catch (error) {
-      vscode.window.showErrorMessage(
-        'Failed to get response from Gemini Service: ' + error,
-      );
-      return 'Failed to connect to the language model service.';
+      vscode.window.showErrorMessage('Failed to get response from Gemini Service: ' + error);
+      return "Failed to connect to the language model service.";
     }
   }
 
-  public async getResponseChunksForQuery(
-    query: string,
-    sendStreamResponse: (msg: string) => void,
-    currentEntryID?: string,
-  ): Promise<string> {
+  public async getResponseChunksForQuery(query: string, sendStreamResponse: (msg: string) => void, currentEntryID?: string): Promise<string> {
     const genAI = new GoogleGenerativeAI(this.apiKey);
     const model = genAI.getGenerativeModel({ model: this.currentModel });
 
-    const history = currentEntryID
-      ? this.getHistoryBeforeEntry(currentEntryID)
-      : this.history;
+    const history = currentEntryID ? this.getHistoryBeforeEntry(currentEntryID) : this.history;
 
     try {
       const chat = model.startChat({
@@ -179,19 +140,18 @@ export class GeminiService extends AbstractLanguageModelService {
 
       return responseText;
     } catch (error) {
-      vscode.window.showErrorMessage(
-        'Failed to get response from Gemini Service: ' + error,
-      );
-      return 'Failed to connect to the language model service.';
+      vscode.window.showErrorMessage('Failed to get response from Gemini Service: ' + error);
+      return "Failed to connect to the language model service.";
     }
   }
 
-  public async getResponseChunksForQueryWithImage(
-    query: string,
-    images: string[],
-    sendStreamResponse: (msg: string) => void,
-  ): Promise<string> {
+  public async getResponseChunksForQueryWithImage(query: string, images: string[], sendStreamResponse: (msg: string) => void): Promise<string> {
     const genAI = new GoogleGenerativeAI(this.apiKey);
+
+    if (!this.currentModel.includes("vision")) {
+      vscode.window.showErrorMessage('This model does not support image input.');
+      return "This model does not support image input.";
+    }
 
     const model = genAI.getGenerativeModel({ model: this.currentModel });
 
@@ -199,10 +159,7 @@ export class GeminiService extends AbstractLanguageModelService {
       let responseText = '';
 
       const imageParts = images.map((image) => {
-        return this.fileToGenerativePart(
-          image,
-          `image/${image.split('.').pop()}`,
-        );
+        return this.fileToGenerativePart(image, `image/${image.split('.').pop()}`);
       });
 
       const result = await model.generateContentStream({
@@ -218,10 +175,8 @@ export class GeminiService extends AbstractLanguageModelService {
 
       return responseText;
     } catch (error) {
-      vscode.window.showErrorMessage(
-        'Failed to get response from Gemini Service: ' + error,
-      );
-      return 'Failed to connect to the language model service.';
+      vscode.window.showErrorMessage('Failed to get response from Gemini Service: ' + error);
+      return "Failed to connect to the language model service.";
     }
   }
 }
