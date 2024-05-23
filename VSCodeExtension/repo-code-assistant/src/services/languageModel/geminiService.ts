@@ -50,7 +50,7 @@ export class GeminiService extends AbstractLanguageModelService {
     settingsManager: SettingsManager,
     availableModelName: string[] = [
       'gemini-1.5-pro-latest',
-      'gemini-pro-vision',
+      'gemini-1.5-flash-latest',
     ],
   ) {
     super(
@@ -192,13 +192,6 @@ export class GeminiService extends AbstractLanguageModelService {
     sendStreamResponse: (msg: string) => void,
   ): Promise<string> {
     const genAI = new GoogleGenerativeAI(this.apiKey);
-
-    if (!this.currentModel.includes('vision')) {
-      vscode.window.showErrorMessage(
-        'This model does not support image input.',
-      );
-      return 'This model does not support image input.';
-    }
 
     const model = genAI.getGenerativeModel({ model: this.currentModel });
 
