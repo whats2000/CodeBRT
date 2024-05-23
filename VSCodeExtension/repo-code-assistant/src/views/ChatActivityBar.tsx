@@ -132,7 +132,7 @@ export const ChatActivityBar = () => {
     setIsLoading(true);
 
     // Add a user message to conversation history
-    const userEntryId = await callApi("addConversationEntry", activeModel, messages.current, "user", inputMessage);
+    const userEntryId = await callApi("addConversationEntry", activeModel, messages.current, "user", inputMessage, uploadedImages);
     setMessages((prevMessages): ConversationHistory => {
       const updatedEntries = {
         ...prevMessages.entries,
@@ -140,6 +140,7 @@ export const ChatActivityBar = () => {
           id: userEntryId,
           role: "user",
           message: inputMessage,
+          images: uploadedImages,
           parent: messages.current,
           children: [],
         },

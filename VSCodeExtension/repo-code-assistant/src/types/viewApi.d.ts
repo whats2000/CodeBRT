@@ -199,6 +199,12 @@ export type ViewApi = {
    * @returns The file saved path.
    */
   uploadImage: (base64Data: string) => Promise<string>;
+
+  /**
+   * Get the webview URI for a path.
+   * @param absolutePath - The absolute path to get the URI for.
+   */
+  getWebviewUri: (absolutePath: string) => string;
 };
 
 /**

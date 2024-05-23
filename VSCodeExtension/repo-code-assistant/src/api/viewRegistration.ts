@@ -81,18 +81,20 @@ const setViewHtml = <V extends ViewKey>(
   const csp = (
     isProduction
       ? [
-          `form-action 'none';`,
-          `default-src ${webview.cspSource};`,
-          `script-src ${webview.cspSource} 'nonce-${nonce}';`,
-          `style-src ${webview.cspSource} ${DEV_SERVER_HOST} 'unsafe-inline';`,
-        ]
+        `form-action 'none';`,
+        `default-src ${webview.cspSource};`,
+        `script-src ${webview.cspSource} 'nonce-${nonce}';`,
+        `style-src ${webview.cspSource} ${DEV_SERVER_HOST} 'unsafe-inline';`,
+        `img-src ${webview.cspSource} vscode-resource:;`,
+      ]
       : [
-          `form-action 'none';`,
-          `default-src ${webview.cspSource} ${DEV_SERVER_HOST};`,
-          `style-src ${webview.cspSource} ${DEV_SERVER_HOST} 'unsafe-inline';`,
-          `script-src ${webview.cspSource} ${DEV_SERVER_HOST} 'nonce-${nonce}';`,
-          `connect-src 'self' ${webview.cspSource} ${DEV_SERVER_HOST} ws:;`,
-        ]
+        `form-action 'none';`,
+        `default-src ${webview.cspSource} ${DEV_SERVER_HOST};`,
+        `style-src ${webview.cspSource} ${DEV_SERVER_HOST} 'unsafe-inline';`,
+        `script-src ${webview.cspSource} ${DEV_SERVER_HOST} 'nonce-${nonce}';`,
+        `connect-src 'self' ${webview.cspSource} ${DEV_SERVER_HOST} ws:;`,
+        `img-src ${webview.cspSource} vscode-resource:;`,
+      ]
   ).join(" ");
 
   webview.html = template({
@@ -110,7 +112,12 @@ export const viewRegistration = async <V extends ViewKey>(
   ctx: vscode.ExtensionContext,
   viewId: V
 ) => {
-  const view = await createView(ctx, viewId, { enableScripts: true });
+  const view = await createView(ctx, viewId, {
+    enableScripts: true,
+    localResourceRoots: [
+      vscode.Uri.file(path.join(ctx.extensionPath, "media")),
+    ]
+  });
   setViewHtml(ctx, viewId, view.webview);
   return view;
 };

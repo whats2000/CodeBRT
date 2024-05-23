@@ -295,31 +295,43 @@ export const activate = async (ctx: vscode.ExtensionContext) => {
         throw new Error('Invalid input string');
       }
 
-      if (!vscode.workspace.workspaceFolders) {
-        throw new Error('No workspace folder is opened');
-      }
-
       const buffer = Buffer.from(matches[2], 'base64');
-      const workspacePath = vscode.workspace.workspaceFolders[0].uri.fsPath;
-      const imagesDir = path.join(workspacePath, '.vscode', 'images');
+      const mediaDir = path.join(ctx.extensionPath, 'media');
 
-      // Create the .vscode/images directory if it does not exist
+      // Create the media directory if it does not exist
       try {
-        await fs.mkdir(imagesDir, { recursive: true });
+        await fs.mkdir(mediaDir, { recursive: true });
       } catch (error) {
-        throw new Error('Failed to create images directory: ' + error);
+        throw new Error('Failed to create media directory: ' + error);
       }
 
       // Generate a unique filename to avoid conflicts
-      const filename = path.join(imagesDir, `uploaded_image_${Date.now()}.png`);
+      const filename = path.join(mediaDir, `uploaded_image_${Date.now()}.png`);
 
       try {
         await fs.writeFile(filename, buffer);
+
+        vscode.window.showInformationMessage(`Image saved to: ${filename}`);
       } catch (error) {
         throw new Error('Failed to write image file: ' + error);
       }
 
       return filename;
+    },
+    getWebviewUri: (absolutePath: string) => {
+      const extensionPath = ctx.extensionPath.endsWith(path.sep) ? ctx.extensionPath : ctx.extensionPath + path.sep;
+
+      const relativePath = path.relative(extensionPath, absolutePath);
+
+      const panel = connectedViews?.chatActivityBar;
+
+      if (!panel) return '';
+
+      const imagePath = path.join(ctx.extensionPath, relativePath);
+
+      const imageUri = panel.webview.asWebviewUri(vscode.Uri.file(imagePath));
+
+      return imageUri.toString();
     },
   };
 

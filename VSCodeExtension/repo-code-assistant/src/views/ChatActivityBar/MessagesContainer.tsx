@@ -1,4 +1,4 @@
-import React, { useContext, useState } from "react";
+import React, { useContext, useState, useEffect } from "react";
 import ReactMarkdown from "react-markdown";
 import { RendererCode } from "../common/RenderCode";
 import styled from "styled-components";
@@ -119,6 +119,12 @@ const Button = styled.button<{ $user: string }>`
   }
 `;
 
+const MessageImage = styled.img`
+  max-width: 100%;
+  border-radius: 10px;
+  margin-top: 10px;
+`;
+
 interface MessagesContainerProps {
   setMessages: React.Dispatch<React.SetStateAction<ConversationHistory>>;
   modelType: ModelType;
@@ -161,6 +167,24 @@ export const MessagesContainer: React.FC<MessagesContainerProps> = (
   const [editingEntryId, setEditingEntryId] = useState<string | null>(null);
   const [editedMessage, setEditedMessage] = useState("");
   const {callApi} = useContext(WebviewContext);
+  const [imageUrls, setImageUrls] = useState<Record<string, string>>({});
+
+  useEffect(() => {
+    const loadImageUrls = async () => {
+      const urls: Record<string, string> = {};
+      for (const entry of Object.values(messages.entries)) {
+        if (entry.images) {
+          for (const image of entry.images) {
+            const webviewUri = await callApi("getWebviewUri", image);
+            urls[image] = webviewUri;
+          }
+        }
+      }
+      setImageUrls(urls);
+    };
+
+    loadImageUrls();
+  }, [messages.entries, callApi]);
 
   const handleCopy = (text: string, entryId: string) => {
     navigator.clipboard.writeText(text)
@@ -293,13 +317,18 @@ export const MessagesContainer: React.FC<MessagesContainerProps> = (
                 <Button $user={entry.role} onClick={handleCancelEdit}>Cancel</Button>
               </>
             ) : (
-              <MessageText>
-                {entry.role === "AI" && entry.id === messages.current && isLoading ? (
-                  <TypingAnimation message={entry.message} isLoading={isLoading} scrollToBottom={scrollToBottom}/>
-                ) : (
-                  <ReactMarkdown components={RendererCode} children={entry.message}/>
-                )}
-              </MessageText>
+              <>
+                <MessageText>
+                  {entry.role === "AI" && entry.id === messages.current && isLoading ? (
+                    <TypingAnimation message={entry.message} isLoading={isLoading} scrollToBottom={scrollToBottom}/>
+                  ) : (
+                    <ReactMarkdown components={RendererCode} children={entry.message}/>
+                  )}
+                </MessageText>
+                {entry.images && entry.images.map((image, index) => (
+                  <MessageImage key={index} src={imageUrls[image] || image} alt="Referenced Image"/>
+                ))}
+              </>
             )}
           </MessageBubble>
         );
