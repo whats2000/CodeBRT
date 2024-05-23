@@ -302,6 +302,22 @@ export abstract class AbstractLanguageModelService implements LanguageModelServi
    */
   public deleteHistory(historyID: string): ConversationHistory {
     if (this.histories[historyID]) {
+      const historyToDelete = this.histories[historyID];
+
+      // Delete referenced images
+      for (const entryID in historyToDelete.entries) {
+        const entry = historyToDelete.entries[entryID];
+        if (entry.images) {
+          entry.images.forEach(async (imagePath) => {
+            try {
+              await fs.promises.unlink(imagePath);
+            } catch (error) {
+              vscode.window.showErrorMessage(`Failed to delete image: ${imagePath}, error: ${error}`);
+            }
+          });
+        }
+      }
+
       delete this.histories[historyID];
       const newHistory = this.addNewConversationHistory();
       this.saveHistories().catch(

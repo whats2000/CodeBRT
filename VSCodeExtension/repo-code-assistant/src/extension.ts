@@ -310,8 +310,6 @@ export const activate = async (ctx: vscode.ExtensionContext) => {
 
       try {
         await fs.writeFile(filename, buffer);
-
-        vscode.window.showInformationMessage(`Image saved to: ${filename}`);
       } catch (error) {
         throw new Error('Failed to write image file: ' + error);
       }

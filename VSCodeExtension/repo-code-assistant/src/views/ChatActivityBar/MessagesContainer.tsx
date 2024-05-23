@@ -1,4 +1,4 @@
-import React, { useContext, useState, useEffect } from "react";
+import React, { useContext, useEffect, useState } from "react";
 import ReactMarkdown from "react-markdown";
 import { RendererCode } from "../common/RenderCode";
 import styled from "styled-components";
@@ -8,7 +8,7 @@ import { ModelType } from "../../types/modelType";
 import { WebviewContext } from "../WebviewContext";
 import { TypingAnimation } from "../common/TypingAnimation";
 import { CopyButton } from "../common/CopyButton";
-import { EditIcon, GoForwardIcon, GoBackIcon } from "../../icons";
+import { EditIcon, GoBackIcon, GoForwardIcon } from "../../icons";
 
 const StyledMessagesContainer = styled.div`
   flex-grow: 1;
@@ -175,15 +175,14 @@ export const MessagesContainer: React.FC<MessagesContainerProps> = (
       for (const entry of Object.values(messages.entries)) {
         if (entry.images) {
           for (const image of entry.images) {
-            const webviewUri = await callApi("getWebviewUri", image);
-            urls[image] = webviewUri;
+            urls[image] = await callApi("getWebviewUri", image);
           }
         }
       }
       setImageUrls(urls);
     };
 
-    loadImageUrls();
+    loadImageUrls().then();
   }, [messages.entries, callApi]);
 
   const handleCopy = (text: string, entryId: string) => {
