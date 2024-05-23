@@ -64,6 +64,17 @@ export interface LanguageModelService {
   deleteHistory: (historyID: string) => ConversationHistory;
 
   /**
+   * Get the available models
+   */
+  getAvailableModels: () => string[];
+
+  /**
+   * Switch to a different model
+   * @param newModel - The name of the model to switch to
+   */
+  switchModel: (newModel: string) => void;
+
+  /**
    * Get the response for a query, if the currentEntryID is provided, the history will be used from that point
    * @param query - The query to get a response for
    * @param currentEntryID - The current entry ID

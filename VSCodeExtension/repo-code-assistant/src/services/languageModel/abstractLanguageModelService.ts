@@ -1,7 +1,9 @@
 import * as fs from 'fs';
 import * as path from 'path';
-import * as vscode from 'vscode';
 import { v4 as uuidv4 } from 'uuid';
+
+import * as vscode from 'vscode';
+
 import { ConversationHistory, ConversationEntry, ConversationHistoryList } from '../../types/conversationHistory';
 import SettingsManager from "../../api/settingsManager";
 import { LanguageModelService } from "../../types/languageModelService";
@@ -56,7 +58,7 @@ export abstract class AbstractLanguageModelService implements LanguageModelServi
   /**
    * The list of available model names
    */
-  static availableModelName: string[] = [];
+  protected availableModelName: string[] = [];
 
   /**
    * Constructor for the AbstractLanguageModelService
@@ -64,12 +66,20 @@ export abstract class AbstractLanguageModelService implements LanguageModelServi
    * @param historyFileName - The name of the history file
    * @param settingsManager - The settings manager
    * @param currentModel - The current in-use model
+   * @param availableModelName - The list of available model names
    * @protected
    */
-  protected constructor(context: vscode.ExtensionContext, historyFileName: string, settingsManager: SettingsManager, currentModel: string) {
+  protected constructor(
+    context: vscode.ExtensionContext,
+    historyFileName: string,
+    settingsManager: SettingsManager,
+    currentModel: string,
+    availableModelName: string[]
+  ) {
     this.context = context;
     this.settingsManager = settingsManager;
     this.currentModel = currentModel;
+    this.availableModelName = availableModelName;
 
     const workspaceFolders = vscode.workspace.workspaceFolders;
     if (workspaceFolders) {
@@ -303,6 +313,26 @@ export abstract class AbstractLanguageModelService implements LanguageModelServi
   }
 
   /**
+   * Get the available models
+   */
+  public getAvailableModels(): string[] {
+    return this.availableModelName;
+  }
+
+  /**
+   * Switch to a different model
+   * @param newModel - The name of the model to switch to
+   */
+  public switchModel(newModel: string): void {
+    if (this.availableModelName.includes(newModel)) {
+      this.currentModel = newModel;
+      vscode.window.showInformationMessage(`Switched to model: ${newModel}`).then();
+    } else {
+      vscode.window.showErrorMessage(`Model ${newModel} is not available.`).then();
+    }
+  }
+
+  /**
    * Post process the loaded history, this will be called after the history is loaded
    * @param history - The loaded history
    * @protected
@@ -326,4 +356,10 @@ export abstract class AbstractLanguageModelService implements LanguageModelServi
    * @returns The response for the query
    */
   public abstract getResponseChunksForQuery(query: string, sendStreamResponse: (msg: string) => void, currentEntryID?: string): Promise<string>;
+
+  public async getResponseChunksForQueryWithImage(_query: string, _images: string[], _sendStreamResponse: (msg: string) => void): Promise<string> {
+    vscode.window.showInformationMessage('This feature is not supported by the current model.').then();
+
+    return "This feature is not supported by the current model.";
+  }
 }

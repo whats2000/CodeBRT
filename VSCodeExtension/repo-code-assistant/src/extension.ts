@@ -234,6 +234,26 @@ export const activate = async (ctx: vscode.ExtensionContext) => {
 
       return modelService.deleteHistory(historyID);
     },
+    getAvailableModels: (modelType: ModelType) => {
+      const modelService: LanguageModelService = models[modelType].service;
+
+      if (!modelService) {
+        vscode.window.showErrorMessage(`Failed to get available models for unknown model type: ${modelType}`);
+        return [];
+      }
+
+      return modelService.getAvailableModels();
+    },
+    switchModel: (modelType: ModelType, modelName: string) => {
+      const modelService: LanguageModelService = models[modelType].service;
+
+      if (!modelService) {
+        vscode.window.showErrorMessage(`Failed to switch language model for unknown model type: ${modelType}`);
+        return;
+      }
+
+      modelService.switchModel(modelName);
+    },
     updateHistoryTitleById: (modelType: ModelType, historyID: string, title: string) => {
       const modelService: LanguageModelService = models[modelType].service;
 

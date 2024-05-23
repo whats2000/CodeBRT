@@ -169,6 +169,18 @@ export type ViewApi = {
    * @param title - The new title.
    */
   updateHistoryTitleById: (modelType: ModelType, historyID: string, title: string) => void;
+
+  /**
+   * Get the available models for a language model.
+   */
+  getAvailableModels: (modelType: ModelType) => string[];
+
+  /**
+   * Switch to a different model.
+   * @param modelType - The type of the model to switch to.
+   * @param modelName - The name of the model to switch to.
+   */
+  switchModel: (modelType: ModelType, modelName: string) => void;
 };
 
 /**

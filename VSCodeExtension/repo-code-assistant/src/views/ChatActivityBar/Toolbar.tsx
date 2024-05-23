@@ -1,4 +1,4 @@
-import React, { useContext, useState } from "react";
+import React, { useContext, useEffect, useState } from "react";
 import styled from "styled-components";
 
 import { ModelType } from "../../types/modelType";
@@ -14,6 +14,7 @@ const StyledToolbar = styled.div`
 
   & > div {
     display: flex;
+    align-items: center;
   }
 `;
 
@@ -45,6 +46,20 @@ const ModelSelect = styled.select`
   }
 `;
 
+const AvailableModelSelect = styled.select`
+  padding: 5px 10px;
+  border-radius: 4px;
+  background-color: #666;
+  color: white;
+  border: none;
+  height: 30px;
+  margin-left: 5px;
+
+  &:focus {
+    outline: none;
+  }
+`;
+
 interface ToolbarProps {
   activeModel: ModelType;
   messages: ConversationHistory;
@@ -52,16 +67,26 @@ interface ToolbarProps {
   setActiveModel: React.Dispatch<React.SetStateAction<ModelType>>;
 }
 
-export const Toolbar: React.FC<ToolbarProps> = (
-  {
-    activeModel,
-    messages,
-    setMessages,
-    setActiveModel
-  }) => {
+export const Toolbar: React.FC<ToolbarProps> = ({
+                                                  activeModel,
+                                                  messages,
+                                                  setMessages,
+                                                  setActiveModel,
+                                                }) => {
   const { callApi } = useContext(WebviewContext);
-  const options: ModelType[] = ["gemini", "cohere", "openai"];
+  const modelServices: ModelType[] = ["gemini", "cohere", "openai"];
+  const [availableModels, setAvailableModels] = useState<string[]>([]);
+  const [selectedModel, setSelectedModel] = useState<string>("");
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+
+  useEffect(() => {
+    callApi("getAvailableModels", activeModel)
+      .then((models: string[]) => setAvailableModels(models))
+      .catch((error) =>
+        callApi("alertMessage", `Failed to load available models: ${error}`, "error")
+          .catch(console.error)
+      );
+  }, [activeModel]);
 
   const openSettings = () => {
     callApi("showSettingsView")
@@ -77,8 +102,16 @@ export const Toolbar: React.FC<ToolbarProps> = (
       .catch((error) => console.error("Failed to clear conversation history:", error));
   };
 
-  const handleModelChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
+  const handleModelServiceChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
     setActiveModel(event.target.value as ModelType);
+  };
+
+  const handleModelChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
+    const newModel = event.target.value;
+    setSelectedModel(newModel);
+    callApi("switchModel", activeModel, newModel).catch((error) =>
+      callApi("alertMessage", `Failed to switch model: ${error}`, "error").catch(console.error)
+    );
   };
 
   const toggleSidebar = () => {
@@ -88,9 +121,22 @@ export const Toolbar: React.FC<ToolbarProps> = (
   return (
     <>
       <StyledToolbar>
-        <ModelSelect value={activeModel} onChange={handleModelChange}>
-          {options.map((model) => <option key={model} value={model}>{model}</option>)}
-        </ModelSelect>
+        <div>
+          <ModelSelect value={activeModel} onChange={handleModelServiceChange}>
+            {modelServices.map((service) => (
+              <option key={service} value={service}>
+                {service}
+              </option>
+            ))}
+          </ModelSelect>
+          <AvailableModelSelect value={selectedModel} onChange={handleModelChange}>
+            {availableModels.map((model) => (
+              <option key={model} value={model}>
+                {model}
+              </option>
+            ))}
+          </AvailableModelSelect>
+        </div>
         <div>
           <ToolbarButton onClick={toggleSidebar}><HistoryIcon /></ToolbarButton>
           <ToolbarButton onClick={createNewChat}><NewChat /></ToolbarButton>

@@ -6,15 +6,21 @@ import { AbstractLanguageModelService } from "./abstractLanguageModelService";
 import SettingsManager from "../../api/settingsManager";
 
 export class CohereService extends AbstractLanguageModelService {
-  static availableModelName: string[] = ["command"];
   private apiKey: string;
   private readonly settingsListener: vscode.Disposable;
 
   constructor(
     context: vscode.ExtensionContext,
     settingsManager: SettingsManager,
+    availableModelName: string[] = ["command"],
   ) {
-    super(context, "cohereConversationHistory.json", settingsManager, CohereService.availableModelName[0]);
+    super(
+      context,
+      "cohereConversationHistory.json",
+      settingsManager,
+      availableModelName[0],
+      availableModelName,
+    );
     this.apiKey = settingsManager.get("cohereApiKey");
     this.initialize().catch((error) =>
       vscode.window.showErrorMessage(

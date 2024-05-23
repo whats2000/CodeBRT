@@ -1,12 +1,18 @@
 import * as vscode from "vscode";
-import { Content, GoogleGenerativeAI, HarmBlockThreshold, HarmCategory } from "@google/generative-ai";
+import fs from "fs";
+import {
+  Content,
+  GoogleGenerativeAI,
+  HarmBlockThreshold,
+  HarmCategory,
+  InlineDataPart
+} from "@google/generative-ai";
 
 import { ConversationEntry, ConversationHistory } from "../../types/conversationHistory";
 import { AbstractLanguageModelService } from "./abstractLanguageModelService";
 import SettingsManager from "../../api/settingsManager";
 
 export class GeminiService extends AbstractLanguageModelService {
-  static availableModelName: string[] = ["gemini-1.5-pro-latest"];
   private apiKey: string;
   private readonly settingsListener: vscode.Disposable;
 
@@ -18,14 +24,24 @@ export class GeminiService extends AbstractLanguageModelService {
   };
 
   private readonly safetySettings = [
-    {category: HarmCategory.HARM_CATEGORY_HARASSMENT, threshold: HarmBlockThreshold.BLOCK_MEDIUM_AND_ABOVE},
-    {category: HarmCategory.HARM_CATEGORY_HATE_SPEECH, threshold: HarmBlockThreshold.BLOCK_MEDIUM_AND_ABOVE},
-    {category: HarmCategory.HARM_CATEGORY_SEXUALLY_EXPLICIT, threshold: HarmBlockThreshold.BLOCK_MEDIUM_AND_ABOVE},
-    {category: HarmCategory.HARM_CATEGORY_DANGEROUS_CONTENT, threshold: HarmBlockThreshold.BLOCK_MEDIUM_AND_ABOVE},
+    {category: HarmCategory.HARM_CATEGORY_HARASSMENT, threshold: HarmBlockThreshold.BLOCK_NONE},
+    {category: HarmCategory.HARM_CATEGORY_HATE_SPEECH, threshold: HarmBlockThreshold.BLOCK_NONE},
+    {category: HarmCategory.HARM_CATEGORY_SEXUALLY_EXPLICIT, threshold: HarmBlockThreshold.BLOCK_NONE},
+    {category: HarmCategory.HARM_CATEGORY_DANGEROUS_CONTENT, threshold: HarmBlockThreshold.BLOCK_NONE},
   ];
 
-  constructor(context: vscode.ExtensionContext, settingsManager: SettingsManager) {
-    super(context, 'geminiConversationHistory.json', settingsManager, GeminiService.availableModelName[0]);
+  constructor(
+    context: vscode.ExtensionContext,
+    settingsManager: SettingsManager,
+    availableModelName: string[] = ["gemini-1.5-pro-latest", "gemini-pro-vision"],
+  ) {
+    super(
+      context,
+      'geminiConversationHistory.json',
+      settingsManager,
+      availableModelName[0],
+      availableModelName,
+    );
     this.apiKey = settingsManager.get('geminiApiKey');
     this.initialize().catch((error) => vscode.window.showErrorMessage('Failed to initialize Gemini Service: ' + error));
 
@@ -71,6 +87,15 @@ export class GeminiService extends AbstractLanguageModelService {
     return result;
   }
 
+  private fileToGenerativePart(path: string, mimeType: string): InlineDataPart {
+    return {
+      inlineData: {
+        data: Buffer.from(fs.readFileSync(path)).toString("base64"),
+        mimeType
+      },
+    };
+  }
+
   public async getResponseForQuery(query: string, currentEntryID?: string): Promise<string> {
     const genAI = new GoogleGenerativeAI(this.apiKey);
     const model = genAI.getGenerativeModel({ model: this.currentModel });
@@ -107,6 +132,41 @@ export class GeminiService extends AbstractLanguageModelService {
 
       let responseText = '';
       const result = await chat.sendMessageStream(query);
+      for await (const item of result.stream) {
+        const partText = item.text();
+        sendStreamResponse(partText);
+        responseText += partText;
+      }
+
+      return responseText;
+    } catch (error) {
+      vscode.window.showErrorMessage('Failed to get response from Gemini Service: ' + error);
+      return "Failed to connect to the language model service.";
+    }
+  }
+
+  public async getResponseChunksForQueryWithImage(query: string, images: string[], sendStreamResponse: (msg: string) => void): Promise<string> {
+    const genAI = new GoogleGenerativeAI(this.apiKey);
+
+    if (!this.currentModel.includes("vision")) {
+      vscode.window.showErrorMessage('This model does not support image input.');
+      return "This model does not support image input.";
+    }
+
+    const model = genAI.getGenerativeModel({ model: this.currentModel });
+
+    try {
+      let responseText = '';
+
+      const imageParts = images.map((image) => {
+        return this.fileToGenerativePart(image, `image/${image.split('.').pop()}`);
+      });
+
+      const result = await model.generateContentStream({
+        generationConfig: this.generationConfig,
+        contents: [{ role: 'user', parts: [{ text: query }, ...imageParts] }],
+      });
+
       for await (const item of result.stream) {
         const partText = item.text();
         sendStreamResponse(partText);

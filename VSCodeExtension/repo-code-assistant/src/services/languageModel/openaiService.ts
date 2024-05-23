@@ -10,18 +10,19 @@ import SettingsManager from "../../api/settingsManager";
 
 export class OpenAIService extends AbstractLanguageModelService {
   private apiKey: string;
-  static availableModelName: string[] = ["gpt-3.5-turbo"];
   private readonly settingsListener: vscode.Disposable;
 
   constructor(
     context: vscode.ExtensionContext,
     settingsManager: SettingsManager,
+    availableModelName: string[] = ["gpt-3.5-turbo", "gpt-4o"],
   ) {
     super(
       context,
       "openAIConversationHistory.json",
       settingsManager,
-      OpenAIService.availableModelName[0],
+      availableModelName[0],
+      availableModelName,
     );
     this.apiKey = settingsManager.get("openAiApiKey");
 
@@ -90,7 +91,7 @@ export class OpenAIService extends AbstractLanguageModelService {
     try {
       const chatCompletion = await openai.chat.completions.create({
         messages: conversationHistory,
-        model: OpenAIService.availableModelName[0],
+        model: this.currentModel,
       } as ChatCompletionCreateParamsNonStreaming);
 
       return chatCompletion.choices[0]?.message?.content!;
@@ -120,7 +121,7 @@ export class OpenAIService extends AbstractLanguageModelService {
     try {
       const stream = await openai.chat.completions.create({
         messages: conversationHistory,
-        model: OpenAIService.availableModelName[0],
+        model: this.currentModel,
         stream: true,
       } as ChatCompletionCreateParamsStreaming);
 
