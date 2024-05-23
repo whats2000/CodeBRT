@@ -1,9 +1,12 @@
-import * as vscode from "vscode";
-import { Cohere, CohereClient } from "cohere-ai";
+import * as vscode from 'vscode';
+import { Cohere, CohereClient } from 'cohere-ai';
 
-import { ConversationEntry, ConversationHistory } from "../../types/conversationHistory";
-import { AbstractLanguageModelService } from "./abstractLanguageModelService";
-import SettingsManager from "../../api/settingsManager";
+import {
+  ConversationEntry,
+  ConversationHistory,
+} from '../../types/conversationHistory';
+import { AbstractLanguageModelService } from './abstractLanguageModelService';
+import SettingsManager from '../../api/settingsManager';
 
 export class CohereService extends AbstractLanguageModelService {
   private apiKey: string;
@@ -12,26 +15,26 @@ export class CohereService extends AbstractLanguageModelService {
   constructor(
     context: vscode.ExtensionContext,
     settingsManager: SettingsManager,
-    availableModelName: string[] = ["command"],
+    availableModelName: string[] = ['command'],
   ) {
     super(
       context,
-      "cohereConversationHistory.json",
+      'cohereConversationHistory.json',
       settingsManager,
       availableModelName[0],
       availableModelName,
     );
-    this.apiKey = settingsManager.get("cohereApiKey");
+    this.apiKey = settingsManager.get('cohereApiKey');
     this.initialize().catch((error) =>
       vscode.window.showErrorMessage(
-        "Failed to initialize Cohere Service: " + error,
+        'Failed to initialize Cohere Service: ' + error,
       ),
     );
 
     // Listen for settings changes
     this.settingsListener = vscode.workspace.onDidChangeConfiguration((e) => {
-      if (e.affectsConfiguration("repo-code-assistant.cohereApiKey")) {
-        this.apiKey = settingsManager.get("cohereApiKey");
+      if (e.affectsConfiguration('repo-code-assistant.cohereApiKey')) {
+        this.apiKey = settingsManager.get('cohereApiKey');
       }
     });
 
@@ -43,7 +46,7 @@ export class CohereService extends AbstractLanguageModelService {
       await this.loadHistories();
     } catch (error) {
       vscode.window.showErrorMessage(
-        "Failed to initialize Cohere Service: " + error,
+        'Failed to initialize Cohere Service: ' + error,
       );
     }
   }
@@ -52,15 +55,15 @@ export class CohereService extends AbstractLanguageModelService {
     this.history = history;
   }
 
-  private conversationHistoryToContent(
-    entries: { [key: string]: ConversationEntry },
-  ): Cohere.ChatMessage[] {
+  private conversationHistoryToContent(entries: {
+    [key: string]: ConversationEntry;
+  }): Cohere.ChatMessage[] {
     let result: Cohere.ChatMessage[] = [];
     let currentEntry = entries[this.history.current];
 
     while (currentEntry) {
       result.unshift({
-        role: currentEntry.role === "AI" ? "CHATBOT" : "USER",
+        role: currentEntry.role === 'AI' ? 'CHATBOT' : 'USER',
         message: currentEntry.message,
       });
 
@@ -74,10 +77,15 @@ export class CohereService extends AbstractLanguageModelService {
     return result;
   }
 
-  public async getResponseForQuery(query: string, currentEntryID?: string): Promise<string> {
+  public async getResponseForQuery(
+    query: string,
+    currentEntryID?: string,
+  ): Promise<string> {
     const model = new CohereClient({ token: this.apiKey });
 
-    const history = currentEntryID ? this.getHistoryBeforeEntry(currentEntryID) : this.history;
+    const history = currentEntryID
+      ? this.getHistoryBeforeEntry(currentEntryID)
+      : this.history;
 
     try {
       const response = await model.chat({
@@ -89,9 +97,9 @@ export class CohereService extends AbstractLanguageModelService {
       return response.text;
     } catch (error) {
       vscode.window.showErrorMessage(
-        "Failed to get response from Cohere Service: " + error,
+        'Failed to get response from Cohere Service: ' + error,
       );
-      return "Failed to connect to the language model service.";
+      return 'Failed to connect to the language model service.';
     }
   }
 
@@ -104,7 +112,9 @@ export class CohereService extends AbstractLanguageModelService {
       token: this.apiKey,
     });
 
-    const history = currentEntryID ? this.getHistoryBeforeEntry(currentEntryID) : this.history;
+    const history = currentEntryID
+      ? this.getHistoryBeforeEntry(currentEntryID)
+      : this.history;
 
     try {
       const result = await model.chatStream({
@@ -112,9 +122,9 @@ export class CohereService extends AbstractLanguageModelService {
         model: this.currentModel,
         message: query,
       });
-      let responseText = "";
+      let responseText = '';
       for await (const item of result) {
-        if (item.eventType !== "text-generation") continue;
+        if (item.eventType !== 'text-generation') continue;
 
         const partText = item.text;
         sendStreamResponse(partText);
@@ -124,9 +134,9 @@ export class CohereService extends AbstractLanguageModelService {
       return responseText;
     } catch (error) {
       vscode.window.showErrorMessage(
-        "Failed to get response from Cohere Service: " + error,
+        'Failed to get response from Cohere Service: ' + error,
       );
-      return "Failed to connect to the language model service.";
+      return 'Failed to connect to the language model service.';
     }
   }
 }

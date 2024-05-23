@@ -4,14 +4,20 @@ import { v4 as uuidv4 } from 'uuid';
 
 import * as vscode from 'vscode';
 
-import { ConversationHistory, ConversationEntry, ConversationHistoryList } from '../../types/conversationHistory';
-import SettingsManager from "../../api/settingsManager";
-import { LanguageModelService } from "../../types/languageModelService";
+import {
+  ConversationHistory,
+  ConversationEntry,
+  ConversationHistoryList,
+} from '../../types/conversationHistory';
+import SettingsManager from '../../api/settingsManager';
+import { LanguageModelService } from '../../types/languageModelService';
 
 /**
  * Abstract class for the Language Model Service
  */
-export abstract class AbstractLanguageModelService implements LanguageModelService {
+export abstract class AbstractLanguageModelService
+  implements LanguageModelService
+{
   /**
    * The extension context
    * @protected
@@ -40,7 +46,7 @@ export abstract class AbstractLanguageModelService implements LanguageModelServi
     current: '',
     create_time: Date.now(),
     update_time: Date.now(),
-    entries: {}
+    entries: {},
   };
 
   /**
@@ -74,7 +80,7 @@ export abstract class AbstractLanguageModelService implements LanguageModelServi
     historyFileName: string,
     settingsManager: SettingsManager,
     currentModel: string,
-    availableModelName: string[]
+    availableModelName: string[],
   ) {
     this.context = context;
     this.settingsManager = settingsManager;
@@ -83,11 +89,17 @@ export abstract class AbstractLanguageModelService implements LanguageModelServi
 
     const workspaceFolders = vscode.workspace.workspaceFolders;
     if (workspaceFolders) {
-      if (!fs.existsSync(path.join(workspaceFolders[0].uri.fsPath, '.vscode'))) {
+      if (
+        !fs.existsSync(path.join(workspaceFolders[0].uri.fsPath, '.vscode'))
+      ) {
         fs.mkdirSync(path.join(workspaceFolders[0].uri.fsPath, '.vscode'));
       }
 
-      this.historyFilePath = path.join(workspaceFolders[0].uri.fsPath, '.vscode', historyFileName);
+      this.historyFilePath = path.join(
+        workspaceFolders[0].uri.fsPath,
+        '.vscode',
+        historyFileName,
+      );
     } else {
       this.historyFilePath = null;
     }
@@ -147,14 +159,16 @@ export abstract class AbstractLanguageModelService implements LanguageModelServi
       current: '',
       create_time: Date.now(),
       update_time: Date.now(),
-      entries: {}
+      entries: {},
     };
 
     this.histories[newHistory.root] = newHistory;
     this.history = newHistory;
 
-    this.saveHistories().catch(
-      (error) => vscode.window.showErrorMessage('Failed to add new conversation history: ' + error)
+    this.saveHistories().catch((error) =>
+      vscode.window.showErrorMessage(
+        'Failed to add new conversation history: ' + error,
+      ),
     );
 
     return newHistory;
@@ -168,7 +182,12 @@ export abstract class AbstractLanguageModelService implements LanguageModelServi
    * @param images - The images referenced by the entry
    * @returns The ID of the newly created entry
    */
-  public addConversationEntry(parentID: string | null, role: 'user' | 'AI', message: string, images?: string[]): string {
+  public addConversationEntry(
+    parentID: string | null,
+    role: 'user' | 'AI',
+    message: string,
+    images?: string[],
+  ): string {
     const newID = uuidv4();
     const newEntry: ConversationEntry = {
       id: newID,
@@ -176,12 +195,14 @@ export abstract class AbstractLanguageModelService implements LanguageModelServi
       message: message,
       images: images,
       parent: parentID,
-      children: []
+      children: [],
     };
 
     if (parentID) {
       if (!this.history.entries[parentID]) {
-        vscode.window.showErrorMessage('Parent entry not found: ' + parentID).then();
+        vscode.window
+          .showErrorMessage('Parent entry not found: ' + parentID)
+          .then();
         return '';
       }
       this.history.entries[parentID].children.push(newID);
@@ -196,8 +217,10 @@ export abstract class AbstractLanguageModelService implements LanguageModelServi
     this.history.update_time = Date.now();
     this.history.current = newID;
     this.histories[this.history.root] = this.history;
-    this.saveHistories().catch(
-      (error) => vscode.window.showErrorMessage('Failed to add conversation entry: ' + error)
+    this.saveHistories().catch((error) =>
+      vscode.window.showErrorMessage(
+        'Failed to add conversation entry: ' + error,
+      ),
     );
 
     return newID;
@@ -213,11 +236,14 @@ export abstract class AbstractLanguageModelService implements LanguageModelServi
       this.history.entries[entryID].message = newMessage;
       this.history.update_time = Date.now();
       this.histories[this.history.root] = this.history;
-      this.saveHistories().catch(
-        (error) => vscode.window.showErrorMessage('Failed to edit conversation entry: ' + error)
+      this.saveHistories().catch((error) =>
+        vscode.window.showErrorMessage(
+          'Failed to edit conversation entry: ' + error,
+        ),
       );
     } else {
-      vscode.window.showErrorMessage('Entry not found: ' + entryID)
+      vscode.window
+        .showErrorMessage('Entry not found: ' + entryID)
         .then(() => console.error('Entry not found: ' + entryID));
     }
   }
@@ -231,14 +257,15 @@ export abstract class AbstractLanguageModelService implements LanguageModelServi
     if (this.histories[historyID]) {
       this.histories[historyID].title = newTitle;
       this.histories[historyID].update_time = Date.now();
-      this.saveHistories().catch(
-        (error) => vscode.window.showErrorMessage('Failed to update conversation title: ' + error)
+      this.saveHistories().catch((error) =>
+        vscode.window.showErrorMessage(
+          'Failed to update conversation title: ' + error,
+        ),
       );
     } else {
       vscode.window.showErrorMessage('History not found: ' + historyID).then();
     }
   }
-
 
   /**
    * Get the history before a given entry id
@@ -252,7 +279,7 @@ export abstract class AbstractLanguageModelService implements LanguageModelServi
       current: currentEntryID,
       create_time: this.history.create_time,
       update_time: Date.now(),
-      entries: {}
+      entries: {},
     };
 
     let currentEntry = this.history.entries[currentEntryID];
@@ -267,7 +294,7 @@ export abstract class AbstractLanguageModelService implements LanguageModelServi
       }
     }
 
-    entryStack.reverse().forEach(entry => {
+    entryStack.reverse().forEach((entry) => {
       newHistory.entries[entry.id] = entry;
     });
 
@@ -281,8 +308,8 @@ export abstract class AbstractLanguageModelService implements LanguageModelServi
   public switchHistory(historyID: string): void {
     if (this.histories[historyID]) {
       this.history = this.histories[historyID];
-      this.saveHistories().catch(
-        (error) => vscode.window.showErrorMessage('Failed to switch history: ' + error)
+      this.saveHistories().catch((error) =>
+        vscode.window.showErrorMessage('Failed to switch history: ' + error),
       );
     } else {
       vscode.window.showErrorMessage('History not found: ' + historyID).then();
@@ -312,7 +339,9 @@ export abstract class AbstractLanguageModelService implements LanguageModelServi
             try {
               await fs.promises.unlink(imagePath);
             } catch (error) {
-              vscode.window.showErrorMessage(`Failed to delete image: ${imagePath}, error: ${error}`);
+              vscode.window.showErrorMessage(
+                `Failed to delete image: ${imagePath}, error: ${error}`,
+              );
             }
           });
         }
@@ -320,8 +349,8 @@ export abstract class AbstractLanguageModelService implements LanguageModelServi
 
       delete this.histories[historyID];
       const newHistory = this.addNewConversationHistory();
-      this.saveHistories().catch(
-        (error) => vscode.window.showErrorMessage('Failed to delete history: ' + error)
+      this.saveHistories().catch((error) =>
+        vscode.window.showErrorMessage('Failed to delete history: ' + error),
       );
       return newHistory;
     } else {
@@ -344,9 +373,13 @@ export abstract class AbstractLanguageModelService implements LanguageModelServi
   public switchModel(newModel: string): void {
     if (this.availableModelName.includes(newModel)) {
       this.currentModel = newModel;
-      vscode.window.showInformationMessage(`Switched to model: ${newModel}`).then();
+      vscode.window
+        .showInformationMessage(`Switched to model: ${newModel}`)
+        .then();
     } else {
-      vscode.window.showErrorMessage(`Model ${newModel} is not available.`).then();
+      vscode.window
+        .showErrorMessage(`Model ${newModel} is not available.`)
+        .then();
     }
   }
 
@@ -363,7 +396,10 @@ export abstract class AbstractLanguageModelService implements LanguageModelServi
    * @param currentEntryID - The current entry ID
    * @returns The response for the query
    */
-  public abstract getResponseForQuery(query: string, currentEntryID?: string): Promise<string>;
+  public abstract getResponseForQuery(
+    query: string,
+    currentEntryID?: string,
+  ): Promise<string>;
 
   /**
    * Get the response for a query and also fire a view event to send the response in chunks.
@@ -373,11 +409,23 @@ export abstract class AbstractLanguageModelService implements LanguageModelServi
    * @param currentEntryID - The current entry ID
    * @returns The response for the query
    */
-  public abstract getResponseChunksForQuery(query: string, sendStreamResponse: (msg: string) => void, currentEntryID?: string): Promise<string>;
+  public abstract getResponseChunksForQuery(
+    query: string,
+    sendStreamResponse: (msg: string) => void,
+    currentEntryID?: string,
+  ): Promise<string>;
 
-  public async getResponseChunksForQueryWithImage(_query: string, _images: string[], _sendStreamResponse: (msg: string) => void): Promise<string> {
-    vscode.window.showInformationMessage('This feature is not supported by the current model.').then();
+  public async getResponseChunksForQueryWithImage(
+    _query: string,
+    _images: string[],
+    _sendStreamResponse: (msg: string) => void,
+  ): Promise<string> {
+    vscode.window
+      .showInformationMessage(
+        'This feature is not supported by the current model.',
+      )
+      .then();
 
-    return "This feature is not supported by the current model.";
+    return 'This feature is not supported by the current model.';
   }
 }

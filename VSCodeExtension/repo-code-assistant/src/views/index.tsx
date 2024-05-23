@@ -1,10 +1,10 @@
-import React from "react";
-import { createRoot } from "react-dom/client";
+import React from 'react';
+import { createRoot } from 'react-dom/client';
 
-import { WebviewApi, WithWebviewContext } from "./WebviewContext";
-import { ChatActivityBar } from "./ChatActivityBar";
-import { WorkPanel } from "./WorkPanel";
-import { SettingsBar } from "./SettingsBar";
+import { WebviewApi, WithWebviewContext } from './WebviewContext';
+import { ChatActivityBar } from './ChatActivityBar';
+import { WorkPanel } from './WorkPanel';
+import { SettingsBar } from './SettingsBar';
 
 /**
  * Views that can be connected to the extension
@@ -25,7 +25,7 @@ export function render<V extends ViewKey>(
   key: V,
   vscodeApi: WebviewApi,
   publicPath: string,
-  rootId = "root"
+  rootId = 'root',
 ) {
   const container = document.getElementById(rootId);
   if (!container) {
@@ -41,6 +41,6 @@ export function render<V extends ViewKey>(
   root.render(
     <WithWebviewContext vscodeApi={vscodeApi}>
       <Component />
-    </WithWebviewContext>
+    </WithWebviewContext>,
   );
 }

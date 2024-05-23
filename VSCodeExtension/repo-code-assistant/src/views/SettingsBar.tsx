@@ -1,8 +1,8 @@
-import React, { useState, useEffect, useContext } from "react";
-import styled from "styled-components";
+import React, { useState, useEffect, useContext } from 'react';
+import styled from 'styled-components';
 
-import { ExtensionSettings } from "../types/extensionSettings";
-import { WebviewContext } from "./WebviewContext";
+import { ExtensionSettings } from '../types/extensionSettings';
+import { WebviewContext } from './WebviewContext';
 
 // Styled components
 const Container = styled.div`
@@ -68,11 +68,11 @@ const Button = styled.button`
 export const SettingsBar = () => {
   const { callApi } = useContext(WebviewContext);
   const [settings, setSettings] = useState<ExtensionSettings>({
-    lastUsedModel: "gemini",
-    geminiApiKey: "",
-    openAiApiKey: "",
-    cohereApiKey: "",
-    groqApiKey: "",
+    lastUsedModel: 'gemini',
+    geminiApiKey: '',
+    openAiApiKey: '',
+    cohereApiKey: '',
+    groqApiKey: '',
     enableModel: {
       gemini: false,
       openai: false,
@@ -83,9 +83,9 @@ export const SettingsBar = () => {
 
   useEffect(() => {
     Object.keys(settings).forEach((key) => {
-      callApi("getSetting", key as keyof typeof settings)
+      callApi('getSetting', key as keyof typeof settings)
         .then((value: any) => {
-          if (key === "enableModel" && Object.keys(value).length === 0) {
+          if (key === 'enableModel' && Object.keys(value).length === 0) {
             value = settings.enableModel;
           }
           setSettings((prev) => ({ ...prev, [key]: value }));
@@ -114,15 +114,15 @@ export const SettingsBar = () => {
 
   const saveSettings = () => {
     Object.entries(settings).forEach(([key, value]) => {
-      callApi("updateSetting", key as keyof ExtensionSettings, value)
+      callApi('updateSetting', key as keyof ExtensionSettings, value)
         .then(() =>
-          callApi("alertMessage", "Settings saved successfully", "info"),
+          callApi('alertMessage', 'Settings saved successfully', 'info'),
         )
         .catch((e) =>
           callApi(
-            "alertMessage",
+            'alertMessage',
             `Failed to save settings: ${e.message}`,
-            "error",
+            'error',
           ),
         );
     });
@@ -138,20 +138,20 @@ export const SettingsBar = () => {
         }}
       >
         {Object.entries(settings).map(([key, value]) => {
-          if (key === "enableModel") {
+          if (key === 'enableModel') {
             return (
               <FormGroup key={key}>
                 <Label>
                   {key
-                    .replace(/([A-Z])/g, " $1")
+                    .replace(/([A-Z])/g, ' $1')
                     .charAt(0)
-                    .toUpperCase() + key.replace(/([A-Z])/g, " $1").slice(1)}
+                    .toUpperCase() + key.replace(/([A-Z])/g, ' $1').slice(1)}
                 </Label>
                 <CheckboxContainer>
                   {Object.entries(value).map(([modelKey, modelValue]) => (
                     <CheckboxLabel key={modelKey}>
                       <Input
-                        type="checkbox"
+                        type='checkbox'
                         id={modelKey}
                         checked={modelValue}
                         onChange={handleSettingChange(
@@ -171,22 +171,22 @@ export const SettingsBar = () => {
               <FormGroup key={key}>
                 <Label htmlFor={key}>
                   {key
-                    .replace(/([A-Z])/g, " $1")
+                    .replace(/([A-Z])/g, ' $1')
                     .charAt(0)
-                    .toUpperCase() + key.replace(/([A-Z])/g, " $1").slice(1)}
+                    .toUpperCase() + key.replace(/([A-Z])/g, ' $1').slice(1)}
                   :
                 </Label>
                 <Input
                   id={key}
-                  type="text"
-                  value={(value as string) || ""}
+                  type='text'
+                  value={(value as string) || ''}
                   onChange={handleSettingChange(key as keyof typeof settings)}
                 />
               </FormGroup>
             );
           }
         })}
-        <Button type="submit">Save Settings</Button>
+        <Button type='submit'>Save Settings</Button>
       </Form>
     </Container>
   );

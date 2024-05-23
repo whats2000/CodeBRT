@@ -1,6 +1,6 @@
-import { useContext, useEffect, useState } from "react";
+import { useContext, useEffect, useState } from 'react';
 
-import { WebviewContext } from "./WebviewContext";
+import { WebviewContext } from './WebviewContext';
 
 export const WorkPanel = () => {
   const { callApi, addListener, removeListener } = useContext(WebviewContext);
@@ -11,25 +11,25 @@ export const WorkPanel = () => {
     const cb = (msg: string) => {
       setMessages([...messages, msg]);
     };
-    addListener("exampleBMessage", cb);
+    addListener('exampleBMessage', cb);
 
     return () => {
-      removeListener("exampleBMessage", cb);
+      removeListener('exampleBMessage', cb);
     };
   }, [messages]);
 
   const getFileContents = () => {
-    callApi("getFileContents")
-      .then(async content => setFileContent(await content))
-      .catch((error) => console.error("Failed to get file contents:", error));
+    callApi('getFileContents')
+      .then(async (content) => setFileContent(await content))
+      .catch((error) => console.error('Failed to get file contents:', error));
   };
 
   return (
     <div
       style={{
-        display: "flex",
-        flexDirection: "row",
-        alignItems: "flex-start",
+        display: 'flex',
+        flexDirection: 'row',
+        alignItems: 'flex-start',
       }}
     >
       <div
@@ -41,13 +41,13 @@ export const WorkPanel = () => {
           style={{
             width: 500,
             height: 250,
-            border: "1px solid grey",
+            border: '1px solid grey',
             padding: 10,
-            overflow: "scroll",
+            overflow: 'scroll',
             marginBottom: 10,
           }}
         >
-          <pre style={{ width: "100%", height: "100%" }}>{fileContent}</pre>
+          <pre style={{ width: '100%', height: '100%' }}>{fileContent}</pre>
         </div>
         <button onClick={getFileContents}>Load File</button>
       </div>

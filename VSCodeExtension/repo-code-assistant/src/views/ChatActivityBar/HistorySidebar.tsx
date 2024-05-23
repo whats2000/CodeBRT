@@ -3,8 +3,11 @@ import styled from 'styled-components';
 
 import { WebviewContext } from '../WebviewContext';
 import { ModelType } from '../../types/modelType';
-import { DeleteIcon } from "../../icons";
-import { ConversationHistory, ConversationHistoryList } from '../../types/conversationHistory';
+import { DeleteIcon } from '../../icons';
+import {
+  ConversationHistory,
+  ConversationHistoryList,
+} from '../../types/conversationHistory';
 import LoadingSpinner from '../common/LoadingSpinner';
 
 const SidebarContainer = styled.div<{ isOpen: boolean }>`
@@ -97,14 +100,13 @@ interface HistorySidebarProps {
   setMessages: React.Dispatch<React.SetStateAction<ConversationHistory>>;
 }
 
-export const HistorySidebar: React.FC<HistorySidebarProps> = (
-  {
-    isOpen,
-    onClose,
-    activeModel,
-    messages,
-    setMessages
-  }) => {
+export const HistorySidebar: React.FC<HistorySidebarProps> = ({
+  isOpen,
+  onClose,
+  activeModel,
+  messages,
+  setMessages,
+}) => {
   const { callApi } = useContext(WebviewContext);
   const [histories, setHistories] = useState<ConversationHistoryList>({});
   const [isLoading, setIsLoading] = useState(false);
@@ -120,8 +122,11 @@ export const HistorySidebar: React.FC<HistorySidebarProps> = (
           setIsLoading(false);
         })
         .catch((error) => {
-          callApi('alertMessage', `Failed to load histories: ${error}`, 'error')
-            .catch((error) => console.error(error));
+          callApi(
+            'alertMessage',
+            `Failed to load histories: ${error}`,
+            'error',
+          ).catch((error) => console.error(error));
           setIsLoading(false);
         });
     }
@@ -135,11 +140,14 @@ export const HistorySidebar: React.FC<HistorySidebarProps> = (
       .then(() => callApi('getLanguageModelConversationHistory', activeModel))
       .then((history) => {
         setMessages(history);
-        setIsLoading(false);  // End loading after switching history
+        setIsLoading(false); // End loading after switching history
       })
       .catch((error) => {
-        callApi('alertMessage', `Failed to switch history: ${error}`, 'error')
-          .catch((error) => console.error(error));
+        callApi(
+          'alertMessage',
+          `Failed to switch history: ${error}`,
+          'error',
+        ).catch((error) => console.error(error));
         setIsLoading(false);
       });
     onClose();
@@ -156,8 +164,13 @@ export const HistorySidebar: React.FC<HistorySidebarProps> = (
 
         setMessages(newConversationHistory);
       })
-      .catch((error) => callApi('alertMessage', `Failed to delete history: ${error}`, 'error')
-        .catch((error) => console.error(error)));
+      .catch((error) =>
+        callApi(
+          'alertMessage',
+          `Failed to delete history: ${error}`,
+          'error',
+        ).catch((error) => console.error(error)),
+      );
   };
 
   const handleTitleDoubleClick = (historyID: string, title: string) => {
@@ -177,11 +190,16 @@ export const HistorySidebar: React.FC<HistorySidebarProps> = (
           [historyID]: {
             ...prevHistories[historyID],
             title: titleInput,
-          }
+          },
         }));
       })
-      .catch((error) => callApi('alertMessage', `Failed to update title: ${error}`, 'error')
-        .catch((error) => console.error(error)));
+      .catch((error) =>
+        callApi(
+          'alertMessage',
+          `Failed to update title: ${error}`,
+          'error',
+        ).catch((error) => console.error(error)),
+      );
     setEditingHistoryID(null);
   };
 
@@ -190,36 +208,55 @@ export const HistorySidebar: React.FC<HistorySidebarProps> = (
       <CloseBtn onClick={onClose}>&times;</CloseBtn>
       {isLoading ? (
         <LoadingSpinner />
-      ) : Object.keys(histories).length - Object.keys(histories).filter((historyID) => historyID === "").length === 0 ? (
+      ) : Object.keys(histories).length -
+          Object.keys(histories).filter((historyID) => historyID === '')
+            .length ===
+        0 ? (
         <NoHistoryMessageContainer>
           <NoHistoryMessage>Nothing Currently</NoHistoryMessage>
         </NoHistoryMessageContainer>
       ) : (
         <HistoryList>
-          {Object.keys(histories).map((historyID) => historyID !== "" && (
-            <HistoryItem key={historyID} onClick={() => switchHistory(historyID)} $active={historyID === messages.root}>
-              {editingHistoryID === historyID ? (
-                <EditableTitle
-                  value={titleInput}
-                  onChange={handleTitleChange}
-                  onBlur={() => handleTitleBlur(historyID)}
-                  onSubmit={() => handleTitleBlur(historyID)}
-                  autoFocus
-                />
-              ) : (
-                <Title onDoubleClick={(e) => {
-                  e.stopPropagation();
-                  handleTitleDoubleClick(historyID, histories[historyID].title);
-                }}>{histories[historyID].title}</Title>
-              )}
-              <DeleteButton onClick={(e) => {
-                e.stopPropagation();
-                deleteHistory(historyID);
-              }}>
-                <DeleteIcon />
-              </DeleteButton>
-            </HistoryItem>
-          ))}
+          {Object.keys(histories).map(
+            (historyID) =>
+              historyID !== '' && (
+                <HistoryItem
+                  key={historyID}
+                  onClick={() => switchHistory(historyID)}
+                  $active={historyID === messages.root}
+                >
+                  {editingHistoryID === historyID ? (
+                    <EditableTitle
+                      value={titleInput}
+                      onChange={handleTitleChange}
+                      onBlur={() => handleTitleBlur(historyID)}
+                      onSubmit={() => handleTitleBlur(historyID)}
+                      autoFocus
+                    />
+                  ) : (
+                    <Title
+                      onDoubleClick={(e) => {
+                        e.stopPropagation();
+                        handleTitleDoubleClick(
+                          historyID,
+                          histories[historyID].title,
+                        );
+                      }}
+                    >
+                      {histories[historyID].title}
+                    </Title>
+                  )}
+                  <DeleteButton
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      deleteHistory(historyID);
+                    }}
+                  >
+                    <DeleteIcon />
+                  </DeleteButton>
+                </HistoryItem>
+              ),
+          )}
         </HistoryList>
       )}
     </SidebarContainer>

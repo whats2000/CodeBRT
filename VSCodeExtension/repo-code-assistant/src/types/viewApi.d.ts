@@ -1,12 +1,15 @@
-import { ExtensionSettings } from "./extensionSettings";
-import { ConversationHistory, ConversationHistoryList } from "./conversationHistory";
-import { ModelType } from "./modelType";
+import { ExtensionSettings } from './extensionSettings';
+import {
+  ConversationHistory,
+  ConversationHistoryList,
+} from './conversationHistory';
+import { ModelType } from './modelType';
 
 /**
  * Represents the API request structure for the view.
  */
 export type ViewApiRequest<K extends keyof ViewApi = keyof ViewApi> = {
-  type: "request";
+  type: 'request';
   id: string;
   key: K;
   params: Parameters<ViewApi[K]>;
@@ -16,7 +19,7 @@ export type ViewApiRequest<K extends keyof ViewApi = keyof ViewApi> = {
  * Represents the API response structure for the view.
  */
 export type ViewApiResponse = {
-  type: "response";
+  type: 'response';
   id: string;
   value: unknown;
 };
@@ -25,7 +28,7 @@ export type ViewApiResponse = {
  * Represents the API error structure for the view.
  */
 export type ViewApiError = {
-  type: "error";
+  type: 'error';
   id: string;
   value: string;
 };
@@ -34,7 +37,7 @@ export type ViewApiError = {
  * Represents the API event structure for the view.
  */
 export type ViewApiEvent<K extends keyof ViewEvents = keyof ViewEvents> = {
-  type: "event";
+  type: 'event';
   key: K;
   value: Parameters<ViewEvents[K]>;
 };
@@ -60,7 +63,10 @@ export type ViewApi = {
    * @param value - The new value of the setting.
    * @returns A promise that resolves when the setting is updated.
    */
-  updateSetting: (key: keyof ExtensionSettings, value: ExtensionSettings[typeof key]) => Promise<void>;
+  updateSetting: (
+    key: keyof ExtensionSettings,
+    value: ExtensionSettings[typeof key],
+  ) => Promise<void>;
 
   /**
    * Get the settings of the extension.
@@ -74,7 +80,7 @@ export type ViewApi = {
    * @param msg - The message to show.
    * @param type - The type of the message in ["info", "warning", "error"]
    */
-  alertMessage: (msg: string, type: "info" | "warning" | "error") => void;
+  alertMessage: (msg: string, type: 'info' | 'warning' | 'error') => void;
 
   /**
    * Send a message to Example B.
@@ -89,14 +95,21 @@ export type ViewApi = {
    * @param useStream - Whether to use the stream response.
    * @param currentEntryID - The current entry ID.
    */
-  getLanguageModelResponse: (query: string, modelType: ModelType, useStream?: boolean, currentEntryID?: string) => Promise<string>;
+  getLanguageModelResponse: (
+    query: string,
+    modelType: ModelType,
+    useStream?: boolean,
+    currentEntryID?: string,
+  ) => Promise<string>;
 
   /**
    * Get the conversation history for a language model.
    * @param modelType - The type of the model to get the conversation history for.
    * @returns The conversation history.
    */
-  getLanguageModelConversationHistory: (modelType: ModelType) => ConversationHistory;
+  getLanguageModelConversationHistory: (
+    modelType: ModelType,
+  ) => ConversationHistory;
 
   /**
    * Add a new conversation history for a language model.
@@ -111,7 +124,11 @@ export type ViewApi = {
    * @param entryID - The ID of the entry to edit.
    * @param newMessage - The new message to set.
    */
-  editLanguageModelConversationHistory: (modelType: ModelType, entryID: string, newMessage: string) => void;
+  editLanguageModelConversationHistory: (
+    modelType: ModelType,
+    entryID: string,
+    newMessage: string,
+  ) => void;
 
   /**
    * Send a stream response chunk.
@@ -140,7 +157,13 @@ export type ViewApi = {
    * @param images - The images to add.
    * @returns The ID of the new entry.
    */
-  addConversationEntry: (modelType: ModelType, parentID: string, sender: "user" | "AI", message: string, images?: string[]) => Promise<string>;
+  addConversationEntry: (
+    modelType: ModelType,
+    parentID: string,
+    sender: 'user' | 'AI',
+    message: string,
+    images?: string[],
+  ) => Promise<string>;
 
   /**
    * Edit a conversation entry in the conversation history for a language model.
@@ -161,7 +184,10 @@ export type ViewApi = {
    * @param historyID - The ID of the history to delete.
    * @returns The new conversation history.
    */
-  deleteHistory: (modelType: ModelType, historyID: string) => ConversationHistory;
+  deleteHistory: (
+    modelType: ModelType,
+    historyID: string,
+  ) => ConversationHistory;
 
   /**
    * Edit the specified history title.
@@ -169,7 +195,11 @@ export type ViewApi = {
    * @param historyID - The ID of the history to edit.
    * @param title - The new title.
    */
-  updateHistoryTitleById: (modelType: ModelType, historyID: string, title: string) => void;
+  updateHistoryTitleById: (
+    modelType: ModelType,
+    historyID: string,
+    title: string,
+  ) => void;
 
   /**
    * Get the available models for a language model.
@@ -191,7 +221,12 @@ export type ViewApi = {
    * @param currentEntryID - The current entry ID.
    * @returns The response.
    */
-  getLanguageModelResponseWithImage: (query: string, modelType: ModelType, images: string[], currentEntryID?: string) => Promise<string>;
+  getLanguageModelResponseWithImage: (
+    query: string,
+    modelType: ModelType,
+    images: string[],
+    currentEntryID?: string,
+  ) => Promise<string>;
 
   /**
    * Get the response for a query with a file.

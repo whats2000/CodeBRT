@@ -1,6 +1,6 @@
-import React, { createContext } from "react";
-import DeferredPromise from "promise-deferred";
-import { v4 as uuid } from "uuid";
+import React, { createContext } from 'react';
+import DeferredPromise from 'promise-deferred';
+import { v4 as uuid } from 'uuid';
 
 import {
   ViewApi,
@@ -9,7 +9,7 @@ import {
   ViewApiRequest,
   ViewApiResponse,
   ViewEvents,
-} from "../types/viewApi";
+} from '../types/viewApi';
 
 /**
  * Type definitions for context values of the Webview.
@@ -45,7 +45,7 @@ type CallAPI = <K extends keyof ViewApi>(
  */
 type AddRemoveListener = <K extends keyof ViewEvents>(
   key: K,
-  cb: (...params: Parameters<ViewEvents[K]>) => void
+  cb: (...params: Parameters<ViewEvents[K]>) => void,
 ) => void;
 
 /**
@@ -54,7 +54,7 @@ type AddRemoveListener = <K extends keyof ViewEvents>(
  * @returns An object containing functions to call API, add listeners, and remove listeners.
  */
 export const webviewContextValue = (
-  postMessage: (message: unknown) => void
+  postMessage: (message: unknown) => void,
 ): WebviewContextValue => {
   const pendingRequests: Record<string, DeferredPromise.Deferred<unknown>> = {};
   const listeners: Record<string, Set<(...args: unknown[]) => void>> = {};
@@ -64,19 +64,19 @@ export const webviewContextValue = (
    * @param e - Message event containing data from the host.
    */
   const onMessage = (e: MessageEvent<Record<string, unknown>>) => {
-    if (e.data.type === "response") {
+    if (e.data.type === 'response') {
       const data = e.data as ViewApiResponse;
       pendingRequests[data.id].resolve(data.value);
-    } else if (e.data.type === "error") {
+    } else if (e.data.type === 'error') {
       const data = e.data as ViewApiError;
       pendingRequests[data.id].reject(new Error(data.value));
-    } else if (e.data.type === "event") {
+    } else if (e.data.type === 'event') {
       const data = e.data as ViewApiEvent;
       listeners?.[data.key]?.forEach((cb) => cb(...data.value));
     }
   };
 
-  window.addEventListener("message", onMessage);
+  window.addEventListener('message', onMessage);
 
   /**
    * Calls an API using the provided key and parameters.
@@ -91,7 +91,7 @@ export const webviewContextValue = (
   ) => {
     const id = uuid();
     const deferred = new DeferredPromise<ReturnType<ViewApi[K]>>();
-    const req: ViewApiRequest = { type: "request", id, key, params };
+    const req: ViewApiRequest = { type: 'request', id, key, params };
     pendingRequests[id] = deferred;
     postMessage(req);
     return deferred.promise;
@@ -130,7 +130,7 @@ export const webviewContextValue = (
  * Context for the Webview that provides functions to interact with the host.
  */
 export const WebviewContext = createContext<WebviewContextValue>(
-  {} as WebviewContextValue
+  {} as WebviewContextValue,
 );
 
 /**

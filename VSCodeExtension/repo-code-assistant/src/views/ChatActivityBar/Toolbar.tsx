@@ -1,11 +1,11 @@
-import React, { useContext, useEffect, useState } from "react";
-import styled from "styled-components";
+import React, { useContext, useEffect, useState } from 'react';
+import styled from 'styled-components';
 
-import { ModelType } from "../../types/modelType";
-import { ConversationHistory } from "../../types/conversationHistory";
-import { NewChat, SettingIcon, HistoryIcon } from "../../icons";
-import { WebviewContext } from "../WebviewContext";
-import { HistorySidebar } from "./HistorySidebar";
+import { ModelType } from '../../types/modelType';
+import { ConversationHistory } from '../../types/conversationHistory';
+import { NewChat, SettingIcon, HistoryIcon } from '../../icons';
+import { WebviewContext } from '../WebviewContext';
+import { HistorySidebar } from './HistorySidebar';
 
 const StyledToolbar = styled.div`
   display: flex;
@@ -74,38 +74,38 @@ export const Toolbar: React.FC<ToolbarProps> = ({
   setActiveModel,
 }) => {
   const { callApi } = useContext(WebviewContext);
-  const modelServices: ModelType[] = ["gemini", "cohere", "openai", "groq"];
+  const modelServices: ModelType[] = ['gemini', 'cohere', 'openai', 'groq'];
   const [availableModels, setAvailableModels] = useState<string[]>([]);
-  const [selectedModel, setSelectedModel] = useState<string>("");
+  const [selectedModel, setSelectedModel] = useState<string>('');
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
   useEffect(() => {
-    callApi("getAvailableModels", activeModel)
+    callApi('getAvailableModels', activeModel)
       .then((models: string[]) => setAvailableModels(models))
       .catch((error) =>
         callApi(
-          "alertMessage",
+          'alertMessage',
           `Failed to load available models: ${error}`,
-          "error",
+          'error',
         ).catch(console.error),
       );
   }, [activeModel]);
 
   const openSettings = () => {
-    callApi("showSettingsView").catch((error) =>
+    callApi('showSettingsView').catch((error) =>
       callApi(
-        "alertMessage",
+        'alertMessage',
         `Failed to open settings: ${error}`,
-        "error",
+        'error',
       ).catch(console.error),
     );
   };
 
   const createNewChat = () => {
-    callApi("addNewConversationHistory", activeModel)
+    callApi('addNewConversationHistory', activeModel)
       .then((newConversationHistory) => setMessages(newConversationHistory))
       .catch((error) =>
-        console.error("Failed to clear conversation history:", error),
+        console.error('Failed to clear conversation history:', error),
       );
   };
 
@@ -118,11 +118,11 @@ export const Toolbar: React.FC<ToolbarProps> = ({
   const handleModelChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
     const newModel = event.target.value;
     setSelectedModel(newModel);
-    callApi("switchModel", activeModel, newModel).catch((error) =>
+    callApi('switchModel', activeModel, newModel).catch((error) =>
       callApi(
-        "alertMessage",
+        'alertMessage',
         `Failed to switch model: ${error}`,
-        "error",
+        'error',
       ).catch(console.error),
     );
   };

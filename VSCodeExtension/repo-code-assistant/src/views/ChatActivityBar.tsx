@@ -1,13 +1,13 @@
-import { useContext, useState, useEffect, useRef } from "react";
-import styled from "styled-components";
-import { v4 as uuidv4 } from "uuid";
+import { useContext, useState, useEffect, useRef } from 'react';
+import styled from 'styled-components';
+import { v4 as uuidv4 } from 'uuid';
 
-import { ConversationHistory } from "../types/conversationHistory";
-import { ModelType } from "../types/modelType";
-import { WebviewContext } from "./WebviewContext";
-import { Toolbar } from "./ChatActivityBar/Toolbar";
-import { InputContainer } from "./ChatActivityBar/InputContainer";
-import { MessagesContainer } from "./ChatActivityBar/MessagesContainer";
+import { ConversationHistory } from '../types/conversationHistory';
+import { ModelType } from '../types/modelType';
+import { WebviewContext } from './WebviewContext';
+import { Toolbar } from './ChatActivityBar/Toolbar';
+import { InputContainer } from './ChatActivityBar/InputContainer';
+import { MessagesContainer } from './ChatActivityBar/MessagesContainer';
 
 const Container = styled.div`
   display: flex;
@@ -19,18 +19,18 @@ const Container = styled.div`
 `;
 
 export const ChatActivityBar = () => {
-  const {callApi, addListener, removeListener} = useContext(WebviewContext);
-  const [inputMessage, setInputMessage] = useState("");
+  const { callApi, addListener, removeListener } = useContext(WebviewContext);
+  const [inputMessage, setInputMessage] = useState('');
   const [messages, setMessages] = useState<ConversationHistory>({
     title: '',
     create_time: 0,
     update_time: 0,
     root: '',
     current: '',
-    entries: {}
+    entries: {},
   });
   const [isLoading, setIsLoading] = useState(false);
-  const [activeModel, setActiveModel] = useState<ModelType>("gemini");
+  const [activeModel, setActiveModel] = useState<ModelType>('gemini');
   const [uploadedImages, setUploadedImages] = useState<string[]>([]);
 
   const messageEndRef = useRef<HTMLDivElement>(null);
@@ -39,7 +39,7 @@ export const ChatActivityBar = () => {
   const scrollToBottom = (smooth: boolean = true) => {
     if (messagesContainerRef.current) {
       if (smooth) {
-        messageEndRef.current?.scrollIntoView({behavior: "smooth"});
+        messageEndRef.current?.scrollIntoView({ behavior: 'smooth' });
       } else {
         messageEndRef.current?.scrollIntoView();
       }
@@ -50,7 +50,8 @@ export const ChatActivityBar = () => {
     const threshold = 300;
     if (!messagesContainerRef.current) return false;
 
-    const {scrollTop, scrollHeight, clientHeight} = messagesContainerRef.current;
+    const { scrollTop, scrollHeight, clientHeight } =
+      messagesContainerRef.current;
     const position = scrollHeight - scrollTop - clientHeight;
 
     return position < threshold;
@@ -58,11 +59,11 @@ export const ChatActivityBar = () => {
 
   // Function to handle incoming streamed responses
   const handleStreamResponse = (responseFromMessage: string) => {
-    setMessages(prevMessages => {
-      const newEntries = {...prevMessages.entries};
+    setMessages((prevMessages) => {
+      const newEntries = { ...prevMessages.entries };
       const currentID = prevMessages.current;
 
-      if (newEntries[currentID] && newEntries[currentID].role === "AI") {
+      if (newEntries[currentID] && newEntries[currentID].role === 'AI') {
         newEntries[currentID] = {
           ...newEntries[currentID],
           message: newEntries[currentID].message + responseFromMessage,
@@ -71,14 +72,14 @@ export const ChatActivityBar = () => {
         const tempId = `temp-${uuidv4()}`;
         newEntries[tempId] = {
           id: tempId,
-          role: "AI",
+          role: 'AI',
           message: responseFromMessage,
           parent: currentID,
           children: [],
         };
         prevMessages.current = tempId;
       }
-      return {...prevMessages, entries: newEntries};
+      return { ...prevMessages, entries: newEntries };
     });
     if (isNearBottom()) {
       scrollToBottom(false);
@@ -86,19 +87,21 @@ export const ChatActivityBar = () => {
   };
 
   useEffect(() => {
-    addListener("streamResponse", handleStreamResponse);
+    addListener('streamResponse', handleStreamResponse);
     return () => {
-      removeListener("streamResponse", handleStreamResponse);
+      removeListener('streamResponse', handleStreamResponse);
     };
   }, []);
 
   useEffect(() => {
-    callApi("saveLastUsedModel", activeModel)
-      .catch(error =>
-        callApi("alertMessage", `Failed to save last used model: ${error}`, "error")
-          .catch(console.error)
-      );
-    callApi("getLanguageModelConversationHistory", activeModel)
+    callApi('saveLastUsedModel', activeModel).catch((error) =>
+      callApi(
+        'alertMessage',
+        `Failed to save last used model: ${error}`,
+        'error',
+      ).catch(console.error),
+    );
+    callApi('getLanguageModelConversationHistory', activeModel)
       .then((history) => {
         if (history) {
           setMessages(history as ConversationHistory);
@@ -108,21 +111,27 @@ export const ChatActivityBar = () => {
         setTimeout(() => scrollToBottom(), 100);
       })
       .catch((error) =>
-        callApi("alertMessage", `Failed to get conversation history: ${error}`, "error")
-          .catch(console.error)
+        callApi(
+          'alertMessage',
+          `Failed to get conversation history: ${error}`,
+          'error',
+        ).catch(console.error),
       );
   }, [activeModel]);
 
   useEffect(() => {
-    callApi("getLastUsedModel")
+    callApi('getLastUsedModel')
       .then((lastUsedModel) => {
         if (lastUsedModel) {
           setActiveModel(lastUsedModel as ModelType);
         }
       })
       .catch((error) =>
-        callApi("alertMessage", `Failed to get last used model: ${error}`, "error")
-          .catch(console.error)
+        callApi(
+          'alertMessage',
+          `Failed to get last used model: ${error}`,
+          'error',
+        ).catch(console.error),
       );
   }, []);
 
@@ -132,13 +141,20 @@ export const ChatActivityBar = () => {
     setIsLoading(true);
 
     // Add a user message to conversation history
-    const userEntryId = await callApi("addConversationEntry", activeModel, messages.current, "user", inputMessage, uploadedImages);
+    const userEntryId = await callApi(
+      'addConversationEntry',
+      activeModel,
+      messages.current,
+      'user',
+      inputMessage,
+      uploadedImages,
+    );
     setMessages((prevMessages): ConversationHistory => {
       const updatedEntries = {
         ...prevMessages.entries,
         [userEntryId]: {
           id: userEntryId,
-          role: "user",
+          role: 'user',
           message: inputMessage,
           images: uploadedImages,
           parent: messages.current,
@@ -153,7 +169,7 @@ export const ChatActivityBar = () => {
 
       return {
         ...prevMessages,
-        entries: updatedEntries as ConversationHistory["entries"],
+        entries: updatedEntries as ConversationHistory['entries'],
         current: userEntryId,
         root: prevMessages.root === '' ? userEntryId : prevMessages.root,
       };
@@ -161,14 +177,14 @@ export const ChatActivityBar = () => {
 
     // Create a temporary AI response entry
     const tempId = `temp-${uuidv4()}`;
-    setMessages(prevMessages => ({
+    setMessages((prevMessages) => ({
       ...prevMessages,
       entries: {
         ...prevMessages.entries,
         [tempId]: {
           id: tempId,
-          role: "AI",
-          message: "",
+          role: 'AI',
+          message: '',
           parent: userEntryId,
           children: [],
         },
@@ -178,21 +194,38 @@ export const ChatActivityBar = () => {
     scrollToBottom(false);
 
     try {
-      const responseText = uploadedImages.length > 0
-        ? await callApi("getLanguageModelResponseWithImage", inputMessage, activeModel, uploadedImages) as string
-        : await callApi("getLanguageModelResponse", inputMessage, activeModel, true) as string;
+      const responseText =
+        uploadedImages.length > 0
+          ? ((await callApi(
+              'getLanguageModelResponseWithImage',
+              inputMessage,
+              activeModel,
+              uploadedImages,
+            )) as string)
+          : ((await callApi(
+              'getLanguageModelResponse',
+              inputMessage,
+              activeModel,
+              true,
+            )) as string);
 
       // Add AI response to conversation history and replace the temporary ID
-      const aiEntryId = await callApi("addConversationEntry", activeModel, userEntryId, "AI", responseText);
-      setMessages(prevMessages => {
-        const newEntries = {...prevMessages.entries};
+      const aiEntryId = await callApi(
+        'addConversationEntry',
+        activeModel,
+        userEntryId,
+        'AI',
+        responseText,
+      );
+      setMessages((prevMessages) => {
+        const newEntries = { ...prevMessages.entries };
         // Update the temporary AI message entry with the actual AI response
         if (newEntries[tempId]) {
           delete newEntries[tempId];
         }
         newEntries[aiEntryId] = {
           id: aiEntryId,
-          role: "AI",
+          role: 'AI',
           message: responseText,
           parent: userEntryId,
           children: [],
@@ -210,29 +243,42 @@ export const ChatActivityBar = () => {
         };
       });
 
-      setInputMessage("");
+      setInputMessage('');
       setUploadedImages([]);
       setTimeout(() => {
         setIsLoading(false);
         scrollToBottom(true);
       }, 1000);
     } catch (error) {
-      callApi("alertMessage", `Failed to get response: ${error}`, "error").catch(console.error);
+      callApi(
+        'alertMessage',
+        `Failed to get response: ${error}`,
+        'error',
+      ).catch(console.error);
       setIsLoading(false);
     }
   };
 
   // Function to handle saving an edited user message and generating a new AI response
-  const handleEditUserMessageSave = async (entryId: string, editedMessage: string) => {
+  const handleEditUserMessageSave = async (
+    entryId: string,
+    editedMessage: string,
+  ) => {
     const entry = messages.entries[entryId];
-    const newEntryId = await callApi("addConversationEntry", activeModel, entry.parent ?? '', "user", editedMessage);
+    const newEntryId = await callApi(
+      'addConversationEntry',
+      activeModel,
+      entry.parent ?? '',
+      'user',
+      editedMessage,
+    );
 
     setMessages((prevMessages): ConversationHistory => {
       const updatedEntries = {
         ...prevMessages.entries,
         [newEntryId]: {
           id: newEntryId,
-          role: "user",
+          role: 'user',
           message: editedMessage,
           parent: entry.parent,
           children: [],
@@ -246,21 +292,21 @@ export const ChatActivityBar = () => {
 
       return {
         ...prevMessages,
-        entries: updatedEntries as ConversationHistory["entries"],
+        entries: updatedEntries as ConversationHistory['entries'],
         current: newEntryId,
       };
     });
 
     // Create a temporary AI response entry
     const tempId = `temp-${uuidv4()}`;
-    setMessages(prevMessages => ({
+    setMessages((prevMessages) => ({
       ...prevMessages,
       entries: {
         ...prevMessages.entries,
         [tempId]: {
           id: tempId,
-          role: "AI",
-          message: "",
+          role: 'AI',
+          message: '',
           parent: newEntryId,
           children: [],
         },
@@ -270,19 +316,31 @@ export const ChatActivityBar = () => {
     scrollToBottom(false);
 
     try {
-      const responseText = await callApi("getLanguageModelResponse", editedMessage, activeModel, true, newEntryId) as string;
+      const responseText = (await callApi(
+        'getLanguageModelResponse',
+        editedMessage,
+        activeModel,
+        true,
+        newEntryId,
+      )) as string;
 
       // Add AI response to conversation history and replace the temporary ID
-      const aiEntryId = await callApi("addConversationEntry", activeModel, newEntryId, "AI", responseText);
-      setMessages(prevMessages => {
-        const newEntries = {...prevMessages.entries};
+      const aiEntryId = await callApi(
+        'addConversationEntry',
+        activeModel,
+        newEntryId,
+        'AI',
+        responseText,
+      );
+      setMessages((prevMessages) => {
+        const newEntries = { ...prevMessages.entries };
         // Update the temporary AI message entry with the actual AI response
         if (newEntries[tempId]) {
           delete newEntries[tempId];
         }
         newEntries[aiEntryId] = {
           id: aiEntryId,
-          role: "AI",
+          role: 'AI',
           message: responseText,
           parent: newEntryId,
           children: [],
@@ -305,7 +363,11 @@ export const ChatActivityBar = () => {
         scrollToBottom(true);
       }, 1000);
     } catch (error) {
-      callApi("alertMessage", `Failed to get response: ${error}`, "error").catch(console.error);
+      callApi(
+        'alertMessage',
+        `Failed to get response: ${error}`,
+        'error',
+      ).catch(console.error);
       setIsLoading(false);
     }
   };
@@ -314,15 +376,18 @@ export const ChatActivityBar = () => {
   const handleImageUpload = (files: FileList | null) => {
     if (files && files.length > 0) {
       const fileArray = Array.from(files);
-      fileArray.map(file => {
+      fileArray.map((file) => {
         const reader = new FileReader();
         reader.readAsDataURL(file);
         reader.onload = async () => {
           if (reader.result) {
             // Sending the file data as base64 string
-            const fileName = await callApi("uploadImage", reader.result as string)
+            const fileName = await callApi(
+              'uploadImage',
+              reader.result as string,
+            );
 
-            setUploadedImages(prevImages => [...prevImages, fileName]);
+            setUploadedImages((prevImages) => [...prevImages, fileName]);
           }
         };
       });

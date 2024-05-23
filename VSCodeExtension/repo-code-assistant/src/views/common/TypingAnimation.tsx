@@ -1,17 +1,16 @@
-import { useEffect, useState } from "react";
-import ReactMarkdown from "react-markdown";
-import { RendererCode } from "./RenderCode";
+import { useEffect, useState } from 'react';
+import ReactMarkdown from 'react-markdown';
+import { RendererCode } from './RenderCode';
 
-export const TypingAnimation = (
-  {
-    message,
-    isLoading,
-    scrollToBottom,
-  }: {
-    message: string;
-    isLoading: boolean;
-    scrollToBottom: (smooth: boolean) => void;
-  }) => {
+export const TypingAnimation = ({
+  message,
+  isLoading,
+  scrollToBottom,
+}: {
+  message: string;
+  isLoading: boolean;
+  scrollToBottom: (smooth: boolean) => void;
+}) => {
   const [displayedMessage, setDisplayedMessage] = useState(message);
 
   useEffect(() => {
@@ -25,7 +24,9 @@ export const TypingAnimation = (
 
       const timer = setTimeout(() => {
         // Calculate chunk size based on loading state
-        const chunkSize = isLoading ? Math.ceil(remainingLength / 10) : Math.ceil(remainingLength / 5);
+        const chunkSize = isLoading
+          ? Math.ceil(remainingLength / 10)
+          : Math.ceil(remainingLength / 5);
         const nextLength = length + chunkSize;
         setDisplayedMessage(message.substring(0, nextLength));
       }, delay);
@@ -40,5 +41,7 @@ export const TypingAnimation = (
     }
   }, [displayedMessage, message, scrollToBottom]);
 
-  return <ReactMarkdown components={RendererCode}>{displayedMessage}</ReactMarkdown>;
+  return (
+    <ReactMarkdown components={RendererCode}>{displayedMessage}</ReactMarkdown>
+  );
 };

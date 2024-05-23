@@ -1,10 +1,10 @@
-import * as vscode from "vscode";
-import { randomBytes } from "crypto";
-import path from "node:path";
+import * as vscode from 'vscode';
+import { randomBytes } from 'crypto';
+import path from 'node:path';
 
-import { ViewKey } from "../views";
+import { ViewKey } from '../views';
 
-const DEV_SERVER_HOST = "http://localhost:18080";
+const DEV_SERVER_HOST = 'http://localhost:18080';
 
 const template = (params: {
   csp: string;
@@ -36,7 +36,7 @@ const template = (params: {
 const createView = async <V extends ViewKey>(
   ctx: vscode.ExtensionContext,
   viewId: V,
-  options?: vscode.WebviewOptions
+  options?: vscode.WebviewOptions,
 ): Promise<vscode.WebviewView> => {
   return await new Promise((resolve, reject) => {
     let dispose: vscode.Disposable;
@@ -65,10 +65,10 @@ const createView = async <V extends ViewKey>(
 const setViewHtml = <V extends ViewKey>(
   ctx: vscode.ExtensionContext,
   viewId: V,
-  webview: vscode.Webview
+  webview: vscode.Webview,
 ) => {
   const isProduction = ctx.extensionMode === vscode.ExtensionMode.Production;
-  const nonce = randomBytes(16).toString("base64");
+  const nonce = randomBytes(16).toString('base64');
 
   const uri = (...parts: string[]) =>
     webview
@@ -76,29 +76,29 @@ const setViewHtml = <V extends ViewKey>(
       .toString(true);
 
   const publicPath = isProduction ? uri() : `${DEV_SERVER_HOST}/`;
-  const srcUri = isProduction ? uri("views.js") : `${DEV_SERVER_HOST}/views.js`;
+  const srcUri = isProduction ? uri('views.js') : `${DEV_SERVER_HOST}/views.js`;
 
   const csp = (
     isProduction
       ? [
-        `form-action 'none';`,
-        `default-src ${webview.cspSource};`,
-        `script-src ${webview.cspSource} 'nonce-${nonce}';`,
-        `style-src ${webview.cspSource} ${DEV_SERVER_HOST} 'unsafe-inline';`,
-        `img-src ${webview.cspSource} vscode-resource:;`,
-      ]
+          `form-action 'none';`,
+          `default-src ${webview.cspSource};`,
+          `script-src ${webview.cspSource} 'nonce-${nonce}';`,
+          `style-src ${webview.cspSource} ${DEV_SERVER_HOST} 'unsafe-inline';`,
+          `img-src ${webview.cspSource} vscode-resource:;`,
+        ]
       : [
-        `form-action 'none';`,
-        `default-src ${webview.cspSource} ${DEV_SERVER_HOST};`,
-        `style-src ${webview.cspSource} ${DEV_SERVER_HOST} 'unsafe-inline';`,
-        `script-src ${webview.cspSource} ${DEV_SERVER_HOST} 'nonce-${nonce}';`,
-        `connect-src 'self' ${webview.cspSource} ${DEV_SERVER_HOST} ws:;`,
-        `img-src ${webview.cspSource} vscode-resource:;`,
-      ]
-  ).join(" ");
+          `form-action 'none';`,
+          `default-src ${webview.cspSource} ${DEV_SERVER_HOST};`,
+          `style-src ${webview.cspSource} ${DEV_SERVER_HOST} 'unsafe-inline';`,
+          `script-src ${webview.cspSource} ${DEV_SERVER_HOST} 'nonce-${nonce}';`,
+          `connect-src 'self' ${webview.cspSource} ${DEV_SERVER_HOST} ws:;`,
+          `img-src ${webview.cspSource} vscode-resource:;`,
+        ]
+  ).join(' ');
 
   webview.html = template({
-    title: "Example",
+    title: 'Example',
     csp,
     srcUri,
     publicPath,
@@ -110,13 +110,13 @@ const setViewHtml = <V extends ViewKey>(
 
 export const viewRegistration = async <V extends ViewKey>(
   ctx: vscode.ExtensionContext,
-  viewId: V
+  viewId: V,
 ) => {
   const view = await createView(ctx, viewId, {
     enableScripts: true,
     localResourceRoots: [
-      vscode.Uri.file(path.join(ctx.extensionPath, "media")),
-    ]
+      vscode.Uri.file(path.join(ctx.extensionPath, 'media')),
+    ],
   });
   setViewHtml(ctx, viewId, view.webview);
   return view;

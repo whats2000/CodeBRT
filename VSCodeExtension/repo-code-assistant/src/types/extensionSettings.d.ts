@@ -1,4 +1,4 @@
-import { ModelType } from "./modelType";
+import { ModelType } from './modelType';
 
 /**
  * Represents the settings for the extension.

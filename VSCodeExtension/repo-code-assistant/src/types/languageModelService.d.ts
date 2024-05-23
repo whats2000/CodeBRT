@@ -1,4 +1,7 @@
-import { ConversationHistory, ConversationHistoryList } from "./conversationHistory";
+import {
+  ConversationHistory,
+  ConversationHistoryList,
+} from './conversationHistory';
 
 export interface LanguageModelService {
   /**
@@ -30,7 +33,12 @@ export interface LanguageModelService {
    * @param images - The images of the new entry
    * @returns The ID of the newly created entry
    */
-  addConversationEntry: (parentID: string | null, role: 'user' | 'AI', message: string, images?: string[]) => string;
+  addConversationEntry: (
+    parentID: string | null,
+    role: 'user' | 'AI',
+    message: string,
+    images?: string[],
+  ) => string;
 
   /**
    * Edit the conversation history
@@ -81,7 +89,10 @@ export interface LanguageModelService {
    * @param currentEntryID - The current entry ID
    * @returns The response for the query
    */
-  getResponseForQuery: (query: string, currentEntryID?: string) => Promise<string>;
+  getResponseForQuery: (
+    query: string,
+    currentEntryID?: string,
+  ) => Promise<string>;
 
   /**
    * Get the response for a query and also fire a view event to send the response in chunks.
@@ -91,7 +102,11 @@ export interface LanguageModelService {
    * @param currentEntryID - The current entry ID
    * @returns The response for the query
    */
-  getResponseChunksForQuery: (query: string, sendStreamResponse: (msg: string) => void, currentEntryID?: string) => Promise<string>;
+  getResponseChunksForQuery: (
+    query: string,
+    sendStreamResponse: (msg: string) => void,
+    currentEntryID?: string,
+  ) => Promise<string>;
 
   /**
    * Get the response for a query with an image
@@ -101,5 +116,10 @@ export interface LanguageModelService {
    * @param currentEntryID - The current entry ID
    * @returns The response for the query
    */
-  getResponseChunksForQueryWithImage: (query: string, images: string[], sendStreamResponse: (msg: string) => void, currentEntryID?: string) => Promise<string>;
+  getResponseChunksForQueryWithImage: (
+    query: string,
+    images: string[],
+    sendStreamResponse: (msg: string) => void,
+    currentEntryID?: string,
+  ) => Promise<string>;
 }

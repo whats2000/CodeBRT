@@ -1,7 +1,7 @@
-import React from "react";
-import styled from "styled-components";
+import React from 'react';
+import styled from 'styled-components';
 
-import { CopyIcon, CopySuccessIcon } from "../../icons";
+import { CopyIcon, CopySuccessIcon } from '../../icons';
 
 const StyledCopyButton = styled.button<{ $copied: boolean }>`
   color: white;
@@ -16,7 +16,7 @@ const StyledCopyButton = styled.button<{ $copied: boolean }>`
   outline: none;
 
   &:hover {
-    color: #3C3C3C;
+    color: #3c3c3c;
     background-color: #ffffff90;
   }
 `;
@@ -26,10 +26,13 @@ interface CopyButtonProps {
   handleCopy: () => void;
 }
 
-export const CopyButton: React.FC<CopyButtonProps> = ({copied, handleCopy}) => {
+export const CopyButton: React.FC<CopyButtonProps> = ({
+  copied,
+  handleCopy,
+}) => {
   return (
     <StyledCopyButton onClick={handleCopy} $copied={copied}>
       {copied ? <CopySuccessIcon /> : <CopyIcon />}
     </StyledCopyButton>
   );
-}
+};

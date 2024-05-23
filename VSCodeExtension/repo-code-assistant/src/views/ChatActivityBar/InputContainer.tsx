@@ -1,6 +1,6 @@
-import React, { useState } from "react";
-import { SendIcon, UploadIcon } from "../../icons";
-import styled from "styled-components";
+import React, { useState } from 'react';
+import { SendIcon, UploadIcon } from '../../icons';
+import styled from 'styled-components';
 
 const StyledInputContainer = styled.div`
   display: flex;
@@ -92,19 +92,23 @@ interface InputContainerProps {
   handleImageUpload: (files: FileList | null) => void;
 }
 
-export const InputContainer = (
-  { inputMessage, setInputMessage, sendMessage, isLoading, handleImageUpload }: InputContainerProps
-) => {
+export const InputContainer = ({
+  inputMessage,
+  setInputMessage,
+  sendMessage,
+  isLoading,
+  handleImageUpload,
+}: InputContainerProps) => {
   const [enterPressCount, setEnterPressCount] = useState(0);
   const resetEnterPressCount = () => setEnterPressCount(0);
 
   const handleKeyDown = (event: React.KeyboardEvent<HTMLTextAreaElement>) => {
-    if (event.key === "Enter" && !event.shiftKey) {
+    if (event.key === 'Enter' && !event.shiftKey) {
       event.preventDefault();
       if (enterPressCount === 0) {
         setTimeout(resetEnterPressCount, 500);
       }
-      setEnterPressCount(prev => prev + 1);
+      setEnterPressCount((prev) => prev + 1);
 
       if (enterPressCount + 1 >= 2 && !isLoading) {
         sendMessage();
@@ -122,19 +126,19 @@ export const InputContainer = (
   return (
     <StyledInputContainer>
       <UploadButton>
-        <input type="file" accept="image/*" onChange={handleFileChange} />
+        <input type='file' accept='image/*' onChange={handleFileChange} />
         <UploadIcon />
       </UploadButton>
       <MessageInput
         value={inputMessage}
-        onChange={e => setInputMessage(e.target.value)}
+        onChange={(e) => setInputMessage(e.target.value)}
         onKeyDown={handleKeyDown}
-        placeholder="Type your message..."
+        placeholder='Type your message...'
         disabled={isLoading}
       />
       <SendButton onClick={sendMessage} disabled={isLoading}>
-        {isLoading ? <Spinner/> : <SendIcon/>}
+        {isLoading ? <Spinner /> : <SendIcon />}
       </SendButton>
     </StyledInputContainer>
   );
-}
+};
