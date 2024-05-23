@@ -361,6 +361,13 @@ export const activate = async (ctx: vscode.ExtensionContext) => {
 
       return filename;
     },
+    deleteImage: async (imagePath: string) => {
+      try {
+        await fs.unlink(imagePath);
+      } catch (error) {
+        vscode.window.showErrorMessage(`Failed to delete image: ${error}`);
+      }
+    },
     getWebviewUri: (absolutePath: string) => {
       const extensionPath = ctx.extensionPath.endsWith(path.sep)
         ? ctx.extensionPath

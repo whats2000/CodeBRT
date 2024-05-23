@@ -1,10 +1,58 @@
-import React, { useState } from 'react';
-import { SendIcon, UploadIcon } from '../../icons';
+import React, { useState, useContext, useEffect } from 'react';
+import { SendIcon, UploadIcon, CloseIcon } from '../../icons'; // Assuming CloseIcon is added to your icons
 import styled from 'styled-components';
+import { WebviewContext } from '../WebviewContext';
 
 const StyledInputContainer = styled.div`
   display: flex;
-  padding: 10px 15px 10px 5px;
+  flex-direction: column;
+  padding: 10px 15px;
+`;
+
+const InputRow = styled.div`
+  display: flex;
+`;
+
+const UploadedImageContainer = styled.div`
+  display: flex;
+  flex-wrap: wrap;
+`;
+
+const UploadedImageWrapper = styled.div`
+  position: relative;
+  margin: 5px 5px 15px;
+
+  &:hover button {
+    display: flex;
+  }
+`;
+
+const UploadedImage = styled.img`
+  max-width: 100px;
+  max-height: 100px;
+  border-radius: 4px;
+`;
+
+const DeleteButton = styled.button`
+  display: none;
+  position: absolute;
+  align-items: center;
+  justify-content: center;
+  top: 0;
+  right: 0;
+  background-color: rgba(0, 0, 0, 0.5);
+  color: white;
+  border: none;
+  border-radius: 50%;
+  cursor: pointer;
+  padding: 0;
+
+  &:hover {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: rgba(255, 0, 0, 0.5);
+  }
 `;
 
 const MessageInput = styled.textarea`
@@ -89,7 +137,9 @@ interface InputContainerProps {
   setInputMessage: (message: string) => void;
   sendMessage: () => void;
   isLoading: boolean;
+  uploadedImages: string[];
   handleImageUpload: (files: FileList | null) => void;
+  handleImageRemove: (imagePath: string) => void;
 }
 
 export const InputContainer = ({
@@ -97,9 +147,14 @@ export const InputContainer = ({
   setInputMessage,
   sendMessage,
   isLoading,
+  uploadedImages,
   handleImageUpload,
+  handleImageRemove,
 }: InputContainerProps) => {
+  const { callApi } = useContext(WebviewContext);
   const [enterPressCount, setEnterPressCount] = useState(0);
+  const [imageUris, setImageUris] = useState<string[]>([]);
+
   const resetEnterPressCount = () => setEnterPressCount(0);
 
   const handleKeyDown = (event: React.KeyboardEvent<HTMLTextAreaElement>) => {
@@ -123,22 +178,49 @@ export const InputContainer = ({
     handleImageUpload(event.target.files);
   };
 
+  useEffect(() => {
+    const updateImageUris = async () => {
+      const uris = await Promise.all(
+        uploadedImages.map(async (imagePath) => {
+          const uri = await callApi('getWebviewUri', imagePath);
+          return uri as string;
+        }),
+      );
+      setImageUris(uris);
+    };
+    updateImageUris().catch((error) => console.error(error));
+  }, [uploadedImages, callApi]);
+
   return (
     <StyledInputContainer>
-      <UploadButton>
-        <input type='file' accept='image/*' onChange={handleFileChange} />
-        <UploadIcon />
-      </UploadButton>
-      <MessageInput
-        value={inputMessage}
-        onChange={(e) => setInputMessage(e.target.value)}
-        onKeyDown={handleKeyDown}
-        placeholder='Type your message...'
-        disabled={isLoading}
-      />
-      <SendButton onClick={sendMessage} disabled={isLoading}>
-        {isLoading ? <Spinner /> : <SendIcon />}
-      </SendButton>
+      <UploadedImageContainer>
+        {imageUris.map((imageUri, index) => (
+          <UploadedImageWrapper key={index}>
+            <UploadedImage src={imageUri} alt={`Uploaded ${index + 1}`} />
+            <DeleteButton
+              onClick={() => handleImageRemove(uploadedImages[index])}
+            >
+              <CloseIcon />
+            </DeleteButton>
+          </UploadedImageWrapper>
+        ))}
+      </UploadedImageContainer>
+      <InputRow>
+        <UploadButton>
+          <input type='file' accept='image/*' onChange={handleFileChange} />
+          <UploadIcon />
+        </UploadButton>
+        <MessageInput
+          value={inputMessage}
+          onChange={(e) => setInputMessage(e.target.value)}
+          onKeyDown={handleKeyDown}
+          placeholder='Type your message...'
+          disabled={isLoading}
+        />
+        <SendButton onClick={sendMessage} disabled={isLoading}>
+          {isLoading ? <Spinner /> : <SendIcon />}
+        </SendButton>
+      </InputRow>
     </StyledInputContainer>
   );
 };

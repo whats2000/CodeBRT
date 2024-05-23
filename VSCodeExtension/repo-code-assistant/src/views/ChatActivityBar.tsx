@@ -394,6 +394,11 @@ export const ChatActivityBar = () => {
     }
   };
 
+  const handleImageRemove = async (imagePath: string) => {
+    await callApi('deleteImage', imagePath);
+    setUploadedImages((prev) => prev.filter((path) => path !== imagePath));
+  };
+
   return (
     <Container>
       <Toolbar
@@ -413,11 +418,13 @@ export const ChatActivityBar = () => {
         handleEditUserMessageSave={handleEditUserMessageSave}
       />
       <InputContainer
+        uploadedImages={uploadedImages}
         handleImageUpload={handleImageUpload}
         inputMessage={inputMessage}
         setInputMessage={setInputMessage}
         sendMessage={sendMessage}
         isLoading={isLoading}
+        handleImageRemove={handleImageRemove}
       />
     </Container>
   );
