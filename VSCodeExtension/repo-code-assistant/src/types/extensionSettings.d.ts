@@ -20,14 +20,19 @@ export type ExtensionSettings = {
   cohereApiKey: string;
 
   /**
+   * The API key for the Groq model
+   */
+  groqApiKey: string;
+
+  /**
    * Determines if the model is enabled for code generation
    */
   enableModel: {
     [key in ModelType]: boolean;
-  },
+  };
 
   /**
    * The last used model
    */
   lastUsedModel: ModelType;
-}
+};

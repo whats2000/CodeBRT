@@ -22,8 +22,6 @@
     "format": "prettier 'src/**/*.js' 'src/**/*.jsx' 'src/**/*.ts' 'src/**/*.tsx' './package.json' '.swcrc' './*.js' --no-error-on-unmatched-pattern --write"
   },
   "devDependencies": {
-    "cohere-ai": "^7.9.5",
-    "openai": "^4.47.1",
     "@google/generative-ai": "^0.8.0",
     "@pmmmwh/react-refresh-webpack-plugin": "^0.5.11",
     "@swc/cli": "^0.1.62",
@@ -37,8 +35,11 @@
     "@types/uuid": "^9.0.5",
     "@types/vscode": "^1.83.1",
     "@vscode/vsce": "^2.21.1",
+    "cohere-ai": "^7.9.5",
     "copy-webpack-plugin": "^11.0.0",
-    "prettier": "^3.0.3",
+    "groq-sdk": "^0.4.0",
+    "openai": "^4.47.1",
+    "prettier": "3.2.5",
     "prettier-plugin-organize-imports": "^3.2.3",
     "promise-deferred": "^2.0.4",
     "react": "^18.2.0",
@@ -112,6 +113,11 @@
           "default": "",
           "description": "Cohere API Key"
         },
+        "repo-code-assistant.groqApiKey": {
+          "type": "string",
+          "default": "",
+          "description": "Open Source LLM API Key"
+        },
         "repo-code-assistant.enableModel": {
           "type": "object",
           "properties": {
@@ -142,9 +148,10 @@
   },
   "dependencies": {
     "@google/generative-ai": "^0.8.0",
-    "openai": "^4.47.1",
     "@types/react-syntax-highlighter": "^15.5.11",
     "cohere-ai": "^7.9.5",
+    "groq-sdk": "^0.4.0",
+    "openai": "^4.47.1",
     "react-markdown": "^9.0.1",
     "react-syntax-highlighter": "^15.5.0",
     "styled-components": "^6.1.8"
