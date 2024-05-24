@@ -112,12 +112,7 @@ export const viewRegistration = async <V extends ViewKey>(
   ctx: vscode.ExtensionContext,
   viewId: V,
 ) => {
-  const view = await createView(ctx, viewId, {
-    enableScripts: true,
-    localResourceRoots: [
-      vscode.Uri.file(path.join(ctx.extensionPath, 'media')),
-    ],
-  });
+  const view = await createView(ctx, viewId, { enableScripts: true });
   setViewHtml(ctx, viewId, view.webview);
   return view;
 };
