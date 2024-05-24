@@ -415,6 +415,34 @@ export abstract class AbstractLanguageModelService
     currentEntryID?: string,
   ): Promise<string>;
 
+  /**
+   * Get the response for a query with an image, if the currentEntryID is provided, the history will be used from that point
+   * If the model does not support this feature, a message will be shown to the user
+   * @param _query - The query to get a response for
+   * @param _images - The images to get a response for
+   * @param _currentEntryID - The current entry ID
+   */
+  public async getResponseForQueryWithImage(
+    _query: string,
+    _images: string[],
+    _currentEntryID?: string,
+  ): Promise<string> {
+    vscode.window
+      .showInformationMessage(
+        'This feature is not supported by the current model.',
+      )
+      .then();
+
+    return 'This feature is not supported by the current model.';
+  }
+
+  /**
+   * Get the response for a query with an image, if the currentEntryID is provided, the history will be used from that point
+   * If the model does not support this feature, a message will be shown to the user
+   * @param _query - The query to get a response for
+   * @param _images - The images to get a response for
+   * @param _sendStreamResponse - The callback to send chunks of the response to
+   */
   public async getResponseChunksForQueryWithImage(
     _query: string,
     _images: string[],

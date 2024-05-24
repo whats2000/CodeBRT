@@ -186,6 +186,36 @@ export class GeminiService extends AbstractLanguageModelService {
     }
   }
 
+  public async getResponseForQueryWithImage(
+    query: string,
+    images: string[],
+  ): Promise<string> {
+    const genAI = new GoogleGenerativeAI(this.apiKey);
+
+    const model = genAI.getGenerativeModel({ model: this.currentModel });
+
+    try {
+      const imageParts = images.map((image) => {
+        return this.fileToGenerativePart(
+          image,
+          `image/${image.split('.').pop()}`,
+        );
+      });
+
+      const result = await model.generateContent({
+        generationConfig: this.generationConfig,
+        contents: [{ role: 'user', parts: [{ text: query }, ...imageParts] }],
+      });
+
+      return result.response.text();
+    } catch (error) {
+      vscode.window.showErrorMessage(
+        'Failed to get response from Gemini Service: ' + error,
+      );
+      return 'Failed to connect to the language model service.';
+    }
+  }
+
   public async getResponseChunksForQueryWithImage(
     query: string,
     images: string[],

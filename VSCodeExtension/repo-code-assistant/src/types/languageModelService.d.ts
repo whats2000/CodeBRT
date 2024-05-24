@@ -110,6 +110,22 @@ export interface LanguageModelService {
 
   /**
    * Get the response for a query with an image
+   * If the currentEntryID is provided, the history will be used from that point
+   * Notice: That not all models support history with images
+   * @param query - The query to get a response for
+   * @param images - The images paths to use
+   * @param currentEntryID - The current entry ID
+   */
+  getResponseForQueryWithImage: (
+    query: string,
+    images: string[],
+    currentEntryID?: string,
+  ) => Promise<string>;
+
+  /**
+   * Get the response for a query with an image and also fire a view event to send the response in chunks.
+   * If the currentEntryID is provided, the history will be used from that point
+   * Notice: That not all models support history with images
    * @param query - The query to get a response for
    * @param images - The images paths to use
    * @param sendStreamResponse - The callback to send chunks of the response to
