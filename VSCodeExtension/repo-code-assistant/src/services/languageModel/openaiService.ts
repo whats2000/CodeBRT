@@ -1,8 +1,13 @@
 import * as vscode from 'vscode';
-import { OpenAI } from 'openai';
-import ChatCompletionMessageParam = OpenAI.Chat.Completions.ChatCompletionMessageParam;
-import ChatCompletionCreateParamsNonStreaming = OpenAI.Chat.Completions.ChatCompletionCreateParamsNonStreaming;
-import ChatCompletionCreateParamsStreaming = OpenAI.Chat.Completions.ChatCompletionCreateParamsStreaming;
+import OpenAI from 'openai';
+import fs from 'fs';
+import path from 'path';
+import {
+  ChatCompletionMessageParam,
+  ChatCompletionContentPartImage,
+  ChatCompletionCreateParamsStreaming,
+  ChatCompletionCreateParamsNonStreaming,
+} from 'openai/src/resources/chat/completions';
 
 import {
   ConversationEntry,
@@ -115,6 +120,19 @@ export class OpenAIService extends AbstractLanguageModelService {
     }
   }
 
+  private fileToGenerativePart(
+    filePath: string,
+    mimeType: string,
+  ): ChatCompletionContentPartImage {
+    const base64Data = fs.readFileSync(filePath).toString('base64');
+    return {
+      type: 'image_url',
+      image_url: {
+        url: `data:${mimeType};base64,${base64Data}`,
+      },
+    };
+  }
+
   public async getResponseChunksForQuery(
     query: string,
     sendStreamResponse: (msg: string) => void,
@@ -156,6 +174,60 @@ export class OpenAIService extends AbstractLanguageModelService {
         'Failed to get response from OpenAI Service: ' + error,
       );
       return 'Failed to connect to the language model service.';
+    }
+  }
+
+  public async getResponseChunksForQueryWithImage(
+    query: string,
+    images: string[],
+    sendStreamResponse: (msg: string) => void,
+    currentEntryID?: string,
+  ): Promise<string> {
+    const openai = new OpenAI({ apiKey: this.apiKey });
+
+    const history = currentEntryID
+      ? this.getHistoryBeforeEntry(currentEntryID)
+      : this.history;
+    const conversationHistory = this.conversationHistoryToContent(
+      history.entries,
+    );
+
+    // Append the current query to the conversation history
+    conversationHistory.push({ role: 'user', content: query });
+
+    try {
+      let responseText = '';
+
+      const imageParts = images.map((image) => {
+        const mimeType = `image/${path.extname(image).slice(1)}`;
+        return this.fileToGenerativePart(image, mimeType);
+      });
+
+      const messages: ChatCompletionMessageParam[] = [
+        {
+          role: 'user',
+          content: [{ type: 'text', text: query }, ...imageParts],
+        },
+      ];
+
+      const stream = await openai.chat.completions.create({
+        model: this.currentModel,
+        messages: messages,
+        stream: true,
+      } as ChatCompletionCreateParamsStreaming);
+
+      for await (const chunk of stream) {
+        const partText = chunk.choices[0]?.delta?.content || '';
+        sendStreamResponse(partText);
+        responseText += partText;
+      }
+
+      return responseText;
+    } catch (error) {
+      vscode.window.showErrorMessage(
+        'Failed to get response from OpenAI Service: ' + error,
+      );
+      return 'Failed to connect to the language model service';
     }
   }
 }
