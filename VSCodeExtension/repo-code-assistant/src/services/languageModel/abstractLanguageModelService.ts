@@ -384,13 +384,6 @@ export abstract class AbstractLanguageModelService
   }
 
   /**
-   * Post process the loaded history, this will be called after the history is loaded
-   * @param history - The loaded history
-   * @protected
-   */
-  protected abstract processLoadedHistory(history: ConversationHistory): void;
-
-  /**
    * Get the response for a query, if the currentEntryID is provided, the history will be used from that point
    * @param query - The query to get a response for
    * @param currentEntryID - The current entry ID

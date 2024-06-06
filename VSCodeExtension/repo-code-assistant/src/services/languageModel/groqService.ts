@@ -1,10 +1,7 @@
 import * as vscode from 'vscode';
 import Groq from 'groq-sdk';
 import ChatCompletionMessageParam = Groq.Chat.Completions.ChatCompletionMessageParam;
-import {
-  ConversationEntry,
-  ConversationHistory,
-} from '../../types/conversationHistory';
+import { ConversationEntry } from '../../types/conversationHistory';
 import { AbstractLanguageModelService } from './abstractLanguageModelService';
 import SettingsManager from '../../api/settingsManager';
 import {
@@ -60,10 +57,6 @@ export class GroqService extends AbstractLanguageModelService {
         'Failed to initialize Groq Service: ' + error,
       );
     }
-  }
-
-  protected processLoadedHistory(history: ConversationHistory): void {
-    this.history = history;
   }
 
   private conversationHistoryToContent(entries: {

@@ -1,10 +1,7 @@
 import * as vscode from 'vscode';
 import { Cohere, CohereClient } from 'cohere-ai';
 
-import {
-  ConversationEntry,
-  ConversationHistory,
-} from '../../types/conversationHistory';
+import { ConversationEntry } from '../../types/conversationHistory';
 import { AbstractLanguageModelService } from './abstractLanguageModelService';
 import SettingsManager from '../../api/settingsManager';
 
@@ -49,10 +46,6 @@ export class CohereService extends AbstractLanguageModelService {
         'Failed to initialize Cohere Service: ' + error,
       );
     }
-  }
-
-  protected processLoadedHistory(history: ConversationHistory): void {
-    this.history = history;
   }
 
   private conversationHistoryToContent(entries: {

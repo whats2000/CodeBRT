@@ -3,7 +3,7 @@ import {
   ConversationHistoryList,
 } from './conversationHistory';
 
-export interface LanguageModelService {
+export type LanguageModelService = {
   /**
    * Load the conversation histories from the file
    */
@@ -138,4 +138,4 @@ export interface LanguageModelService {
     sendStreamResponse: (msg: string) => void,
     currentEntryID?: string,
   ) => Promise<string>;
-}
+};
