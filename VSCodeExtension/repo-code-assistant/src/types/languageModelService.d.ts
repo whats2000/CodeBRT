@@ -127,7 +127,7 @@ export type LanguageModelService = {
    * If the currentEntryID is provided, the history will be used from that point
    * Notice: That not all models support history with images
    * @param query - The query to get a response for
-   * @param images - The images paths to use
+   * @param images - The list of images paths to use
    * @param sendStreamResponse - The callback to send chunks of the response to
    * @param currentEntryID - The current entry ID
    * @returns The response for the query

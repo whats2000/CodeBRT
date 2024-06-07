@@ -25,6 +25,11 @@ export type ExtensionSettings = {
   groqApiKey: string;
 
   /**
+   * The API key for the Hugging Face model
+   */
+  huggingFaceApiKey: string;
+
+  /**
    * Determines if the model is enabled for code generation
    */
   enableModel: {

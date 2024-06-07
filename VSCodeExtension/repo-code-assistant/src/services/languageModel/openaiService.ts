@@ -53,7 +53,7 @@ export class OpenAIService extends AbstractLanguageModelService {
       await this.loadHistories();
     } catch (error) {
       vscode.window.showErrorMessage(
-        'Failed to initialize OpenAI Service: ' + error,
+        'Failed to initialize OpenAI Service History: ' + error,
       );
     }
   }
@@ -78,6 +78,19 @@ export class OpenAIService extends AbstractLanguageModelService {
     }
 
     return result;
+  }
+
+  private fileToGenerativePart(
+    filePath: string,
+    mimeType: string,
+  ): ChatCompletionContentPartImage {
+    const base64Data = fs.readFileSync(filePath).toString('base64');
+    return {
+      type: 'image_url',
+      image_url: {
+        url: `data:${mimeType};base64,${base64Data}`,
+      },
+    };
   }
 
   public async getResponseForQuery(
@@ -111,19 +124,6 @@ export class OpenAIService extends AbstractLanguageModelService {
       );
       return 'Failed to connect to the language model service.';
     }
-  }
-
-  private fileToGenerativePart(
-    filePath: string,
-    mimeType: string,
-  ): ChatCompletionContentPartImage {
-    const base64Data = fs.readFileSync(filePath).toString('base64');
-    return {
-      type: 'image_url',
-      image_url: {
-        url: `data:${mimeType};base64,${base64Data}`,
-      },
-    };
   }
 
   public async getResponseChunksForQuery(
@@ -167,6 +167,50 @@ export class OpenAIService extends AbstractLanguageModelService {
         'Failed to get response from OpenAI Service: ' + error,
       );
       return 'Failed to connect to the language model service.';
+    }
+  }
+
+  public async getResponseForQueryWithImage(
+    query: string,
+    images: string[],
+    currentEntryID?: string,
+  ): Promise<string> {
+    const openai = new OpenAI({ apiKey: this.apiKey });
+
+    const history = currentEntryID
+      ? this.getHistoryBeforeEntry(currentEntryID)
+      : this.history;
+    const conversationHistory = this.conversationHistoryToContent(
+      history.entries,
+    );
+
+    // Append the current query to the conversation history
+    conversationHistory.push({ role: 'user', content: query });
+
+    try {
+      const imageParts = images.map((image) => {
+        const mimeType = `image/${path.extname(image).slice(1)}`;
+        return this.fileToGenerativePart(image, mimeType);
+      });
+
+      const messages: ChatCompletionMessageParam[] = [
+        {
+          role: 'user',
+          content: [{ type: 'text', text: query }, ...imageParts],
+        },
+      ];
+
+      const chatCompletion = await openai.chat.completions.create({
+        model: this.currentModel,
+        messages: messages,
+      } as ChatCompletionCreateParamsNonStreaming);
+
+      return chatCompletion.choices[0]?.message?.content!;
+    } catch (error) {
+      vscode.window.showErrorMessage(
+        'Failed to get response from OpenAI Service: ' + error,
+      );
+      return 'Failed to connect to the language model service';
     }
   }
 

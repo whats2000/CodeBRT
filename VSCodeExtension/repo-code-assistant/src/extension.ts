@@ -22,6 +22,7 @@ import { CohereService } from './services/languageModel/cohereService';
 import { OpenAIService } from './services/languageModel/openaiService';
 import { LanguageModelService } from './types/languageModelService';
 import { GroqService } from './services/languageModel/groqService';
+import { HuggingFaceService } from "./services/languageModel/huggingFaceService";
 
 export const activate = async (ctx: vscode.ExtensionContext) => {
   const connectedViews: Partial<Record<ViewKey, vscode.WebviewView>> = {};
@@ -43,6 +44,10 @@ export const activate = async (ctx: vscode.ExtensionContext) => {
       service: new GroqService(ctx, settingsManager),
       enabled: settingsManager.get('enableModel').groq,
     },
+    huggingFace: {
+      service: new HuggingFaceService(ctx, settingsManager),
+      enabled: settingsManager.get('enableModel').huggingFace,
+    }
   };
 
   /**

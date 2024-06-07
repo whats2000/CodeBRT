@@ -46,11 +46,13 @@ class SettingsManager {
         openai: false,
         cohere: false,
         groq: false,
+        huggingFace: false,
       },
       openAiApiKey: '',
       geminiApiKey: '',
       cohereApiKey: '',
       groqApiKey: '',
+      huggingFaceApiKey: '',
       lastUsedModel: 'gemini',
     };
   }

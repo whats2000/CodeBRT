@@ -231,7 +231,7 @@ export type ViewApi = {
   /**
    * Get the response for a query with a file.
    * @param base64Data - The base64 data of the file.
-   * @returns The file saved path.
+   * @returns The path of the file.
    */
   uploadImage: (base64Data: string) => Promise<string>;
 

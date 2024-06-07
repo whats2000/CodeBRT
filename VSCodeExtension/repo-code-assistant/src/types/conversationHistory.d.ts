@@ -43,7 +43,7 @@ export type ConversationHistory = {
   title: string;
 
   /**
-   * The create time of the conversation history
+   * The creation time of the conversation history
    */
   create_time: number;
 

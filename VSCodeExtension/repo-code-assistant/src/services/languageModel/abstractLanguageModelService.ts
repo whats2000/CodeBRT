@@ -412,7 +412,7 @@ export abstract class AbstractLanguageModelService
    * Get the response for a query with an image, if the currentEntryID is provided, the history will be used from that point
    * If the model does not support this feature, a message will be shown to the user
    * @param _query - The query to get a response for
-   * @param _images - The images to get a response for
+   * @param _images - The list of images paths to use
    * @param _currentEntryID - The current entry ID
    */
   public async getResponseForQueryWithImage(
@@ -433,7 +433,7 @@ export abstract class AbstractLanguageModelService
    * Get the response for a query with an image, if the currentEntryID is provided, the history will be used from that point
    * If the model does not support this feature, a message will be shown to the user
    * @param _query - The query to get a response for
-   * @param _images - The images to get a response for
+   * @param _images - The list of images paths to use
    * @param _sendStreamResponse - The callback to send chunks of the response to
    */
   public async getResponseChunksForQueryWithImage(

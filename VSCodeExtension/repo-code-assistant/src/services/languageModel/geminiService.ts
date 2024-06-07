@@ -79,7 +79,7 @@ export class GeminiService extends AbstractLanguageModelService {
       await this.loadHistories();
     } catch (error) {
       vscode.window.showErrorMessage(
-        'Failed to initialize Gemini Service: ' + error,
+        'Failed to initialize Gemini Service History: ' + error,
       );
     }
   }
@@ -125,6 +125,11 @@ export class GeminiService extends AbstractLanguageModelService {
     const history = currentEntryID
       ? this.getHistoryBeforeEntry(currentEntryID)
       : this.history;
+
+    // Pop if the last entry is the user and the content is equal to the query
+    if (history.entries[history.current].role === 'user' && history.entries[history.current].message === query) {
+      delete history.entries[history.current];
+    }
 
     try {
       const chat = model.startChat({

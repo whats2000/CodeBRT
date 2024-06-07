@@ -35,7 +35,7 @@ export class GroqService extends AbstractLanguageModelService {
     // Initialize and load conversation history
     this.initialize().catch((error) =>
       vscode.window.showErrorMessage(
-        'Failed to initialize Groq Service: ' + error,
+        'Failed to initialize Groq Service History: ' + error,
       ),
     );
 
@@ -82,7 +82,7 @@ export class GroqService extends AbstractLanguageModelService {
   }
 
   public async getResponseForQuery(
-    query: string,
+    _query: string,
     currentEntryID?: string,
   ): Promise<string> {
     const groq = new Groq({
@@ -95,9 +95,6 @@ export class GroqService extends AbstractLanguageModelService {
     const conversationHistory = this.conversationHistoryToContent(
       history.entries,
     );
-
-    // Append the current query to the conversation history
-    conversationHistory.push({ role: 'user', content: query });
 
     try {
       const chatCompletion = await groq.chat.completions.create({
@@ -120,7 +117,7 @@ export class GroqService extends AbstractLanguageModelService {
   }
 
   public async getResponseChunksForQuery(
-    query: string,
+    _query: string,
     sendStreamResponse: (msg: string) => void,
     currentEntryID?: string,
   ): Promise<string> {
@@ -134,9 +131,6 @@ export class GroqService extends AbstractLanguageModelService {
     const conversationHistory = this.conversationHistoryToContent(
       history.entries,
     );
-
-    // Append the current query to the conversation history
-    conversationHistory.push({ role: 'user', content: query });
 
     try {
       const stream = await groq.chat.completions.create({

@@ -24,7 +24,7 @@ export class CohereService extends AbstractLanguageModelService {
     this.apiKey = settingsManager.get('cohereApiKey');
     this.initialize().catch((error) =>
       vscode.window.showErrorMessage(
-        'Failed to initialize Cohere Service: ' + error,
+        'Failed to initialize Cohere Service History: ' + error,
       ),
     );
 

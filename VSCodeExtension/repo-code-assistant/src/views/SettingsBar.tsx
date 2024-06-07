@@ -73,11 +73,13 @@ export const SettingsBar = () => {
     openAiApiKey: '',
     cohereApiKey: '',
     groqApiKey: '',
+    huggingFaceApiKey: '',
     enableModel: {
       gemini: false,
       openai: false,
       cohere: false,
       groq: false,
+      huggingFace: false,
     },
   });
 
