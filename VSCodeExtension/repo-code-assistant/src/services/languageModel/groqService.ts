@@ -59,9 +59,10 @@ export class GroqService extends AbstractLanguageModelService {
     }
   }
 
-  private conversationHistoryToContent(entries: {
-    [key: string]: ConversationEntry;
-  }): ChatCompletionMessageParam[] {
+  private conversationHistoryToContent(
+    entries: { [key: string]: ConversationEntry; },
+    query: string,
+  ): ChatCompletionMessageParam[] {
     const result: Groq.Chat.Completions.ChatCompletionMessageParam[] = [];
     let currentEntry = entries[this.history.current];
 
@@ -78,11 +79,19 @@ export class GroqService extends AbstractLanguageModelService {
       }
     }
 
+    // Groq's API requires the query message at the end of the history
+    if (result.length > 0 && result[result.length - 1].role !== 'user') {
+      result.push({
+        role: 'user',
+        content: query
+      });
+    }
+
     return result;
   }
 
   public async getResponseForQuery(
-    _query: string,
+    query: string,
     currentEntryID?: string,
   ): Promise<string> {
     const groq = new Groq({
@@ -94,6 +103,7 @@ export class GroqService extends AbstractLanguageModelService {
       : this.history;
     const conversationHistory = this.conversationHistoryToContent(
       history.entries,
+      query,
     );
 
     try {
@@ -117,7 +127,7 @@ export class GroqService extends AbstractLanguageModelService {
   }
 
   public async getResponseChunksForQuery(
-    _query: string,
+    query: string,
     sendStreamResponse: (msg: string) => void,
     currentEntryID?: string,
   ): Promise<string> {
@@ -130,6 +140,7 @@ export class GroqService extends AbstractLanguageModelService {
       : this.history;
     const conversationHistory = this.conversationHistoryToContent(
       history.entries,
+      query,
     );
 
     try {

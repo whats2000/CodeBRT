@@ -58,9 +58,10 @@ export class OpenAIService extends AbstractLanguageModelService {
     }
   }
 
-  private conversationHistoryToContent(entries: {
-    [key: string]: ConversationEntry;
-  }): ChatCompletionMessageParam[] {
+  private conversationHistoryToContent(
+    entries: { [key: string]: ConversationEntry; },
+    query: string,
+  ): ChatCompletionMessageParam[] {
     const result: OpenAI.Chat.Completions.ChatCompletionMessageParam[] = [];
     let currentEntry = entries[this.history.current];
 
@@ -75,6 +76,14 @@ export class OpenAIService extends AbstractLanguageModelService {
       } else {
         break;
       }
+    }
+
+    // OpenAI's API requires the query message at the end of the history
+    if (result.length > 0 && result[result.length - 1].role !== 'user') {
+      result.push({
+        role: 'user',
+        content: query,
+      });
     }
 
     return result;
@@ -106,10 +115,8 @@ export class OpenAIService extends AbstractLanguageModelService {
       : this.history;
     const conversationHistory = this.conversationHistoryToContent(
       history.entries,
+      query,
     );
-
-    // Append the current query to the conversation history
-    conversationHistory.push({ role: 'user', content: query });
 
     try {
       const chatCompletion = await openai.chat.completions.create({
@@ -140,10 +147,8 @@ export class OpenAIService extends AbstractLanguageModelService {
       : this.history;
     const conversationHistory = this.conversationHistoryToContent(
       history.entries,
+      query,
     );
-
-    // Append the current query to the conversation history
-    conversationHistory.push({ role: 'user', content: query });
 
     try {
       const stream = await openai.chat.completions.create({
@@ -173,19 +178,9 @@ export class OpenAIService extends AbstractLanguageModelService {
   public async getResponseForQueryWithImage(
     query: string,
     images: string[],
-    currentEntryID?: string,
+    _currentEntryID?: string,
   ): Promise<string> {
-    const openai = new OpenAI({ apiKey: this.apiKey });
-
-    const history = currentEntryID
-      ? this.getHistoryBeforeEntry(currentEntryID)
-      : this.history;
-    const conversationHistory = this.conversationHistoryToContent(
-      history.entries,
-    );
-
-    // Append the current query to the conversation history
-    conversationHistory.push({ role: 'user', content: query });
+    const openai = new OpenAI({apiKey: this.apiKey});
 
     try {
       const imageParts = images.map((image) => {
@@ -196,7 +191,7 @@ export class OpenAIService extends AbstractLanguageModelService {
       const messages: ChatCompletionMessageParam[] = [
         {
           role: 'user',
-          content: [{ type: 'text', text: query }, ...imageParts],
+          content: [{type: 'text', text: query}, ...imageParts],
         },
       ];
 
@@ -218,19 +213,9 @@ export class OpenAIService extends AbstractLanguageModelService {
     query: string,
     images: string[],
     sendStreamResponse: (msg: string) => void,
-    currentEntryID?: string,
+    _currentEntryID?: string,
   ): Promise<string> {
-    const openai = new OpenAI({ apiKey: this.apiKey });
-
-    const history = currentEntryID
-      ? this.getHistoryBeforeEntry(currentEntryID)
-      : this.history;
-    const conversationHistory = this.conversationHistoryToContent(
-      history.entries,
-    );
-
-    // Append the current query to the conversation history
-    conversationHistory.push({ role: 'user', content: query });
+    const openai = new OpenAI({apiKey: this.apiKey});
 
     try {
       let responseText = '';
@@ -243,7 +228,7 @@ export class OpenAIService extends AbstractLanguageModelService {
       const messages: ChatCompletionMessageParam[] = [
         {
           role: 'user',
-          content: [{ type: 'text', text: query }, ...imageParts],
+          content: [{type: 'text', text: query}, ...imageParts],
         },
       ];
 

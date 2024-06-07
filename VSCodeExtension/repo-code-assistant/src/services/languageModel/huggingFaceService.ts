@@ -51,9 +51,10 @@ export class HuggingFaceService extends AbstractLanguageModelService {
     }
   }
 
-  private conversationHistoryToContent(entries: {
-    [key: string]: ConversationEntry;
-  }): ChatCompletionInputMessage[] {
+  private conversationHistoryToContent(
+    entries: { [key: string]: ConversationEntry; },
+    query: string,
+  ): ChatCompletionInputMessage[] {
     const result: ChatCompletionInputMessage[] = [];
     let currentEntry = entries[this.history.current];
 
@@ -70,11 +71,19 @@ export class HuggingFaceService extends AbstractLanguageModelService {
       }
     }
 
+    // Hugging Face's API requires the query message at the end of the history
+    if (result.length > 0 && result[result.length - 1].role !== 'user') {
+      result.push({
+        role: 'user',
+        content: query,
+      });
+    }
+
     return result;
   }
 
   public async getResponseForQuery(
-    _query: string,
+    query: string,
     currentEntryID?: string,
   ): Promise<string> {
     const huggerFace = new HfInference(this.apiKey);
@@ -84,6 +93,7 @@ export class HuggingFaceService extends AbstractLanguageModelService {
       : this.history;
     const conversationHistory = this.conversationHistoryToContent(
       history.entries,
+      query,
     );
 
     const response = await huggerFace.chatCompletion({
@@ -96,7 +106,7 @@ export class HuggingFaceService extends AbstractLanguageModelService {
   }
 
   public async getResponseChunksForQuery(
-    _query: string,
+    query: string,
     sendStreamResponse: (msg: string) => void,
     currentEntryID?: string,
   ): Promise<string> {
@@ -107,6 +117,7 @@ export class HuggingFaceService extends AbstractLanguageModelService {
       : this.history;
     const conversationHistory = this.conversationHistoryToContent(
       history.entries,
+      query,
     );
 
     let responseText = '';

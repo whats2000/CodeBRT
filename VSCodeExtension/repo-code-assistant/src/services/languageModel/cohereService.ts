@@ -48,9 +48,9 @@ export class CohereService extends AbstractLanguageModelService {
     }
   }
 
-  private conversationHistoryToContent(entries: {
-    [key: string]: ConversationEntry;
-  }): Cohere.ChatMessage[] {
+  private conversationHistoryToContent(
+    entries: { [key: string]: ConversationEntry; }
+  ): Cohere.ChatMessage[] {
     let result: Cohere.ChatMessage[] = [];
     let currentEntry = entries[this.history.current];
 
@@ -67,6 +67,11 @@ export class CohereService extends AbstractLanguageModelService {
       }
     }
 
+    // Cohere's API doesn't include the query message
+    if (result.length > 0 && result[result.length - 1].role === 'USER') {
+      result.pop();
+    }
+
     return result;
   }
 
@@ -80,9 +85,11 @@ export class CohereService extends AbstractLanguageModelService {
       ? this.getHistoryBeforeEntry(currentEntryID)
       : this.history;
 
+    const conversationHistory = this.conversationHistoryToContent(history.entries);
+
     try {
       const response = await model.chat({
-        chatHistory: this.conversationHistoryToContent(history.entries),
+        chatHistory: conversationHistory,
         model: this.currentModel,
         message: query,
       });
@@ -109,9 +116,11 @@ export class CohereService extends AbstractLanguageModelService {
       ? this.getHistoryBeforeEntry(currentEntryID)
       : this.history;
 
+    const conversationHistory = this.conversationHistoryToContent(history.entries);
+
     try {
       const result = await model.chatStream({
-        chatHistory: this.conversationHistoryToContent(history.entries),
+        chatHistory: conversationHistory,
         model: this.currentModel,
         message: query,
       });

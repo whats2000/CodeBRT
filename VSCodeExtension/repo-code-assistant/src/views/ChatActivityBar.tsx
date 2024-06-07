@@ -332,6 +332,7 @@ export const ChatActivityBar = () => {
               editedMessage,
               activeModel,
               true,
+              newEntryId,
             )) as string);
 
       // Add AI response to conversation history and replace the temporary ID

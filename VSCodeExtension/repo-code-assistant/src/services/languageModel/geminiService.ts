@@ -103,6 +103,11 @@ export class GeminiService extends AbstractLanguageModelService {
       }
     }
 
+    // Gemini's history doesn't include the query message
+    if (result.length > 0 && result[result.length - 1].role === 'user') {
+      result.pop();
+    }
+
     return result;
   }
 
@@ -126,16 +131,13 @@ export class GeminiService extends AbstractLanguageModelService {
       ? this.getHistoryBeforeEntry(currentEntryID)
       : this.history;
 
-    // Pop if the last entry is the user and the content is equal to the query
-    if (history.entries[history.current].role === 'user' && history.entries[history.current].message === query) {
-      delete history.entries[history.current];
-    }
+    const conversationHistory = this.conversationHistoryToContent(history.entries);
 
     try {
       const chat = model.startChat({
         generationConfig: this.generationConfig,
         safetySettings: this.safetySettings,
-        history: this.conversationHistoryToContent(history.entries),
+        history: conversationHistory,
       });
 
       const result = await chat.sendMessage(query);
@@ -160,11 +162,13 @@ export class GeminiService extends AbstractLanguageModelService {
       ? this.getHistoryBeforeEntry(currentEntryID)
       : this.history;
 
+    const conversationHistory = this.conversationHistoryToContent(history.entries);
+
     try {
       const chat = model.startChat({
         generationConfig: this.generationConfig,
         safetySettings: this.safetySettings,
-        history: this.conversationHistoryToContent(history.entries),
+        history: conversationHistory,
       });
 
       let responseText = '';
