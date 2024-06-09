@@ -27,9 +27,18 @@ const SidebarContainer = styled.div<{ isOpen: boolean }>`
 const CloseBtn = styled.span`
   position: absolute;
   top: 10px;
-  right: 15px;
+  right: 5px;
   font-size: 36px;
   cursor: pointer;
+  text-align: center;
+  line-height: 30px;
+  border-radius: 4px;
+  width: 30px;
+  height: 30px;
+
+  &:hover {
+    background-color: #333;
+  }
 `;
 
 const HistoryList = styled.ul`
