@@ -1,64 +1,24 @@
 import React, { useContext, useEffect, useState } from 'react';
-import styled from 'styled-components';
+import { Select, Button, Space, Drawer } from 'antd';
+import {
+  PlusOutlined,
+  HistoryOutlined,
+  SettingOutlined,
+} from '@ant-design/icons';
 
 import { ModelType } from '../../../types/modelType';
 import { ConversationHistory } from '../../../types/conversationHistory';
-import { NewChat, SettingIcon, HistoryIcon } from '../../../icons';
 import { WebviewContext } from '../../WebviewContext';
 import { HistorySidebar } from './HistorySidebar';
 import { SettingsBar } from './SettingsBar';
+import styled from 'styled-components';
 
-const StyledToolbar = styled.div`
+const { Option } = Select;
+
+const StyledSpace = styled(Space)`
   display: flex;
   justify-content: space-between;
-  padding: 5px 15px 5px 5px;
-
-  & > div {
-    display: flex;
-    align-items: center;
-  }
-`;
-
-const ToolbarButton = styled.button`
-  padding: 5px;
-  color: #f0f0f0;
-  background-color: transparent;
-  display: flex;
-  align-items: center;
-  border: none;
-  border-radius: 4px;
-
-  &:hover {
-    background-color: #333;
-  }
-`;
-
-const ModelSelect = styled.select`
-  padding: 5px 10px;
-  border-radius: 4px;
-  background-color: #666;
-  color: white;
-  border: none;
-  height: 30px;
-  margin-left: 5px;
-
-  &:focus {
-    outline: none;
-  }
-`;
-
-const AvailableModelSelect = styled.select`
-  padding: 5px 10px;
-  border-radius: 4px;
-  background-color: #666;
-  color: white;
-  border: none;
-  height: 30px;
-  margin-left: 5px;
-
-  &:focus {
-    outline: none;
-  }
+  padding: 5px 15px;
 `;
 
 interface ToolbarProps {
@@ -87,10 +47,15 @@ export const Toolbar: React.FC<ToolbarProps> = ({
   const [selectedModel, setSelectedModel] = useState<string>('');
   const [isHistorySidebarOpen, setIsHistorySidebarOpen] = useState(false);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+  const [isOffCanvas, setIsOffCanvas] = useState(false);
+  const [isSelectModelOpen, setIsSelectModelOpen] = useState(false);
 
   useEffect(() => {
     callApi('getAvailableModels', activeModel)
-      .then((models: string[]) => setAvailableModels(models))
+      .then((models: string[]) => {
+        setAvailableModels(models);
+        setSelectedModel(models[0]);
+      })
       .catch((error) =>
         callApi(
           'alertMessage',
@@ -98,7 +63,19 @@ export const Toolbar: React.FC<ToolbarProps> = ({
           'error',
         ).catch(console.error),
       );
+
+    const handleResize = () => {
+      setIsOffCanvas(window.innerWidth < 600);
+    };
+
+    window.addEventListener('resize', handleResize);
+    handleResize();
+
+    return () => {
+      window.removeEventListener('resize', handleResize);
+    };
   }, [activeModel]);
+
   const createNewChat = () => {
     callApi('addNewConversationHistory', activeModel)
       .then((newConversationHistory) => setMessages(newConversationHistory))
@@ -107,16 +84,13 @@ export const Toolbar: React.FC<ToolbarProps> = ({
       );
   };
 
-  const handleModelServiceChange = (
-    event: React.ChangeEvent<HTMLSelectElement>,
-  ) => {
-    setActiveModel(event.target.value as ModelType);
+  const handleModelServiceChange = (value: ModelType) => {
+    setActiveModel(value);
   };
 
-  const handleModelChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
-    const newModel = event.target.value;
-    setSelectedModel(newModel);
-    callApi('switchModel', activeModel, newModel).catch((error) =>
+  const handleModelChange = (value: string) => {
+    setSelectedModel(value);
+    callApi('switchModel', activeModel, value).catch((error) =>
       callApi(
         'alertMessage',
         `Failed to switch model: ${error}`,
@@ -141,38 +115,76 @@ export const Toolbar: React.FC<ToolbarProps> = ({
 
   return (
     <>
-      <StyledToolbar>
-        <div>
-          <ModelSelect value={activeModel} onChange={handleModelServiceChange}>
-            {modelServices.map((service) => (
-              <option key={service} value={service}>
-                {service}
-              </option>
-            ))}
-          </ModelSelect>
-          <AvailableModelSelect
-            value={selectedModel}
-            onChange={handleModelChange}
-          >
-            {availableModels.map((model) => (
-              <option key={model} value={model}>
-                {model}
-              </option>
-            ))}
-          </AvailableModelSelect>
-        </div>
-        <div>
-          <ToolbarButton onClick={toggleHistorySidebar}>
-            <HistoryIcon />
-          </ToolbarButton>
-          <ToolbarButton onClick={createNewChat}>
-            <NewChat />
-          </ToolbarButton>
-          <ToolbarButton onClick={toggleSettings}>
-            <SettingIcon />
-          </ToolbarButton>
-        </div>
-      </StyledToolbar>
+      <StyledSpace>
+        <Space>
+          {isOffCanvas ? (
+            <>
+              <Select
+                value={activeModel}
+                onChange={handleModelServiceChange}
+                style={{ width: 100 }}
+              >
+                {modelServices.map((service) => (
+                  <Option key={service} value={service}>
+                    {service}
+                  </Option>
+                ))}
+              </Select>
+              <Button onClick={() => setIsSelectModelOpen(true)}>
+                {selectedModel}
+              </Button>
+              <Drawer
+                title='Select Model'
+                placement='right'
+                open={isSelectModelOpen}
+                onClose={() => setIsSelectModelOpen(false)}
+              >
+                <Select
+                  value={selectedModel}
+                  onChange={handleModelChange}
+                  style={{ width: '100%' }}
+                >
+                  {availableModels.map((model) => (
+                    <Option key={model} value={model}>
+                      {model}
+                    </Option>
+                  ))}
+                </Select>
+              </Drawer>
+            </>
+          ) : (
+            <>
+              <Select
+                value={activeModel}
+                onChange={handleModelServiceChange}
+                style={{ width: 150 }}
+              >
+                {modelServices.map((service) => (
+                  <Option key={service} value={service}>
+                    {service}
+                  </Option>
+                ))}
+              </Select>
+              <Select
+                value={selectedModel}
+                onChange={handleModelChange}
+                style={{ width: 200 }}
+              >
+                {availableModels.map((model) => (
+                  <Option key={model} value={model}>
+                    {model}
+                  </Option>
+                ))}
+              </Select>
+            </>
+          )}
+        </Space>
+        <Space>
+          <Button icon={<HistoryOutlined />} onClick={toggleHistorySidebar} />
+          <Button icon={<PlusOutlined />} onClick={createNewChat} />
+          <Button icon={<SettingOutlined />} onClick={toggleSettings} />
+        </Space>
+      </StyledSpace>
       <HistorySidebar
         isOpen={isHistorySidebarOpen}
         onClose={toggleHistorySidebar}
