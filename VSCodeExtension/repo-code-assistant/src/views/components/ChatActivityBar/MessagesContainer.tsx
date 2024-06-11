@@ -6,12 +6,12 @@ import styled from 'styled-components';
 import {
   ConversationEntry,
   ConversationHistory,
-} from '../../types/conversationHistory';
-import { ModelType } from '../../types/modelType';
-import { WebviewContext } from '../WebviewContext';
+} from '../../../types/conversationHistory';
+import { ModelType } from '../../../types/modelType';
+import { WebviewContext } from '../../WebviewContext';
 import { TypingAnimation } from '../common/TypingAnimation';
 import { CopyButton } from '../common/CopyButton';
-import { EditIcon, GoBackIcon, GoForwardIcon } from '../../icons';
+import { EditIcon, GoBackIcon, GoForwardIcon } from '../../../icons';
 
 const StyledMessagesContainer = styled.div`
   flex-grow: 1;

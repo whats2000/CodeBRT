@@ -1,10 +1,10 @@
 import React, { useContext, useEffect, useState } from 'react';
 import styled from 'styled-components';
 
-import { ModelType } from '../../types/modelType';
-import { ConversationHistory } from '../../types/conversationHistory';
-import { NewChat, SettingIcon, HistoryIcon } from '../../icons';
-import { WebviewContext } from '../WebviewContext';
+import { ModelType } from '../../../types/modelType';
+import { ConversationHistory } from '../../../types/conversationHistory';
+import { NewChat, SettingIcon, HistoryIcon } from '../../../icons';
+import { WebviewContext } from '../../WebviewContext';
 import { HistorySidebar } from './HistorySidebar';
 import { SettingsBar } from './SettingsBar';
 
@@ -75,7 +75,14 @@ export const Toolbar: React.FC<ToolbarProps> = ({
   setActiveModel,
 }) => {
   const { callApi } = useContext(WebviewContext);
-  const modelServices: ModelType[] = ['gemini', 'cohere', 'openai', 'groq', 'huggingFace', 'custom'];
+  const modelServices: ModelType[] = [
+    'gemini',
+    'cohere',
+    'openai',
+    'groq',
+    'huggingFace',
+    'custom',
+  ];
   const [availableModels, setAvailableModels] = useState<string[]>([]);
   const [selectedModel, setSelectedModel] = useState<string>('');
   const [isHistorySidebarOpen, setIsHistorySidebarOpen] = useState(false);
@@ -131,7 +138,6 @@ export const Toolbar: React.FC<ToolbarProps> = ({
       setIsHistorySidebarOpen(false);
     }
   };
-
 
   return (
     <>

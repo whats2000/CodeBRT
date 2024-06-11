@@ -1,7 +1,7 @@
 import React from 'react';
 import styled from 'styled-components';
 
-import { CopyIcon, CopySuccessIcon } from '../../icons';
+import { CopyIcon, CopySuccessIcon } from '../../../icons';
 
 const StyledCopyButton = styled.button<{ $copied: boolean }>`
   color: white;

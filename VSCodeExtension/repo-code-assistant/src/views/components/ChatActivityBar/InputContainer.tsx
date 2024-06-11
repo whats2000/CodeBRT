@@ -1,7 +1,7 @@
 import React, { useState, useContext, useEffect } from 'react';
-import { SendIcon, UploadIcon, CloseIcon } from '../../icons'; // Assuming CloseIcon is added to your icons
+import { SendIcon, UploadIcon, CloseIcon } from '../../../icons'; // Assuming CloseIcon is added to your icons
 import styled from 'styled-components';
-import { WebviewContext } from '../WebviewContext';
+import { WebviewContext } from '../../WebviewContext';
 
 const StyledInputContainer = styled.div`
   display: flex;

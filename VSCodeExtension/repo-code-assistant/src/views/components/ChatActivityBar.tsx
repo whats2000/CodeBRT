@@ -2,9 +2,9 @@ import { useContext, useState, useEffect, useRef } from 'react';
 import styled from 'styled-components';
 import { v4 as uuidv4 } from 'uuid';
 
-import { ConversationHistory } from '../types/conversationHistory';
-import { ModelType } from '../types/modelType';
-import { WebviewContext } from './WebviewContext';
+import { ConversationHistory } from '../../types/conversationHistory';
+import { ModelType } from '../../types/modelType';
+import { WebviewContext } from '../WebviewContext';
 import { Toolbar } from './ChatActivityBar/Toolbar';
 import { InputContainer } from './ChatActivityBar/InputContainer';
 import { MessagesContainer } from './ChatActivityBar/MessagesContainer';

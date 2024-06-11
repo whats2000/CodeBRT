@@ -1,17 +1,17 @@
 import React, { useState, useEffect, useContext } from 'react';
 import styled from 'styled-components';
 
-import { ExtensionSettings } from '../types/extensionSettings';
-import { WebviewContext } from './WebviewContext';
-import { ModelType } from '../types/modelType';
+import { ExtensionSettings } from '../../../types/extensionSettings';
+import { WebviewContext } from '../../WebviewContext';
+import { ModelType } from '../../../types/modelType';
 
 // Styled components
 const SettingSidebar = styled.div<{ $isOpen: boolean }>`
-  width: 300px;
+  width: 80%;
   position: fixed;
   z-index: 1;
   top: 0;
-  left: ${(props) => (props.$isOpen ? '0' : '-300px')};
+  left: ${(props) => (props.$isOpen ? '0' : '-80%')};
   height: 100%;
   background-color: #111;
   overflow-y: scroll;
@@ -62,10 +62,9 @@ const CloseBtn = styled.span`
 `;
 
 const Container = styled.div`
-  padding: 5px;
   border-radius: 8px;
   box-shadow: 0 2px 15px rgba(0, 0, 0, 0.1);
-  padding-left: 10px;
+  padding: 20px;
 `;
 
 const Title = styled.h1`
@@ -139,8 +138,11 @@ export const SettingsBar: React.FC<SettingSidebarProps> = ({
 }) => {
   const { callApi } = useContext(WebviewContext);
   const [settings, setSettings] = useState<ExtensionSettings>({
-    groqApiKey: '',
     lastUsedModel: 'gemini',
+    selectedCustomModel: '',
+    customModels: [],
+    huggingFaceApiKey: '',
+    groqApiKey: '',
     geminiApiKey: '',
     openAiApiKey: '',
     cohereApiKey: '',
@@ -149,6 +151,8 @@ export const SettingsBar: React.FC<SettingSidebarProps> = ({
       openai: false,
       cohere: false,
       groq: false,
+      huggingFace: false,
+      custom: false,
     },
   });
 
@@ -241,7 +245,7 @@ export const SettingsBar: React.FC<SettingSidebarProps> = ({
                   </CheckboxContainer>
                 </FormGroup>
               );
-            } else {
+            } else if (key.includes('ApiKey')) {
               return (
                 <FormGroup key={key}>
                   <Label htmlFor={key}>

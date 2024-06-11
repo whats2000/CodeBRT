@@ -1,13 +1,13 @@
 import React, { useContext, useEffect, useState } from 'react';
 import styled from 'styled-components';
 
-import { WebviewContext } from '../WebviewContext';
-import { ModelType } from '../../types/modelType';
-import { DeleteIcon } from '../../icons';
+import { WebviewContext } from '../../WebviewContext';
+import { ModelType } from '../../../types/modelType';
+import { DeleteIcon } from '../../../icons';
 import {
   ConversationHistory,
   ConversationHistoryList,
-} from '../../types/conversationHistory';
+} from '../../../types/conversationHistory';
 import LoadingSpinner from '../common/LoadingSpinner';
 
 const SidebarContainer = styled.div<{ isOpen: boolean }>`
