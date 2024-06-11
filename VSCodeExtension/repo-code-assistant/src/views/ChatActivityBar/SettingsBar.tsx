@@ -138,6 +138,7 @@ export const SettingsBar: React.FC<SettingSidebarProps> = ({
 }) => {
   const { callApi } = useContext(WebviewContext);
   const [settings, setSettings] = useState<ExtensionSettings>({
+    customModels: [], selectedCustomModel: '',
     huggingFaceApiKey: '',
     groqApiKey: '',
     lastUsedModel: 'gemini',
@@ -150,6 +151,7 @@ export const SettingsBar: React.FC<SettingSidebarProps> = ({
       cohere: false,
       groq: false,
       huggingFace: false,
+      custom: false
     }
   });
 
