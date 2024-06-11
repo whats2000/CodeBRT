@@ -4,7 +4,6 @@ import { createRoot } from 'react-dom/client';
 import { WebviewApi, WithWebviewContext } from './WebviewContext';
 import { ChatActivityBar } from './ChatActivityBar';
 import { WorkPanel } from './WorkPanel';
-import { SettingsBar } from './SettingsBar';
 
 /**
  * Views that can be connected to the extension
@@ -13,7 +12,6 @@ import { SettingsBar } from './SettingsBar';
 export const Views = {
   chatActivityBar: ChatActivityBar,
   workPanel: WorkPanel,
-  settingsBar: SettingsBar,
 } as const;
 
 /**

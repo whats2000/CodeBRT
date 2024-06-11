@@ -6,6 +6,7 @@ import { ConversationHistory } from '../../types/conversationHistory';
 import { NewChat, SettingIcon, HistoryIcon } from '../../icons';
 import { WebviewContext } from '../WebviewContext';
 import { HistorySidebar } from './HistorySidebar';
+import { SettingsBar } from './SettingsBar';
 
 const StyledToolbar = styled.div`
   display: flex;
@@ -77,7 +78,8 @@ export const Toolbar: React.FC<ToolbarProps> = ({
   const modelServices: ModelType[] = ['gemini', 'cohere', 'openai', 'groq', 'huggingFace'];
   const [availableModels, setAvailableModels] = useState<string[]>([]);
   const [selectedModel, setSelectedModel] = useState<string>('');
-  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [isHistorySidebarOpen, setIsHistorySidebarOpen] = useState(false);
+  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
 
   useEffect(() => {
     callApi('getAvailableModels', activeModel)
@@ -90,17 +92,6 @@ export const Toolbar: React.FC<ToolbarProps> = ({
         ).catch(console.error),
       );
   }, [activeModel]);
-
-  const openSettings = () => {
-    callApi('showSettingsView').catch((error) =>
-      callApi(
-        'alertMessage',
-        `Failed to open settings: ${error}`,
-        'error',
-      ).catch(console.error),
-    );
-  };
-
   const createNewChat = () => {
     callApi('addNewConversationHistory', activeModel)
       .then((newConversationHistory) => setMessages(newConversationHistory))
@@ -127,9 +118,20 @@ export const Toolbar: React.FC<ToolbarProps> = ({
     );
   };
 
-  const toggleSidebar = () => {
-    setIsSidebarOpen(!isSidebarOpen);
+  const toggleHistorySidebar = () => {
+    setIsHistorySidebarOpen(!isHistorySidebarOpen);
+    if (isSettingsOpen) {
+      setIsSettingsOpen(false);
+    }
   };
+
+  const toggleSettings = () => {
+    setIsSettingsOpen(!isSettingsOpen);
+    if (isHistorySidebarOpen) {
+      setIsHistorySidebarOpen(false);
+    }
+  };
+
 
   return (
     <>
@@ -154,23 +156,28 @@ export const Toolbar: React.FC<ToolbarProps> = ({
           </AvailableModelSelect>
         </div>
         <div>
-          <ToolbarButton onClick={toggleSidebar}>
+          <ToolbarButton onClick={toggleHistorySidebar}>
             <HistoryIcon />
           </ToolbarButton>
           <ToolbarButton onClick={createNewChat}>
             <NewChat />
           </ToolbarButton>
-          <ToolbarButton onClick={openSettings}>
+          <ToolbarButton onClick={toggleSettings}>
             <SettingIcon />
           </ToolbarButton>
         </div>
       </StyledToolbar>
       <HistorySidebar
-        isOpen={isSidebarOpen}
-        onClose={toggleSidebar}
+        isOpen={isHistorySidebarOpen}
+        onClose={toggleHistorySidebar}
         messages={messages}
         activeModel={activeModel}
         setMessages={setMessages}
+      />
+      <SettingsBar
+        isOpen={isSettingsOpen}
+        onClose={toggleSettings}
+        activeModel={activeModel}
       />
     </>
   );

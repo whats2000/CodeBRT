@@ -88,10 +88,6 @@ export const activate = async (ctx: vscode.ExtensionContext) => {
 
       return await fs.readFile(uris[0].fsPath, 'utf-8');
     },
-    showSettingsView: () => {
-      connectedViews?.settingsBar?.show?.(true);
-      vscode.commands.executeCommand('settingsBar.focus');
-    },
     updateSetting: async (
       key: keyof ExtensionSettings,
       value: ExtensionSettings[typeof key],
@@ -434,9 +430,6 @@ export const activate = async (ctx: vscode.ExtensionContext) => {
     console.error(e);
   });
   registerAndConnectView('workPanel').catch((e) => {
-    console.error(e);
-  });
-  registerAndConnectView('settingsBar').catch((e) => {
     console.error(e);
   });
 };

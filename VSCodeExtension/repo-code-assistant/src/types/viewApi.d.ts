@@ -53,11 +53,6 @@ export type ViewApi = {
   getFileContents: () => Promise<string>;
 
   /**
-   * Show the settings view.
-   */
-  showSettingsView: () => void;
-
-  /**
    * Update the settings of the extension.
    * @param key - The key of the setting to update.
    * @param value - The new value of the setting.

@@ -81,11 +81,6 @@
           "id": "chatActivityBar",
           "type": "webview",
           "name": "Chat"
-        },
-        {
-          "id": "settingsBar",
-          "type": "webview",
-          "name": "Settings"
         }
       ],
       "workingPanelContainer": [
