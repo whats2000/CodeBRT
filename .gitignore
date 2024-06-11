@@ -26,3 +26,6 @@ dist-ssr
 **/.idea/*
 
 .vite-react-ssg-temp/
+MonitorProject/
+
+LocalLanguageModelServer/venv/*
