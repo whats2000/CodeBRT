@@ -1,16 +1,20 @@
-import React, { useState, useContext, useEffect } from 'react';
-import { SendIcon, UploadIcon, CloseIcon } from '../../../icons'; // Assuming CloseIcon is added to your icons
+import React, { useState, useContext, useEffect, useRef } from 'react';
 import styled from 'styled-components';
+import { Button, Flex } from 'antd';
+import {
+  CloseCircleFilled,
+  LoadingOutlined,
+  SendOutlined,
+  UploadOutlined,
+} from '@ant-design/icons';
+import TextArea from 'antd/es/input/TextArea';
+
 import { WebviewContext } from '../../WebviewContext';
 
 const StyledInputContainer = styled.div`
   display: flex;
   flex-direction: column;
   padding: 10px 15px 10px 10px;
-`;
-
-const InputRow = styled.div`
-  display: flex;
 `;
 
 const UploadedImageContainer = styled.div`
@@ -46,91 +50,17 @@ const DeleteButton = styled.button`
   border-radius: 50%;
   cursor: pointer;
   padding: 0;
+  opacity: 0.8;
 
   &:hover {
     display: flex;
     align-items: center;
     justify-content: center;
-    background-color: rgba(255, 0, 0, 0.5);
+    opacity: 1;
   }
 `;
 
-const MessageInput = styled.textarea`
-  flex-grow: 1;
-  margin-right: 10px;
-  padding: 5px;
-  border-radius: 4px;
-  background-color: lightgrey;
-  min-height: 18px;
-  max-height: 50vh;
-  height: 18px;
-
-  &:disabled {
-    color: #333;
-    background-color: #666;
-    border: none;
-    cursor: not-allowed;
-  }
-`;
-
-const SendButton = styled.button`
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background-color: #0056b3;
-  color: white;
-  border: none;
-  border-radius: 4px;
-  cursor: pointer;
-
-  &:hover {
-    background-color: #00408a;
-  }
-
-  &:disabled {
-    background-color: #ccc;
-    cursor: not-allowed;
-  }
-`;
-
-const UploadButton = styled.label`
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background-color: #444;
-  color: white;
-  border: none;
-  border-radius: 4px;
-  cursor: pointer;
-  padding: 5px;
-  margin-right: 10px;
-
-  &:hover {
-    background-color: #333;
-  }
-
-  input {
-    display: none;
-  }
-`;
-
-const Spinner = styled.div`
-  border: 4px solid rgba(0, 0, 0, 0.1);
-  width: 10px;
-  height: 10px;
-  border-radius: 50%;
-  border-left-color: #09f;
-  animation: spin 1s infinite linear;
-
-  @keyframes spin {
-    0% {
-      transform: rotate(0deg);
-    }
-    100% {
-      transform: rotate(360deg);
-    }
-  }
-`;
+const UploadButton = styled(Button)``;
 
 interface InputContainerProps {
   inputMessage: string;
@@ -154,6 +84,7 @@ export const InputContainer = ({
   const { callApi } = useContext(WebviewContext);
   const [enterPressCount, setEnterPressCount] = useState(0);
   const [imageUris, setImageUris] = useState<string[]>([]);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const resetEnterPressCount = () => setEnterPressCount(0);
 
@@ -179,6 +110,12 @@ export const InputContainer = ({
     event.target.value = '';
   };
 
+  const handleUploadButtonClick = () => {
+    if (fileInputRef.current) {
+      fileInputRef.current.click();
+    }
+  };
+
   useEffect(() => {
     const updateImageUris = async () => {
       const uris = await Promise.all(
@@ -200,28 +137,37 @@ export const InputContainer = ({
             <UploadedImage src={imageUri} alt={`Uploaded ${index + 1}`} />
             <DeleteButton
               onClick={() => handleImageRemove(uploadedImages[index])}
+              disabled={isLoading}
             >
-              <CloseIcon />
+              <CloseCircleFilled />
             </DeleteButton>
           </UploadedImageWrapper>
         ))}
       </UploadedImageContainer>
-      <InputRow>
-        <UploadButton>
-          <input type='file' accept='image/*' onInput={handleFileChange} />
-          <UploadIcon />
+      <Flex gap={10}>
+        <UploadButton onClick={handleUploadButtonClick} disabled={isLoading}>
+          <UploadOutlined />
+          Upload
         </UploadButton>
-        <MessageInput
+        <input
+          type='file'
+          accept='image/*'
+          ref={fileInputRef}
+          onInput={handleFileChange}
+          style={{ display: 'none' }}
+        />
+        <TextArea
           value={inputMessage}
           onChange={(e) => setInputMessage(e.target.value)}
           onKeyDown={handleKeyDown}
           placeholder='Type your message...'
           disabled={isLoading}
+          autoSize={{ minRows: 1, maxRows: 10 }}
         />
-        <SendButton onClick={sendMessage} disabled={isLoading}>
-          {isLoading ? <Spinner /> : <SendIcon />}
-        </SendButton>
-      </InputRow>
+        <Button onClick={sendMessage} disabled={isLoading}>
+          {isLoading ? <LoadingOutlined /> : <SendOutlined />}
+        </Button>
+      </Flex>
     </StyledInputContainer>
   );
 };
