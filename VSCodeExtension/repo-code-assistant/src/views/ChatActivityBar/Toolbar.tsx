@@ -75,7 +75,7 @@ export const Toolbar: React.FC<ToolbarProps> = ({
   setActiveModel,
 }) => {
   const { callApi } = useContext(WebviewContext);
-  const modelServices: ModelType[] = ['gemini', 'cohere', 'openai', 'groq', 'huggingFace'];
+  const modelServices: ModelType[] = ['gemini', 'cohere', 'openai', 'groq', 'huggingFace', 'custom'];
   const [availableModels, setAvailableModels] = useState<string[]>([]);
   const [selectedModel, setSelectedModel] = useState<string>('');
   const [isHistorySidebarOpen, setIsHistorySidebarOpen] = useState(false);

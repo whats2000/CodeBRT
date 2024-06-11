@@ -33,6 +33,7 @@
     "@types/react": "^18.2.29",
     "@types/react-dom": "^18.2.13",
     "@types/react-syntax-highlighter": "^15.5.11",
+    "axios": "^1.7.2",
     "@types/uuid": "^9.0.5",
     "@types/vscode": "^1.83.1",
     "@vscode/vsce": "^2.21.1",
@@ -148,6 +149,45 @@
           "type": "string",
           "default": "gemini",
           "description": "Last used model"
+        },
+        "repo-code-assistant.customModels": {
+          "type": "array",
+          "description": "Custom model configurations",
+          "items": {
+            "type": "object",
+            "properties": {
+              "name": {
+                "type": "string",
+                "description": "Custom model name"
+              },
+              "apiUrl": {
+                "type": "string",
+                "description": "API URL for the custom model"
+              },
+              "apiMethod": {
+                "type": "string",
+                "enum": ["GET", "POST"],
+                "description": "HTTP method to use for the custom model"
+              },
+              "apiTextParam": {
+                "type": "string",
+                "description": "Parameter name for the text input"
+              },
+              "apiImageParam": {
+                "type": "string",
+                "description": "Parameter name for the image input"
+              },
+              "includeQueryInHistory": {
+                "type": "boolean",
+                "description": "Whether to include the query in the conversation history"
+              }
+            }
+          }
+        },
+        "repo-code-assistant.selectedCustomModel": {
+          "type": "string",
+          "default": "",
+          "description": "Selected custom model"
         }
       }
     }
@@ -156,6 +196,7 @@
     "@google/generative-ai": "^0.8.0",
     "@huggingface/inference": "^2.7.0",
     "@types/react-syntax-highlighter": "^15.5.11",
+    "axios": "^1.7.2",
     "cohere-ai": "^7.9.5",
     "groq-sdk": "^0.4.0",
     "openai": "^4.47.1",
