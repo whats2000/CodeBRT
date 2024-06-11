@@ -13,6 +13,7 @@ import {
   ViewEvents,
 } from './types/viewApi';
 import { ExtensionSettings } from './types/extensionSettings';
+import { LanguageModelService } from "./types/languageModelService";
 import { LoadedModels, ModelType } from './types/modelType';
 import { ConversationHistory } from './types/conversationHistory';
 import { viewRegistration } from './api/viewRegistration';
@@ -20,13 +21,16 @@ import SettingsManager from './api/settingsManager';
 import { GeminiService } from './services/languageModel/geminiService';
 import { CohereService } from './services/languageModel/cohereService';
 import { OpenAIService } from './services/languageModel/openaiService';
-import { LanguageModelService } from './types/languageModelService';
 import { GroqService } from './services/languageModel/groqService';
-import { HuggingFaceService } from "./services/languageModel/huggingFaceService";
+import { HuggingFaceService } from './services/languageModel/huggingFaceService';
+import { CustomApiService } from './services/languageModel/customApiService';
 
 export const activate = async (ctx: vscode.ExtensionContext) => {
   const connectedViews: Partial<Record<ViewKey, vscode.WebviewView>> = {};
   const settingsManager = SettingsManager.getInstance();
+  const customModels = settingsManager.getCustomModels();
+  const customModelNames = customModels.map(model => model.name);
+
   const models: LoadedModels = {
     gemini: {
       service: new GeminiService(ctx, settingsManager),
@@ -47,6 +51,10 @@ export const activate = async (ctx: vscode.ExtensionContext) => {
     huggingFace: {
       service: new HuggingFaceService(ctx, settingsManager),
       enabled: settingsManager.get('enableModel').huggingFace,
+    },
+    custom: {
+      service: new CustomApiService(ctx, settingsManager, customModelNames),
+      enabled: true, // Assuming at least one custom model is available
     }
   };
 
@@ -136,10 +144,10 @@ export const activate = async (ctx: vscode.ExtensionContext) => {
       try {
         return useStream
           ? modelService.getResponseChunksForQuery(
-              query,
-              api.sendStreamResponse,
-              currentEntryID,
-            )
+            query,
+            api.sendStreamResponse,
+            currentEntryID,
+          )
           : modelService.getResponseForQuery(query, currentEntryID);
       } catch (error) {
         return `Failed to get response from ${modelType} service: ${error}`;
@@ -350,7 +358,7 @@ export const activate = async (ctx: vscode.ExtensionContext) => {
 
       // Create the media directory if it does not exist
       try {
-        await fs.mkdir(mediaDir, { recursive: true });
+        await fs.mkdir(mediaDir, {recursive: true});
       } catch (error) {
         throw new Error('Failed to create media directory: ' + error);
       }
