@@ -114,8 +114,9 @@ export class CustomApiService extends AbstractLanguageModelService {
       }
     }
 
-    if (this.includeQueryInHistory) {
-      historyArray.push({ role: 'user', message: '{query}' });
+    // If the API format history doesn't include the query message and the last message is a user message, remove it
+    if (!this.includeQueryInHistory && historyArray.length > 0 && historyArray[historyArray.length - 1].role === 'user') {
+      historyArray.pop();
     }
 
     return JSON.stringify(historyArray);
@@ -152,23 +153,28 @@ export class CustomApiService extends AbstractLanguageModelService {
 
     try {
       let responseText = '';
-      if (this.apiMethod === 'GET') {
-        const response = await axios.get(this.apiUrl, { params: { [this.apiTextParam]: conversationHistory }, responseType: 'stream' });
-        response.data.on('data', (chunk: Buffer) => {
-          const partText = chunk.toString();
-          sendStreamResponse(partText);
-          responseText += partText;
-        });
-      } else {
-        const response = await axios.post(this.apiUrl, { [this.apiTextParam]: conversationHistory }, { responseType: 'stream' });
-        response.data.on('data', (chunk: Buffer) => {
-          const partText = chunk.toString();
-          sendStreamResponse(partText);
-          responseText += partText;
-        });
-      }
+      const response = this.apiMethod === 'GET'
+        ? await axios.get(this.apiUrl, { params: { [this.apiTextParam]: conversationHistory }, responseType: 'stream' })
+        : await axios.post(this.apiUrl, { [this.apiTextParam]: conversationHistory }, { responseType: 'stream' });
 
-      return responseText;
+      return new Promise<string>((resolve, reject) => {
+        response.data.on('data', (chunk: Buffer) => {
+          const partText = chunk.toString();
+          sendStreamResponse(partText);
+          responseText += partText;
+        });
+
+        response.data.on('end', () => {
+          resolve(responseText);
+        });
+
+        response.data.on('error', (error: Error) => {
+          vscode.window.showErrorMessage(
+            'Failed to get response from Custom API Service: ' + error,
+          );
+          reject('Failed to connect to the custom API service.');
+        });
+      });
     } catch (error) {
       vscode.window.showErrorMessage(
         'Failed to get response from Custom API Service: ' + error,
@@ -189,10 +195,11 @@ export class CustomApiService extends AbstractLanguageModelService {
       const formData = new FormData();
       formData.append(this.apiTextParam, conversationHistory);
 
-      images.forEach((image, index) => {
+      for (const [index, image] of images.entries()) {
         const mimeType = `image/${path.extname(image).slice(1)}`;
-        formData.append(`${this.apiImageParam}[${index}]`, fs.createReadStream(image), { contentType: mimeType });
-      });
+        const file = await fs.promises.readFile(image);
+        formData.append(`${this.apiImageParam}[${index}]`, file, { filename: path.basename(image), contentType: mimeType });
+      }
 
       const response = await axios.post(this.apiUrl, formData, {
         headers: {
@@ -222,10 +229,11 @@ export class CustomApiService extends AbstractLanguageModelService {
       const formData = new FormData();
       formData.append(this.apiTextParam, conversationHistory);
 
-      images.forEach((image, index) => {
+      for (const [index, image] of images.entries()) {
         const mimeType = `image/${path.extname(image).slice(1)}`;
-        formData.append(`${this.apiImageParam}[${index}]`, fs.createReadStream(image), { contentType: mimeType });
-      });
+        const file = await fs.promises.readFile(image);
+        formData.append(`${this.apiImageParam}[${index}]`, file, { filename: path.basename(image), contentType: mimeType });
+      }
 
       const response = await axios.post(this.apiUrl, formData, {
         headers: {
@@ -234,19 +242,50 @@ export class CustomApiService extends AbstractLanguageModelService {
         responseType: 'stream',
       });
 
-      let responseText = '';
-      response.data.on('data', (chunk: Buffer) => {
-        const partText = chunk.toString();
-        sendStreamResponse(partText);
-        responseText += partText;
-      });
+      return new Promise<string>((resolve, reject) => {
+        let responseText = '';
 
-      return responseText;
+        response.data.on('data', (chunk: Buffer) => {
+          const partText = chunk.toString();
+          sendStreamResponse(partText);
+          responseText += partText;
+        });
+
+        response.data.on('end', () => {
+          resolve(responseText);
+        });
+
+        response.data.on('error', (error: Error) => {
+          vscode.window.showErrorMessage(
+            'Failed to get response from Custom API Service with image: ' + error,
+          );
+          reject('Failed to connect to the custom API service with image.');
+        });
+      });
     } catch (error) {
       vscode.window.showErrorMessage(
-        'Failed to get response from Custom API Service: ' + error,
+        'Failed to get response from Custom API Service with image: ' + error,
       );
-      return 'Failed to connect to the custom API service.';
+      return 'Failed to connect to the custom API service with image.';
     }
+  }
+
+  public async switchModel(modelName: string): Promise<void> {
+    const customModels = this.settingsManager.getCustomModels();
+    const selectedModel = customModels.find(model => model.name === modelName);
+
+    if (selectedModel) {
+      this.settingsManager.selectCustomModel(modelName);
+      this.apiUrl = selectedModel.apiUrl;
+      this.apiMethod = selectedModel.apiMethod;
+      this.apiTextParam = selectedModel.apiTextParam;
+      this.apiImageParam = selectedModel.apiImageParam;
+      this.includeQueryInHistory = selectedModel.includeQueryInHistory;
+      await this.loadHistories();
+    } else {
+      vscode.window.showErrorMessage(`Custom model ${modelName} not found.`);
+    }
+
+    super.switchModel(modelName);
   }
 }
