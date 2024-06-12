@@ -1,7 +1,7 @@
 import React from 'react';
 import styled from 'styled-components';
 
-import { CopyIcon, CopySuccessIcon } from '../../../icons';
+import { CopyFilled, CopyOutlined } from '@ant-design/icons';
 
 const StyledCopyButton = styled.button<{ $copied: boolean }>`
   color: white;
@@ -32,7 +32,7 @@ export const CopyButton: React.FC<CopyButtonProps> = ({
 }) => {
   return (
     <StyledCopyButton onClick={handleCopy} $copied={copied}>
-      {copied ? <CopySuccessIcon /> : <CopyIcon />}
+      {copied ? <CopyFilled /> : <CopyOutlined />}
     </StyledCopyButton>
   );
 };

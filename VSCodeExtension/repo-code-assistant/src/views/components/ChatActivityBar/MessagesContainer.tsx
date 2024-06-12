@@ -11,7 +11,12 @@ import { ModelType } from '../../../types/modelType';
 import { WebviewContext } from '../../WebviewContext';
 import { TypingAnimation } from '../common/TypingAnimation';
 import { CopyButton } from '../common/CopyButton';
-import { EditIcon, GoBackIcon, GoForwardIcon } from '../../../icons';
+import {
+  ArrowLeftOutlined,
+  ArrowRightOutlined,
+  EditOutlined,
+} from '@ant-design/icons';
+import { Button, Space } from 'antd';
 
 const StyledMessagesContainer = styled.div`
   flex-grow: 1;
@@ -28,7 +33,7 @@ const MessageBubble = styled.div<{ $user: string }>`
   flex-direction: column;
   background-color: ${({ $user }) => ($user === 'user' ? '#666' : '#333')};
   border-radius: 15px;
-  padding: 8px 10px;
+  padding: 8px 15px;
   margin: 10px;
   color: lightgrey;
   position: relative;
@@ -36,6 +41,7 @@ const MessageBubble = styled.div<{ $user: string }>`
 
 const MessageText = styled.span`
   word-wrap: break-word;
+  margin: 10px 0;
 `;
 
 const RespondCharacter = styled.span<{ $user: string }>`
@@ -90,13 +96,13 @@ const BranchCount = styled.span`
   padding: 5px 8px;
 `;
 
-const EditInput = styled.textarea`
+const EditInputTextArea = styled.textarea`
   width: 100%;
   padding: 8px;
   margin-top: 5px;
   box-sizing: border-box;
   background-color: transparent;
-  color: lightgrey;
+  color: lightsteelblue;
   border: none;
   border-radius: 4px;
   resize: none;
@@ -104,21 +110,6 @@ const EditInput = styled.textarea`
 
   &:focus {
     outline: none;
-  }
-`;
-
-const Button = styled.button<{ $user: string }>`
-  color: white;
-  background-color: ${({ $user }) => ($user === 'user' ? '#333' : '#666')};
-  border: none;
-  border-radius: 4px;
-  padding: 5px 8px;
-  margin-top: 5px;
-  cursor: pointer;
-  outline: none;
-
-  &:hover {
-    background-color: #555;
   }
 `;
 
@@ -303,7 +294,7 @@ export const MessagesContainer: React.FC<MessagesContainerProps> = ({
                 onClick={() => handleGoForward(entry, 'prev')}
                 style={{ right: 120 }}
               >
-                <GoBackIcon />
+                <ArrowLeftOutlined />
               </NavigationButton>
             )}
             {parent && siblingCount > 1 && (
@@ -316,7 +307,7 @@ export const MessagesContainer: React.FC<MessagesContainerProps> = ({
                 onClick={() => handleGoForward(entry, 'next')}
                 style={{ right: 65 }}
               >
-                <GoForwardIcon />
+                <ArrowRightOutlined />
               </NavigationButton>
             )}
             {messages.root !== entry.id && messages.root !== '' && (
@@ -327,7 +318,7 @@ export const MessagesContainer: React.FC<MessagesContainerProps> = ({
                     : handleEdit(entry.id, entry.message)
                 }
               >
-                <EditIcon />
+                <EditOutlined />
               </EditButton>
             )}
 
@@ -341,23 +332,30 @@ export const MessagesContainer: React.FC<MessagesContainerProps> = ({
                 : 'You'}
             </RespondCharacter>
             {entry.id === editingEntryId ? (
-              <>
-                <EditInput
+              <Space direction={'vertical'}>
+                <EditInputTextArea
                   id={`edit-input-${entry.id}`}
                   value={editedMessage}
                   onChange={handleInput}
                   autoFocus
                 />
                 <Button
-                  $user={entry.role}
+                  type={'primary'}
+                  ghost={true}
                   onClick={() => handleSaveEdit(entry.id)}
+                  style={{ width: '100%' }}
                 >
                   Save
                 </Button>
-                <Button $user={entry.role} onClick={handleCancelEdit}>
+                <Button
+                  type={'primary'}
+                  ghost={true}
+                  onClick={handleCancelEdit}
+                  style={{ width: '100%' }}
+                >
                   Cancel
                 </Button>
-              </>
+              </Space>
             ) : (
               <>
                 <MessageText>
