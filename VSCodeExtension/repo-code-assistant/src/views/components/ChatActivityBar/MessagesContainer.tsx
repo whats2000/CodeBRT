@@ -52,7 +52,7 @@ const MessageBubble = styled.div<{ $user: string }>`
   display: flex;
   flex-direction: column;
   background-color: ${({ $user, theme }) =>
-    $user === 'user' ? theme.colorBgContainer : theme.colorBgElevated};
+    $user === 'user' ? theme.colorBgLayout : theme.colorBgElevated};
   border-radius: 15px;
   border: 1px solid ${({ theme }) => theme.colorBorder};
   padding: 8px 15px;
