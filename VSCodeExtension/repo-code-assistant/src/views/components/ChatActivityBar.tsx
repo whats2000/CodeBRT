@@ -1,6 +1,7 @@
 import { useContext, useState, useEffect, useRef } from 'react';
 import styled from 'styled-components';
 import { v4 as uuidv4 } from 'uuid';
+import { Content } from 'antd/es/layout/layout';
 
 import { ConversationHistory } from '../../types/conversationHistory';
 import { ModelType } from '../../types/modelType';
@@ -9,7 +10,7 @@ import { Toolbar } from './ChatActivityBar/Toolbar';
 import { InputContainer } from './ChatActivityBar/InputContainer';
 import { MessagesContainer } from './ChatActivityBar/MessagesContainer';
 
-const Container = styled.div`
+const Container = styled(Content)`
   display: flex;
   flex-direction: column;
   justify-content: space-between;

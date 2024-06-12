@@ -1,6 +1,7 @@
 import React, { useContext, useEffect, useState } from 'react';
 import styled from 'styled-components';
-import { Drawer, List, Typography } from 'antd';
+import { Drawer, Menu, Typography, Input, Spin, Flex, Button } from 'antd';
+import { DeleteOutlined } from '@ant-design/icons';
 
 import { WebviewContext } from '../../WebviewContext';
 import { ModelType } from '../../../types/modelType';
@@ -8,41 +9,14 @@ import {
   ConversationHistory,
   ConversationHistoryList,
 } from '../../../types/conversationHistory';
-import { DeleteOutlined } from '@ant-design/icons';
-import TextArea from 'antd/es/input/TextArea';
 
 const StyledDrawer = styled(Drawer)`
-  & div.ant-drawer-header {
+  & .ant-drawer-header {
     padding: 10px;
   }
 
-  & div.ant-drawer-body {
+  & .ant-drawer-body {
     padding: 0;
-  }
-`;
-
-const HistoryItem = styled(List.Item)<{ $active: boolean }>`
-  padding: 10px !important;
-  background-color: ${({ $active }) => ($active ? '#333' : 'transparent')};
-  border-left: ${({ $active }) =>
-    $active ? '5px solid #2196F3' : '5px solid transparent'};
-
-  &:hover {
-    background-color: #575757;
-  }
-`;
-
-const DeleteButton = styled.button`
-  background: none;
-  border: none;
-  color: white;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-
-  &:hover {
-    color: red;
   }
 `;
 
@@ -53,17 +27,9 @@ const NoHistoryMessageContainer = styled.div`
   height: 100%;
 `;
 
-const Title = styled.span`
-  font-size: 18px;
-  flex-grow: 1;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  max-width: 90%;
-`;
-
-const StyledTextArea = styled(TextArea)`
+const EditableTitle = styled(Input.TextArea)`
   max-width: 90% !important;
+  margin-right: 10px;
 `;
 
 interface HistorySidebarProps {
@@ -195,63 +161,67 @@ export const HistorySidebar: React.FC<HistorySidebarProps> = ({
     setEditingHistoryID(null);
   };
 
+  const items = Object.keys(histories)
+    .map((historyID) => {
+      if (historyID === '') return null;
+
+      return {
+        key: historyID,
+        label: (
+          <Flex
+            justify={'space-between'}
+            align={'center'}
+            onDoubleClick={(e) => {
+              e.stopPropagation();
+              handleTitleDoubleClick(historyID, histories[historyID].title);
+            }}
+          >
+            {editingHistoryID === historyID ? (
+              <EditableTitle
+                value={titleInput}
+                onChange={handleTitleChange}
+                onBlur={() => handleTitleBlur(historyID)}
+                onSubmit={() => handleTitleBlur(historyID)}
+                autoSize={{ minRows: 1, maxRows: 10 }}
+                autoFocus
+              />
+            ) : (
+              <Typography.Text ellipsis>
+                {histories[historyID].title}
+              </Typography.Text>
+            )}
+            <Button danger={true} type='text' size='small'>
+              <DeleteOutlined
+                onClick={(e) => {
+                  e.stopPropagation();
+                  deleteHistory(historyID);
+                }}
+              />
+            </Button>
+          </Flex>
+        ),
+        onClick: () => switchHistory(historyID),
+      };
+    })
+    .filter((item) => item !== null);
+
   return (
     <StyledDrawer
       title='Chat History'
       open={isOpen}
       onClose={onClose}
-      placement={'left'}
-      loading={isLoading}
+      placement='left'
     >
-      {Object.keys(histories).length ===
-      Object.keys(histories).filter((historyID) => historyID === '').length ? (
+      {isLoading ? (
+        <NoHistoryMessageContainer>
+          <Spin size={'large'} />
+        </NoHistoryMessageContainer>
+      ) : items.length === 0 ? (
         <NoHistoryMessageContainer>
           <Typography.Text>Nothing Currently</Typography.Text>
         </NoHistoryMessageContainer>
       ) : (
-        <List>
-          {Object.keys(histories).map(
-            (historyID) =>
-              historyID !== '' && (
-                <HistoryItem
-                  key={historyID}
-                  onClick={() => switchHistory(historyID)}
-                  $active={historyID === messages.root}
-                >
-                  {editingHistoryID === historyID ? (
-                    <StyledTextArea
-                      value={titleInput}
-                      onChange={handleTitleChange}
-                      onBlur={() => handleTitleBlur(historyID)}
-                      onSubmit={() => handleTitleBlur(historyID)}
-                      autoSize={{ minRows: 1, maxRows: 10 }}
-                      autoFocus
-                    />
-                  ) : (
-                    <Title
-                      onDoubleClick={(e) => {
-                        e.stopPropagation();
-                        handleTitleDoubleClick(
-                          historyID,
-                          histories[historyID].title,
-                        );
-                      }}
-                    >
-                      {histories[historyID].title}
-                    </Title>
-                  )}
-                  <DeleteButton
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      deleteHistory(historyID);
-                    }}
-                  >
-                    <DeleteOutlined />
-                  </DeleteButton>
-                </HistoryItem>
-              ),
-          )}
-        </List>
+        <Menu selectedKeys={[messages.root]} mode='inline' items={items} />
       )}
     </StyledDrawer>
   );
