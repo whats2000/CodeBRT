@@ -1,24 +1,18 @@
 import React from 'react';
 import styled from 'styled-components';
-
 import { CopyFilled, CopyOutlined } from '@ant-design/icons';
+import { Button } from 'antd';
 
-const StyledCopyButton = styled.button<{ $copied: boolean }>`
-  color: white;
+const StyledCopyButton = styled(Button)<{ $copied: boolean }>`
   position: absolute;
   top: 5px;
-  right: 5px;
+  right: 7px;
   background-color: transparent;
   border: none;
   border-radius: 4px;
   padding: 5px 8px;
   cursor: pointer;
   outline: none;
-
-  &:hover {
-    color: #3c3c3c;
-    background-color: #ffffff90;
-  }
 `;
 
 interface CopyButtonProps {
@@ -31,7 +25,12 @@ export const CopyButton: React.FC<CopyButtonProps> = ({
   handleCopy,
 }) => {
   return (
-    <StyledCopyButton onClick={handleCopy} $copied={copied}>
+    <StyledCopyButton
+      onClick={handleCopy}
+      $copied={copied}
+      ghost={true}
+      type={'primary'}
+    >
       {copied ? <CopyFilled /> : <CopyOutlined />}
     </StyledCopyButton>
   );
