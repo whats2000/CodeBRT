@@ -22,15 +22,21 @@ const StyledSpace = styled(Space)`
 `;
 
 interface ToolbarProps {
-  activeModel: ModelType;
+  activeModel: ModelType | 'loading...';
   messages: ConversationHistory;
+  isActiveModelLoading: boolean;
+  setIsActiveModelLoading: React.Dispatch<React.SetStateAction<boolean>>;
   setMessages: React.Dispatch<React.SetStateAction<ConversationHistory>>;
-  setActiveModel: React.Dispatch<React.SetStateAction<ModelType>>;
+  setActiveModel: React.Dispatch<
+    React.SetStateAction<ModelType | 'loading...'>
+  >;
 }
 
 export const Toolbar: React.FC<ToolbarProps> = ({
   activeModel,
   messages,
+  isActiveModelLoading,
+  setIsActiveModelLoading,
   setMessages,
   setActiveModel,
 }) => {
@@ -51,18 +57,24 @@ export const Toolbar: React.FC<ToolbarProps> = ({
   const [isSelectModelOpen, setIsSelectModelOpen] = useState(false);
 
   useEffect(() => {
+    setIsActiveModelLoading(true);
+    if (activeModel === 'loading...') {
+      return;
+    }
     callApi('getAvailableModels', activeModel)
       .then((models: string[]) => {
         setAvailableModels(models);
         setSelectedModel(models[0]);
+        setIsActiveModelLoading(false);
       })
-      .catch((error) =>
+      .catch((error) => {
         callApi(
           'alertMessage',
           `Failed to load available models: ${error}`,
           'error',
-        ).catch(console.error),
-      );
+        ).catch(console.error);
+        setIsActiveModelLoading(false);
+      });
 
     const handleResize = () => {
       setIsOffCanvas(window.innerWidth < 600);
@@ -77,6 +89,9 @@ export const Toolbar: React.FC<ToolbarProps> = ({
   }, [activeModel]);
 
   const createNewChat = () => {
+    if (activeModel === 'loading...') {
+      return;
+    }
     callApi('addNewConversationHistory', activeModel)
       .then((newConversationHistory) => setMessages(newConversationHistory))
       .catch((error) =>
@@ -84,12 +99,23 @@ export const Toolbar: React.FC<ToolbarProps> = ({
       );
   };
 
-  const handleModelServiceChange = (value: ModelType) => {
+  const handleModelServiceChange = (value: ModelType | 'loading...') => {
+    setIsActiveModelLoading(true);
+
+    if (value === 'loading...') {
+      return;
+    }
+
     setActiveModel(value);
   };
 
   const handleModelChange = (value: string) => {
     setSelectedModel(value);
+
+    if (activeModel === 'loading...') {
+      return;
+    }
+
     callApi('switchModel', activeModel, value).catch((error) =>
       callApi(
         'alertMessage',
@@ -123,6 +149,7 @@ export const Toolbar: React.FC<ToolbarProps> = ({
                 value={activeModel}
                 onChange={handleModelServiceChange}
                 style={{ width: 100 }}
+                loading={isActiveModelLoading}
               >
                 {modelServices.map((service) => (
                   <Option key={service} value={service}>
@@ -138,9 +165,10 @@ export const Toolbar: React.FC<ToolbarProps> = ({
                 placement='right'
                 open={isSelectModelOpen}
                 onClose={() => setIsSelectModelOpen(false)}
+                loading={isActiveModelLoading}
               >
                 <Select
-                  value={selectedModel}
+                  value={isActiveModelLoading ? 'Loading...' : selectedModel}
                   onChange={handleModelChange}
                   style={{ width: '100%' }}
                 >
@@ -158,6 +186,7 @@ export const Toolbar: React.FC<ToolbarProps> = ({
                 value={activeModel}
                 onChange={handleModelServiceChange}
                 style={{ width: 150 }}
+                loading={isActiveModelLoading}
               >
                 {modelServices.map((service) => (
                   <Option key={service} value={service}>
@@ -166,9 +195,10 @@ export const Toolbar: React.FC<ToolbarProps> = ({
                 ))}
               </Select>
               <Select
-                value={selectedModel}
+                value={isActiveModelLoading ? 'Loading...' : selectedModel}
                 onChange={handleModelChange}
                 style={{ width: 200 }}
+                loading={isActiveModelLoading}
               >
                 {availableModels.map((model) => (
                   <Option key={model} value={model}>
@@ -192,11 +222,7 @@ export const Toolbar: React.FC<ToolbarProps> = ({
         activeModel={activeModel}
         setMessages={setMessages}
       />
-      <SettingsBar
-        isOpen={isSettingsOpen}
-        onClose={toggleSettings}
-        activeModel={activeModel}
-      />
+      <SettingsBar isOpen={isSettingsOpen} onClose={toggleSettings} />
     </>
   );
 };

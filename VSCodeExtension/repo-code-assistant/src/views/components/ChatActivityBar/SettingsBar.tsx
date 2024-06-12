@@ -4,7 +4,6 @@ import { Drawer, Form, Input, Checkbox } from 'antd';
 
 import { ExtensionSettings } from '../../../types/extensionSettings';
 import { WebviewContext } from '../../WebviewContext';
-import { ModelType } from '../../../types/modelType';
 
 const StyledForm = styled(Form)`
   display: flex;
@@ -24,13 +23,11 @@ const CheckboxGroup = styled.div`
 interface SettingSidebarProps {
   isOpen: boolean;
   onClose: () => void;
-  activeModel: ModelType;
 }
 
 export const SettingsBar: React.FC<SettingSidebarProps> = ({
   isOpen,
   onClose,
-  activeModel,
 }) => {
   const { callApi } = useContext(WebviewContext);
   const [settings, setSettings] = useState<ExtensionSettings>({
@@ -71,7 +68,7 @@ export const SettingsBar: React.FC<SettingSidebarProps> = ({
           });
       });
     }
-  }, [isOpen, activeModel]);
+  }, [isOpen]);
 
   const handleSettingChange =
     (

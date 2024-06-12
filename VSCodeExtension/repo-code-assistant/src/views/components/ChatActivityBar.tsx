@@ -30,8 +30,11 @@ export const ChatActivityBar = () => {
     entries: {},
   });
   const [isLoading, setIsLoading] = useState(false);
-  const [activeModel, setActiveModel] = useState<ModelType>('gemini');
+  const [activeModel, setActiveModel] = useState<ModelType | 'loading...'>(
+    'loading...',
+  );
   const [uploadedImages, setUploadedImages] = useState<string[]>([]);
+  const [isActiveModelLoading, setIsActiveModelLoading] = useState(false);
 
   const messageEndRef = useRef<HTMLDivElement>(null);
   const messagesContainerRef = useRef<HTMLDivElement>(null);
@@ -94,6 +97,8 @@ export const ChatActivityBar = () => {
   }, []);
 
   useEffect(() => {
+    if (activeModel === 'loading...') return;
+
     callApi('saveLastUsedModel', activeModel).catch((error) =>
       callApi(
         'alertMessage',
@@ -120,23 +125,28 @@ export const ChatActivityBar = () => {
   }, [activeModel]);
 
   useEffect(() => {
+    setIsActiveModelLoading(true);
     callApi('getLastUsedModel')
       .then((lastUsedModel) => {
         if (lastUsedModel) {
           setActiveModel(lastUsedModel as ModelType);
         }
+        setIsActiveModelLoading(false);
       })
-      .catch((error) =>
+      .catch((error) => {
         callApi(
           'alertMessage',
           `Failed to get last used model: ${error}`,
           'error',
-        ).catch(console.error),
-      );
+        ).catch(console.error);
+        setIsActiveModelLoading(false);
+      });
   }, []);
 
   // Function to send messages and handle responses
   const sendMessage = async () => {
+    if (isLoading) return;
+    if (activeModel === 'loading...') return;
     if (!inputMessage.trim()) return;
     setIsLoading(true);
 
@@ -264,6 +274,9 @@ export const ChatActivityBar = () => {
     entryId: string,
     editedMessage: string,
   ) => {
+    if (isLoading) return;
+    if (activeModel === 'loading...') return;
+
     const entry = messages.entries[entryId];
     const newEntryId = await callApi(
       'addConversationEntry',
@@ -417,12 +430,15 @@ export const ChatActivityBar = () => {
       <Toolbar
         messages={messages}
         activeModel={activeModel}
+        isActiveModelLoading={isActiveModelLoading}
+        setIsActiveModelLoading={setIsActiveModelLoading}
         setMessages={setMessages}
         setActiveModel={setActiveModel}
       />
       <MessagesContainer
         setMessages={setMessages}
         modelType={activeModel}
+        isActiveModelLoading={isActiveModelLoading}
         messagesContainerRef={messagesContainerRef}
         messages={messages}
         isLoading={isLoading}

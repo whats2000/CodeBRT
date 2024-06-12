@@ -69,7 +69,7 @@ const StyledTextArea = styled(TextArea)`
 interface HistorySidebarProps {
   isOpen: boolean;
   onClose: () => void;
-  activeModel: ModelType;
+  activeModel: ModelType | 'loading...';
   messages: ConversationHistory;
   setMessages: React.Dispatch<React.SetStateAction<ConversationHistory>>;
 }
@@ -90,6 +90,11 @@ export const HistorySidebar: React.FC<HistorySidebarProps> = ({
   useEffect(() => {
     if (isOpen) {
       setIsLoading(true);
+
+      if (activeModel === 'loading...') {
+        return;
+      }
+
       callApi('getHistories', activeModel)
         .then((histories) => {
           setHistories(histories as ConversationHistoryList);
@@ -110,6 +115,11 @@ export const HistorySidebar: React.FC<HistorySidebarProps> = ({
     if (historyID === messages.root) return;
 
     setIsLoading(true);
+
+    if (activeModel === 'loading...') {
+      return;
+    }
+
     callApi('switchHistory', activeModel, historyID)
       .then(() => callApi('getLanguageModelConversationHistory', activeModel))
       .then((history) => {
@@ -128,6 +138,10 @@ export const HistorySidebar: React.FC<HistorySidebarProps> = ({
   };
 
   const deleteHistory = (historyID: string) => {
+    if (activeModel === 'loading...') {
+      return;
+    }
+
     callApi('deleteHistory', activeModel, historyID)
       .then((newConversationHistory) => {
         setHistories((prevHistories) => {
@@ -157,6 +171,10 @@ export const HistorySidebar: React.FC<HistorySidebarProps> = ({
   };
 
   const handleTitleBlur = (historyID: string) => {
+    if (activeModel === 'loading...') {
+      return;
+    }
+
     callApi('updateHistoryTitleById', activeModel, historyID, titleInput)
       .then(() => {
         setHistories((prevHistories) => ({

@@ -1,7 +1,7 @@
 import React, { useContext, useEffect, useState } from 'react';
 import ReactMarkdown from 'react-markdown';
 import { RendererCode } from '../common/RenderCode';
-import styled from 'styled-components';
+import styled, { keyframes } from 'styled-components';
 
 import {
   ConversationEntry,
@@ -16,9 +16,27 @@ import {
   ArrowRightOutlined,
   EditOutlined,
 } from '@ant-design/icons';
-import { Button, Space } from 'antd';
+import { Button, Space, Spin } from 'antd';
 
-const StyledMessagesContainer = styled.div`
+const fadeIn = keyframes`
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+`;
+
+const fadeOut = keyframes`
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+  }
+`;
+
+const StyledMessagesContainer = styled.div<{ $isActiveModelLoading: boolean }>`
   flex-grow: 1;
   overflow-y: auto;
   padding-right: 35px;
@@ -26,6 +44,9 @@ const StyledMessagesContainer = styled.div`
   padding-bottom: 10px;
   border-top: 1px solid #ccc;
   border-bottom: 1px solid #ccc;
+
+  animation: ${(props) => (props.$isActiveModelLoading ? fadeOut : fadeIn)} 0.5s
+    ease-in-out;
 `;
 
 const MessageBubble = styled.div<{ $user: string }>`
@@ -121,7 +142,8 @@ const MessageImage = styled.img`
 
 interface MessagesContainerProps {
   setMessages: React.Dispatch<React.SetStateAction<ConversationHistory>>;
-  modelType: ModelType;
+  modelType: ModelType | 'loading...';
+  isActiveModelLoading: boolean;
   messagesContainerRef: React.RefObject<HTMLDivElement>;
   messages: ConversationHistory;
   isLoading: boolean;
@@ -155,6 +177,7 @@ const traverseHistory = (
 export const MessagesContainer: React.FC<MessagesContainerProps> = ({
   setMessages,
   modelType,
+  isActiveModelLoading,
   messagesContainerRef,
   messages,
   isLoading,
@@ -165,8 +188,9 @@ export const MessagesContainer: React.FC<MessagesContainerProps> = ({
   const [copied, setCopied] = useState<Record<string, boolean>>({});
   const [editingEntryId, setEditingEntryId] = useState<string | null>(null);
   const [editedMessage, setEditedMessage] = useState('');
-  const { callApi } = useContext(WebviewContext);
   const [imageUrls, setImageUrls] = useState<Record<string, string>>({});
+
+  const { callApi } = useContext(WebviewContext);
 
   useEffect(() => {
     const loadImageUrls = async () => {
@@ -218,6 +242,8 @@ export const MessagesContainer: React.FC<MessagesContainerProps> = ({
   };
 
   const handleSaveEdit = async (entryId: string) => {
+    if (modelType === 'loading...') return;
+
     if (messages.entries[entryId].role === 'user') {
       await handleEditUserMessageSave(entryId, editedMessage);
     } else {
@@ -281,113 +307,125 @@ export const MessagesContainer: React.FC<MessagesContainerProps> = ({
   );
 
   return (
-    <StyledMessagesContainer ref={messagesContainerRef}>
-      {conversationHistory.map((entry) => {
-        const parent = entry.parent ? messages.entries[entry.parent] : null;
-        const siblingCount = parent ? parent.children.length : 0;
-        const currentIndex = parent ? parent.children.indexOf(entry.id) + 1 : 0;
+    <>
+      {isActiveModelLoading && (
+        <Spin fullscreen={true} size={'large'}>
+          <span>Loading conversation history...</span>
+        </Spin>
+      )}
+      <StyledMessagesContainer
+        $isActiveModelLoading={isActiveModelLoading}
+        ref={messagesContainerRef}
+      >
+        {conversationHistory.map((entry) => {
+          const parent = entry.parent ? messages.entries[entry.parent] : null;
+          const siblingCount = parent ? parent.children.length : 0;
+          const currentIndex = parent
+            ? parent.children.indexOf(entry.id) + 1
+            : 0;
 
-        return (
-          <MessageBubble key={entry.id} $user={entry.role}>
-            {parent && currentIndex > 1 && (
-              <NavigationButton
-                onClick={() => handleGoForward(entry, 'prev')}
-                style={{ right: 120 }}
-              >
-                <ArrowLeftOutlined />
-              </NavigationButton>
-            )}
-            {parent && siblingCount > 1 && (
-              <BranchCount style={{ right: 90 }}>
-                {`${currentIndex}/${siblingCount}`}
-              </BranchCount>
-            )}
-            {parent && currentIndex < siblingCount && (
-              <NavigationButton
-                onClick={() => handleGoForward(entry, 'next')}
-                style={{ right: 65 }}
-              >
-                <ArrowRightOutlined />
-              </NavigationButton>
-            )}
-            {messages.root !== entry.id && messages.root !== '' && (
-              <EditButton
-                onClick={() =>
-                  editingEntryId === entry.id
-                    ? handleCancelEdit()
-                    : handleEdit(entry.id, entry.message)
-                }
-              >
-                <EditOutlined />
-              </EditButton>
-            )}
+          return (
+            <MessageBubble key={entry.id} $user={entry.role}>
+              {parent && currentIndex > 1 && (
+                <NavigationButton
+                  onClick={() => handleGoForward(entry, 'prev')}
+                  style={{ right: 120 }}
+                >
+                  <ArrowLeftOutlined />
+                </NavigationButton>
+              )}
+              {parent && siblingCount > 1 && (
+                <BranchCount style={{ right: 90 }}>
+                  {`${currentIndex}/${siblingCount}`}
+                </BranchCount>
+              )}
+              {parent && currentIndex < siblingCount && (
+                <NavigationButton
+                  onClick={() => handleGoForward(entry, 'next')}
+                  style={{ right: 65 }}
+                >
+                  <ArrowRightOutlined />
+                </NavigationButton>
+              )}
+              {messages.root !== entry.id && messages.root !== '' && (
+                <EditButton
+                  onClick={() =>
+                    editingEntryId === entry.id
+                      ? handleCancelEdit()
+                      : handleEdit(entry.id, entry.message)
+                  }
+                >
+                  <EditOutlined />
+                </EditButton>
+              )}
 
-            <CopyButton
-              copied={copied[entry.id]}
-              handleCopy={() => handleCopy(entry.message, entry.id)}
-            />
-            <RespondCharacter $user={entry.role}>
-              {entry.role === 'AI'
-                ? modelType.charAt(0).toUpperCase() + modelType.slice(1)
-                : 'You'}
-            </RespondCharacter>
-            {entry.id === editingEntryId ? (
-              <Space direction={'vertical'}>
-                <EditInputTextArea
-                  id={`edit-input-${entry.id}`}
-                  value={editedMessage}
-                  onChange={handleInput}
-                  autoFocus
-                />
-                <Button
-                  type={'primary'}
-                  ghost={true}
-                  onClick={() => handleSaveEdit(entry.id)}
-                  style={{ width: '100%' }}
-                >
-                  Save
-                </Button>
-                <Button
-                  type={'primary'}
-                  ghost={true}
-                  onClick={handleCancelEdit}
-                  style={{ width: '100%' }}
-                >
-                  Cancel
-                </Button>
-              </Space>
-            ) : (
-              <>
-                <MessageText>
-                  {entry.role === 'AI' &&
-                  entry.id === messages.current &&
-                  isLoading ? (
-                    <TypingAnimation
-                      message={entry.message}
-                      isLoading={isLoading}
-                      scrollToBottom={scrollToBottom}
-                    />
-                  ) : (
-                    <ReactMarkdown
-                      components={RendererCode}
-                      children={entry.message}
-                    />
-                  )}
-                </MessageText>
-                {entry.images &&
-                  entry.images.map((image, index) => (
-                    <MessageImage
-                      key={index}
-                      src={imageUrls[image] || image}
-                      alt='Referenced Image'
-                    />
-                  ))}
-              </>
-            )}
-          </MessageBubble>
-        );
-      })}
-      <div ref={messageEndRef} />
-    </StyledMessagesContainer>
+              <CopyButton
+                copied={copied[entry.id]}
+                handleCopy={() => handleCopy(entry.message, entry.id)}
+              />
+              <RespondCharacter $user={entry.role}>
+                {entry.role === 'AI'
+                  ? modelType.charAt(0).toUpperCase() + modelType.slice(1)
+                  : 'You'}
+              </RespondCharacter>
+              {entry.id === editingEntryId ? (
+                <Space direction={'vertical'}>
+                  <EditInputTextArea
+                    id={`edit-input-${entry.id}`}
+                    value={editedMessage}
+                    onChange={handleInput}
+                    autoFocus
+                  />
+                  <Button
+                    type={'primary'}
+                    ghost={true}
+                    onClick={() => handleSaveEdit(entry.id)}
+                    style={{ width: '100%' }}
+                  >
+                    Save
+                  </Button>
+                  <Button
+                    type={'primary'}
+                    ghost={true}
+                    onClick={handleCancelEdit}
+                    style={{ width: '100%' }}
+                  >
+                    Cancel
+                  </Button>
+                </Space>
+              ) : (
+                <>
+                  <MessageText>
+                    {entry.role === 'AI' &&
+                    entry.id === messages.current &&
+                    isLoading ? (
+                      <TypingAnimation
+                        message={entry.message}
+                        isLoading={isLoading}
+                        scrollToBottom={scrollToBottom}
+                      />
+                    ) : (
+                      <ReactMarkdown
+                        components={RendererCode}
+                        children={entry.message}
+                      />
+                    )}
+                  </MessageText>
+                  {entry.images &&
+                    entry.images.map((image, index) => (
+                      <MessageImage
+                        key={index}
+                        src={imageUrls[image] || image}
+                        alt='Referenced Image'
+                      />
+                    ))}
+                </>
+              )}
+            </MessageBubble>
+          );
+        })}
+        <div ref={messageEndRef} />
+      </StyledMessagesContainer>
+    </>
   );
 };
