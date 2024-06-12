@@ -9,6 +9,8 @@ import { WebviewContext } from '../WebviewContext';
 import { Toolbar } from './ChatActivityBar/Toolbar';
 import { InputContainer } from './ChatActivityBar/InputContainer';
 import { MessagesContainer } from './ChatActivityBar/MessagesContainer';
+import { ConfigProvider } from 'antd';
+import { useThemeConfig } from '../hooks/useThemeConfig';
 
 const Container = styled(Content)`
   display: flex;
@@ -39,6 +41,8 @@ export const ChatActivityBar = () => {
 
   const messageEndRef = useRef<HTMLDivElement>(null);
   const messagesContainerRef = useRef<HTMLDivElement>(null);
+
+  const theme = useThemeConfig();
 
   const scrollToBottom = (smooth: boolean = true) => {
     if (messagesContainerRef.current) {
@@ -427,35 +431,37 @@ export const ChatActivityBar = () => {
   };
 
   return (
-    <Container>
-      <Toolbar
-        messages={messages}
-        activeModel={activeModel}
-        isActiveModelLoading={isActiveModelLoading}
-        setIsActiveModelLoading={setIsActiveModelLoading}
-        setMessages={setMessages}
-        setActiveModel={setActiveModel}
-      />
-      <MessagesContainer
-        setMessages={setMessages}
-        modelType={activeModel}
-        isActiveModelLoading={isActiveModelLoading}
-        messagesContainerRef={messagesContainerRef}
-        messages={messages}
-        isLoading={isLoading}
-        scrollToBottom={scrollToBottom}
-        messageEndRef={messageEndRef}
-        handleEditUserMessageSave={handleEditUserMessageSave}
-      />
-      <InputContainer
-        uploadedImages={uploadedImages}
-        handleImageUpload={handleImageUpload}
-        inputMessage={inputMessage}
-        setInputMessage={setInputMessage}
-        sendMessage={sendMessage}
-        isLoading={isLoading}
-        handleImageRemove={handleImageRemove}
-      />
-    </Container>
+    <ConfigProvider theme={theme}>
+      <Container>
+        <Toolbar
+          messages={messages}
+          activeModel={activeModel}
+          isActiveModelLoading={isActiveModelLoading}
+          setIsActiveModelLoading={setIsActiveModelLoading}
+          setMessages={setMessages}
+          setActiveModel={setActiveModel}
+        />
+        <MessagesContainer
+          setMessages={setMessages}
+          modelType={activeModel}
+          isActiveModelLoading={isActiveModelLoading}
+          messagesContainerRef={messagesContainerRef}
+          messages={messages}
+          isLoading={isLoading}
+          scrollToBottom={scrollToBottom}
+          messageEndRef={messageEndRef}
+          handleEditUserMessageSave={handleEditUserMessageSave}
+        />
+        <InputContainer
+          uploadedImages={uploadedImages}
+          handleImageUpload={handleImageUpload}
+          inputMessage={inputMessage}
+          setInputMessage={setInputMessage}
+          sendMessage={sendMessage}
+          isLoading={isLoading}
+          handleImageRemove={handleImageRemove}
+        />
+      </Container>
+    </ConfigProvider>
   );
 };

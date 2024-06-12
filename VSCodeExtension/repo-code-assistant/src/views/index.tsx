@@ -1,11 +1,9 @@
 import React from 'react';
 import { createRoot } from 'react-dom/client';
-import { ConfigProvider } from 'antd';
 
 import { WebviewApi, WithWebviewContext } from './WebviewContext';
 import { ChatActivityBar } from './components/ChatActivityBar';
 import { WorkPanel } from './components/WorkPanel';
-import customTheme from './themeConfig';
 
 const resetCss = require('antd/dist/reset.css').default.toString();
 
@@ -46,10 +44,8 @@ export function render<V extends ViewKey>(
   const root = createRoot(container);
 
   root.render(
-    <ConfigProvider theme={customTheme}>
-      <WithWebviewContext vscodeApi={vscodeApi}>
-        <Component />
-      </WithWebviewContext>
-    </ConfigProvider>,
+    <WithWebviewContext vscodeApi={vscodeApi}>
+      <Component />
+    </WithWebviewContext>,
   );
 }

@@ -10,9 +10,12 @@ const CodeBlockContainer = styled.div`
 `;
 
 const CodeBlock = styled(SyntaxHighlighter)`
-  background-color: #3c3c3c !important;
   border-radius: 4px;
   margin: 0;
+
+  & code {
+    background: transparent;
+  }
 `;
 
 const OtherCodeBlock = styled.code`
