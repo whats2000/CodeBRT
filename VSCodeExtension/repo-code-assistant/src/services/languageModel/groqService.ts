@@ -5,8 +5,8 @@ import { ConversationEntry } from '../../types/conversationHistory';
 import { AbstractLanguageModelService } from './abstractLanguageModelService';
 import SettingsManager from '../../api/settingsManager';
 import {
-  ChatCompletionCreateParamsNonStreaming,
-  ChatCompletionCreateParamsStreaming,
+  type ChatCompletionCreateParamsNonStreaming,
+  type ChatCompletionCreateParamsStreaming,
 } from 'groq-sdk/src/resources/chat/completions';
 
 export class GroqService extends AbstractLanguageModelService {
@@ -60,7 +60,7 @@ export class GroqService extends AbstractLanguageModelService {
   }
 
   private conversationHistoryToContent(
-    entries: { [key: string]: ConversationEntry; },
+    entries: { [key: string]: ConversationEntry },
     query: string,
   ): ChatCompletionMessageParam[] {
     const result: Groq.Chat.Completions.ChatCompletionMessageParam[] = [];
@@ -83,7 +83,7 @@ export class GroqService extends AbstractLanguageModelService {
     if (result.length > 0 && result[result.length - 1].role !== 'user') {
       result.push({
         role: 'user',
-        content: query
+        content: query,
       });
     }
 

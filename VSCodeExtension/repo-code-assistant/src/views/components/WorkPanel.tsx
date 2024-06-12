@@ -1,6 +1,6 @@
 import { useContext, useEffect, useState } from 'react';
 
-import { WebviewContext } from './WebviewContext';
+import { WebviewContext } from '../WebviewContext';
 
 export const WorkPanel = () => {
   const { callApi, addListener, removeListener } = useContext(WebviewContext);

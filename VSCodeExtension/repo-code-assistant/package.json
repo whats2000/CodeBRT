@@ -22,6 +22,7 @@
     "format": "prettier 'src/**/*.js' 'src/**/*.jsx' 'src/**/*.ts' 'src/**/*.tsx' './package.json' '.swcrc' './*.js' --no-error-on-unmatched-pattern --write"
   },
   "devDependencies": {
+    "@ant-design/icons": "^5.3.7",
     "@google/generative-ai": "^0.8.0",
     "@huggingface/inference": "^2.7.0",
     "@pmmmwh/react-refresh-webpack-plugin": "^0.5.11",
@@ -33,12 +34,14 @@
     "@types/react": "^18.2.29",
     "@types/react-dom": "^18.2.13",
     "@types/react-syntax-highlighter": "^15.5.11",
-    "axios": "^1.7.2",
     "@types/uuid": "^9.0.5",
     "@types/vscode": "^1.83.1",
     "@vscode/vsce": "^2.21.1",
+    "antd": "^5.18.0",
+    "axios": "^1.7.2",
     "cohere-ai": "^7.9.5",
     "copy-webpack-plugin": "^11.0.0",
+    "css-loader": "^7.1.2",
     "groq-sdk": "^0.4.0",
     "openai": "^4.47.1",
     "prettier": "3.2.5",
@@ -138,10 +141,20 @@
               "default": false,
               "description": "Enable Cohere model"
             },
+            "groq": {
+              "type": "boolean",
+              "default": false,
+              "description": "Enable Open Source LLM model"
+            },
             "huggingface": {
               "type": "boolean",
               "default": false,
               "description": "Enable HuggingFace model"
+            },
+            "custom": {
+              "type": "boolean",
+              "default": false,
+              "description": "Enable custom model"
             }
           }
         },
@@ -166,7 +179,10 @@
               },
               "apiMethod": {
                 "type": "string",
-                "enum": ["GET", "POST"],
+                "enum": [
+                  "GET",
+                  "POST"
+                ],
                 "description": "HTTP method to use for the custom model"
               },
               "apiTextParam": {
@@ -193,11 +209,13 @@
     }
   },
   "dependencies": {
+    "@ant-design/icons": "^5.3.7",
     "@google/generative-ai": "^0.8.0",
     "@huggingface/inference": "^2.7.0",
     "@types/react-syntax-highlighter": "^15.5.11",
     "axios": "^1.7.2",
     "cohere-ai": "^7.9.5",
+    "css-loader": "^7.1.2",
     "groq-sdk": "^0.4.0",
     "openai": "^4.47.1",
     "react-markdown": "^9.0.1",

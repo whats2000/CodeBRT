@@ -1,9 +1,13 @@
 import React from 'react';
 import { createRoot } from 'react-dom/client';
+import { ConfigProvider } from 'antd';
 
 import { WebviewApi, WithWebviewContext } from './WebviewContext';
-import { ChatActivityBar } from './ChatActivityBar';
-import { WorkPanel } from './WorkPanel';
+import { ChatActivityBar } from './components/ChatActivityBar';
+import { WorkPanel } from './components/WorkPanel';
+import customTheme from './themeConfig';
+
+const resetCss = require('antd/dist/reset.css').default.toString();
 
 /**
  * Views that can be connected to the extension
@@ -34,11 +38,18 @@ export function render<V extends ViewKey>(
 
   const Component: React.ComponentType = Views[key];
 
+  // Append styles to the document head
+  const styleElement = document.createElement('style');
+  styleElement.innerHTML = `${resetCss}`;
+  document.head.appendChild(styleElement);
+
   const root = createRoot(container);
 
   root.render(
-    <WithWebviewContext vscodeApi={vscodeApi}>
-      <Component />
-    </WithWebviewContext>,
+    <ConfigProvider theme={customTheme}>
+      <WithWebviewContext vscodeApi={vscodeApi}>
+        <Component />
+      </WithWebviewContext>
+    </ConfigProvider>,
   );
 }
