@@ -101,27 +101,32 @@
         "repo-code-assistant.geminiApiKey": {
           "type": "string",
           "default": "",
-          "description": "Gemini API Key"
+          "description": "Gemini API Key",
+          "markdownDescription": "API key for Gemini model"
         },
         "repo-code-assistant.openAiApiKey": {
           "type": "string",
           "default": "",
-          "description": "OpenAI API Key"
+          "description": "OpenAI API Key",
+          "markdownDescription": "API key for OpenAI model"
         },
         "repo-code-assistant.cohereApiKey": {
           "type": "string",
           "default": "",
-          "description": "Cohere API Key"
+          "description": "Cohere API Key",
+          "markdownDescription": "API key for Cohere model"
         },
         "repo-code-assistant.groqApiKey": {
           "type": "string",
           "default": "",
-          "description": "Open Source LLM API Key"
+          "description": "Open Source LLM API Key",
+          "markdownDescription": "API key for Open Source LLM model"
         },
         "repo-code-assistant.huggingFaceApiKey": {
           "type": "string",
           "default": "",
-          "description": "HuggingFace API Key"
+          "description": "HuggingFace API Key",
+          "markdownDescription": "API key for HuggingFace model"
         },
         "repo-code-assistant.enableModel": {
           "type": "object",
@@ -204,6 +209,44 @@
           "type": "string",
           "default": "",
           "description": "Selected custom model"
+        },
+        "repo-code-assistant.themePrimaryColor": {
+          "type": "string",
+          "default": "#f0f0f0",
+          "description": "Primary color for the theme"
+        },
+        "repo-code-assistant.themeAlgorithm": {
+          "type": "string",
+          "default": "darkAlgorithm",
+          "description": "Algorithm for the theme",
+          "enum": [
+            "darkAlgorithm",
+            "defaultAlgorithm",
+            "compactAlgorithm"
+          ],
+          "enumDescriptions": [
+            "Dark algorithm",
+            "Light algorithm",
+            "Compact algorithm"
+          ],
+          "markdownDescription": "The algorithm to use for the theme. The `darkAlgorithm` is a dark theme with a dark background and light text. The `defaultAlgorithm` is a light theme with a light background and dark text. The `compactAlgorithm` is a compact theme with a dark background and light text.",
+          "markdownEnumDescriptions": [
+            "Dark algorithm",
+            "Light algorithm",
+            "Compact algorithm"
+          ]
+        },
+        "repo-code-assistant.themeBorderRadius": {
+          "type": "number",
+          "default": 4,
+          "description": "Border radius for the theme",
+          "markdownDescription": "The border radius for the theme. The default value is 4.",
+          "minimum": 0,
+          "maximum": 100,
+          "markdownEnumDescriptions": [
+            "0",
+            "100"
+          ]
         }
       }
     }

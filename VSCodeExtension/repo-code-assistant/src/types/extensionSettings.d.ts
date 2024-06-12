@@ -85,4 +85,19 @@ export type ExtensionSettings = {
    * The name of the currently selected custom model.
    */
   selectedCustomModel: string;
+
+  /**
+   * The primary color for the Ant Design theme.
+   */
+  themePrimaryColor: string;
+
+  /**
+   * The algorithm for the Ant Design theme.
+   */
+  themeAlgorithm: 'defaultAlgorithm' | 'darkAlgorithm' | 'compactAlgorithm';
+
+  /**
+   * The border radius for the Ant Design theme.
+   */
+  themeBorderRadius: number;
 };
