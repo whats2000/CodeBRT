@@ -141,10 +141,20 @@
               "default": false,
               "description": "Enable Cohere model"
             },
+            "groq": {
+              "type": "boolean",
+              "default": false,
+              "description": "Enable Open Source LLM model"
+            },
             "huggingface": {
               "type": "boolean",
               "default": false,
               "description": "Enable HuggingFace model"
+            },
+            "custom": {
+              "type": "boolean",
+              "default": false,
+              "description": "Enable custom model"
             }
           }
         },
