@@ -203,7 +203,8 @@ export const HistorySidebar: React.FC<HistorySidebarProps> = ({
       placement={'left'}
       loading={isLoading}
     >
-      {Object.keys(histories).length === 0 ? (
+      {Object.keys(histories).length ===
+      Object.keys(histories).filter((historyID) => historyID === '').length ? (
         <NoHistoryMessageContainer>
           <Typography.Text>Nothing Currently</Typography.Text>
         </NoHistoryMessageContainer>
