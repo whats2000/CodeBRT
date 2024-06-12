@@ -1,14 +1,7 @@
 import React, { useContext, useEffect, useState } from 'react';
 import ReactMarkdown from 'react-markdown';
 import { RendererCode } from '../common/RenderCode';
-import styled, { keyframes } from 'styled-components';
-import { WebviewContext } from '../../WebviewContext';
-import {
-  ConversationEntry,
-  ConversationHistory,
-} from '../../../types/conversationHistory';
-import { ModelType } from '../../../types/modelType';
-import { TypingAnimation } from '../common/TypingAnimation';
+import styled from 'styled-components';
 import {
   ArrowLeftOutlined,
   ArrowRightOutlined,
@@ -18,25 +11,16 @@ import {
 } from '@ant-design/icons';
 import { Button, Space, Spin, Typography, theme, Input, Flex } from 'antd';
 
+import { WebviewContext } from '../../WebviewContext';
+import {
+  ConversationEntry,
+  ConversationHistory,
+} from '../../../types/conversationHistory';
+import { ModelType } from '../../../types/modelType';
+import { TypingAnimation } from '../common/TypingAnimation';
+import { fadeIn, fadeOut } from '../../styles/animation';
+
 const { useToken } = theme;
-
-const fadeIn = keyframes`
-    from {
-        opacity: 0;
-    }
-    to {
-        opacity: 1;
-    }
-`;
-
-const fadeOut = keyframes`
-    from {
-        opacity: 1;
-    }
-    to {
-        opacity: 0;
-    }
-`;
 
 const StyledMessagesContainer = styled.div<{ $isActiveModelLoading: boolean }>`
   flex-grow: 1;
