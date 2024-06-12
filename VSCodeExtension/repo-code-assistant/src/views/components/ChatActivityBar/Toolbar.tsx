@@ -18,7 +18,7 @@ const { Option } = Select;
 const StyledSpace = styled(Space)`
   display: flex;
   justify-content: space-between;
-  padding: 5px 15px;
+  padding: 10px 15px;
 `;
 
 interface ToolbarProps {

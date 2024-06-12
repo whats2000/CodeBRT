@@ -2,49 +2,48 @@ import React, { useContext, useEffect, useState } from 'react';
 import ReactMarkdown from 'react-markdown';
 import { RendererCode } from '../common/RenderCode';
 import styled, { keyframes } from 'styled-components';
-
+import { WebviewContext } from '../../WebviewContext';
 import {
   ConversationEntry,
   ConversationHistory,
 } from '../../../types/conversationHistory';
 import { ModelType } from '../../../types/modelType';
-import { WebviewContext } from '../../WebviewContext';
 import { TypingAnimation } from '../common/TypingAnimation';
-import { CopyButton } from '../common/CopyButton';
 import {
   ArrowLeftOutlined,
   ArrowRightOutlined,
+  CopyFilled,
+  CopyOutlined,
   EditOutlined,
 } from '@ant-design/icons';
-import { Button, Space, Spin } from 'antd';
+import { Button, Space, Spin, Typography, theme, Input, Flex } from 'antd';
+
+const { useToken } = theme;
 
 const fadeIn = keyframes`
-  from {
-    opacity: 0;
-  }
-  to {
-    opacity: 1;
-  }
+    from {
+        opacity: 0;
+    }
+    to {
+        opacity: 1;
+    }
 `;
 
 const fadeOut = keyframes`
-  from {
-    opacity: 1;
-  }
-  to {
-    opacity: 0;
-  }
+    from {
+        opacity: 1;
+    }
+    to {
+        opacity: 0;
+    }
 `;
 
 const StyledMessagesContainer = styled.div<{ $isActiveModelLoading: boolean }>`
   flex-grow: 1;
   overflow-y: auto;
-  padding-right: 35px;
-  padding-top: 10px;
-  padding-bottom: 10px;
-  border-top: 1px solid #ccc;
-  border-bottom: 1px solid #ccc;
-
+  padding: 10px 55px 10px 10px;
+  border-top: 1px solid ${({ theme }) => theme.colorBorderSecondary};
+  border-bottom: 1px solid ${({ theme }) => theme.colorBorderSecondary};
   animation: ${(props) => (props.$isActiveModelLoading ? fadeOut : fadeIn)} 0.5s
     ease-in-out;
 `;
@@ -52,86 +51,41 @@ const StyledMessagesContainer = styled.div<{ $isActiveModelLoading: boolean }>`
 const MessageBubble = styled.div<{ $user: string }>`
   display: flex;
   flex-direction: column;
-  background-color: ${({ $user }) => ($user === 'user' ? '#666' : '#333')};
+  background-color: ${({ $user, theme }) =>
+    $user === 'user' ? theme.colorBgContainer : theme.colorBgElevated};
   border-radius: 15px;
+  border: 1px solid ${({ theme }) => theme.colorBorder};
   padding: 8px 15px;
-  margin: 10px;
-  color: lightgrey;
+  margin: 10px 0;
+  color: ${({ theme }) => theme.colorText};
   position: relative;
+`;
+
+const RespondCharacter = styled(Typography.Text)<{ $user: string }>`
+  color: ${({ $user, theme }) =>
+    $user === 'user' ? theme.colorPrimary : theme.colorSecondary};
+  font-weight: bold;
+  margin-bottom: 5px;
+`;
+
+const EditInputTextArea = styled(Input.TextArea)`
+  background-color: transparent;
+  color: ${({ theme }) => theme.colorText};
+  border: none;
+  border-radius: 4px;
+  resize: none;
+  overflow: hidden;
+  margin-top: 10px;
+
+  &:focus {
+    outline: none;
+    border-color: ${({ theme }) => theme.colorPrimary};
+  }
 `;
 
 const MessageText = styled.span`
   word-wrap: break-word;
   margin: 10px 0;
-`;
-
-const RespondCharacter = styled.span<{ $user: string }>`
-  color: ${({ $user }) => ($user === 'user' ? '#f0f0f0' : '#09f')};
-  font-weight: bold;
-  margin-bottom: 5px;
-  display: inline-block;
-`;
-
-const EditButton = styled.button`
-  color: white;
-  position: absolute;
-  top: 5px;
-  right: 35px;
-  background-color: transparent;
-  border: none;
-  border-radius: 4px;
-  padding: 5px 8px;
-  cursor: pointer;
-  outline: none;
-
-  &:hover {
-    color: #3c3c3c;
-    background-color: #ffffff90;
-  }
-`;
-
-const NavigationButton = styled.button`
-  color: white;
-  position: absolute;
-  top: 5px;
-  background-color: transparent;
-  border: none;
-  border-radius: 4px;
-  padding: 5px 8px;
-  cursor: pointer;
-  outline: none;
-
-  &:hover {
-    color: #3c3c3c;
-    background-color: #ffffff90;
-  }
-`;
-
-const BranchCount = styled.span`
-  color: white;
-  position: absolute;
-  top: 5px;
-  background-color: transparent;
-  border: none;
-  border-radius: 4px;
-  padding: 5px 8px;
-`;
-
-const EditInputTextArea = styled.textarea`
-  width: 100%;
-  padding: 8px;
-  margin-top: 5px;
-  box-sizing: border-box;
-  background-color: transparent;
-  color: lightsteelblue;
-  border: none;
-  border-radius: 4px;
-  resize: none;
-  overflow: hidden;
-
-  &:focus {
-    outline: none;
-  }
 `;
 
 const MessageImage = styled.img`
@@ -152,7 +106,7 @@ interface MessagesContainerProps {
   handleEditUserMessageSave: (
     entryId: string,
     editedMessage: string,
-  ) => Promise<void>; // New prop
+  ) => Promise<void>;
 }
 
 const traverseHistory = (
@@ -183,7 +137,7 @@ export const MessagesContainer: React.FC<MessagesContainerProps> = ({
   isLoading,
   scrollToBottom,
   messageEndRef,
-  handleEditUserMessageSave, // Receive the new handler
+  handleEditUserMessageSave,
 }) => {
   const [copied, setCopied] = useState<Record<string, boolean>>({});
   const [editingEntryId, setEditingEntryId] = useState<string | null>(null);
@@ -191,6 +145,7 @@ export const MessagesContainer: React.FC<MessagesContainerProps> = ({
   const [imageUrls, setImageUrls] = useState<Record<string, string>>({});
 
   const { callApi } = useContext(WebviewContext);
+  const { token } = useToken();
 
   useEffect(() => {
     const loadImageUrls = async () => {
@@ -325,49 +280,57 @@ export const MessagesContainer: React.FC<MessagesContainerProps> = ({
             : 0;
 
           return (
-            <MessageBubble key={entry.id} $user={entry.role}>
-              {parent && currentIndex > 1 && (
-                <NavigationButton
-                  onClick={() => handleGoForward(entry, 'prev')}
-                  style={{ right: 120 }}
-                >
-                  <ArrowLeftOutlined />
-                </NavigationButton>
-              )}
-              {parent && siblingCount > 1 && (
-                <BranchCount style={{ right: 90 }}>
-                  {`${currentIndex}/${siblingCount}`}
-                </BranchCount>
-              )}
-              {parent && currentIndex < siblingCount && (
-                <NavigationButton
-                  onClick={() => handleGoForward(entry, 'next')}
-                  style={{ right: 65 }}
-                >
-                  <ArrowRightOutlined />
-                </NavigationButton>
-              )}
-              {messages.root !== entry.id && messages.root !== '' && (
-                <EditButton
-                  onClick={() =>
-                    editingEntryId === entry.id
-                      ? handleCancelEdit()
-                      : handleEdit(entry.id, entry.message)
-                  }
-                >
-                  <EditOutlined />
-                </EditButton>
-              )}
+            <MessageBubble key={entry.id} $user={entry.role} theme={token}>
+              <Flex align={'center'} justify={'space-between'}>
+                <RespondCharacter $user={entry.role} theme={token}>
+                  {entry.role === 'AI'
+                    ? modelType.charAt(0).toUpperCase() + modelType.slice(1)
+                    : 'You'}
+                </RespondCharacter>
+                <Flex gap={1}>
+                  {parent && siblingCount > 1 && (
+                    <Button
+                      onClick={() => handleGoForward(entry, 'prev')}
+                      type={'text'}
+                      disabled={currentIndex === 1}
+                    >
+                      <ArrowLeftOutlined />
+                    </Button>
+                  )}
+                  {parent && siblingCount > 1 && (
+                    <Button type={'text'}>
+                      {currentIndex}/{siblingCount}
+                    </Button>
+                  )}
+                  {parent && siblingCount > 1 && (
+                    <Button
+                      onClick={() => handleGoForward(entry, 'next')}
+                      type={'text'}
+                      disabled={currentIndex === siblingCount}
+                    >
+                      <ArrowRightOutlined />
+                    </Button>
+                  )}
+                  {messages.root !== entry.id && messages.root !== '' && (
+                    <Button
+                      icon={<EditOutlined />}
+                      type={'text'}
+                      onClick={() =>
+                        editingEntryId === entry.id
+                          ? handleCancelEdit()
+                          : handleEdit(entry.id, entry.message)
+                      }
+                    />
+                  )}
+                  <Button
+                    onClick={() => handleCopy(entry.message, entry.id)}
+                    type={'text'}
+                  >
+                    {copied[entry.id] ? <CopyFilled /> : <CopyOutlined />}
+                  </Button>
+                </Flex>
+              </Flex>
 
-              <CopyButton
-                copied={copied[entry.id]}
-                handleCopy={() => handleCopy(entry.message, entry.id)}
-              />
-              <RespondCharacter $user={entry.role}>
-                {entry.role === 'AI'
-                  ? modelType.charAt(0).toUpperCase() + modelType.slice(1)
-                  : 'You'}
-              </RespondCharacter>
               {entry.id === editingEntryId ? (
                 <Space direction={'vertical'}>
                   <EditInputTextArea
@@ -375,21 +338,15 @@ export const MessagesContainer: React.FC<MessagesContainerProps> = ({
                     value={editedMessage}
                     onChange={handleInput}
                     autoFocus
+                    theme={token}
                   />
                   <Button
-                    type={'primary'}
-                    ghost={true}
                     onClick={() => handleSaveEdit(entry.id)}
                     style={{ width: '100%' }}
                   >
                     Save
                   </Button>
-                  <Button
-                    type={'primary'}
-                    ghost={true}
-                    onClick={handleCancelEdit}
-                    style={{ width: '100%' }}
-                  >
+                  <Button onClick={handleCancelEdit} style={{ width: '100%' }}>
                     Cancel
                   </Button>
                 </Space>
