@@ -12,7 +12,7 @@ import { DeleteOutlined } from '@ant-design/icons';
 import TextArea from 'antd/es/input/TextArea';
 
 const StyledDrawer = styled(Drawer)`
-  & .ant-drawer-header {
+  & div.ant-drawer-header {
     padding: 10px;
   }
 
