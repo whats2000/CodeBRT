@@ -1,62 +1,31 @@
 import React, { useContext, useEffect, useState } from 'react';
 import styled from 'styled-components';
+import { Drawer, List, Typography } from 'antd';
 
 import { WebviewContext } from '../../WebviewContext';
 import { ModelType } from '../../../types/modelType';
-import { DeleteIcon } from '../../../icons';
 import {
   ConversationHistory,
   ConversationHistoryList,
 } from '../../../types/conversationHistory';
-import LoadingSpinner from '../common/LoadingSpinner';
+import { DeleteOutlined } from '@ant-design/icons';
+import TextArea from 'antd/es/input/TextArea';
 
-const SidebarContainer = styled.div<{ isOpen: boolean }>`
-  width: 250px;
-  position: fixed;
-  z-index: 1;
-  top: 0;
-  left: ${(props) => (props.isOpen ? '0' : '-250px')};
-  height: 100%;
-  background-color: #111;
-  overflow-x: hidden;
-  transition: left 0.5s;
-  padding-top: 60px;
-  color: white;
-`;
+const StyledDrawer = styled(Drawer)`
+  & .ant-drawer-header {
+    padding: 10px;
+  }
 
-const CloseBtn = styled.span`
-  position: absolute;
-  top: 10px;
-  right: 5px;
-  font-size: 36px;
-  cursor: pointer;
-  text-align: center;
-  line-height: 30px;
-  border-radius: 4px;
-  width: 30px;
-  height: 30px;
-
-  &:hover {
-    background-color: #333;
+  & div.ant-drawer-body {
+    padding: 0;
   }
 `;
 
-const HistoryList = styled.ul`
-  list-style-type: none;
-  padding: 0;
-`;
-
-const HistoryItem = styled.li<{ $active: boolean }>`
-  padding: 10px 15px;
-  text-decoration: none;
-  font-size: 20px;
-  color: white;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  transition: 0.3s;
-  cursor: pointer;
+const HistoryItem = styled(List.Item)<{ $active: boolean }>`
+  padding: 10px !important;
   background-color: ${({ $active }) => ($active ? '#333' : 'transparent')};
+  border-left: ${({ $active }) =>
+    $active ? '5px solid #2196F3' : '5px solid transparent'};
 
   &:hover {
     background-color: #575757;
@@ -68,7 +37,9 @@ const DeleteButton = styled.button`
   border: none;
   color: white;
   cursor: pointer;
-  padding: 5px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 
   &:hover {
     color: red;
@@ -82,23 +53,17 @@ const NoHistoryMessageContainer = styled.div`
   height: 100%;
 `;
 
-const NoHistoryMessage = styled.div`
-  color: lightgray;
-  text-align: center;
-`;
-
 const Title = styled.span`
-  font-size: 20px;
+  font-size: 18px;
+  flex-grow: 1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 90%;
 `;
 
-const EditableTitle = styled.textarea`
-  background: transparent;
-  border: none;
-  color: white;
-  font-size: 20px;
-  padding: 0;
-  margin: 0;
-  outline: white;
+const StyledTextArea = styled(TextArea)`
+  max-width: 90% !important;
 `;
 
 interface HistorySidebarProps {
@@ -135,7 +100,7 @@ export const HistorySidebar: React.FC<HistorySidebarProps> = ({
             'alertMessage',
             `Failed to load histories: ${error}`,
             'error',
-          ).catch((error) => console.error(error));
+          ).catch(console.error);
           setIsLoading(false);
         });
     }
@@ -149,14 +114,14 @@ export const HistorySidebar: React.FC<HistorySidebarProps> = ({
       .then(() => callApi('getLanguageModelConversationHistory', activeModel))
       .then((history) => {
         setMessages(history);
-        setIsLoading(false); // End loading after switching history
+        setIsLoading(false);
       })
       .catch((error) => {
         callApi(
           'alertMessage',
           `Failed to switch history: ${error}`,
           'error',
-        ).catch((error) => console.error(error));
+        ).catch(console.error);
         setIsLoading(false);
       });
     onClose();
@@ -178,7 +143,7 @@ export const HistorySidebar: React.FC<HistorySidebarProps> = ({
           'alertMessage',
           `Failed to delete history: ${error}`,
           'error',
-        ).catch((error) => console.error(error)),
+        ).catch(console.error),
       );
   };
 
@@ -207,25 +172,25 @@ export const HistorySidebar: React.FC<HistorySidebarProps> = ({
           'alertMessage',
           `Failed to update title: ${error}`,
           'error',
-        ).catch((error) => console.error(error)),
+        ).catch(console.error),
       );
     setEditingHistoryID(null);
   };
 
   return (
-    <SidebarContainer isOpen={isOpen}>
-      <CloseBtn onClick={onClose}>&times;</CloseBtn>
-      {isLoading ? (
-        <LoadingSpinner />
-      ) : Object.keys(histories).length -
-          Object.keys(histories).filter((historyID) => historyID === '')
-            .length ===
-        0 ? (
+    <StyledDrawer
+      title='Chat History'
+      open={isOpen}
+      onClose={onClose}
+      placement={'left'}
+      loading={isLoading}
+    >
+      {Object.keys(histories).length === 0 ? (
         <NoHistoryMessageContainer>
-          <NoHistoryMessage>Nothing Currently</NoHistoryMessage>
+          <Typography.Text>Nothing Currently</Typography.Text>
         </NoHistoryMessageContainer>
       ) : (
-        <HistoryList>
+        <List>
           {Object.keys(histories).map(
             (historyID) =>
               historyID !== '' && (
@@ -235,11 +200,12 @@ export const HistorySidebar: React.FC<HistorySidebarProps> = ({
                   $active={historyID === messages.root}
                 >
                   {editingHistoryID === historyID ? (
-                    <EditableTitle
+                    <StyledTextArea
                       value={titleInput}
                       onChange={handleTitleChange}
                       onBlur={() => handleTitleBlur(historyID)}
                       onSubmit={() => handleTitleBlur(historyID)}
+                      autoSize={{ minRows: 1, maxRows: 10 }}
                       autoFocus
                     />
                   ) : (
@@ -261,13 +227,13 @@ export const HistorySidebar: React.FC<HistorySidebarProps> = ({
                       deleteHistory(historyID);
                     }}
                   >
-                    <DeleteIcon />
+                    <DeleteOutlined />
                   </DeleteButton>
                 </HistoryItem>
               ),
           )}
-        </HistoryList>
+        </List>
       )}
-    </SidebarContainer>
+    </StyledDrawer>
   );
 };

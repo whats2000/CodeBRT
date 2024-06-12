@@ -147,7 +147,6 @@ export const InputContainer = ({
       <Flex gap={10}>
         <UploadButton onClick={handleUploadButtonClick} disabled={isLoading}>
           <UploadOutlined />
-          Upload
         </UploadButton>
         <input
           type='file'
