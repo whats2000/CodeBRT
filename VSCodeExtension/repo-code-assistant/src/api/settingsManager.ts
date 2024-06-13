@@ -55,7 +55,7 @@ class SettingsManager {
   public addCustomModel(model: CustomModelSettings): void {
     const customModels = this.getCustomModels();
     customModels.push(model);
-    this.set('customModels', customModels);
+    this.set('customModels', customModels).then();
   }
 
   public updateCustomModel(model: CustomModelSettings): void {
@@ -63,25 +63,25 @@ class SettingsManager {
     const index = customModels.findIndex((m) => m.name === model.name);
     if (index !== -1) {
       customModels[index] = model;
-      this.set('customModels', customModels);
+      this.set('customModels', customModels).then();
     }
   }
 
   public deleteCustomModel(modelName: string): void {
     let customModels = this.getCustomModels();
     customModels = customModels.filter((m) => m.name !== modelName);
-    this.set('customModels', customModels);
-
-    const selectedModel = this.get('selectedCustomModel');
-    if (selectedModel === modelName) {
-      this.set('selectedCustomModel', '');
-    }
+    this.set('customModels', customModels).then(() => {
+      const selectedModel = this.get('selectedCustomModel');
+      if (selectedModel === modelName) {
+        this.set('selectedCustomModel', '').then();
+      }
+    });
   }
 
   public selectCustomModel(modelName: string): void {
     const customModels = this.getCustomModels();
     if (customModels.find((m) => m.name === modelName)) {
-      this.set('selectedCustomModel', modelName);
+      this.set('selectedCustomModel', modelName).then();
     }
   }
 

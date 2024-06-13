@@ -30,6 +30,11 @@ export type CustomModelSettings = {
   apiImageParam: string;
 
   /**
+   * The name of the query parameter in the API payload.
+   */
+  apiQueryParam: string;
+
+  /**
    * Indicates whether the query should be included in the history.
    */
   includeQueryInHistory: boolean;

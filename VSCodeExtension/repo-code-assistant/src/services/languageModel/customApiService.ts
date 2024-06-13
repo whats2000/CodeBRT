@@ -12,6 +12,7 @@ export class CustomApiService extends AbstractLanguageModelService {
   private apiMethod: 'GET' | 'POST';
   private apiTextParam: string;
   private apiImageParam: string;
+  private apiQueryParam: string;
   private includeQueryInHistory: boolean;
   private readonly settingsListener: vscode.Disposable;
 
@@ -33,6 +34,7 @@ export class CustomApiService extends AbstractLanguageModelService {
       this.apiMethod = selectedModel.apiMethod;
       this.apiTextParam = selectedModel.apiTextParam;
       this.apiImageParam = selectedModel.apiImageParam;
+      this.apiQueryParam = selectedModel.apiQueryParam;
       this.includeQueryInHistory = selectedModel.includeQueryInHistory;
     } else {
       super(
@@ -46,6 +48,7 @@ export class CustomApiService extends AbstractLanguageModelService {
       this.apiMethod = 'POST';
       this.apiTextParam = 'message';
       this.apiImageParam = 'images';
+      this.apiQueryParam = 'query';
       this.includeQueryInHistory = true;
       console.log(
         'No custom model configuration found. Please configure a custom model.',
@@ -89,12 +92,14 @@ export class CustomApiService extends AbstractLanguageModelService {
       this.apiMethod = selectedModel.apiMethod;
       this.apiTextParam = selectedModel.apiTextParam;
       this.apiImageParam = selectedModel.apiImageParam;
+      this.apiQueryParam = selectedModel.apiQueryParam;
       this.includeQueryInHistory = selectedModel.includeQueryInHistory;
     } else {
       this.apiUrl = '';
       this.apiMethod = 'POST';
       this.apiTextParam = 'message';
       this.apiImageParam = 'images';
+      this.apiQueryParam = 'query';
       this.includeQueryInHistory = true;
       vscode.window
         .showErrorMessage(
@@ -137,9 +142,14 @@ export class CustomApiService extends AbstractLanguageModelService {
   private async createImageFormData(
     conversationHistory: string,
     images: string[],
+    query: string,
   ): Promise<FormData> {
     const formData = new FormData();
     formData.append(this.apiTextParam, conversationHistory);
+
+    if (!this.includeQueryInHistory) {
+      formData.append(this.apiQueryParam, query);
+    }
 
     for (const [index, image] of images.entries()) {
       const mimeType = `image/${path.extname(image).slice(1)}`;
@@ -160,20 +170,24 @@ export class CustomApiService extends AbstractLanguageModelService {
     const history = currentEntryID
       ? this.getHistoryBeforeEntry(currentEntryID)
       : this.history;
-    const conversationHistory = this.conversationHistoryToJson(
-      history.entries,
-    ).replace('{query}', query);
+    const conversationHistory = this.conversationHistoryToJson(history.entries);
+
+    const requestPayload: any = {
+      [this.apiTextParam]: conversationHistory,
+    };
+
+    if (!this.includeQueryInHistory) {
+      requestPayload[this.apiQueryParam] = query;
+    }
 
     try {
       let response;
       if (this.apiMethod === 'GET') {
         response = await axios.get(this.apiUrl, {
-          params: { [this.apiTextParam]: conversationHistory },
+          params: requestPayload,
         });
       } else {
-        response = await axios.post(this.apiUrl, {
-          [this.apiTextParam]: conversationHistory,
-        });
+        response = await axios.post(this.apiUrl, requestPayload);
       }
 
       return response.data.response;
@@ -193,23 +207,27 @@ export class CustomApiService extends AbstractLanguageModelService {
     const history = currentEntryID
       ? this.getHistoryBeforeEntry(currentEntryID)
       : this.history;
-    const conversationHistory = this.conversationHistoryToJson(
-      history.entries,
-    ).replace('{query}', query);
+    const conversationHistory = this.conversationHistoryToJson(history.entries);
+
+    const requestPayload: any = {
+      [this.apiTextParam]: conversationHistory,
+    };
+
+    if (!this.includeQueryInHistory) {
+      requestPayload[this.apiQueryParam] = query;
+    }
 
     try {
       let responseText = '';
       const response =
         this.apiMethod === 'GET'
           ? await axios.get(this.apiUrl, {
-              params: { [this.apiTextParam]: conversationHistory },
+              params: requestPayload,
               responseType: 'stream',
             })
-          : await axios.post(
-              this.apiUrl,
-              { [this.apiTextParam]: conversationHistory },
-              { responseType: 'stream' },
-            );
+          : await axios.post(this.apiUrl, requestPayload, {
+              responseType: 'stream',
+            });
 
       return new Promise<string>((resolve, reject) => {
         response.data.on('data', (chunk: Buffer) => {
@@ -245,14 +263,13 @@ export class CustomApiService extends AbstractLanguageModelService {
     const history = currentEntryID
       ? this.getHistoryBeforeEntry(currentEntryID)
       : this.history;
-    const conversationHistory = this.conversationHistoryToJson(
-      history.entries,
-    ).replace('{query}', query);
+    const conversationHistory = this.conversationHistoryToJson(history.entries);
 
     try {
       const formData = await this.createImageFormData(
         conversationHistory,
         images,
+        query,
       );
 
       const response = await axios.post(this.apiUrl, formData, {
@@ -279,14 +296,13 @@ export class CustomApiService extends AbstractLanguageModelService {
     const history = currentEntryID
       ? this.getHistoryBeforeEntry(currentEntryID)
       : this.history;
-    const conversationHistory = this.conversationHistoryToJson(
-      history.entries,
-    ).replace('{query}', query);
+    const conversationHistory = this.conversationHistoryToJson(history.entries);
 
     try {
       const formData = await this.createImageFormData(
         conversationHistory,
         images,
+        query,
       );
 
       const response = await axios.post(this.apiUrl, formData, {
