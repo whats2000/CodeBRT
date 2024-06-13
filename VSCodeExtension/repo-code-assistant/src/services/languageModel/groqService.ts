@@ -1,6 +1,5 @@
 import * as vscode from 'vscode';
 import Groq from 'groq-sdk';
-import ChatCompletionMessageParam = Groq.Chat.Completions.ChatCompletionMessageParam;
 import { ConversationEntry } from '../../types/conversationHistory';
 import { AbstractLanguageModelService } from './abstractLanguageModelService';
 import SettingsManager from '../../api/settingsManager';
@@ -8,6 +7,7 @@ import {
   type ChatCompletionCreateParamsNonStreaming,
   type ChatCompletionCreateParamsStreaming,
 } from 'groq-sdk/src/resources/chat/completions';
+import ChatCompletionMessageParam = Groq.Chat.Completions.ChatCompletionMessageParam;
 
 export class GroqService extends AbstractLanguageModelService {
   private apiKey: string;
@@ -16,20 +16,23 @@ export class GroqService extends AbstractLanguageModelService {
   constructor(
     context: vscode.ExtensionContext,
     settingsManager: SettingsManager,
-    availableModelName: string[] = [
+  ) {
+    const availableModelNames = settingsManager.get('groqAvailableModels') || [
       'llama3-70b-8192',
       'llama3-8b-8192',
       'mixtral-8x7b-32768',
       'gemma-7b-it',
-    ],
-  ) {
+    ];
+    const defaultModelName = availableModelNames[0];
+
     super(
       context,
       'groqConversationHistory.json',
       settingsManager,
-      availableModelName[0],
-      availableModelName,
+      defaultModelName,
+      availableModelNames,
     );
+
     this.apiKey = settingsManager.get('groqApiKey');
 
     // Initialize and load conversation history
@@ -41,8 +44,19 @@ export class GroqService extends AbstractLanguageModelService {
 
     // Listen for settings changes
     this.settingsListener = vscode.workspace.onDidChangeConfiguration((e) => {
-      if (e.affectsConfiguration('repo-code-assistant.groqApiKey')) {
+      if (
+        e.affectsConfiguration('repo-code-assistant.groqApiKey') ||
+        e.affectsConfiguration('repo-code-assistant.groqAvailableModels')
+      ) {
         this.apiKey = settingsManager.get('groqApiKey');
+        this.availableModelNames = settingsManager.get(
+          'groqAvailableModels',
+        ) || [
+          'llama3-70b-8192',
+          'llama3-8b-8192',
+          'mixtral-8x7b-32768',
+          'gemma-7b-it',
+        ];
       }
     });
 

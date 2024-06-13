@@ -12,16 +12,22 @@ export class CohereService extends AbstractLanguageModelService {
   constructor(
     context: vscode.ExtensionContext,
     settingsManager: SettingsManager,
-    availableModelName: string[] = ['command'],
   ) {
+    const availableModelNames = settingsManager.get(
+      'cohereAvailableModels',
+    ) || ['command'];
+    const defaultModelName = availableModelNames[0];
+
     super(
       context,
       'cohereConversationHistory.json',
       settingsManager,
-      availableModelName[0],
-      availableModelName,
+      defaultModelName,
+      availableModelNames,
     );
+
     this.apiKey = settingsManager.get('cohereApiKey');
+
     this.initialize().catch((error) =>
       vscode.window.showErrorMessage(
         'Failed to initialize Cohere Service History: ' + error,
@@ -30,8 +36,14 @@ export class CohereService extends AbstractLanguageModelService {
 
     // Listen for settings changes
     this.settingsListener = vscode.workspace.onDidChangeConfiguration((e) => {
-      if (e.affectsConfiguration('repo-code-assistant.cohereApiKey')) {
+      if (
+        e.affectsConfiguration('repo-code-assistant.cohereApiKey') ||
+        e.affectsConfiguration('repo-code-assistant.cohereAvailableModels')
+      ) {
         this.apiKey = settingsManager.get('cohereApiKey');
+        this.availableModelNames = settingsManager.get(
+          'cohereAvailableModels',
+        ) || ['command'];
       }
     });
 
@@ -48,9 +60,9 @@ export class CohereService extends AbstractLanguageModelService {
     }
   }
 
-  private conversationHistoryToContent(
-    entries: { [key: string]: ConversationEntry; }
-  ): Cohere.ChatMessage[] {
+  private conversationHistoryToContent(entries: {
+    [key: string]: ConversationEntry;
+  }): Cohere.ChatMessage[] {
     let result: Cohere.ChatMessage[] = [];
     let currentEntry = entries[this.history.current];
 
@@ -85,7 +97,9 @@ export class CohereService extends AbstractLanguageModelService {
       ? this.getHistoryBeforeEntry(currentEntryID)
       : this.history;
 
-    const conversationHistory = this.conversationHistoryToContent(history.entries);
+    const conversationHistory = this.conversationHistoryToContent(
+      history.entries,
+    );
 
     try {
       const response = await model.chat({
@@ -116,7 +130,9 @@ export class CohereService extends AbstractLanguageModelService {
       ? this.getHistoryBeforeEntry(currentEntryID)
       : this.history;
 
-    const conversationHistory = this.conversationHistoryToContent(history.entries);
+    const conversationHistory = this.conversationHistoryToContent(
+      history.entries,
+    );
 
     try {
       const result = await model.chatStream({

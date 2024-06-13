@@ -104,11 +104,33 @@
           "description": "Gemini API Key",
           "markdownDescription": "API key for Gemini model"
         },
+        "repo-code-assistant.geminiAvailableModels": {
+          "type": "array",
+          "description": "Available models for Gemini",
+          "default": [
+            "gemini-1.5-pro-latest",
+            "gemini-1.5-flash-latest"
+          ],
+          "items": {
+            "type": "string"
+          }
+        },
         "repo-code-assistant.openAiApiKey": {
           "type": "string",
           "default": "",
           "description": "OpenAI API Key",
           "markdownDescription": "API key for OpenAI model"
+        },
+        "repo-code-assistant.openAiAvailableModels": {
+          "type": "array",
+          "description": "Available models for OpenAI",
+          "default": [
+            "gpt-3.5-turbo",
+            "gpt-4o"
+          ],
+          "items": {
+            "type": "string"
+          }
         },
         "repo-code-assistant.cohereApiKey": {
           "type": "string",
@@ -116,17 +138,50 @@
           "description": "Cohere API Key",
           "markdownDescription": "API key for Cohere model"
         },
+        "repo-code-assistant.cohereAvailableModels": {
+          "type": "array",
+          "description": "Available models for Cohere",
+          "default": [
+            "command"
+          ],
+          "items": {
+            "type": "string"
+          }
+        },
         "repo-code-assistant.groqApiKey": {
           "type": "string",
           "default": "",
           "description": "Open Source LLM API Key",
           "markdownDescription": "API key for Open Source LLM model"
         },
+        "repo-code-assistant.groqAvailableModels": {
+          "type": "array",
+          "description": "Available models for Open Source LLM",
+          "default": [
+            "llama3-70b-8192",
+            "llama3-8b-8192",
+            "mixtral-8x7b-32768",
+            "gemma-7b-it"
+          ],
+          "items": {
+            "type": "string"
+          }
+        },
         "repo-code-assistant.huggingFaceApiKey": {
           "type": "string",
           "default": "",
           "description": "HuggingFace API Key",
           "markdownDescription": "API key for HuggingFace model"
+        },
+        "repo-code-assistant.huggingFaceAvailableModels": {
+          "type": "array",
+          "description": "Available models for HuggingFace",
+          "default": [
+            "HuggingFaceH4/zephyr-7b-beta"
+          ],
+          "items": {
+            "type": "string"
+          }
         },
         "repo-code-assistant.enableModel": {
           "type": "object",

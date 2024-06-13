@@ -64,7 +64,7 @@ export abstract class AbstractLanguageModelService
   /**
    * The list of available model names
    */
-  protected availableModelName: string[] = [];
+  protected availableModelNames: string[] = [];
 
   /**
    * Constructor for the AbstractLanguageModelService
@@ -72,7 +72,7 @@ export abstract class AbstractLanguageModelService
    * @param historyFileName - The name of the history file
    * @param settingsManager - The settings manager
    * @param currentModel - The current in-use model
-   * @param availableModelName - The list of available model names
+   * @param availableModelNames - The list of available model names
    * @protected
    */
   protected constructor(
@@ -80,12 +80,12 @@ export abstract class AbstractLanguageModelService
     historyFileName: string,
     settingsManager: SettingsManager,
     currentModel: string,
-    availableModelName: string[],
+    availableModelNames: string[],
   ) {
     this.context = context;
     this.settingsManager = settingsManager;
     this.currentModel = currentModel;
-    this.availableModelName = availableModelName;
+    this.availableModelNames = availableModelNames;
 
     const workspaceFolders = vscode.workspace.workspaceFolders;
     if (workspaceFolders) {
@@ -363,7 +363,7 @@ export abstract class AbstractLanguageModelService
    * Get the available models
    */
   public getAvailableModels(): string[] {
-    return this.availableModelName;
+    return this.availableModelNames;
   }
 
   /**
@@ -371,7 +371,7 @@ export abstract class AbstractLanguageModelService
    * @param newModel - The name of the model to switch to
    */
   public switchModel(newModel: string): void {
-    if (this.availableModelName.includes(newModel)) {
+    if (this.availableModelNames.includes(newModel)) {
       this.currentModel = newModel;
       vscode.window
         .showInformationMessage(`Switched to model: ${newModel}`)

@@ -50,9 +50,19 @@ export type ExtensionSettings = {
   geminiApiKey: string;
 
   /**
+   * The available models for the Gemini API.
+   */
+  geminiAvailableModels: string[];
+
+  /**
    * The API key for the OpenAI model.
    */
   openAiApiKey: string;
+
+  /**
+   * The available models for the OpenAI API.
+   */
+  openAiAvailableModels: string[];
 
   /**
    * The API key for the Cohere model.
@@ -60,14 +70,29 @@ export type ExtensionSettings = {
   cohereApiKey: string;
 
   /**
+   * The available models for the Cohere API.
+   */
+  cohereAvailableModels: string[];
+
+  /**
    * The API key for the Groq model.
    */
   groqApiKey: string;
 
   /**
+   * The available models for the Groq API.
+   */
+  groqAvailableModels: string[];
+
+  /**
    * The API key for the Hugging Face model.
    */
   huggingFaceApiKey: string;
+
+  /**
+   * The available models for the Hugging Face API.
+   */
+  huggingFaceAvailableModels: string[];
 
   /**
    * Determines if the model is enabled for code generation.

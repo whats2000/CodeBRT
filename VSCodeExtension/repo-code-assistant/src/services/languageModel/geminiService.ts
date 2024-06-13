@@ -45,19 +45,21 @@ export class GeminiService extends AbstractLanguageModelService {
   constructor(
     context: vscode.ExtensionContext,
     settingsManager: SettingsManager,
-    availableModelName: string[] = [
-      'gemini-1.5-pro-latest',
-      'gemini-1.5-flash-latest',
-    ],
   ) {
+    const availableModelNames = settingsManager.get(
+      'geminiAvailableModels',
+    ) || ['gemini-1.5-pro-latest', 'gemini-1.5-flash-latest'];
+    const defaultModelName = availableModelNames[0];
+
     super(
       context,
       'geminiConversationHistory.json',
       settingsManager,
-      availableModelName[0],
-      availableModelName,
+      defaultModelName,
+      availableModelNames,
     );
     this.apiKey = settingsManager.get('geminiApiKey');
+
     this.initialize().catch((error) =>
       vscode.window.showErrorMessage(
         'Failed to initialize Gemini Service: ' + error,
@@ -66,8 +68,14 @@ export class GeminiService extends AbstractLanguageModelService {
 
     // Listen for settings changes
     this.settingsListener = vscode.workspace.onDidChangeConfiguration((e) => {
-      if (e.affectsConfiguration('repo-code-assistant.geminiApiKey')) {
+      if (
+        e.affectsConfiguration('repo-code-assistant.geminiApiKey') ||
+        e.affectsConfiguration('repo-code-assistant.geminiAvailableModels')
+      ) {
         this.apiKey = settingsManager.get('geminiApiKey');
+        this.availableModelNames = settingsManager.get(
+          'geminiAvailableModels',
+        ) || ['gemini-1.5-pro-latest', 'gemini-1.5-flash-latest'];
       }
     });
 
@@ -131,7 +139,9 @@ export class GeminiService extends AbstractLanguageModelService {
       ? this.getHistoryBeforeEntry(currentEntryID)
       : this.history;
 
-    const conversationHistory = this.conversationHistoryToContent(history.entries);
+    const conversationHistory = this.conversationHistoryToContent(
+      history.entries,
+    );
 
     try {
       const chat = model.startChat({
@@ -162,7 +172,9 @@ export class GeminiService extends AbstractLanguageModelService {
       ? this.getHistoryBeforeEntry(currentEntryID)
       : this.history;
 
-    const conversationHistory = this.conversationHistoryToContent(history.entries);
+    const conversationHistory = this.conversationHistoryToContent(
+      history.entries,
+    );
 
     try {
       const chat = model.startChat({
