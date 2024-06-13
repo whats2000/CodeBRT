@@ -4,16 +4,18 @@ import {
   Form,
   Input,
   Button,
-  List,
   Select,
   Checkbox,
   Space,
+  Collapse,
+  List,
 } from 'antd';
 import { WebviewContext } from '../../../WebviewContext';
 import { CustomModelSettings } from '../../../../types/extensionSettings';
 import { ModelType } from '../../../../types/modelType';
 
 const { Option } = Select;
+const { Panel } = Collapse;
 
 interface EditModelListBarProps {
   isOpen: boolean;
@@ -74,27 +76,23 @@ export const EditModelListBar: React.FC<EditModelListBarProps> = ({
     if (activeModel === 'loading...') return;
 
     if (activeModel === 'custom') {
-      customModels.forEach((model) => {
-        if (model.name) {
-          callApi('updateCustomModel', model)
-            .then(() => {
-              callApi(
-                'alertMessage',
-                'Custom models saved successfully',
-                'info',
-              ).catch(console.error);
-              handleEditModelListSave(customModels.map((model) => model.name));
-              onClose();
-            })
-            .catch((error: any) => {
-              callApi(
-                'alertMessage',
-                `Failed to save custom models: ${error}`,
-                'error',
-              ).catch(console.error);
-            });
-        }
-      });
+      callApi('setCustomModels', customModels)
+        .then(() => {
+          callApi(
+            'alertMessage',
+            'Custom models saved successfully',
+            'info',
+          ).catch(console.error);
+          handleEditModelListSave(customModels.map((model) => model.name));
+          onClose();
+        })
+        .catch((error: any) => {
+          callApi(
+            'alertMessage',
+            `Failed to save custom models: ${error}`,
+            'error',
+          ).catch(console.error);
+        });
     } else {
       callApi('setAvailableModels', activeModel, availableModels)
         .then(() => {
@@ -182,116 +180,127 @@ export const EditModelListBar: React.FC<EditModelListBarProps> = ({
     >
       {activeModel === 'custom' ? (
         <Form layout='vertical'>
-          <List
-            dataSource={customModels}
-            renderItem={(model, index) => (
-              <List.Item
-                actions={[
-                  <Button danger onClick={() => handleRemoveModel(index)}>
-                    Remove
-                  </Button>,
-                ]}
-              >
-                <Form.Item label='Name'>
-                  <Input
-                    value={model.name}
-                    onChange={(e) =>
-                      handleModelChange(index, 'name', e.target.value)
-                    }
-                  />
-                </Form.Item>
-                <Form.Item label='API URL'>
-                  <Input
-                    value={model.apiUrl}
-                    onChange={(e) =>
-                      handleModelChange(index, 'apiUrl', e.target.value)
-                    }
-                  />
-                </Form.Item>
-                <Form.Item label='API Method'>
-                  <Select
-                    value={model.apiMethod}
-                    onChange={(value) =>
-                      handleModelChange(index, 'apiMethod', value)
-                    }
-                  >
-                    <Option value='GET'>GET</Option>
-                    <Option value='POST'>POST</Option>
-                  </Select>
-                </Form.Item>
-                <Form.Item label='Text Parameter'>
-                  <Input
-                    value={model.apiTextParam}
-                    onChange={(e) =>
-                      handleModelChange(index, 'apiTextParam', e.target.value)
-                    }
-                  />
-                </Form.Item>
-                <Form.Item label='Image Parameter'>
-                  <Input
-                    value={model.apiImageParam}
-                    onChange={(e) =>
-                      handleModelChange(index, 'apiImageParam', e.target.value)
-                    }
-                  />
-                </Form.Item>
-                <Form.Item label='Query Parameter'>
-                  <Input
-                    value={model.apiQueryParam}
-                    onChange={(e) =>
-                      handleModelChange(index, 'apiQueryParam', e.target.value)
-                    }
-                  />
-                </Form.Item>
-                <Form.Item label='Include Query in History'>
-                  <Checkbox
-                    checked={model.includeQueryInHistory}
-                    onChange={(e) =>
-                      handleModelChange(
-                        index,
-                        'includeQueryInHistory',
-                        e.target.checked,
-                      )
-                    }
-                  />
-                </Form.Item>
-              </List.Item>
-            )}
-          />
-          <Button type='dashed' onClick={handleAddModel} block>
-            Add Model
-          </Button>
-          <Button type='primary' onClick={handleSave} block>
-            Save
-          </Button>
+          <Space direction='vertical' style={{ width: '100%' }}>
+            <Collapse bordered={false} size={'large'}>
+              {customModels.map((model, index) => (
+                <Panel
+                  header={model.name || 'New Model'}
+                  key={index.toString()}
+                  extra={
+                    <Button danger onClick={() => handleRemoveModel(index)}>
+                      Remove
+                    </Button>
+                  }
+                >
+                  <Form.Item label='Name'>
+                    <Input
+                      value={model.name}
+                      onChange={(e) =>
+                        handleModelChange(index, 'name', e.target.value)
+                      }
+                    />
+                  </Form.Item>
+                  <Form.Item label='API URL'>
+                    <Input
+                      value={model.apiUrl}
+                      onChange={(e) =>
+                        handleModelChange(index, 'apiUrl', e.target.value)
+                      }
+                    />
+                  </Form.Item>
+                  <Form.Item label='API Method'>
+                    <Select
+                      value={model.apiMethod}
+                      onChange={(value) =>
+                        handleModelChange(index, 'apiMethod', value)
+                      }
+                    >
+                      <Option value='GET'>GET</Option>
+                      <Option value='POST'>POST</Option>
+                    </Select>
+                  </Form.Item>
+                  <Form.Item label='Text Parameter'>
+                    <Input
+                      value={model.apiTextParam}
+                      onChange={(e) =>
+                        handleModelChange(index, 'apiTextParam', e.target.value)
+                      }
+                    />
+                  </Form.Item>
+                  <Form.Item label='Image Parameter'>
+                    <Input
+                      value={model.apiImageParam}
+                      onChange={(e) =>
+                        handleModelChange(
+                          index,
+                          'apiImageParam',
+                          e.target.value,
+                        )
+                      }
+                    />
+                  </Form.Item>
+                  <Form.Item label='Query Parameter'>
+                    <Input
+                      value={model.apiQueryParam}
+                      onChange={(e) =>
+                        handleModelChange(
+                          index,
+                          'apiQueryParam',
+                          e.target.value,
+                        )
+                      }
+                    />
+                  </Form.Item>
+                  <Form.Item label='Include Query in History'>
+                    <Checkbox
+                      checked={model.includeQueryInHistory}
+                      onChange={(e) =>
+                        handleModelChange(
+                          index,
+                          'includeQueryInHistory',
+                          e.target.checked,
+                        )
+                      }
+                    />
+                  </Form.Item>
+                </Panel>
+              ))}
+            </Collapse>
+            <Button type='dashed' onClick={handleAddModel} block>
+              Add Model
+            </Button>
+            <Button type='primary' onClick={handleSave} block>
+              Save
+            </Button>
+          </Space>
         </Form>
       ) : (
         <Form layout='vertical'>
-          <List
-            dataSource={availableModels}
-            renderItem={(model, index) => (
-              <List.Item
-                actions={[
-                  <Button
-                    danger
-                    onClick={() => handleRemoveAvailableModel(index)}
-                  >
-                    Remove
-                  </Button>,
-                ]}
-              >
-                <Form.Item label={`Model ${index + 1}`}>
-                  <Input
-                    value={model}
-                    onChange={(e) =>
-                      handleAvailableModelChange(index, e.target.value)
-                    }
-                  />
-                </Form.Item>
-              </List.Item>
-            )}
-          />
-          <Space direction={'vertical'} style={{ width: '100%' }}>
+          <Space direction='vertical' style={{ width: '100%' }}>
+            <List
+              dataSource={availableModels}
+              renderItem={(model, index) => (
+                <List.Item
+                  actions={[
+                    <Button
+                      danger
+                      onClick={() => handleRemoveAvailableModel(index)}
+                    >
+                      Remove
+                    </Button>,
+                  ]}
+                >
+                  <Form.Item label={`Model ${index + 1}`}>
+                    <Input
+                      value={model}
+                      onChange={(e) =>
+                        handleAvailableModelChange(index, e.target.value)
+                      }
+                    />
+                  </Form.Item>
+                </List.Item>
+              )}
+            />
             <Button type='dashed' onClick={handleAddAvailableModel} block>
               Add Model
             </Button>

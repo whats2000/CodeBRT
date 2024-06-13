@@ -58,15 +58,6 @@ class SettingsManager {
     this.set('customModels', customModels).then();
   }
 
-  public updateCustomModel(model: CustomModelSettings): void {
-    const customModels = this.getCustomModels();
-    const index = customModels.findIndex((m) => m.name === model.name);
-    if (index !== -1) {
-      customModels[index] = model;
-      this.set('customModels', customModels).then();
-    }
-  }
-
   public deleteCustomModel(modelName: string): void {
     let customModels = this.getCustomModels();
     customModels = customModels.filter((m) => m.name !== modelName);

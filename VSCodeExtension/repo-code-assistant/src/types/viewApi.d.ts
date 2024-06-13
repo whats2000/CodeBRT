@@ -265,10 +265,10 @@ export type ViewApi = {
   addCustomModel: (model: CustomModelSettings) => void;
 
   /**
-   * Update the custom model settings.
-   * @param model - The custom model settings to update.
+   * Set the custom models settings list.
+   * @param newCustomModelSettings - The new custom model settings.
    */
-  updateCustomModel: (model: CustomModelSettings) => void;
+  setCustomModels: (newCustomModelSettings: CustomModelSettings[]) => void;
 
   /**
    * Add a custom model.

@@ -418,8 +418,8 @@ export const activate = async (ctx: vscode.ExtensionContext) => {
     addCustomModel: (model: CustomModelSettings) => {
       settingsManager.addCustomModel(model);
     },
-    updateCustomModel: (model: CustomModelSettings) => {
-      settingsManager.updateCustomModel(model);
+    setCustomModels: (newCustomModelSettings: CustomModelSettings[]) => {
+      settingsManager.set('customModels', newCustomModelSettings);
     },
     deleteCustomModel: (modelName: string) => {
       settingsManager.deleteCustomModel(modelName);
