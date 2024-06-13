@@ -121,7 +121,7 @@
           "description": "OpenAI API Key",
           "markdownDescription": "API key for OpenAI model"
         },
-        "repo-code-assistant.'openaiAvailableModels": {
+        "repo-code-assistant.openaiAvailableModels": {
           "type": "array",
           "description": "Available models for OpenAI",
           "default": [
