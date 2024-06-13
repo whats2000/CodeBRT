@@ -22,7 +22,7 @@ export class OpenAIService extends AbstractLanguageModelService {
     settingsManager: SettingsManager,
   ) {
     const availableModelNames = settingsManager.get(
-      'openAiAvailableModels',
+      'openaiAvailableModels',
     ) || ['gpt-3.5-turbo', 'gpt-4o'];
     const defaultModelName = availableModelNames[0];
 
@@ -33,7 +33,7 @@ export class OpenAIService extends AbstractLanguageModelService {
       defaultModelName,
       availableModelNames,
     );
-    this.apiKey = settingsManager.get('openAiApiKey');
+    this.apiKey = settingsManager.get('openaiApiKey');
 
     // Initialize and load conversation history
     this.initialize().catch((error) =>
@@ -45,12 +45,12 @@ export class OpenAIService extends AbstractLanguageModelService {
     // Listen for settings changes
     this.settingsListener = vscode.workspace.onDidChangeConfiguration((e) => {
       if (
-        e.affectsConfiguration('repo-code-assistant.openAiApiKey') ||
-        e.affectsConfiguration('repo-code-assistant.openAiAvailableModels')
+        e.affectsConfiguration('repo-code-assistant.openaiApiKey') ||
+        e.affectsConfiguration('repo-code-assistant.openaiAvailableModels')
       ) {
-        this.apiKey = settingsManager.get('openAiApiKey');
+        this.apiKey = settingsManager.get('openaiApiKey');
         this.availableModelNames = settingsManager.get(
-          'openAiAvailableModels',
+          'openaiAvailableModels',
         ) || ['gpt-3.5-turbo', 'gpt-4o'];
       }
     });

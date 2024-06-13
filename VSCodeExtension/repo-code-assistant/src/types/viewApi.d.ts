@@ -1,4 +1,4 @@
-import { ExtensionSettings } from './extensionSettings';
+import { CustomModelSettings, ExtensionSettings } from './extensionSettings';
 import {
   ConversationHistory,
   ConversationHistoryList,
@@ -198,8 +198,19 @@ export type ViewApi = {
 
   /**
    * Get the available models for a language model.
+   * @param modelType - The type of the model to get the available models for.
    */
   getAvailableModels: (modelType: ModelType) => string[];
+
+  /**
+   * Set the available models for a language model.
+   * @param modelType - The type of the model to set the available models for.
+   * @param newAvailableModels - The new available models.
+   */
+  setAvailableModels: (
+    modelType: ModelType,
+    newAvailableModels: string[],
+  ) => void;
 
   /**
    * Switch to a different model.
@@ -241,6 +252,29 @@ export type ViewApi = {
    * @param absolutePath - The absolute path to get the URI for.
    */
   getWebviewUri: (absolutePath: string) => string;
+
+  /**
+   * Get the custom models settings list.
+   */
+  getCustomModels: () => CustomModelSettings[];
+
+  /**
+   * Add a custom model.
+   * @param model - The custom model settings to add.
+   */
+  addCustomModel: (model: CustomModelSettings) => void;
+
+  /**
+   * Update the custom model settings.
+   * @param model - The custom model settings to update.
+   */
+  updateCustomModel: (model: CustomModelSettings) => void;
+
+  /**
+   * Add a custom model.
+   * @param modelName - The name of the custom model.
+   */
+  deleteCustomModel: (modelName: string) => void;
 };
 
 /**

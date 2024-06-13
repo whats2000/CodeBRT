@@ -57,12 +57,12 @@ export type ExtensionSettings = {
   /**
    * The API key for the OpenAI model.
    */
-  openAiApiKey: string;
+  openaiApiKey: string;
 
   /**
    * The available models for the OpenAI API.
    */
-  openAiAvailableModels: string[];
+  openaiAvailableModels: string[];
 
   /**
    * The API key for the Cohere model.

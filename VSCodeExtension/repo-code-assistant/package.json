@@ -115,13 +115,13 @@
             "type": "string"
           }
         },
-        "repo-code-assistant.openAiApiKey": {
+        "repo-code-assistant.openaiApiKey": {
           "type": "string",
           "default": "",
           "description": "OpenAI API Key",
           "markdownDescription": "API key for OpenAI model"
         },
-        "repo-code-assistant.openAiAvailableModels": {
+        "repo-code-assistant.'openaiAvailableModels": {
           "type": "array",
           "description": "Available models for OpenAI",
           "default": [

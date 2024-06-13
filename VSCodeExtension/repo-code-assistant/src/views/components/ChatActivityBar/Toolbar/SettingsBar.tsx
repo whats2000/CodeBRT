@@ -10,8 +10,8 @@ import {
   Button,
 } from 'antd';
 
-import { ExtensionSettings } from '../../../types/extensionSettings';
-import { WebviewContext } from '../../WebviewContext';
+import { ExtensionSettings } from '../../../../types/extensionSettings';
+import { WebviewContext } from '../../../WebviewContext';
 import type { Color } from 'antd/es/color-picker/color';
 
 const StyledForm = styled(Form)`
@@ -47,8 +47,8 @@ export const SettingsBar: React.FC<SettingSidebarProps> = ({
     groqAvailableModels: [],
     geminiApiKey: '',
     geminiAvailableModels: [],
-    openAiApiKey: '',
-    openAiAvailableModels: [],
+    openaiApiKey: '',
+    openaiAvailableModels: [],
     cohereApiKey: '',
     cohereAvailableModels: [],
     huggingFaceApiKey: '',

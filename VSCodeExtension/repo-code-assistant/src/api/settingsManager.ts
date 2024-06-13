@@ -96,8 +96,8 @@ class SettingsManager {
         huggingFace: false,
         custom: false,
       },
-      openAiApiKey: '',
-      openAiAvailableModels: ['gpt-3.5-turbo', 'gpt-4o'],
+      openaiApiKey: '',
+      openaiAvailableModels: ['gpt-3.5-turbo', 'gpt-4o'],
       geminiApiKey: '',
       geminiAvailableModels: [
         'gemini-1.5-pro-latest',
