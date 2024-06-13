@@ -24,35 +24,69 @@ random_sentences = [
     "Cwm fjord bank glyphs vext quiz."
 ]
 
-
 @app.route('/api', methods=['POST'])
-def handle_request():
-    content_type = request.headers.get('Content-Type')
-
-    if content_type == 'application/json':
-        return handle_text_request()
-    elif content_type.startswith('multipart/form-data'):
-        return handle_image_request()
-    else:
-        return Response("Unsupported Media Type", status=415)
+def api():
+    print('API Request Received')
+    return handle_request('message', 'image', '', include_query_in_history=True)
 
 @app.route('/api2', methods=['POST'])
-def handle_request2():
+def api2():
+    print('API2 Request Received')
+    return handle_request('message', 'image', 'query', include_query_in_history=False)
+
+@app.route('/api3', methods=['GET'])
+def api3():
+    print('API3 Request Received')
+    return handle_get_request('message', 'image')
+
+@app.route('/api4', methods=['POST'])
+def api4():
+    print('API4 Request Received')
+    return handle_request('text', 'img', 'q', include_query_in_history=False)
+
+@app.route('/api5', methods=['GET'])
+def api5():
+    print('API5 Request Received')
+    return handle_get_request('data', 'file', 'search')
+
+@app.route('/api6', methods=['POST'])
+def api6():
+    print('API6 Request Received')
+    return handle_request('content', 'upload', '', include_query_in_history=True)
+
+
+def handle_request(api_text_param, api_image_param, api_query_param, include_query_in_history):
     content_type = request.headers.get('Content-Type')
 
-    print('API2')
+    # Output Full Request Content
+    print(f"Received Content-Type: {content_type}")
+    print(f"Received Data: {request.data}")
+    print(f"Received Form: {request.form}")
+    print(f"Received Files: {request.files}")
 
     if content_type == 'application/json':
-        return handle_text_request()
+        print('The payload is a JSON')
+        text = request.json.get(api_text_param, 'The quick brown fox jumps over the lazy dog.')
+        if not include_query_in_history:
+            query = request.json.get(api_query_param, '')
+            text += f" Query: {query}"
+        return generate_response(text)
     elif content_type.startswith('multipart/form-data'):
-        return handle_image_request()
+        print('The payload is a multipart form data')
+        text = request.form.get(api_text_param, 'The quick brown fox jumps over the lazy dog.')
+        if not include_query_in_history:
+            query = request.form.get(api_query_param, '')
+            text += f" Query: {query}"
+        return handle_image_request(text, api_image_param)
     else:
         return Response("Unsupported Media Type", status=415)
 
-@app.route('/api3', methods=['GET'])
-def handle_get_request():
-    text = request.args.get('message', 'The quick brown fox jumps over the lazy dog.')
-    image_data = request.args.get('image', None)
+
+def handle_get_request(api_text_param, api_image_param, api_query_param=None):
+    text = request.args.get(api_text_param, 'The quick brown fox jumps over the lazy dog.')
+    query = request.args.get(api_query_param, '') if api_query_param else ''
+    text = text.replace('{query}', query)
+    image_data = request.args.get(api_image_param, None)
 
     print(f"Received text (GET): {text}")
     images = []
@@ -79,27 +113,10 @@ def handle_get_request():
     return Response(generate(), content_type='text/plain')
 
 
-def handle_text_request():
-    text = request.json.get('message', 'The quick brown fox jumps over the lazy dog.')
+def handle_image_request(text, api_image_param):
+    images = [file for key, file in request.files.items() if key.startswith(api_image_param)]
 
-    print(f"Received text: {text}")
-
-    def generate():
-        response_text = random.choice(random_sentences)
-        for word in response_text.split():
-            yield word + " "
-            time.sleep(0.05)
-
-    return Response(generate(), content_type='text/plain')
-
-
-def handle_image_request():
-    text = request.form.get('message', 'The quick brown fox jumps over the lazy dog.')
-    print("Form data:", request.form.to_dict())
-    print("Files:", request.files.to_dict())
-
-    images = [file for key, file in request.files.items() if key.startswith('image')]
-
+    print(f"Received text (POST): {text}")
     print(f"Received {len(images)} images: {[image.filename for image in images]}")
 
     image_info = []
@@ -112,6 +129,17 @@ def handle_image_request():
 
     def generate():
         response_text = random.choice(random_sentences) + f' {len(images)} images were uploaded.'
+        for word in response_text.split():
+            yield word + " "
+            time.sleep(0.05)
+
+    return Response(generate(), content_type='text/plain')
+
+
+def generate_response(text):
+    print(f"Received text (POST): {text}")
+    def generate():
+        response_text = random.choice(random_sentences)
         for word in response_text.split():
             yield word + " "
             time.sleep(0.05)

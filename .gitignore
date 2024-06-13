@@ -29,3 +29,4 @@ dist-ssr
 MonitorProject/
 
 LocalLanguageModelServer/venv/*
+uploads/*

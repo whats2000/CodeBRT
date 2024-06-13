@@ -356,6 +356,7 @@ export class CustomApiService extends AbstractLanguageModelService {
     this.apiMethod = selectedModel.apiMethod;
     this.apiTextParam = selectedModel.apiTextParam;
     this.apiImageParam = selectedModel.apiImageParam;
+    this.apiQueryParam = selectedModel.apiQueryParam;
     this.includeQueryInHistory = selectedModel.includeQueryInHistory;
     await this.loadHistories();
 
