@@ -26,6 +26,7 @@ import { CohereService } from './services/languageModel/cohereService';
 import { OpenAIService } from './services/languageModel/openaiService';
 import { GroqService } from './services/languageModel/groqService';
 import { HuggingFaceService } from './services/languageModel/huggingFaceService';
+import { OllamaService } from './services/languageModel/ollamaService';
 import { CustomApiService } from './services/languageModel/customApiService';
 
 export const activate = async (ctx: vscode.ExtensionContext) => {
@@ -55,9 +56,13 @@ export const activate = async (ctx: vscode.ExtensionContext) => {
       service: new HuggingFaceService(ctx, settingsManager),
       enabled: settingsManager.get('enableModel').huggingFace,
     },
+    ollama: {
+      service: new OllamaService(ctx, settingsManager),
+      enabled: settingsManager.get('enableModel').ollama,
+    },
     custom: {
       service: new CustomApiService(ctx, settingsManager, customModelNames),
-      enabled: true, // Assuming at least one custom model is available
+      enabled: settingsManager.get('enableModel').custom,
     },
   };
 

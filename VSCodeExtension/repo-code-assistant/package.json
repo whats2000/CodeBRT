@@ -43,6 +43,7 @@
     "copy-webpack-plugin": "^11.0.0",
     "css-loader": "^7.1.2",
     "groq-sdk": "^0.4.0",
+    "ollama": "^0.5.1",
     "openai": "^4.47.1",
     "prettier": "3.2.5",
     "prettier-plugin-organize-imports": "^3.2.3",
@@ -178,6 +179,35 @@
           "description": "Available models for HuggingFace",
           "default": [
             "HuggingFaceH4/zephyr-7b-beta"
+          ],
+          "items": {
+            "type": "string"
+          }
+        },
+        "repo-code-assistant.ollamaClientHost": {
+          "type": "string",
+          "default": "http://localhost:11434",
+          "description": "Ollama client host",
+          "markdownDescription": "Host for Ollama client"
+        },
+        "repo-code-assistant.ollamaAvailableModels": {
+          "type": "array",
+          "description": "Available models for Ollama",
+          "default": [
+            "llama3",
+            "llama3:70b",
+            "phi3",
+            "phi3:medium",
+            "gemma:2b",
+            "gemma:7b",
+            "mistral",
+            "moondream",
+            "neural-chat",
+            "starling-lm",
+            "codellama",
+            "llama2-uncensored",
+            "llava",
+            "solar"
           ],
           "items": {
             "type": "string"
@@ -319,6 +349,7 @@
     "cohere-ai": "^7.9.5",
     "css-loader": "^7.1.2",
     "groq-sdk": "^0.4.0",
+    "ollama": "^0.5.1",
     "openai": "^4.47.1",
     "react-markdown": "^9.0.1",
     "react-syntax-highlighter": "^15.5.0",

@@ -53,12 +53,15 @@ export const SettingsBar: React.FC<SettingSidebarProps> = ({
     cohereAvailableModels: [],
     huggingFaceApiKey: '',
     huggingFaceAvailableModels: [],
+    ollamaClientHost: '',
+    ollamaAvailableModels: [],
     enableModel: {
       gemini: false,
       openai: false,
       cohere: false,
       groq: false,
       huggingFace: false,
+      ollama: false,
       custom: false,
     },
     themePrimaryColor: '#1677ff',
@@ -204,7 +207,7 @@ export const SettingsBar: React.FC<SettingSidebarProps> = ({
                 </CheckboxGroup>
               </FormGroup>
             );
-          } else if (key.includes('ApiKey')) {
+          } else if (key.includes('ApiKey') || key.includes('ClientHost')) {
             return (
               <FormGroup
                 key={key}

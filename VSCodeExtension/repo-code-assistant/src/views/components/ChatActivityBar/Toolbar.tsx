@@ -53,6 +53,7 @@ export const Toolbar: React.FC<ToolbarProps> = ({
     'openai',
     'groq',
     'huggingFace',
+    'ollama',
     'custom',
   ];
   const [availableModels, setAvailableModels] = useState<string[]>([]);

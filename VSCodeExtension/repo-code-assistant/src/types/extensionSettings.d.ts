@@ -95,6 +95,16 @@ export type ExtensionSettings = {
   huggingFaceAvailableModels: string[];
 
   /**
+   * The host url for the Ollama client.
+   */
+  ollamaClientHost: string;
+
+  /**
+   * The available models for the Ollama API.
+   */
+  ollamaAvailableModels: string[];
+
+  /**
    * Determines if the model is enabled for code generation.
    */
   enableModel: {
