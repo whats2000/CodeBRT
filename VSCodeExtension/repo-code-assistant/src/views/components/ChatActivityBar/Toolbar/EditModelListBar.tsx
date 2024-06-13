@@ -144,6 +144,7 @@ export const EditModelListBar: React.FC<EditModelListBarProps> = ({
     callApi('deleteCustomModel', customModels[index].name)
       .then(() => {
         setCustomModels(updatedModels);
+        handleEditModelListSave(updatedModels.map((model) => model.name));
       })
       .catch((error: any) => {
         callApi(

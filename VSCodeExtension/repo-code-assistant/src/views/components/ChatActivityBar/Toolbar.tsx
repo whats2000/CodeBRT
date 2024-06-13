@@ -152,10 +152,13 @@ export const Toolbar: React.FC<ToolbarProps> = ({
   };
 
   const handleEditModelListSave = (newAvailableModels: string[]) => {
+    if (activeModel === 'loading...') return;
+
     setAvailableModels(newAvailableModels);
 
-    if (!newAvailableModels.includes(selectedModel)) {
-      setSelectedModel(newAvailableModels[0]);
+    if (newAvailableModels.length === 0) {
+      setSelectedModel('');
+      return;
     }
   };
 
@@ -197,10 +200,15 @@ export const Toolbar: React.FC<ToolbarProps> = ({
                       {model}
                     </Option>
                   ))}
-                  <Option value='edit' disabled>
+                  <Option
+                    value='edit'
+                    style={{ paddingLeft: 0, paddingRight: 0 }}
+                    disabled
+                  >
                     <EditModelListButton
                       icon={<SettingOutlined />}
                       onClick={openEditModelList}
+                      style={{ width: '100%' }}
                     >
                       Edit Model List
                     </EditModelListButton>

@@ -69,6 +69,8 @@ export class CustomApiService extends AbstractLanguageModelService {
         e.affectsConfiguration('repo-code-assistant.selectedCustomModel')
       ) {
         this.updateSettings();
+        this.availableModelNames =
+          settingsManager.get('customModels').map((model) => model.name) || [];
       }
     });
 
@@ -101,11 +103,9 @@ export class CustomApiService extends AbstractLanguageModelService {
       this.apiImageParam = 'images';
       this.apiQueryParam = 'query';
       this.includeQueryInHistory = true;
-      vscode.window
-        .showErrorMessage(
-          'No custom model configuration found. Please configure a custom model.',
-        )
-        .then();
+      console.log(
+        'No custom model configuration found. Please configure a custom model.',
+      );
     }
   }
 
@@ -365,6 +365,7 @@ export class CustomApiService extends AbstractLanguageModelService {
       vscode.window.showErrorMessage(`Custom model ${modelName} not found.`);
       return;
     }
+
     this.settingsManager.selectCustomModel(modelName);
     this.apiUrl = selectedModel.apiUrl;
     this.apiMethod = selectedModel.apiMethod;
@@ -372,7 +373,6 @@ export class CustomApiService extends AbstractLanguageModelService {
     this.apiImageParam = selectedModel.apiImageParam;
     this.apiQueryParam = selectedModel.apiQueryParam;
     this.includeQueryInHistory = selectedModel.includeQueryInHistory;
-    await this.loadHistories();
 
     super.switchModel(modelName);
   }
