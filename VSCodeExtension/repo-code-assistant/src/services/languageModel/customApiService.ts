@@ -260,6 +260,13 @@ export class CustomApiService extends AbstractLanguageModelService {
     images: string[],
     currentEntryID?: string,
   ): Promise<string> {
+    if (this.apiMethod === 'GET') {
+      vscode.window.showErrorMessage(
+        'This API uses GET method and cannot be used with image uploads.',
+      );
+      return 'This API uses GET method and cannot be used with image uploads.';
+    }
+
     const history = currentEntryID
       ? this.getHistoryBeforeEntry(currentEntryID)
       : this.history;
@@ -293,6 +300,13 @@ export class CustomApiService extends AbstractLanguageModelService {
     sendStreamResponse: (msg: string) => void,
     currentEntryID?: string,
   ): Promise<string> {
+    if (this.apiMethod === 'GET') {
+      vscode.window.showErrorMessage(
+        'This API uses GET method and cannot be used with image uploads.',
+      );
+      return 'This API uses GET method and cannot be used with image uploads.';
+    }
+
     const history = currentEntryID
       ? this.getHistoryBeforeEntry(currentEntryID)
       : this.history;

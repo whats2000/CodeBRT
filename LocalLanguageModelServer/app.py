@@ -85,10 +85,10 @@ def handle_request(api_text_param, api_image_param, api_query_param, include_que
 def handle_get_request(api_text_param, api_image_param, api_query_param=None):
     text = request.args.get(api_text_param, 'The quick brown fox jumps over the lazy dog.')
     query = request.args.get(api_query_param, '') if api_query_param else ''
-    text = text.replace('{query}', query)
-    image_data = request.args.get(api_image_param, None)
-
+    text = f"{text} Query: {query}" if query else text
     print(f"Received text (GET): {text}")
+
+    image_data = request.args.get(api_image_param, None)
     images = []
 
     if image_data:
