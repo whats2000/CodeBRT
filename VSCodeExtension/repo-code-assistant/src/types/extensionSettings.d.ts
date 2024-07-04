@@ -1,5 +1,27 @@
 import { ModelType } from './modelType';
 
+export type GptSoVitsVoiceSetting = {
+  /**
+   * The name of the voice setting.
+   */
+  name: string;
+
+  /**
+   * The path to the WAV file.
+   */
+  referWavPath: string;
+
+  /**
+   * The text reference of the WAV file.
+   */
+  referText: string;
+
+  /**
+   * The language spoken in the WAV file.
+   */
+  promptLanguage: string;
+};
+
 /**
  * Represents the settings for a custom API model.
  */
@@ -103,6 +125,21 @@ export type ExtensionSettings = {
    * The available models for the Ollama API.
    */
   ollamaAvailableModels: string[];
+
+  /**
+   * The APIUrl for the GPT-SoVits model.
+   */
+  gptSoVitsApiUrl: string;
+
+  /**
+   * The available reference voices for the GPT-SoVits API.
+   */
+  gptSoVitsAvailableReferenceVoices: GptSoVitsVoiceSetting[];
+
+  /**
+   * The selected reference voice for the GPT-SoVits API.
+   */
+  selectedGptSoVitsReferenceVoice: string;
 
   /**
    * Determines if the model is enabled for code generation.
