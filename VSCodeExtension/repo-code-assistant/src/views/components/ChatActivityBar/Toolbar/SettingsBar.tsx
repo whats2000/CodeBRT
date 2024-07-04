@@ -10,8 +10,8 @@ import {
   Button,
 } from 'antd';
 
-import { ExtensionSettings } from '../../../types/extensionSettings';
-import { WebviewContext } from '../../WebviewContext';
+import { ExtensionSettings } from '../../../../types/extensionSettings';
+import { WebviewContext } from '../../../WebviewContext';
 import type { Color } from 'antd/es/color-picker/color';
 
 const StyledForm = styled(Form)`
@@ -43,17 +43,25 @@ export const SettingsBar: React.FC<SettingSidebarProps> = ({
     lastUsedModel: 'gemini',
     selectedCustomModel: '',
     customModels: [],
-    huggingFaceApiKey: '',
     groqApiKey: '',
+    groqAvailableModels: [],
     geminiApiKey: '',
-    openAiApiKey: '',
+    geminiAvailableModels: [],
+    openaiApiKey: '',
+    openaiAvailableModels: [],
     cohereApiKey: '',
+    cohereAvailableModels: [],
+    huggingFaceApiKey: '',
+    huggingFaceAvailableModels: [],
+    ollamaClientHost: '',
+    ollamaAvailableModels: [],
     enableModel: {
       gemini: false,
       openai: false,
       cohere: false,
       groq: false,
       huggingFace: false,
+      ollama: false,
       custom: false,
     },
     themePrimaryColor: '#1677ff',
@@ -199,7 +207,7 @@ export const SettingsBar: React.FC<SettingSidebarProps> = ({
                 </CheckboxGroup>
               </FormGroup>
             );
-          } else if (key.includes('ApiKey')) {
+          } else if (key.includes('ApiKey') || key.includes('ClientHost')) {
             return (
               <FormGroup
                 key={key}

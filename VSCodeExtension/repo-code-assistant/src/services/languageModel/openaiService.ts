@@ -20,16 +20,20 @@ export class OpenAIService extends AbstractLanguageModelService {
   constructor(
     context: vscode.ExtensionContext,
     settingsManager: SettingsManager,
-    availableModelName: string[] = ['gpt-3.5-turbo', 'gpt-4o'],
   ) {
+    const availableModelNames = settingsManager.get(
+      'openaiAvailableModels',
+    ) || ['gpt-3.5-turbo', 'gpt-4o'];
+    const defaultModelName = availableModelNames[0];
+
     super(
       context,
       'openAIConversationHistory.json',
       settingsManager,
-      availableModelName[0],
-      availableModelName,
+      defaultModelName,
+      availableModelNames,
     );
-    this.apiKey = settingsManager.get('openAiApiKey');
+    this.apiKey = settingsManager.get('openaiApiKey');
 
     // Initialize and load conversation history
     this.initialize().catch((error) =>
@@ -40,8 +44,14 @@ export class OpenAIService extends AbstractLanguageModelService {
 
     // Listen for settings changes
     this.settingsListener = vscode.workspace.onDidChangeConfiguration((e) => {
-      if (e.affectsConfiguration('repo-code-assistant.openAiApiKey')) {
-        this.apiKey = settingsManager.get('openAiApiKey');
+      if (
+        e.affectsConfiguration('repo-code-assistant.openaiApiKey') ||
+        e.affectsConfiguration('repo-code-assistant.openaiAvailableModels')
+      ) {
+        this.apiKey = settingsManager.get('openaiApiKey');
+        this.availableModelNames = settingsManager.get(
+          'openaiAvailableModels',
+        ) || ['gpt-3.5-turbo', 'gpt-4o'];
       }
     });
 
@@ -59,7 +69,7 @@ export class OpenAIService extends AbstractLanguageModelService {
   }
 
   private conversationHistoryToContent(
-    entries: { [key: string]: ConversationEntry; },
+    entries: { [key: string]: ConversationEntry },
     query: string,
   ): ChatCompletionMessageParam[] {
     const result: OpenAI.Chat.Completions.ChatCompletionMessageParam[] = [];
@@ -180,7 +190,7 @@ export class OpenAIService extends AbstractLanguageModelService {
     images: string[],
     _currentEntryID?: string,
   ): Promise<string> {
-    const openai = new OpenAI({apiKey: this.apiKey});
+    const openai = new OpenAI({ apiKey: this.apiKey });
 
     try {
       const imageParts = images.map((image) => {
@@ -191,7 +201,7 @@ export class OpenAIService extends AbstractLanguageModelService {
       const messages: ChatCompletionMessageParam[] = [
         {
           role: 'user',
-          content: [{type: 'text', text: query}, ...imageParts],
+          content: [{ type: 'text', text: query }, ...imageParts],
         },
       ];
 
@@ -215,7 +225,7 @@ export class OpenAIService extends AbstractLanguageModelService {
     sendStreamResponse: (msg: string) => void,
     _currentEntryID?: string,
   ): Promise<string> {
-    const openai = new OpenAI({apiKey: this.apiKey});
+    const openai = new OpenAI({ apiKey: this.apiKey });
 
     try {
       let responseText = '';
@@ -228,7 +238,7 @@ export class OpenAIService extends AbstractLanguageModelService {
       const messages: ChatCompletionMessageParam[] = [
         {
           role: 'user',
-          content: [{type: 'text', text: query}, ...imageParts],
+          content: [{ type: 'text', text: query }, ...imageParts],
         },
       ];
 

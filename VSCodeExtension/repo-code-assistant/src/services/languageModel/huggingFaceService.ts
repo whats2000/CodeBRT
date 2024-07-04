@@ -12,14 +12,18 @@ export class HuggingFaceService extends AbstractLanguageModelService {
   constructor(
     context: vscode.ExtensionContext,
     settingsManager: SettingsManager,
-    availableModelName: string[] = ['HuggingFaceH4/zephyr-7b-beta'],
   ) {
+    const availableModelNames = settingsManager.get(
+      'huggingFaceAvailableModels',
+    ) || ['HuggingFaceH4/zephyr-7b-beta'];
+    const defaultModelName = availableModelNames[0];
+
     super(
       context,
       'huggingFaceConversationHistory.json',
       settingsManager,
-      availableModelName[0],
-      availableModelName,
+      defaultModelName,
+      availableModelNames,
     );
 
     this.apiKey = settingsManager.get('huggingFaceApiKey');
@@ -27,14 +31,20 @@ export class HuggingFaceService extends AbstractLanguageModelService {
     // Initialize and load conversation history
     this.initialize().catch((error) =>
       vscode.window.showErrorMessage(
-        'Failed to initialize OpenAI Service: ' + error,
+        'Failed to initialize Hugging Face Service: ' + error,
       ),
     );
 
     // Listen for settings changes
     this.settingsListener = vscode.workspace.onDidChangeConfiguration((e) => {
-      if (e.affectsConfiguration('repo-code-assistant.huggingFaceApiKey')) {
+      if (
+        e.affectsConfiguration('repo-code-assistant.huggingFaceApiKey') ||
+        e.affectsConfiguration('repo-code-assistant.huggingFaceAvailableModels')
+      ) {
         this.apiKey = settingsManager.get('huggingFaceApiKey');
+        this.availableModelNames = settingsManager.get(
+          'huggingFaceAvailableModels',
+        ) || ['HuggingFaceH4/zephyr-7b-beta'];
       }
     });
 
@@ -52,7 +62,7 @@ export class HuggingFaceService extends AbstractLanguageModelService {
   }
 
   private conversationHistoryToContent(
-    entries: { [key: string]: ConversationEntry; },
+    entries: { [key: string]: ConversationEntry },
     query: string,
   ): ChatCompletionInputMessage[] {
     const result: ChatCompletionInputMessage[] = [];

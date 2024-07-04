@@ -30,6 +30,11 @@ export type CustomModelSettings = {
   apiImageParam: string;
 
   /**
+   * The name of the query parameter in the API payload.
+   */
+  apiQueryParam: string;
+
+  /**
    * Indicates whether the query should be included in the history.
    */
   includeQueryInHistory: boolean;
@@ -45,9 +50,19 @@ export type ExtensionSettings = {
   geminiApiKey: string;
 
   /**
+   * The available models for the Gemini API.
+   */
+  geminiAvailableModels: string[];
+
+  /**
    * The API key for the OpenAI model.
    */
-  openAiApiKey: string;
+  openaiApiKey: string;
+
+  /**
+   * The available models for the OpenAI API.
+   */
+  openaiAvailableModels: string[];
 
   /**
    * The API key for the Cohere model.
@@ -55,14 +70,39 @@ export type ExtensionSettings = {
   cohereApiKey: string;
 
   /**
+   * The available models for the Cohere API.
+   */
+  cohereAvailableModels: string[];
+
+  /**
    * The API key for the Groq model.
    */
   groqApiKey: string;
 
   /**
+   * The available models for the Groq API.
+   */
+  groqAvailableModels: string[];
+
+  /**
    * The API key for the Hugging Face model.
    */
   huggingFaceApiKey: string;
+
+  /**
+   * The available models for the Hugging Face API.
+   */
+  huggingFaceAvailableModels: string[];
+
+  /**
+   * The host url for the Ollama client.
+   */
+  ollamaClientHost: string;
+
+  /**
+   * The available models for the Ollama API.
+   */
+  ollamaAvailableModels: string[];
 
   /**
    * Determines if the model is enabled for code generation.

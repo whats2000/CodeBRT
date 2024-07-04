@@ -9,9 +9,10 @@ import {
 import { ModelType } from '../../../types/modelType';
 import { ConversationHistory } from '../../../types/conversationHistory';
 import { WebviewContext } from '../../WebviewContext';
-import { HistorySidebar } from './HistorySidebar';
-import { SettingsBar } from './SettingsBar';
+import { HistorySidebar } from './Toolbar/HistorySidebar';
+import { SettingsBar } from './Toolbar/SettingsBar';
 import styled from 'styled-components';
+import { EditModelListBar } from './Toolbar/EditModelListBar';
 
 const { Option } = Select;
 
@@ -19,6 +20,11 @@ const StyledSpace = styled(Space)`
   display: flex;
   justify-content: space-between;
   padding: 10px 15px;
+`;
+
+const EditModelListButton = styled(Button)`
+  display: flex;
+  align-items: center;
 `;
 
 interface ToolbarProps {
@@ -47,6 +53,7 @@ export const Toolbar: React.FC<ToolbarProps> = ({
     'openai',
     'groq',
     'huggingFace',
+    'ollama',
     'custom',
   ];
   const [availableModels, setAvailableModels] = useState<string[]>([]);
@@ -55,12 +62,14 @@ export const Toolbar: React.FC<ToolbarProps> = ({
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [isOffCanvas, setIsOffCanvas] = useState(false);
   const [isSelectModelOpen, setIsSelectModelOpen] = useState(false);
+  const [isEditModelListOpen, setIsEditModelListOpen] = useState(false);
 
   useEffect(() => {
     setIsActiveModelLoading(true);
     if (activeModel === 'loading...') {
       return;
     }
+
     callApi('getAvailableModels', activeModel)
       .then((models: string[]) => {
         setAvailableModels(models);
@@ -139,6 +148,21 @@ export const Toolbar: React.FC<ToolbarProps> = ({
     }
   };
 
+  const openEditModelList = () => {
+    setIsEditModelListOpen(true);
+  };
+
+  const handleEditModelListSave = (newAvailableModels: string[]) => {
+    if (activeModel === 'loading...') return;
+
+    setAvailableModels(newAvailableModels);
+
+    if (newAvailableModels.length === 0) {
+      setSelectedModel('');
+      return;
+    }
+  };
+
   return (
     <>
       <StyledSpace>
@@ -177,6 +201,19 @@ export const Toolbar: React.FC<ToolbarProps> = ({
                       {model}
                     </Option>
                   ))}
+                  <Option
+                    value='edit'
+                    style={{ paddingLeft: 0, paddingRight: 0 }}
+                    disabled
+                  >
+                    <EditModelListButton
+                      icon={<SettingOutlined />}
+                      onClick={openEditModelList}
+                      style={{ width: '100%' }}
+                    >
+                      Edit Model List
+                    </EditModelListButton>
+                  </Option>
                 </Select>
               </Drawer>
             </>
@@ -205,6 +242,19 @@ export const Toolbar: React.FC<ToolbarProps> = ({
                     {model}
                   </Option>
                 ))}
+                <Option
+                  value='edit'
+                  style={{ paddingLeft: 0, paddingRight: 0 }}
+                  disabled
+                >
+                  <EditModelListButton
+                    icon={<SettingOutlined />}
+                    onClick={openEditModelList}
+                    style={{ width: '100%' }}
+                  >
+                    Edit Model List
+                  </EditModelListButton>
+                </Option>
               </Select>
             </>
           )}
@@ -223,6 +273,12 @@ export const Toolbar: React.FC<ToolbarProps> = ({
         setMessages={setMessages}
       />
       <SettingsBar isOpen={isSettingsOpen} onClose={toggleSettings} />
+      <EditModelListBar
+        isOpen={isEditModelListOpen}
+        onClose={() => setIsEditModelListOpen(false)}
+        activeModel={activeModel}
+        handleEditModelListSave={handleEditModelListSave}
+      />
     </>
   );
 };

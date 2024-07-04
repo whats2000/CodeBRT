@@ -55,33 +55,24 @@ class SettingsManager {
   public addCustomModel(model: CustomModelSettings): void {
     const customModels = this.getCustomModels();
     customModels.push(model);
-    this.set('customModels', customModels);
-  }
-
-  public updateCustomModel(model: CustomModelSettings): void {
-    const customModels = this.getCustomModels();
-    const index = customModels.findIndex((m) => m.name === model.name);
-    if (index !== -1) {
-      customModels[index] = model;
-      this.set('customModels', customModels);
-    }
+    this.set('customModels', customModels).then();
   }
 
   public deleteCustomModel(modelName: string): void {
     let customModels = this.getCustomModels();
     customModels = customModels.filter((m) => m.name !== modelName);
-    this.set('customModels', customModels);
-
-    const selectedModel = this.get('selectedCustomModel');
-    if (selectedModel === modelName) {
-      this.set('selectedCustomModel', '');
-    }
+    this.set('customModels', customModels).then(() => {
+      const selectedModel = this.get('selectedCustomModel');
+      if (selectedModel === modelName) {
+        this.set('selectedCustomModel', '').then();
+      }
+    });
   }
 
   public selectCustomModel(modelName: string): void {
     const customModels = this.getCustomModels();
     if (customModels.find((m) => m.name === modelName)) {
-      this.set('selectedCustomModel', modelName);
+      this.set('selectedCustomModel', modelName).then();
     }
   }
 
@@ -94,13 +85,29 @@ class SettingsManager {
         cohere: false,
         groq: false,
         huggingFace: false,
+        ollama: false,
         custom: false,
       },
-      openAiApiKey: '',
+      openaiApiKey: '',
+      openaiAvailableModels: ['gpt-3.5-turbo', 'gpt-4o'],
       geminiApiKey: '',
+      geminiAvailableModels: [
+        'gemini-1.5-pro-latest',
+        'gemini-1.5-flash-latest',
+      ],
       cohereApiKey: '',
+      cohereAvailableModels: ['command'],
       groqApiKey: '',
+      groqAvailableModels: [
+        'llama3-70b-8192',
+        'llama3-8b-8192',
+        'mixtral-8x7b-32768',
+        'gemma-7b-it',
+      ],
       huggingFaceApiKey: '',
+      huggingFaceAvailableModels: ['HuggingFaceH4/zephyr-7b-beta'],
+      ollamaClientHost: 'http://localhost:11434',
+      ollamaAvailableModels: ['llama2'],
       lastUsedModel: 'gemini',
       customModels: [],
       selectedCustomModel: '',
