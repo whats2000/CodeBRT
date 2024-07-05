@@ -79,7 +79,7 @@ export class GptSoVitsApiService extends AbstractVoiceService {
 
     try {
       const response: AxiosResponse<ArrayBuffer> = await axios.post(
-        `${this.clientHost}/`,
+        `${this.clientHost}`,
         requestData,
         {
           responseType: 'arraybuffer',
