@@ -156,6 +156,18 @@ export const Toolbar: React.FC<ToolbarProps> = ({
       setSelectedModel('');
       return;
     }
+
+    if (!newAvailableModels.includes(selectedModel)) {
+      callApi('switchModel', activeModel, newAvailableModels[0])
+        .then(() => setSelectedModel(newAvailableModels[0]))
+        .catch((error) =>
+          callApi(
+            'alertMessage',
+            `Failed to switch model: ${error}`,
+            'error',
+          ).catch(console.error),
+        );
+    }
   };
 
   const settingMenuItems: MenuProps['items'] = [

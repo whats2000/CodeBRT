@@ -438,14 +438,8 @@ export const activate = async (ctx: vscode.ExtensionContext) => {
     getCustomModels: () => {
       return settingsManager.get('customModels');
     },
-    addCustomModel: (model: CustomModelSettings) => {
-      settingsManager.addCustomModel(model);
-    },
     setCustomModels: (newCustomModelSettings: CustomModelSettings[]) => {
       settingsManager.set('customModels', newCustomModelSettings);
-    },
-    deleteCustomModel: (modelName: string) => {
-      settingsManager.deleteCustomModel(modelName);
     },
     convertTextToVoice: async (voiceServiceType, text) => {
       if (voiceServiceType === 'not set') {
@@ -502,14 +496,8 @@ export const activate = async (ctx: vscode.ExtensionContext) => {
     getGptSoVitsAvailableReferenceVoices: () => {
       return settingsManager.get('gptSoVitsAvailableReferenceVoices');
     },
-    addGptSoVitsReferenceVoice: (voice) => {
-      settingsManager.addGptSoVitsReferenceVoice(voice);
-    },
     setGptSoVitsAvailableReferenceVoices: (newVoices) => {
       settingsManager.set('gptSoVitsAvailableReferenceVoices', newVoices);
-    },
-    deleteGptSoVitsReferenceVoice: (voiceName) => {
-      settingsManager.deleteGptSoVitsReferenceVoice(voiceName);
     },
     switchGptSoVitsReferenceVoice: async (voiceName) => {
       const voiceService = voiceServices.gptSoVits

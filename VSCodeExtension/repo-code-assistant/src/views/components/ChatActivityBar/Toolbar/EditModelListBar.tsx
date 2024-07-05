@@ -141,18 +141,7 @@ export const EditModelListBar: React.FC<EditModelListBarProps> = ({
 
   const handleRemoveModel = (index: number) => {
     const updatedModels = customModels.filter((_, i) => i !== index);
-    callApi('deleteCustomModel', customModels[index].name)
-      .then(() => {
-        setCustomModels(updatedModels);
-        handleEditModelListSave(updatedModels.map((model) => model.name));
-      })
-      .catch((error: any) => {
-        callApi(
-          'alertMessage',
-          `Failed to delete custom model: ${error}`,
-          'error',
-        ).catch(console.error);
-      });
+    setCustomModels(updatedModels);
   };
 
   const handleAvailableModelChange = (index: number, value: string) => {

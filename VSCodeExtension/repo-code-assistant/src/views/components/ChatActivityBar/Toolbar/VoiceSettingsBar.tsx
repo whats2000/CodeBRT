@@ -1,7 +1,8 @@
 import React, { useContext, useEffect, useState } from 'react';
-import { Drawer, Form, Select } from 'antd';
+import { Drawer, Form, Select, Button } from 'antd';
 import { WebviewContext } from '../../../WebviewContext';
 import { VoiceType } from '../../../../types/voiceType';
+import { GptSoVitsSettingsBar } from './VoiceSettingsBar/GptSoVitsSettingsBar';
 
 const { Option } = Select;
 
@@ -20,6 +21,8 @@ export const VoiceSettingsBar: React.FC<VoiceSettingsBarProps> = ({
   const [selectedVoiceToTextService, setSelectedVoiceToTextService] =
     useState<VoiceType>('not set');
   const [isLoading, setIsLoading] = useState(false);
+  const [isGptSoVitsSettingsOpen, setIsGptSoVitsSettingsOpen] = useState(false);
+
   const textToVoiceServices: VoiceType[] = ['not set', 'gptSoVits'];
   const voiceToTextServices: VoiceType[] = ['not set'];
 
@@ -60,44 +63,58 @@ export const VoiceSettingsBar: React.FC<VoiceSettingsBarProps> = ({
   };
 
   return (
-    <Drawer
-      title='Voice Settings'
-      placement='left'
-      open={isOpen}
-      onClose={onClose}
-      width={400}
-      loading={isLoading}
-    >
-      <Form layout='vertical'>
-        <Form.Item label='Text To Voice Service'>
-          <Select
-            value={selectedTextToVoiceService}
-            onChange={(value) =>
-              handleServiceChange('selectedTextToVoiceService', value)
-            }
+    <>
+      <Drawer
+        title='Voice Settings'
+        placement='left'
+        open={isOpen}
+        onClose={onClose}
+        width={400}
+        loading={isLoading}
+      >
+        <Form layout='vertical'>
+          <Form.Item label='Text To Voice Service'>
+            <Select
+              value={selectedTextToVoiceService}
+              onChange={(value) =>
+                handleServiceChange('selectedTextToVoiceService', value)
+              }
+            >
+              {textToVoiceServices.map((service) => (
+                <Option key={service} value={service}>
+                  {service.charAt(0).toUpperCase() + service.slice(1)}
+                </Option>
+              ))}
+            </Select>
+          </Form.Item>
+          <Form.Item label='Voice To Text Service'>
+            <Select
+              value={selectedVoiceToTextService}
+              onChange={(value) =>
+                handleServiceChange('selectedVoiceToTextService', value)
+              }
+            >
+              {voiceToTextServices.map((service) => (
+                <Option key={service} value={service}>
+                  {service}
+                </Option>
+              ))}
+            </Select>
+          </Form.Item>
+          <Button
+            type='primary'
+            onClick={() => setIsGptSoVitsSettingsOpen(true)}
+            ghost={true}
+            block
           >
-            {textToVoiceServices.map((service) => (
-              <Option key={service} value={service}>
-                {service.charAt(0).toUpperCase() + service.slice(1)}
-              </Option>
-            ))}
-          </Select>
-        </Form.Item>
-        <Form.Item label='Voice To Text Service'>
-          <Select
-            value={selectedVoiceToTextService}
-            onChange={(value) =>
-              handleServiceChange('selectedVoiceToTextService', value)
-            }
-          >
-            {voiceToTextServices.map((service) => (
-              <Option key={service} value={service}>
-                {service}
-              </Option>
-            ))}
-          </Select>
-        </Form.Item>
-      </Form>
-    </Drawer>
+            GptSoVits Settings
+          </Button>
+        </Form>
+      </Drawer>
+      <GptSoVitsSettingsBar
+        isOpen={isGptSoVitsSettingsOpen}
+        onClose={() => setIsGptSoVitsSettingsOpen(false)}
+      />
+    </>
   );
 };

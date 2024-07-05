@@ -264,22 +264,10 @@ export type ViewApi = {
   getCustomModels: () => CustomModelSettings[];
 
   /**
-   * Add a custom model.
-   * @param model - The custom model settings to add.
-   */
-  addCustomModel: (model: CustomModelSettings) => void;
-
-  /**
    * Set the custom models settings list.
    * @param newCustomModelSettings - The new custom model settings.
    */
   setCustomModels: (newCustomModelSettings: CustomModelSettings[]) => void;
-
-  /**
-   * Add a custom model.
-   * @param modelName - The name of the custom model.
-   */
-  deleteCustomModel: (modelName: string) => void;
 
   /**
    * Convert text to voice and play it.
@@ -326,24 +314,12 @@ export type ViewApi = {
   getGptSoVitsAvailableReferenceVoices: () => GptSoVitsVoiceSetting[];
 
   /**
-   * Add a reference voice for GPT-SoVits.
-   * @param voice - The reference voice to add.
-   */
-  addGptSoVitsReferenceVoice: (voice: GptSoVitsVoiceSetting) => void;
-
-  /**
    * Set the available reference voices for GPT-SoVits.
    * @param newVoices - The new reference voices.
    */
   setGptSoVitsAvailableReferenceVoices: (
     newVoices: GptSoVitsVoiceSetting[],
   ) => void;
-
-  /**
-   * Delete a reference voice for GPT-SoVits.
-   * @param voiceName - The name of the reference voice to delete.
-   */
-  deleteGptSoVitsReferenceVoice: (voiceName: string) => void;
 
   /**
    * Switch the reference voice for GPT-SoVits.
