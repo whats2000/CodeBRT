@@ -11,12 +11,10 @@ export abstract class AbstractVoiceService implements VoiceService {
     this.settingsManager = settingsManager;
   }
 
-  public async textToVoice(_text: string): Promise<string> {
+  public async textToVoice(_text: string): Promise<void> {
     vscode.window
       .showInformationMessage('Text to voice is not supported in this service')
       .then();
-
-    return Promise.resolve('');
   }
 
   public async voiceToText(_voicePath: string): Promise<string> {
