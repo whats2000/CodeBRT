@@ -337,7 +337,12 @@
               },
               "promptLanguage": {
                 "type": "string",
-                "description": "The language spoken in the WAV file."
+                "description": "The language spoken in the WAV file.",
+                "enum": [
+                  "en",
+                  "zh",
+                  "ja"
+                ]
               }
             }
           }

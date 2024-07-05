@@ -118,28 +118,20 @@ export class GptSoVitsApiService extends AbstractVoiceService {
   }
 
   private preprocessText(text: string): string {
-    // 移除Markdown標題
     text = text.replace(/#+/g, '');
-    // 移除Markdown列表項目
     text = text.replace(/[*+-]/g, '');
-    // 移除Markdown鏈接
     text = text.replace(/\[.*?]\(.*?\)/g, '');
-    // 移除Markdown粗體、斜體和刪除線
-    text = text.replace(/(\*\*|__)(.*?)\1/g, '$2'); // 粗體
-    text = text.replace(/([*_])(.*?)\1/g, '$2'); // 斜體
-    text = text.replace(/~~(.*?)~~/g, '$1'); // 刪除線
-    // 移除Markdown大引號
+    text = text.replace(/(\*\*|__)(.*?)\1/g, '$2');
+    text = text.replace(/([*_])(.*?)\1/g, '$2');
+    text = text.replace(/~~(.*?)~~/g, '$1');
     text = text.replace(/`{1,3}([^`]*)`{1,3}/g, '$1');
-    // 移除Markdown圖片
     text = text.replace(/!\[.*?]\(.*?\)/g, '');
-    // 移除Markdown引用
     text = text.replace(/^>+\s?/gm, '');
-    // 移除多餘的空格和換行符
     text = text.replace(/\n/g, ' ').trim();
     return text;
   }
 
-  private splitTextIntoChunks(text: string, chunkSize: number = 4): string[] {
+  private splitTextIntoChunks(text: string, chunkSize: number = 2): string[] {
     const sentences = text.split(
       /(?<!\w\.\w.)(?<![A-Z][a-z]\.)(?<=[。.?！])\s/g,
     );

@@ -17,9 +17,11 @@ export const GptSoVitsSettingsBar: React.FC<GptSoVitsSettingsBarProps> = ({
 }) => {
   const { callApi } = useContext(WebviewContext);
   const [partialSettings, setPartialSettings] = useState<{
+    gptSoVitsClientHost: string;
     gptSoVitsAvailableReferenceVoices: GptSoVitsVoiceSetting[];
     selectedGptSoVitsReferenceVoice: string;
   }>({
+    gptSoVitsClientHost: '',
     gptSoVitsAvailableReferenceVoices: [],
     selectedGptSoVitsReferenceVoice: '',
   });
@@ -86,6 +88,7 @@ export const GptSoVitsSettingsBar: React.FC<GptSoVitsSettingsBarProps> = ({
 
     updatedVoices[index][field] = value;
     setPartialSettings({
+      ...partialSettings,
       selectedGptSoVitsReferenceVoice:
         field === 'name' &&
         partialSettings.selectedGptSoVitsReferenceVoice === originalName
@@ -117,6 +120,7 @@ export const GptSoVitsSettingsBar: React.FC<GptSoVitsSettingsBarProps> = ({
       );
 
     setPartialSettings({
+      ...partialSettings,
       selectedGptSoVitsReferenceVoice:
         partialSettings.selectedGptSoVitsReferenceVoice ===
         partialSettings.gptSoVitsAvailableReferenceVoices[index].name
@@ -143,6 +147,13 @@ export const GptSoVitsSettingsBar: React.FC<GptSoVitsSettingsBarProps> = ({
       });
   };
 
+  const handleClientHostChange = (value: string) => {
+    setPartialSettings({
+      ...partialSettings,
+      gptSoVitsClientHost: value,
+    });
+  };
+
   return (
     <Drawer
       title='GptSoVits Settings'
@@ -153,6 +164,12 @@ export const GptSoVitsSettingsBar: React.FC<GptSoVitsSettingsBarProps> = ({
       loading={isLoading}
     >
       <Form layout='vertical'>
+        <Form.Item label='Client Host'>
+          <Input.Password
+            value={partialSettings.gptSoVitsClientHost}
+            onChange={(e) => handleClientHostChange(e.target.value)}
+          />
+        </Form.Item>
         <Form.Item label='Selected Reference Voice'>
           <Select
             value={partialSettings.selectedGptSoVitsReferenceVoice}
@@ -204,15 +221,16 @@ export const GptSoVitsSettingsBar: React.FC<GptSoVitsSettingsBarProps> = ({
                     />
                   </Form.Item>
                   <Form.Item label='Prompt Language'>
-                    <Input
+                    <Select
                       value={voice.promptLanguage}
-                      onChange={(e) =>
-                        handleVoiceChange(
-                          index,
-                          'promptLanguage',
-                          e.target.value,
-                        )
+                      onChange={(value) =>
+                        handleVoiceChange(index, 'promptLanguage', value)
                       }
+                      options={[
+                        { label: 'English', value: 'en' },
+                        { label: 'Chinese', value: 'zh' },
+                        { label: 'Japanese', value: 'ja' },
+                      ]}
                     />
                   </Form.Item>
                 </Panel>
