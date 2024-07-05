@@ -1,4 +1,5 @@
 import { ModelType } from './modelType';
+import { VoiceType } from './voiceType';
 
 export type GptSoVitsVoiceSetting = {
   /**
@@ -151,6 +152,16 @@ export type ExtensionSettings = {
    * The name of the currently selected custom model.
    */
   selectedCustomModel: string;
+
+  /**
+   * The selected text-to-voice service.
+   */
+  selectedTextToVoiceService: VoiceType;
+
+  /**
+   * The selected voice-to-text service.
+   */
+  selectedVoiceToTextService: VoiceType;
 
   /**
    * The APIUrl for the GPT-SoVits model.

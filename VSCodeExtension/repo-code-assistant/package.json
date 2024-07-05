@@ -299,6 +299,16 @@
           "default": "",
           "description": "Selected custom model"
         },
+        "repo-code-assistant.selectedTextToVoiceService": {
+          "type": "string",
+          "default": "not set",
+          "description": "Selected text-to-voice service"
+        },
+        "repo-code-assistant.selectedVoiceToTextService": {
+          "type": "string",
+          "default": "not set",
+          "description": "Selected voice-to-text service"
+        },
         "repo-code-assistant.gptSoVitsClientHost": {
           "type": "string",
           "default": "http://localhost:9880/",

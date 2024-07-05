@@ -16,7 +16,7 @@ export type ModelType =
  * Defines a structure for loaded models with detailed service and enabled status.
  */
 export type LoadedModels = {
-  [key in modelType]: {
+  [key in ModelType]: {
     /**
      * The service for the model
      */

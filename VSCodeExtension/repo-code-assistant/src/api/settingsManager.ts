@@ -150,6 +150,8 @@ class SettingsManager {
       lastUsedModel: 'gemini',
       customModels: [],
       selectedCustomModel: '',
+      selectedVoiceToTextService: 'not set',
+      selectedTextToVoiceService: 'not set',
       gptSoVitsClientHost: '',
       gptSoVitsAvailableReferenceVoices: [],
       selectedGptSoVitsReferenceVoice: '',

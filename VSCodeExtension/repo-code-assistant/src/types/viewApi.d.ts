@@ -1,9 +1,14 @@
-import { CustomModelSettings, ExtensionSettings } from './extensionSettings';
+import {
+  CustomModelSettings,
+  ExtensionSettings,
+  GptSoVitsVoiceSetting,
+} from './extensionSettings';
 import {
   ConversationHistory,
   ConversationHistoryList,
 } from './conversationHistory';
 import { ModelType } from './modelType';
+import { VoiceType } from './voiceType';
 
 /**
  * Represents the API request structure for the view.
@@ -275,6 +280,81 @@ export type ViewApi = {
    * @param modelName - The name of the custom model.
    */
   deleteCustomModel: (modelName: string) => void;
+
+  /**
+   * Convert text to voice and play it.
+   * @param voiceServiceType - The type of the voice service to use.
+   * @param text - The text to convert to voice.
+   */
+  convertTextToVoice: (
+    voiceServiceType: VoiceType,
+    text: string,
+  ) => Promise<void>;
+
+  /**
+   * Start recording voice.
+   * After recording, the voice will be converted to text.
+   * @param voiceServiceType - The type of the voice service to use.
+   * @returns The recorded voice as text.
+   */
+  convertVoiceToText: (voiceServiceType: VoiceType) => Promise<string>;
+
+  /**
+   * Get the selected voice service.
+   * @returns The selected voice services.
+   */
+  getSelectedVoiceService: () => {
+    textToVoice: VoiceType;
+    voiceToText: VoiceType;
+  };
+
+  /**
+   * Save the selected text to voice service.
+   * @param voiceServiceType - The type of the voice service to save.
+   */
+  saveSelectedTextToVoiceService: (voiceServiceType: VoiceType) => void;
+
+  /**
+   * Save the selected voice to text service.
+   * @param voiceServiceType - The type of the voice service to save.
+   */
+  saveSelectedVoiceToTextService: (voiceServiceType: VoiceType) => void;
+
+  /**
+   * Get the available reference voices for GPT-SoVits.
+   */
+  getGptSoVitsAvailableReferenceVoices: () => GptSoVitsVoiceSetting[];
+
+  /**
+   * Add a reference voice for GPT-SoVits.
+   * @param voice - The reference voice to add.
+   */
+  addGptSoVitsReferenceVoice: (voice: GptSoVitsVoiceSetting) => void;
+
+  /**
+   * Set the available reference voices for GPT-SoVits.
+   * @param newVoices - The new reference voices.
+   */
+  setGptSoVitsAvailableReferenceVoices: (
+    newVoices: GptSoVitsVoiceSetting[],
+  ) => void;
+
+  /**
+   * Delete a reference voice for GPT-SoVits.
+   * @param voiceName - The name of the reference voice to delete.
+   */
+  deleteGptSoVitsReferenceVoice: (voiceName: string) => void;
+
+  /**
+   * Switch the reference voice for GPT-SoVits.
+   * @param voiceName - The name of the reference voice to switch to.
+   */
+  switchGptSoVitsReferenceVoice: (voiceName: string) => void;
+
+  /**
+   * Get the selected reference voice for GPT-SoVits.
+   */
+  getSelectedGptSoVitsReferenceVoice: () => GptSoVitsVoiceSetting | undefined;
 };
 
 /**

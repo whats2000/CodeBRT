@@ -28,12 +28,20 @@ import { GroqService } from './services/languageModel/groqService';
 import { HuggingFaceService } from './services/languageModel/huggingFaceService';
 import { OllamaService } from './services/languageModel/ollamaService';
 import { CustomApiService } from './services/languageModel/customApiService';
+import { LoadedVoiceService } from './types/voiceType';
+import { GptSoVitsApiService } from './services/Voice/gptSoVitsService';
 
 export const activate = async (ctx: vscode.ExtensionContext) => {
   const connectedViews: Partial<Record<ViewKey, vscode.WebviewView>> = {};
   const settingsManager = SettingsManager.getInstance();
   const customModels = settingsManager.getCustomModels();
   const customModelNames = customModels.map((model) => model.name);
+  const gptSoVitsAvailableReferenceVoices = settingsManager.get(
+    'gptSoVitsAvailableReferenceVoices',
+  );
+  const availableReferenceVoicesNames = gptSoVitsAvailableReferenceVoices.map(
+    (voice) => voice.name,
+  );
 
   const models: LoadedModels = {
     gemini: {
@@ -63,6 +71,16 @@ export const activate = async (ctx: vscode.ExtensionContext) => {
     custom: {
       service: new CustomApiService(ctx, settingsManager, customModelNames),
       enabled: settingsManager.get('enableModel').custom,
+    },
+  };
+
+  const voiceServices: LoadedVoiceService = {
+    gptSoVits: {
+      service: new GptSoVitsApiService(
+        ctx,
+        settingsManager,
+        availableReferenceVoicesNames,
+      ),
     },
   };
 
@@ -428,6 +446,85 @@ export const activate = async (ctx: vscode.ExtensionContext) => {
     },
     deleteCustomModel: (modelName: string) => {
       settingsManager.deleteCustomModel(modelName);
+    },
+    convertTextToVoice: async (voiceServiceType, text) => {
+      if (voiceServiceType === 'not set') {
+        vscode.window.showErrorMessage(
+          'You have not selected a voice service for text to voice conversion, go to settings to select one',
+        );
+        return;
+      }
+
+      const voiceService = voiceServices[voiceServiceType].service;
+      if (!voiceService) {
+        vscode.window.showErrorMessage(
+          `Failed to convert text to voice for unknown voice service type: ${voiceServiceType}`,
+        );
+        return;
+      }
+
+      const voicePath = await voiceService.textToVoice(text);
+
+      // TODO: Play the voice
+      vscode.window.showInformationMessage(`Voice saved to: ${voicePath}`);
+    },
+    convertVoiceToText: async (voiceServiceType) => {
+      if (voiceServiceType === 'not set') {
+        vscode.window.showErrorMessage(
+          'You have not selected a voice service for voice to text conversion, go to settings to select one',
+        );
+        return '';
+      }
+
+      const voiceService = voiceServices[voiceServiceType].service;
+      if (!voiceService) {
+        vscode.window.showErrorMessage(
+          `Failed to convert voice to text for unknown voice service type: ${voiceServiceType}`,
+        );
+        return '';
+      }
+
+      // TODO: Record voice
+      return 'Recorded voice as text';
+    },
+    getSelectedVoiceService: () => {
+      return {
+        textToVoice: settingsManager.get('selectedTextToVoiceService'),
+        voiceToText: settingsManager.get('selectedVoiceToTextService'),
+      };
+    },
+    saveSelectedVoiceToTextService: (voiceServiceType) => {
+      settingsManager.set('selectedVoiceToTextService', voiceServiceType);
+    },
+    saveSelectedTextToVoiceService: (voiceServiceType) => {
+      settingsManager.set('selectedTextToVoiceService', voiceServiceType);
+    },
+    getGptSoVitsAvailableReferenceVoices: () => {
+      return settingsManager.get('gptSoVitsAvailableReferenceVoices');
+    },
+    addGptSoVitsReferenceVoice: (voice) => {
+      settingsManager.addGptSoVitsReferenceVoice(voice);
+    },
+    setGptSoVitsAvailableReferenceVoices: (newVoices) => {
+      settingsManager.set('gptSoVitsAvailableReferenceVoices', newVoices);
+    },
+    deleteGptSoVitsReferenceVoice: (voiceName) => {
+      settingsManager.deleteGptSoVitsReferenceVoice(voiceName);
+    },
+    switchGptSoVitsReferenceVoice: async (voiceName) => {
+      const voiceService = voiceServices.gptSoVits
+        .service as GptSoVitsApiService;
+      if (!voiceService) {
+        vscode.window.showErrorMessage(
+          `Failed to switch voice for GPT-SoVits service`,
+        );
+        return;
+      }
+
+      await voiceService.switchVoice(voiceName);
+    },
+    getSelectedGptSoVitsReferenceVoice: () => {
+      return settingsManager.getSelectedGptSoVitsReferenceVoice();
     },
   };
 

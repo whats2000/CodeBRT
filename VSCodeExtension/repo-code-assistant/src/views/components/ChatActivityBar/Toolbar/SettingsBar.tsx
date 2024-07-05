@@ -58,6 +58,8 @@ export const SettingsBar: React.FC<SettingSidebarProps> = ({
     gptSoVitsClientHost: '',
     gptSoVitsAvailableReferenceVoices: [],
     selectedGptSoVitsReferenceVoice: '',
+    selectedTextToVoiceService: 'not set',
+    selectedVoiceToTextService: 'not set',
     enableModel: {
       gemini: false,
       openai: false,
