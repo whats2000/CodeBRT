@@ -1,6 +1,6 @@
 import fs from 'node:fs/promises';
 import path from 'node:path';
-
+import sound from 'sound-play';
 import * as vscode from 'vscode';
 
 import { ViewKey } from './views';
@@ -36,12 +36,6 @@ export const activate = async (ctx: vscode.ExtensionContext) => {
   const settingsManager = SettingsManager.getInstance();
   const customModels = settingsManager.getCustomModels();
   const customModelNames = customModels.map((model) => model.name);
-  const gptSoVitsAvailableReferenceVoices = settingsManager.get(
-    'gptSoVitsAvailableReferenceVoices',
-  );
-  const availableReferenceVoicesNames = gptSoVitsAvailableReferenceVoices.map(
-    (voice) => voice.name,
-  );
 
   const models: LoadedModels = {
     gemini: {
@@ -76,11 +70,7 @@ export const activate = async (ctx: vscode.ExtensionContext) => {
 
   const voiceServices: LoadedVoiceService = {
     gptSoVits: {
-      service: new GptSoVitsApiService(
-        ctx,
-        settingsManager,
-        availableReferenceVoicesNames,
-      ),
+      service: new GptSoVitsApiService(ctx, settingsManager),
     },
   };
 
@@ -459,8 +449,16 @@ export const activate = async (ctx: vscode.ExtensionContext) => {
 
       const voicePath = await voiceService.textToVoice(text);
 
-      // TODO: Play the voice
       vscode.window.showInformationMessage(`Voice saved to: ${voicePath}`);
+
+      sound
+        .play(voicePath)
+        .then(() => {
+          fs.unlink(voicePath);
+        })
+        .catch((error) => {
+          vscode.window.showErrorMessage(`Failed to play voice: ${error}`);
+        });
     },
     convertVoiceToText: async (voiceServiceType) => {
       if (voiceServiceType === 'not set') {

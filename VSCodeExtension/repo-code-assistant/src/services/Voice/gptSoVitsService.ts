@@ -3,7 +3,6 @@ import vscode from 'vscode';
 
 import SettingsManager from '../../api/settingsManager';
 import { AbstractVoiceService } from './abstractVoiceService';
-import { GptSoVitsVoiceSetting } from '../../types/extensionSettings';
 import path from 'node:path';
 import fs from 'node:fs/promises';
 
@@ -12,21 +11,18 @@ export class GptSoVitsApiService extends AbstractVoiceService {
   private referWavPath: string = '';
   private referText: string = '';
   private promptLanguage: string = '';
-  private availableReferenceVoicesNames: string[];
   private readonly ctx: vscode.ExtensionContext;
   private readonly settingsListener: vscode.Disposable;
 
   constructor(
     context: vscode.ExtensionContext,
     settingsManager: SettingsManager,
-    availableReferenceVoicesNames: string[],
   ) {
     super(settingsManager);
 
     this.updateSettings();
 
     this.clientHost = settingsManager.get('gptSoVitsClientHost');
-    this.availableReferenceVoicesNames = availableReferenceVoicesNames;
     this.ctx = context;
 
     // Listen for settings changes
@@ -42,10 +38,6 @@ export class GptSoVitsApiService extends AbstractVoiceService {
       ) {
         this.updateSettings();
         this.clientHost = settingsManager.get('gptSoVitsClientHost');
-        this.availableReferenceVoicesNames =
-          settingsManager
-            .get('gptSoVitsAvailableReferenceVoices')
-            .map((voice: GptSoVitsVoiceSetting) => voice.name) || [];
       }
     });
 
@@ -118,13 +110,6 @@ export class GptSoVitsApiService extends AbstractVoiceService {
     }
 
     return filename;
-  }
-
-  /**
-   * Get the available voice settings
-   */
-  public getAvailableReferenceVoicesNames(): string[] {
-    return this.availableReferenceVoicesNames;
   }
 
   public async textToVoice(text: string): Promise<string> {
