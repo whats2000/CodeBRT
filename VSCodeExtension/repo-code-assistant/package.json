@@ -299,6 +299,42 @@
           "default": "",
           "description": "Selected custom model"
         },
+        "repo-code-assistant.gptSoVitsClientHost": {
+          "type": "string",
+          "default": "http://localhost:9880/",
+          "description": "GPT-SoVits client host",
+          "markdownDescription": "Host for GPT-SoVits client"
+        },
+        "repo-code-assistant.gptSoVitsAvailableReferenceVoices": {
+          "type": "array",
+          "description": "Available reference voices setting for GPT-SoVits",
+          "items": {
+            "type": "object",
+            "properties": {
+              "name": {
+                "type": "string",
+                "description": "The name of the voice setting."
+              },
+              "referWavPath": {
+                "type": "string",
+                "description": "The path to the WAV file."
+              },
+              "referText": {
+                "type": "string",
+                "description": "The text reference of the WAV file."
+              },
+              "promptLanguage": {
+                "type": "string",
+                "description": "The language spoken in the WAV file."
+              }
+            }
+          }
+        },
+        "repo-code-assistant.selectedGptSoVitsReferenceVoice": {
+          "type": "string",
+          "default": "",
+          "description": "Selected reference voice setting for GPT-SoVits"
+        },
         "repo-code-assistant.themePrimaryColor": {
           "type": "string",
           "default": "#f0f0f0",

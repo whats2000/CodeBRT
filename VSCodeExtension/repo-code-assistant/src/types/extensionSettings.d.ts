@@ -125,17 +125,6 @@ export type ExtensionSettings = {
    * The available models for the Ollama API.
    */
   ollamaAvailableModels: string[];
-
-  /**
-   * The APIUrl for the GPT-SoVits model.
-   */
-  gptSoVitsApiUrl: string;
-
-  /**
-   * The available reference voices for the GPT-SoVits API.
-   */
-  gptSoVitsAvailableReferenceVoices: GptSoVitsVoiceSetting[];
-
   /**
    * The selected reference voice for the GPT-SoVits API.
    */
@@ -162,6 +151,16 @@ export type ExtensionSettings = {
    * The name of the currently selected custom model.
    */
   selectedCustomModel: string;
+
+  /**
+   * The APIUrl for the GPT-SoVits model.
+   */
+  gptSoVitsClientHost: string;
+
+  /**
+   * The available reference voices for the GPT-SoVits API.
+   */
+  gptSoVitsAvailableReferenceVoices: GptSoVitsVoiceSetting[];
 
   /**
    * The primary color for the Ant Design theme.

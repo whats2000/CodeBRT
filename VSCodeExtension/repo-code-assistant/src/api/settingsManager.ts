@@ -2,6 +2,7 @@ import * as vscode from 'vscode';
 import {
   ExtensionSettings,
   CustomModelSettings,
+  GptSoVitsVoiceSetting,
 } from '../types/extensionSettings';
 
 class SettingsManager {
@@ -40,7 +41,7 @@ class SettingsManager {
     );
   }
 
-  // Custom models
+  // For Custom models
   public getCustomModels(): CustomModelSettings[] {
     return this.get('customModels') || [];
   }
@@ -73,6 +74,44 @@ class SettingsManager {
     const customModels = this.getCustomModels();
     if (customModels.find((m) => m.name === modelName)) {
       this.set('selectedCustomModel', modelName).then();
+    }
+  }
+
+  // For Custom voice reference settings
+  public getGptSoVitsAvailableReferenceVoices(): GptSoVitsVoiceSetting[] {
+    return this.get('gptSoVitsAvailableReferenceVoices') || [];
+  }
+
+  public getSelectedGptSoVitsReferenceVoice():
+    | GptSoVitsVoiceSetting
+    | undefined {
+    const selectedVoiceName = this.get('selectedGptSoVitsReferenceVoice');
+    return this.getGptSoVitsAvailableReferenceVoices().find(
+      (voice) => voice.name === selectedVoiceName,
+    );
+  }
+
+  public addGptSoVitsReferenceVoice(voice: GptSoVitsVoiceSetting): void {
+    const voices = this.getGptSoVitsAvailableReferenceVoices();
+    voices.push(voice);
+    this.set('gptSoVitsAvailableReferenceVoices', voices).then();
+  }
+
+  public deleteGptSoVitsReferenceVoice(voiceName: string): void {
+    let voices = this.getGptSoVitsAvailableReferenceVoices();
+    voices = voices.filter((v) => v.name !== voiceName);
+    this.set('gptSoVitsAvailableReferenceVoices', voices).then(() => {
+      const selectedVoice = this.get('selectedGptSoVitsReferenceVoice');
+      if (selectedVoice === voiceName) {
+        this.set('selectedGptSoVitsReferenceVoice', '').then();
+      }
+    });
+  }
+
+  public selectGptSoVitsReferenceVoice(voiceName: string): void {
+    const voices = this.getGptSoVitsAvailableReferenceVoices();
+    if (voices.find((v) => v.name === voiceName)) {
+      this.set('selectedGptSoVitsReferenceVoice', voiceName).then();
     }
   }
 
@@ -111,7 +150,7 @@ class SettingsManager {
       lastUsedModel: 'gemini',
       customModels: [],
       selectedCustomModel: '',
-      gptSoVitsApiUrl: '',
+      gptSoVitsClientHost: '',
       gptSoVitsAvailableReferenceVoices: [],
       selectedGptSoVitsReferenceVoice: '',
       themePrimaryColor: '#f0f0f0',

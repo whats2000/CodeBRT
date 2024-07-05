@@ -41,8 +41,6 @@ export const SettingsBar: React.FC<SettingSidebarProps> = ({
   const { callApi } = useContext(WebviewContext);
   const [settings, setSettings] = useState<ExtensionSettings>({
     lastUsedModel: 'gemini',
-    selectedCustomModel: '',
-    customModels: [],
     groqApiKey: '',
     groqAvailableModels: [],
     geminiApiKey: '',
@@ -55,6 +53,11 @@ export const SettingsBar: React.FC<SettingSidebarProps> = ({
     huggingFaceAvailableModels: [],
     ollamaClientHost: '',
     ollamaAvailableModels: [],
+    selectedCustomModel: '',
+    customModels: [],
+    gptSoVitsClientHost: '',
+    gptSoVitsAvailableReferenceVoices: [],
+    selectedGptSoVitsReferenceVoice: '',
     enableModel: {
       gemini: false,
       openai: false,
