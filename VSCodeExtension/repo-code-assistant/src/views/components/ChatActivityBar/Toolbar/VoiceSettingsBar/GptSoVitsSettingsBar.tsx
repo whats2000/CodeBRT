@@ -77,12 +77,20 @@ export const GptSoVitsSettingsBar: React.FC<GptSoVitsSettingsBarProps> = ({
     field: keyof GptSoVitsVoiceSetting,
     value: string,
   ) => {
+    const originalName =
+      partialSettings.gptSoVitsAvailableReferenceVoices[index].name;
+
     const updatedVoices = [
       ...partialSettings.gptSoVitsAvailableReferenceVoices,
     ];
+
     updatedVoices[index][field] = value;
     setPartialSettings({
-      ...partialSettings,
+      selectedGptSoVitsReferenceVoice:
+        field === 'name' &&
+        partialSettings.selectedGptSoVitsReferenceVoice === originalName
+          ? value
+          : partialSettings.selectedGptSoVitsReferenceVoice,
       gptSoVitsAvailableReferenceVoices: updatedVoices,
     });
   };

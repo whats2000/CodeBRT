@@ -101,7 +101,7 @@ export const VoiceSettingsBar: React.FC<VoiceSettingsBarProps> = ({
             >
               {voiceToTextServices.map((service) => (
                 <Option key={service} value={service}>
-                  {service}
+                  {service.charAt(0).toUpperCase() + service.slice(1)}
                 </Option>
               ))}
             </Select>

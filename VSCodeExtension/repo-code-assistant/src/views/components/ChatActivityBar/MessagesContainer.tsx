@@ -8,6 +8,7 @@ import {
   CopyFilled,
   CopyOutlined,
   EditOutlined,
+  SoundOutlined,
 } from '@ant-design/icons';
 import { Button, Space, Spin, Typography, theme, Input, Flex } from 'antd';
 
@@ -245,6 +246,16 @@ export const MessagesContainer: React.FC<MessagesContainerProps> = ({
     messages.current,
   );
 
+  const handleConvertTextToVoice = (text: string) => {
+    callApi('convertTextToVoice', 'gptSoVits', text).catch((error: any) => {
+      callApi(
+        'alertMessage',
+        `Failed to convert text to voice: ${error}`,
+        'error',
+      ).catch(console.error);
+    });
+  };
+
   return (
     <>
       {isActiveModelLoading && (
@@ -295,6 +306,11 @@ export const MessagesContainer: React.FC<MessagesContainerProps> = ({
                       <ArrowRightOutlined />
                     </Button>
                   )}
+                  <Button
+                    icon={<SoundOutlined />}
+                    type={'text'}
+                    onClick={() => handleConvertTextToVoice(entry.message)}
+                  />
                   {messages.root !== entry.id && messages.root !== '' && (
                     <Button
                       icon={<EditOutlined />}
@@ -307,11 +323,10 @@ export const MessagesContainer: React.FC<MessagesContainerProps> = ({
                     />
                   )}
                   <Button
+                    icon={copied[entry.id] ? <CopyFilled /> : <CopyOutlined />}
                     onClick={() => handleCopy(entry.message, entry.id)}
                     type={'text'}
-                  >
-                    {copied[entry.id] ? <CopyFilled /> : <CopyOutlined />}
-                  </Button>
+                  />
                 </Flex>
               </Flex>
 

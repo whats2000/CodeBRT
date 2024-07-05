@@ -53,23 +53,6 @@ class SettingsManager {
     );
   }
 
-  public addCustomModel(model: CustomModelSettings): void {
-    const customModels = this.getCustomModels();
-    customModels.push(model);
-    this.set('customModels', customModels).then();
-  }
-
-  public deleteCustomModel(modelName: string): void {
-    let customModels = this.getCustomModels();
-    customModels = customModels.filter((m) => m.name !== modelName);
-    this.set('customModels', customModels).then(() => {
-      const selectedModel = this.get('selectedCustomModel');
-      if (selectedModel === modelName) {
-        this.set('selectedCustomModel', '').then();
-      }
-    });
-  }
-
   public selectCustomModel(modelName: string): void {
     const customModels = this.getCustomModels();
     if (customModels.find((m) => m.name === modelName)) {
@@ -89,23 +72,6 @@ class SettingsManager {
     return this.getGptSoVitsAvailableReferenceVoices().find(
       (voice) => voice.name === selectedVoiceName,
     );
-  }
-
-  public addGptSoVitsReferenceVoice(voice: GptSoVitsVoiceSetting): void {
-    const voices = this.getGptSoVitsAvailableReferenceVoices();
-    voices.push(voice);
-    this.set('gptSoVitsAvailableReferenceVoices', voices).then();
-  }
-
-  public deleteGptSoVitsReferenceVoice(voiceName: string): void {
-    let voices = this.getGptSoVitsAvailableReferenceVoices();
-    voices = voices.filter((v) => v.name !== voiceName);
-    this.set('gptSoVitsAvailableReferenceVoices', voices).then(() => {
-      const selectedVoice = this.get('selectedGptSoVitsReferenceVoice');
-      if (selectedVoice === voiceName) {
-        this.set('selectedGptSoVitsReferenceVoice', '').then();
-      }
-    });
   }
 
   public selectGptSoVitsReferenceVoice(voiceName: string): void {
