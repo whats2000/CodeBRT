@@ -188,7 +188,7 @@
         },
         "repo-code-assistant.ollamaClientHost": {
           "type": "string",
-          "default": "http://localhost:11434",
+          "default": "http://127.0.0.1:11434",
           "description": "Ollama client host",
           "markdownDescription": "Host for Ollama client"
         },
@@ -313,7 +313,7 @@
         },
         "repo-code-assistant.gptSoVitsClientHost": {
           "type": "string",
-          "default": "http://localhost:9880/",
+          "default": "http://127.0.0.1:9880/",
           "description": "GPT-SoVits client host",
           "markdownDescription": "Host for GPT-SoVits client"
         },
