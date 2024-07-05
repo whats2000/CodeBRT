@@ -8,6 +8,7 @@ import {
   CopyFilled,
   CopyOutlined,
   EditOutlined,
+  LoadingOutlined,
   SoundOutlined,
 } from '@ant-design/icons';
 import { Button, Space, Spin, Typography, theme, Input, Flex } from 'antd';
@@ -128,6 +129,7 @@ export const MessagesContainer: React.FC<MessagesContainerProps> = ({
   const [editingEntryId, setEditingEntryId] = useState<string | null>(null);
   const [editedMessage, setEditedMessage] = useState('');
   const [imageUrls, setImageUrls] = useState<Record<string, string>>({});
+  const [isAudioPlaying, setIsAudioPlaying] = useState(false);
 
   const { callApi } = useContext(WebviewContext);
   const { token } = useToken();
@@ -247,13 +249,19 @@ export const MessagesContainer: React.FC<MessagesContainerProps> = ({
   );
 
   const handleConvertTextToVoice = (text: string) => {
-    callApi('convertTextToVoice', 'gptSoVits', text).catch((error: any) => {
-      callApi(
-        'alertMessage',
-        `Failed to convert text to voice: ${error}`,
-        'error',
-      ).catch(console.error);
-    });
+    setIsAudioPlaying(true);
+    callApi('convertTextToVoice', 'gptSoVits', text)
+      .then(() => {
+        setIsAudioPlaying(false);
+      })
+      .catch((error: any) => {
+        callApi(
+          'alertMessage',
+          `Failed to convert text to voice: ${error}`,
+          'error',
+        ).catch(console.error);
+        setIsAudioPlaying(false);
+      });
   };
 
   return (
@@ -307,9 +315,16 @@ export const MessagesContainer: React.FC<MessagesContainerProps> = ({
                     </Button>
                   )}
                   <Button
-                    icon={<SoundOutlined />}
+                    icon={
+                      isAudioPlaying ? (
+                        <LoadingOutlined spin />
+                      ) : (
+                        <SoundOutlined />
+                      )
+                    }
                     type={'text'}
                     onClick={() => handleConvertTextToVoice(entry.message)}
+                    disabled={isAudioPlaying}
                   />
                   {messages.root !== entry.id && messages.root !== '' && (
                     <Button

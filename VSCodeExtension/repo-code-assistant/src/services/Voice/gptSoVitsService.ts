@@ -202,10 +202,20 @@ export class GptSoVitsApiService extends AbstractVoiceService {
   }
 
   public async textToVoice(text: string): Promise<void> {
-    const textChunks = this.splitTextIntoChunks(text);
-
-    this.textToVoiceQueue.push(...textChunks);
-    this.processTextToVoiceQueue().then();
+    return new Promise<void>((resolve, reject) => {
+      const textChunks = this.splitTextIntoChunks(text);
+      this.textToVoiceQueue.push(...textChunks);
+      this.processTextToVoiceQueue()
+        .then(() => {
+          const interval = setInterval(() => {
+            if (!this.isTextToVoiceProcessing && !this.isVoicePlaying) {
+              clearInterval(interval);
+              resolve();
+            }
+          }, 100);
+        })
+        .catch(reject);
+    });
   }
 
   /**
