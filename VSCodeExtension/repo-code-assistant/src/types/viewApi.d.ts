@@ -58,18 +58,18 @@ export type ViewApi = {
   getFileContents: () => Promise<string>;
 
   /**
-   * Update the settings of the extension.
-   * @param key - The key of the setting to update.
+   * Set the target setting of the extension.
+   * @param key - The key of the setting to set.
    * @param value - The new value of the setting.
    * @returns A promise that resolves when the setting is updated.
    */
-  updateSetting: (
+  setSetting: (
     key: keyof ExtensionSettings,
     value: ExtensionSettings[typeof key],
   ) => Promise<void>;
 
   /**
-   * Get the settings of the extension.
+   * Get the target setting of the extension.
    * @param key - The key of the setting to get.
    * @returns The value of the setting.
    */
@@ -135,18 +135,6 @@ export type ViewApi = {
    * @param msg - The message chunk to add.
    */
   sendStreamResponse: (msg: string) => void;
-
-  /**
-   * Save the last used model.
-   * @param modelType - The type of the model to save.
-   */
-  saveLastUsedModel: (modelType: ModelType) => void;
-
-  /**
-   * Get the last used model.
-   * @returns The last used model.
-   */
-  getLastUsedModel: () => ModelType;
 
   /**
    * Add a conversation entry to the conversation history for a language model.
@@ -286,40 +274,6 @@ export type ViewApi = {
    * @returns The recorded voice as text.
    */
   convertVoiceToText: (voiceServiceType: VoiceType) => Promise<string>;
-
-  /**
-   * Get the selected voice service.
-   * @returns The selected voice services.
-   */
-  getSelectedVoiceService: () => {
-    textToVoice: VoiceType;
-    voiceToText: VoiceType;
-  };
-
-  /**
-   * Save the selected text to voice service.
-   * @param voiceServiceType - The type of the voice service to save.
-   */
-  saveSelectedTextToVoiceService: (voiceServiceType: VoiceType) => void;
-
-  /**
-   * Save the selected voice to text service.
-   * @param voiceServiceType - The type of the voice service to save.
-   */
-  saveSelectedVoiceToTextService: (voiceServiceType: VoiceType) => void;
-
-  /**
-   * Get the available reference voices for GPT-SoVits.
-   */
-  getGptSoVitsAvailableReferenceVoices: () => GptSoVitsVoiceSetting[];
-
-  /**
-   * Set the available reference voices for GPT-SoVits.
-   * @param newVoices - The new reference voices.
-   */
-  setGptSoVitsAvailableReferenceVoices: (
-    newVoices: GptSoVitsVoiceSetting[],
-  ) => void;
 
   /**
    * Switch the reference voice for GPT-SoVits.

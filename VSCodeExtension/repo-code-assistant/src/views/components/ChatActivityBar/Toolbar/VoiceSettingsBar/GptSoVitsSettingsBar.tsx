@@ -16,65 +16,60 @@ export const GptSoVitsSettingsBar: React.FC<GptSoVitsSettingsBarProps> = ({
   onClose,
 }) => {
   const { callApi } = useContext(WebviewContext);
-  const [
-    gptSoVitsAvailableReferenceVoices,
-    setGptSoVitsAvailableReferenceVoices,
-  ] = useState<GptSoVitsVoiceSetting[]>([]);
-  const [selectedVoice, setSelectedVoice] = useState<string | undefined>();
+  const [partialSettings, setPartialSettings] = useState<{
+    gptSoVitsAvailableReferenceVoices: GptSoVitsVoiceSetting[];
+    selectedGptSoVitsReferenceVoice: string;
+  }>({
+    gptSoVitsAvailableReferenceVoices: [],
+    selectedGptSoVitsReferenceVoice: '',
+  });
   const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
     if (isOpen) {
       setIsLoading(true);
-      callApi('getGptSoVitsAvailableReferenceVoices')
-        .then((voices: GptSoVitsVoiceSetting[]) => {
-          setGptSoVitsAvailableReferenceVoices(voices);
-          setIsLoading(false);
-        })
-        .catch((error: any) => {
-          callApi(
-            'alertMessage',
-            `Failed to load available reference voices: ${error}`,
-            'error',
-          ).catch(console.error);
-          setIsLoading(false);
-        });
 
-      callApi('getSelectedGptSoVitsReferenceVoice')
-        .then((voice: GptSoVitsVoiceSetting | undefined) => {
-          setSelectedVoice(voice?.name);
-        })
-        .catch((error: any) => {
-          callApi(
-            'alertMessage',
-            `Failed to load selected reference voice: ${error}`,
-            'error',
-          ).catch(console.error);
-        });
+      // Create an array of promises for the API calls
+      const promises = Object.keys(partialSettings).map(async (key) => {
+        try {
+          let value = await callApi(
+            'getSetting',
+            key as keyof typeof partialSettings,
+          );
+          setPartialSettings((prev) => ({ ...prev, [key]: value }));
+        } catch (e) {
+          console.error(`Failed to fetch setting ${key}:`, e);
+        }
+      });
+
+      // Use Promise.all to wait for all API calls to complete
+      Promise.all(promises).finally(() => {
+        setIsLoading(false);
+      });
     }
   }, [isOpen]);
 
   const handleSave = () => {
     setIsLoading(true);
-    callApi(
-      'setGptSoVitsAvailableReferenceVoices',
-      gptSoVitsAvailableReferenceVoices,
-    )
+
+    const promises = Object.entries(partialSettings).map(([key, value]) =>
+      callApi('setSetting', key as keyof typeof partialSettings, value).catch(
+        (e) =>
+          callApi(
+            'alertMessage',
+            `Failed to save settings: ${e.message}`,
+            'error',
+          ),
+      ),
+    );
+
+    Promise.all(promises)
       .then(() => {
         callApi('alertMessage', 'Settings saved successfully', 'info').catch(
           console.error,
         );
-        setIsLoading(false);
-        onClose();
       })
-      .catch((error: any) => {
-        callApi(
-          'alertMessage',
-          `Failed to save settings: ${error}`,
-          'error',
-        ).catch(console.error);
-        setIsLoading(false);
-      });
+      .finally(onClose);
   };
 
   const handleVoiceChange = (
@@ -82,37 +77,55 @@ export const GptSoVitsSettingsBar: React.FC<GptSoVitsSettingsBarProps> = ({
     field: keyof GptSoVitsVoiceSetting,
     value: string,
   ) => {
-    const updatedVoices = [...gptSoVitsAvailableReferenceVoices];
+    const updatedVoices = [
+      ...partialSettings.gptSoVitsAvailableReferenceVoices,
+    ];
     updatedVoices[index][field] = value;
-    setGptSoVitsAvailableReferenceVoices(updatedVoices);
+    setPartialSettings({
+      ...partialSettings,
+      gptSoVitsAvailableReferenceVoices: updatedVoices,
+    });
   };
 
   const handleAddVoice = () => {
-    setGptSoVitsAvailableReferenceVoices([
-      ...gptSoVitsAvailableReferenceVoices,
-      {
-        name: '',
-        referWavPath: '',
-        referText: '',
-        promptLanguage: '',
-      },
-    ]);
+    setPartialSettings({
+      ...partialSettings,
+      gptSoVitsAvailableReferenceVoices: [
+        ...partialSettings.gptSoVitsAvailableReferenceVoices,
+        {
+          name: '',
+          referWavPath: '',
+          referText: '',
+          promptLanguage: '',
+        },
+      ],
+    });
   };
 
   const handleRemoveVoice = (index: number) => {
-    const updatedVoices = gptSoVitsAvailableReferenceVoices.filter(
-      (_, i) => i !== index,
-    );
+    const updatedVoices =
+      partialSettings.gptSoVitsAvailableReferenceVoices?.filter(
+        (_, i) => i !== index,
+      );
 
-    if (selectedVoice === gptSoVitsAvailableReferenceVoices[index].name) {
-      setSelectedVoice(undefined);
-    }
-    setGptSoVitsAvailableReferenceVoices(updatedVoices);
+    setPartialSettings({
+      selectedGptSoVitsReferenceVoice:
+        partialSettings.selectedGptSoVitsReferenceVoice ===
+        partialSettings.gptSoVitsAvailableReferenceVoices[index].name
+          ? ''
+          : partialSettings.selectedGptSoVitsReferenceVoice,
+      gptSoVitsAvailableReferenceVoices: updatedVoices,
+    });
   };
 
   const handleSelectedVoiceChange = (value: string) => {
     callApi('switchGptSoVitsReferenceVoice', value)
-      .then(() => setSelectedVoice(value))
+      .then(() =>
+        setPartialSettings({
+          ...partialSettings,
+          selectedGptSoVitsReferenceVoice: value,
+        }),
+      )
       .catch((error: any) => {
         callApi(
           'alertMessage',
@@ -134,11 +147,11 @@ export const GptSoVitsSettingsBar: React.FC<GptSoVitsSettingsBarProps> = ({
       <Form layout='vertical'>
         <Form.Item label='Selected Reference Voice'>
           <Select
-            value={selectedVoice}
+            value={partialSettings.selectedGptSoVitsReferenceVoice}
             onChange={handleSelectedVoiceChange}
             placeholder='Select a reference voice'
           >
-            {gptSoVitsAvailableReferenceVoices.map((voice) => (
+            {partialSettings.gptSoVitsAvailableReferenceVoices.map((voice) => (
               <Option key={voice.name} value={voice.name}>
                 {voice.name}
               </Option>
@@ -147,50 +160,56 @@ export const GptSoVitsSettingsBar: React.FC<GptSoVitsSettingsBarProps> = ({
         </Form.Item>
         <Space direction='vertical' style={{ width: '100%' }}>
           <Collapse bordered={false} size={'large'}>
-            {gptSoVitsAvailableReferenceVoices.map((voice, index) => (
-              <Panel
-                header={voice.name || 'New Voice'}
-                key={index.toString()}
-                extra={
-                  <Button danger onClick={() => handleRemoveVoice(index)}>
-                    Remove
-                  </Button>
-                }
-              >
-                <Form.Item label='Name'>
-                  <Input
-                    value={voice.name}
-                    onChange={(e) =>
-                      handleVoiceChange(index, 'name', e.target.value)
-                    }
-                  />
-                </Form.Item>
-                <Form.Item label='Refer WAV Path'>
-                  <Input
-                    value={voice.referWavPath}
-                    onChange={(e) =>
-                      handleVoiceChange(index, 'referWavPath', e.target.value)
-                    }
-                  />
-                </Form.Item>
-                <Form.Item label='Refer Text'>
-                  <Input
-                    value={voice.referText}
-                    onChange={(e) =>
-                      handleVoiceChange(index, 'referText', e.target.value)
-                    }
-                  />
-                </Form.Item>
-                <Form.Item label='Prompt Language'>
-                  <Input
-                    value={voice.promptLanguage}
-                    onChange={(e) =>
-                      handleVoiceChange(index, 'promptLanguage', e.target.value)
-                    }
-                  />
-                </Form.Item>
-              </Panel>
-            ))}
+            {partialSettings.gptSoVitsAvailableReferenceVoices.map(
+              (voice, index) => (
+                <Panel
+                  header={voice.name || 'New Voice'}
+                  key={index.toString()}
+                  extra={
+                    <Button danger onClick={() => handleRemoveVoice(index)}>
+                      Remove
+                    </Button>
+                  }
+                >
+                  <Form.Item label='Name'>
+                    <Input
+                      value={voice.name}
+                      onChange={(e) =>
+                        handleVoiceChange(index, 'name', e.target.value)
+                      }
+                    />
+                  </Form.Item>
+                  <Form.Item label='Refer WAV Path'>
+                    <Input
+                      value={voice.referWavPath}
+                      onChange={(e) =>
+                        handleVoiceChange(index, 'referWavPath', e.target.value)
+                      }
+                    />
+                  </Form.Item>
+                  <Form.Item label='Refer Text'>
+                    <Input
+                      value={voice.referText}
+                      onChange={(e) =>
+                        handleVoiceChange(index, 'referText', e.target.value)
+                      }
+                    />
+                  </Form.Item>
+                  <Form.Item label='Prompt Language'>
+                    <Input
+                      value={voice.promptLanguage}
+                      onChange={(e) =>
+                        handleVoiceChange(
+                          index,
+                          'promptLanguage',
+                          e.target.value,
+                        )
+                      }
+                    />
+                  </Form.Item>
+                </Panel>
+              ),
+            )}
           </Collapse>
           <Button type='dashed' onClick={handleAddVoice} block>
             Add Voice

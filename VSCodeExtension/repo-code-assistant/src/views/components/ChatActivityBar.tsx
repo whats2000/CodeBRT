@@ -104,7 +104,7 @@ export const ChatActivityBar = () => {
   useEffect(() => {
     if (activeModel === 'loading...') return;
 
-    callApi('saveLastUsedModel', activeModel).catch((error) =>
+    callApi('setSetting', 'lastUsedModel', activeModel).catch((error) =>
       callApi(
         'alertMessage',
         `Failed to save last used model: ${error}`,
@@ -131,7 +131,7 @@ export const ChatActivityBar = () => {
 
   useEffect(() => {
     setIsActiveModelLoading(true);
-    callApi('getLastUsedModel')
+    callApi('getSetting', 'lastUsedModel')
       .then((lastUsedModel) => {
         if (lastUsedModel) {
           setActiveModel(lastUsedModel as ModelType);

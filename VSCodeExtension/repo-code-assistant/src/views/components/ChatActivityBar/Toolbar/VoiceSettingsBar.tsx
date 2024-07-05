@@ -3,6 +3,7 @@ import { Drawer, Form, Select, Button } from 'antd';
 import { WebviewContext } from '../../../WebviewContext';
 import { VoiceType } from '../../../../types/voiceType';
 import { GptSoVitsSettingsBar } from './VoiceSettingsBar/GptSoVitsSettingsBar';
+import { ExtensionSettings } from '../../../../types/extensionSettings';
 
 const { Option } = Select;
 
@@ -16,50 +17,54 @@ export const VoiceSettingsBar: React.FC<VoiceSettingsBarProps> = ({
   onClose,
 }) => {
   const { callApi } = useContext(WebviewContext);
-  const [selectedTextToVoiceService, setSelectedTextToVoiceService] =
-    useState<VoiceType>('not set');
-  const [selectedVoiceToTextService, setSelectedVoiceToTextService] =
-    useState<VoiceType>('not set');
-  const [isLoading, setIsLoading] = useState(false);
   const [isGptSoVitsSettingsOpen, setIsGptSoVitsSettingsOpen] = useState(false);
 
   const textToVoiceServices: VoiceType[] = ['not set', 'gptSoVits'];
   const voiceToTextServices: VoiceType[] = ['not set'];
+  const [partialSettings, setPartialSettings] = useState<
+    Partial<ExtensionSettings>
+  >({
+    selectedTextToVoiceService: 'not set',
+    selectedVoiceToTextService: 'not set',
+  });
+  const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
     if (isOpen) {
       setIsLoading(true);
 
-      callApi('getSelectedVoiceService')
-        .then((service: { textToVoice: VoiceType; voiceToText: VoiceType }) => {
-          setSelectedTextToVoiceService(service.textToVoice);
-          setSelectedVoiceToTextService(service.voiceToText);
-          setIsLoading(false);
-        })
-        .catch((error: any) => {
-          callApi(
-            'alertMessage',
-            `Failed to load Text To Voice service: ${error}`,
-            'error',
-          ).catch(console.error);
-          setIsLoading(false);
-        });
+      // Create an array of promises for the API calls
+      const promises = Object.keys(partialSettings).map(async (key) => {
+        try {
+          let value = await callApi(
+            'getSetting',
+            key as keyof typeof partialSettings,
+          );
+          setPartialSettings((prev) => ({ ...prev, [key]: value }));
+        } catch (e) {
+          console.error(`Failed to fetch setting ${key}:`, e);
+        }
+      });
+
+      // Use Promise.all to wait for all API calls to complete
+      Promise.all(promises).then(() => {
+        setIsLoading(false);
+      });
     }
   }, [isOpen]);
 
   const handleServiceChange = (
     field: 'selectedTextToVoiceService' | 'selectedVoiceToTextService',
-    value: string,
+    value: VoiceType,
   ) => {
-    if (field === 'selectedTextToVoiceService') {
-      callApi('saveSelectedTextToVoiceService', value as VoiceType)
-        .then(() => setSelectedTextToVoiceService(value as VoiceType))
-        .catch(console.error);
-    } else {
-      callApi('saveSelectedVoiceToTextService', value as VoiceType)
-        .then(() => setSelectedVoiceToTextService(value as VoiceType))
-        .catch(console.error);
-    }
+    callApi('setSetting', field, value)
+      .then(() =>
+        setPartialSettings({
+          ...partialSettings,
+          [field]: value,
+        }),
+      )
+      .catch(console.error);
   };
 
   return (
@@ -75,7 +80,7 @@ export const VoiceSettingsBar: React.FC<VoiceSettingsBarProps> = ({
         <Form layout='vertical'>
           <Form.Item label='Text To Voice Service'>
             <Select
-              value={selectedTextToVoiceService}
+              value={partialSettings.selectedTextToVoiceService}
               onChange={(value) =>
                 handleServiceChange('selectedTextToVoiceService', value)
               }
@@ -89,7 +94,7 @@ export const VoiceSettingsBar: React.FC<VoiceSettingsBarProps> = ({
           </Form.Item>
           <Form.Item label='Voice To Text Service'>
             <Select
-              value={selectedVoiceToTextService}
+              value={partialSettings.selectedVoiceToTextService}
               onChange={(value) =>
                 handleServiceChange('selectedVoiceToTextService', value)
               }

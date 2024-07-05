@@ -112,7 +112,7 @@ export const activate = async (ctx: vscode.ExtensionContext) => {
 
       return await fs.readFile(uris[0].fsPath, 'utf-8');
     },
-    updateSetting: async (
+    setSetting: async (
       key: keyof ExtensionSettings,
       value: ExtensionSettings[typeof key],
     ) => {
@@ -220,12 +220,6 @@ export const activate = async (ctx: vscode.ExtensionContext) => {
     },
     sendStreamResponse: (msg: string) => {
       triggerEvent('streamResponse', msg);
-    },
-    saveLastUsedModel: (modelType: ModelType) => {
-      settingsManager.set('lastUsedModel', modelType);
-    },
-    getLastUsedModel: () => {
-      return settingsManager.get('lastUsedModel');
     },
     addConversationEntry: async (
       modelType: ModelType,
@@ -478,24 +472,6 @@ export const activate = async (ctx: vscode.ExtensionContext) => {
 
       // TODO: Record voice
       return 'Recorded voice as text';
-    },
-    getSelectedVoiceService: () => {
-      return {
-        textToVoice: settingsManager.get('selectedTextToVoiceService'),
-        voiceToText: settingsManager.get('selectedVoiceToTextService'),
-      };
-    },
-    saveSelectedVoiceToTextService: (voiceServiceType) => {
-      settingsManager.set('selectedVoiceToTextService', voiceServiceType);
-    },
-    saveSelectedTextToVoiceService: (voiceServiceType) => {
-      settingsManager.set('selectedTextToVoiceService', voiceServiceType);
-    },
-    getGptSoVitsAvailableReferenceVoices: () => {
-      return settingsManager.get('gptSoVitsAvailableReferenceVoices');
-    },
-    setGptSoVitsAvailableReferenceVoices: (newVoices) => {
-      settingsManager.set('gptSoVitsAvailableReferenceVoices', newVoices);
     },
     switchGptSoVitsReferenceVoice: async (voiceName) => {
       const voiceService = voiceServices.gptSoVits
