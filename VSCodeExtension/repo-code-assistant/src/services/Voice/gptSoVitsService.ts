@@ -1,10 +1,11 @@
 import axios, { AxiosResponse } from 'axios';
 import vscode from 'vscode';
+import path from 'node:path';
+import fs from 'node:fs/promises';
+import sound from 'sound-play';
 
 import SettingsManager from '../../api/settingsManager';
 import { AbstractVoiceService } from './abstractVoiceService';
-import path from 'node:path';
-import fs from 'node:fs/promises';
 
 export class GptSoVitsApiService extends AbstractVoiceService {
   private clientHost: string;
@@ -13,6 +14,10 @@ export class GptSoVitsApiService extends AbstractVoiceService {
   private promptLanguage: string = '';
   private readonly ctx: vscode.ExtensionContext;
   private readonly settingsListener: vscode.Disposable;
+  private textToVoiceQueue: string[] = [];
+  private voicePlaybackQueue: string[] = [];
+  private isTextToVoiceProcessing: boolean = false;
+  private isVoicePlaying: boolean = false;
 
   constructor(
     context: vscode.ExtensionContext,
@@ -134,16 +139,73 @@ export class GptSoVitsApiService extends AbstractVoiceService {
     return text;
   }
 
-  public async textToVoice(text: string): Promise<string> {
-    vscode.window.showInformationMessage(this.preprocessText(text));
+  private splitTextIntoChunks(text: string, chunkSize: number = 4): string[] {
+    const sentences = text.split(
+      /(?<!\w\.\w.)(?<![A-Z][a-z]\.)(?<=[。.?！])\s/g,
+    );
+    const chunks = [];
+    for (let i = 0; i < sentences.length; i += chunkSize) {
+      chunks.push(sentences.slice(i, i + chunkSize).join(' '));
+    }
+    return chunks;
+  }
 
-    const response = await this.sendRequest(this.preprocessText(text));
-
-    if (typeof response === 'string') {
-      return response;
+  private async processTextToVoiceQueue(): Promise<void> {
+    if (this.isTextToVoiceProcessing || this.textToVoiceQueue.length === 0) {
+      return;
     }
 
-    return await this.saveVoice(response);
+    this.isTextToVoiceProcessing = true;
+
+    while (this.textToVoiceQueue.length > 0) {
+      const textChunk = this.textToVoiceQueue.shift()!;
+      const response = await this.sendRequest(this.preprocessText(textChunk));
+
+      if (typeof response === 'string') {
+        vscode.window.showErrorMessage(response);
+        this.isTextToVoiceProcessing = false;
+        return;
+      }
+
+      const voicePath = await this.saveVoice(response as Uint8Array);
+
+      this.voicePlaybackQueue.push(voicePath);
+      this.processVoicePlaybackQueue().then();
+    }
+
+    this.isTextToVoiceProcessing = false;
+  }
+
+  private async processVoicePlaybackQueue(): Promise<void> {
+    if (this.isVoicePlaying || this.voicePlaybackQueue.length === 0) {
+      return;
+    }
+
+    this.isVoicePlaying = true;
+
+    while (this.voicePlaybackQueue.length > 0) {
+      const voicePath = this.voicePlaybackQueue.shift()!;
+
+      try {
+        await sound.play(voicePath);
+        fs.unlink(voicePath).catch((error) => {
+          console.error(`Failed to delete voice file: ${error}`);
+        });
+      } catch (error) {
+        vscode.window.showErrorMessage(`Failed to play voice: ${error}`);
+        this.isVoicePlaying = false;
+        return;
+      }
+    }
+
+    this.isVoicePlaying = false;
+  }
+
+  public async textToVoice(text: string): Promise<void> {
+    const textChunks = this.splitTextIntoChunks(text);
+
+    this.textToVoiceQueue.push(...textChunks);
+    this.processTextToVoiceQueue().then();
   }
 
   /**

@@ -1,6 +1,5 @@
 import fs from 'node:fs/promises';
 import path from 'node:path';
-import sound from 'sound-play';
 import * as vscode from 'vscode';
 
 import { ViewKey } from './views';
@@ -441,18 +440,7 @@ export const activate = async (ctx: vscode.ExtensionContext) => {
         return;
       }
 
-      const voicePath = await voiceService.textToVoice(text);
-
-      vscode.window.showInformationMessage(`Voice saved to: ${voicePath}`);
-
-      sound
-        .play(voicePath)
-        .then(() => {
-          fs.unlink(voicePath);
-        })
-        .catch((error) => {
-          vscode.window.showErrorMessage(`Failed to play voice: ${error}`);
-        });
+      await voiceService.textToVoice(text);
     },
     convertVoiceToText: async (voiceServiceType) => {
       if (voiceServiceType === 'not set') {

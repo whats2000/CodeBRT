@@ -5,9 +5,8 @@ export type VoiceService = {
   /**
    * Converts the given text to voice.
    * @param text - The main text to convert to voice.
-   * @returns A promise that resolves to the path of the voice file.
    */
-  textToVoice: (text: string) => Promise<string>;
+  textToVoice: (text: string) => Promise<void>;
 
   /**
    * Converts the given voice to text.
