@@ -117,6 +117,10 @@ export class GptSoVitsApiService extends AbstractVoiceService {
     return filename;
   }
 
+  private removeCodeReferences(text: string): string {
+    return text.replace(/```[\s\S]*?```/g, '');
+  }
+
   private preprocessText(text: string): string {
     text = text.replace(/#+/g, '');
     text = text.replace(/[*+-]/g, '');
@@ -131,7 +135,7 @@ export class GptSoVitsApiService extends AbstractVoiceService {
     return text;
   }
 
-  private splitTextIntoChunks(text: string, chunkSize: number = 2): string[] {
+  private splitTextIntoChunks(text: string, chunkSize: number = 4): string[] {
     const sentences = text.split(
       /(?<!\w\.\w.)(?<![A-Z][a-z]\.)(?<=[。.?！])\s/g,
     );
@@ -195,7 +199,9 @@ export class GptSoVitsApiService extends AbstractVoiceService {
 
   public async textToVoice(text: string): Promise<void> {
     return new Promise<void>((resolve, reject) => {
-      const textChunks = this.splitTextIntoChunks(text);
+      const textChunks = this.splitTextIntoChunks(
+        this.removeCodeReferences(text),
+      );
       this.textToVoiceQueue.push(...textChunks);
       this.processTextToVoiceQueue()
         .then(() => {
