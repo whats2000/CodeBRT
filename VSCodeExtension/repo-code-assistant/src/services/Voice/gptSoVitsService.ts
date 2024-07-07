@@ -2,10 +2,10 @@ import axios, { AxiosResponse } from 'axios';
 import vscode from 'vscode';
 import path from 'node:path';
 import fs from 'node:fs/promises';
-import sound from 'sound-play';
 
 import SettingsManager from '../../api/settingsManager';
 import { AbstractVoiceService } from './abstractVoiceService';
+import SoundPlay from '../../utils/audioPlayer';
 
 export class GptSoVitsApiService extends AbstractVoiceService {
   private clientHost: string;
@@ -19,6 +19,7 @@ export class GptSoVitsApiService extends AbstractVoiceService {
   private isTextToVoiceProcessing: boolean = false;
   private isVoicePlaying: boolean = false;
   private shouldStopPlayback: boolean = false;
+  private soundPlayer: SoundPlay;
 
   constructor(
     context: vscode.ExtensionContext,
@@ -30,6 +31,7 @@ export class GptSoVitsApiService extends AbstractVoiceService {
 
     this.clientHost = settingsManager.get('gptSoVitsClientHost');
     this.ctx = context;
+    this.soundPlayer = new SoundPlay();
 
     // Listen for settings changes
     this.settingsListener = vscode.workspace.onDidChangeConfiguration((e) => {
@@ -188,9 +190,9 @@ export class GptSoVitsApiService extends AbstractVoiceService {
     while (this.voicePlaybackQueue.length > 0) {
       if (this.shouldStopPlayback) {
         this.voicePlaybackQueue.forEach((filePath) => {
-          fs.unlink(filePath).catch((error) => {
-            console.error(`Failed to delete voice file: ${error}`);
-          });
+          fs.unlink(filePath).catch((error) =>
+            console.error(`Failed to delete voice file: ${error}`),
+          );
         });
         this.voicePlaybackQueue = [];
         this.shouldStopPlayback = false;
@@ -200,10 +202,13 @@ export class GptSoVitsApiService extends AbstractVoiceService {
       const voicePath = this.voicePlaybackQueue.shift()!;
 
       try {
-        await sound.play(voicePath);
-        fs.unlink(voicePath).catch((error) => {
-          console.error(`Failed to delete voice file: ${error}`);
-        });
+        await this.soundPlayer.play(voicePath).finally(() =>
+          setTimeout(() => {
+            fs.unlink(voicePath).catch((error) =>
+              console.error(`Failed to delete voice file: ${error}`),
+            );
+          }, 500),
+        );
       } catch (error) {
         vscode.window.showErrorMessage(`Failed to play voice: ${error}`);
         this.isVoicePlaying = false;
@@ -241,6 +246,7 @@ export class GptSoVitsApiService extends AbstractVoiceService {
   public async stopVoice(): Promise<void> {
     this.shouldStopPlayback = true;
     this.textToVoiceQueue = [];
+    this.soundPlayer.stop();
   }
 
   /**
