@@ -55,6 +55,7 @@
     "react-syntax-highlighter": "^15.5.0",
     "styled-components": "^6.1.8",
     "swc-loader": "^0.2.3",
+    "terminate": "^2.8.0",
     "typescript": "^5.2.2",
     "uuid": "^9.0.1",
     "webpack": "^5.89.0",
@@ -404,6 +405,7 @@
     "openai": "^4.47.1",
     "react-markdown": "^9.0.1",
     "react-syntax-highlighter": "^15.5.0",
-    "styled-components": "^6.1.8"
+    "styled-components": "^6.1.8",
+    "terminate": "^2.8.0"
   }
 }

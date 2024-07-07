@@ -1,5 +1,6 @@
-import { spawn, exec } from 'child_process';
-import type { ChildProcess, ExecException } from 'child_process';
+import { spawn } from 'child_process';
+import type { ChildProcess } from 'child_process';
+import terminate from 'terminate';
 
 /* MAC PLAY COMMAND */
 const macPlayCommand = (path: string, volume: number): string =>
@@ -30,15 +31,10 @@ class SoundPlay {
         : windowPlayCommand(path, volumeAdjustedByOS);
 
     try {
-      this.playProcess = exec(
-        playCommand,
-        { windowsHide: true },
-        (err: ExecException | null) => {
-          if (err) {
-            throw err;
-          }
-        },
-      );
+      this.playProcess = spawn(playCommand, {
+        shell: true,
+        windowsHide: true,
+      });
 
       if (this.playProcess) {
         await new Promise<void>((resolve, reject) => {
@@ -52,17 +48,12 @@ class SoundPlay {
   }
 
   stop(): void {
-    if (this.playProcess) {
-      if (process.platform === 'darwin') {
-        this.playProcess.kill('SIGKILL');
-      } else if (process.platform === 'win32' && this.playProcess.pid) {
-        spawn('taskkill', [
-          '/pid',
-          this.playProcess.pid.toString(),
-          '/f',
-          '/t',
-        ]);
-      }
+    if (this.playProcess?.pid) {
+      terminate(this.playProcess.pid, (err) => {
+        if (err) {
+          throw err;
+        }
+      });
       this.playProcess = null;
     }
   }

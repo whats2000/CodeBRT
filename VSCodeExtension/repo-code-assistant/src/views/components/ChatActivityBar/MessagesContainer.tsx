@@ -8,6 +8,7 @@ import {
   CopyFilled,
   CopyOutlined,
   EditOutlined,
+  LoadingOutlined,
   PauseCircleOutlined,
   SoundOutlined,
 } from '@ant-design/icons';
@@ -341,7 +342,9 @@ export const MessagesContainer: React.FC<MessagesContainerProps> = ({
                   >
                     <Button
                       icon={
-                        isAudioPlaying ? (
+                        isStopAudio ? (
+                          <LoadingOutlined spin={true} />
+                        ) : isAudioPlaying ? (
                           <PauseCircleOutlined />
                         ) : (
                           <SoundOutlined />
