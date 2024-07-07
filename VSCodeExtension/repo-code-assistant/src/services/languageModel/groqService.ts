@@ -1,13 +1,14 @@
 import * as vscode from 'vscode';
 import Groq from 'groq-sdk';
-import { ConversationEntry } from '../../types/conversationHistory';
+import type {
+  ChatCompletionCreateParamsNonStreaming,
+  ChatCompletionCreateParamsStreaming,
+  ChatCompletionMessageParam,
+} from 'groq-sdk/src/resources/chat/completions';
+
+import { ConversationEntry } from '../../types';
 import { AbstractLanguageModelService } from './abstractLanguageModelService';
 import SettingsManager from '../../api/settingsManager';
-import {
-  type ChatCompletionCreateParamsNonStreaming,
-  type ChatCompletionCreateParamsStreaming,
-} from 'groq-sdk/src/resources/chat/completions';
-import ChatCompletionMessageParam = Groq.Chat.Completions.ChatCompletionMessageParam;
 
 export class GroqService extends AbstractLanguageModelService {
   private apiKey: string;
@@ -77,7 +78,7 @@ export class GroqService extends AbstractLanguageModelService {
     entries: { [key: string]: ConversationEntry },
     query: string,
   ): ChatCompletionMessageParam[] {
-    const result: Groq.Chat.Completions.ChatCompletionMessageParam[] = [];
+    const result: ChatCompletionMessageParam[] = [];
     let currentEntry = entries[this.history.current];
 
     while (currentEntry) {

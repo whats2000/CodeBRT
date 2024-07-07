@@ -1,8 +1,5 @@
 import * as vscode from 'vscode';
-import {
-  ExtensionSettings,
-  CustomModelSettings,
-} from '../types/extensionSettings';
+import type { ExtensionSettings, CustomModelSettings } from '../types';
 
 class SettingsManager {
   private static instance: SettingsManager;

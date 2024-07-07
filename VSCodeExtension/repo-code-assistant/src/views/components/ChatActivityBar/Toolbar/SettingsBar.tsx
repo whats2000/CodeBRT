@@ -10,7 +10,7 @@ import {
   Button,
 } from 'antd';
 
-import { ExtensionSettings } from '../../../../types/extensionSettings';
+import type { ExtensionSettings } from '../../../../types';
 import { WebviewContext } from '../../../WebviewContext';
 import type { Color } from 'antd/es/color-picker/color';
 

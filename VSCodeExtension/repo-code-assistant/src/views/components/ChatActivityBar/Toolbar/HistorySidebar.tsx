@@ -3,12 +3,12 @@ import styled from 'styled-components';
 import { Drawer, Menu, Typography, Input, Spin, Flex, Button } from 'antd';
 import { DeleteOutlined } from '@ant-design/icons';
 
-import { WebviewContext } from '../../../WebviewContext';
-import { ModelType } from '../../../../types/modelType';
-import {
+import type {
   ConversationHistory,
   ConversationHistoryList,
-} from '../../../../types/conversationHistory';
+  ModelType,
+} from '../../../../types';
+import { WebviewContext } from '../../../WebviewContext';
 
 const StyledDrawer = styled(Drawer)`
   & .ant-drawer-header {

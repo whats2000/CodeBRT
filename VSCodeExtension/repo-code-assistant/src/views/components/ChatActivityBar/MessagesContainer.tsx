@@ -11,12 +11,12 @@ import {
 } from '@ant-design/icons';
 import { Button, Space, Spin, Typography, theme, Input, Flex } from 'antd';
 
-import { WebviewContext } from '../../WebviewContext';
-import {
+import type {
   ConversationEntry,
   ConversationHistory,
-} from '../../../types/conversationHistory';
-import { ModelType } from '../../../types/modelType';
+  ModelType,
+} from '../../../types';
+import { WebviewContext } from '../../WebviewContext';
 import { TypingAnimation } from '../common/TypingAnimation';
 import { fadeIn, fadeOut } from '../../styles/animation';
 
