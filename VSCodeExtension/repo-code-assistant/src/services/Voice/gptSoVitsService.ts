@@ -141,7 +141,6 @@ export class GptSoVitsApiService extends AbstractVoiceService {
           );
         });
         this.voicePlaybackQueue = [];
-        this.shouldStopPlayback = false;
         break;
       }
 
