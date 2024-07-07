@@ -8,10 +8,19 @@ import {
   CopyFilled,
   CopyOutlined,
   EditOutlined,
-  LoadingOutlined,
+  PauseCircleOutlined,
   SoundOutlined,
 } from '@ant-design/icons';
-import { Button, Space, Spin, Typography, theme, Input, Flex } from 'antd';
+import {
+  Button,
+  Space,
+  Spin,
+  Typography,
+  theme,
+  Input,
+  Flex,
+  Tooltip,
+} from 'antd';
 
 import { WebviewContext } from '../../WebviewContext';
 import {
@@ -130,6 +139,7 @@ export const MessagesContainer: React.FC<MessagesContainerProps> = ({
   const [editedMessage, setEditedMessage] = useState('');
   const [imageUrls, setImageUrls] = useState<Record<string, string>>({});
   const [isAudioPlaying, setIsAudioPlaying] = useState(false);
+  const [isStopAudio, setIsStopAudio] = useState(false);
 
   const { callApi } = useContext(WebviewContext);
   const { token } = useToken();
@@ -249,10 +259,17 @@ export const MessagesContainer: React.FC<MessagesContainerProps> = ({
   );
 
   const handleConvertTextToVoice = (text: string) => {
+    if (isAudioPlaying) {
+      setIsStopAudio(true);
+      callApi('stopPlayVoice', 'gptSoVits').catch(console.error);
+      return;
+    }
+
     setIsAudioPlaying(true);
     callApi('convertTextToVoice', 'gptSoVits', text)
       .then(() => {
         setIsAudioPlaying(false);
+        setIsStopAudio(false);
       })
       .catch((error: any) => {
         callApi(
@@ -261,6 +278,7 @@ export const MessagesContainer: React.FC<MessagesContainerProps> = ({
           'error',
         ).catch(console.error);
         setIsAudioPlaying(false);
+        setIsStopAudio(false);
       });
   };
 
@@ -314,18 +332,26 @@ export const MessagesContainer: React.FC<MessagesContainerProps> = ({
                       <ArrowRightOutlined />
                     </Button>
                   )}
-                  <Button
-                    icon={
-                      isAudioPlaying ? (
-                        <LoadingOutlined spin />
-                      ) : (
-                        <SoundOutlined />
-                      )
+                  <Tooltip
+                    title={
+                      isAudioPlaying
+                        ? 'Stop audio, these will take a few seconds in current version'
+                        : ''
                     }
-                    type={'text'}
-                    onClick={() => handleConvertTextToVoice(entry.message)}
-                    disabled={isAudioPlaying}
-                  />
+                  >
+                    <Button
+                      icon={
+                        isAudioPlaying ? (
+                          <PauseCircleOutlined />
+                        ) : (
+                          <SoundOutlined />
+                        )
+                      }
+                      type={'text'}
+                      onClick={() => handleConvertTextToVoice(entry.message)}
+                      disabled={isStopAudio}
+                    />
+                  </Tooltip>
                   {messages.root !== entry.id && messages.root !== '' && (
                     <Button
                       icon={<EditOutlined />}

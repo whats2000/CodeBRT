@@ -24,4 +24,10 @@ export abstract class AbstractVoiceService implements VoiceService {
 
     return Promise.resolve('');
   }
+
+  public async stopVoice(): Promise<void> {
+    vscode.window
+      .showInformationMessage('Stop voice is not supported in this service')
+      .then();
+  }
 }

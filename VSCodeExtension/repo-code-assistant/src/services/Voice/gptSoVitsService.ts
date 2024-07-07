@@ -18,6 +18,7 @@ export class GptSoVitsApiService extends AbstractVoiceService {
   private voicePlaybackQueue: string[] = [];
   private isTextToVoiceProcessing: boolean = false;
   private isVoicePlaying: boolean = false;
+  private shouldStopPlayback: boolean = false;
 
   constructor(
     context: vscode.ExtensionContext,
@@ -163,6 +164,11 @@ export class GptSoVitsApiService extends AbstractVoiceService {
         return;
       }
 
+      if (this.shouldStopPlayback) {
+        this.isTextToVoiceProcessing = false;
+        return;
+      }
+
       const voicePath = await this.saveVoice(response as Uint8Array);
 
       this.voicePlaybackQueue.push(voicePath);
@@ -180,6 +186,17 @@ export class GptSoVitsApiService extends AbstractVoiceService {
     this.isVoicePlaying = true;
 
     while (this.voicePlaybackQueue.length > 0) {
+      if (this.shouldStopPlayback) {
+        this.voicePlaybackQueue.forEach((filePath) => {
+          fs.unlink(filePath).catch((error) => {
+            console.error(`Failed to delete voice file: ${error}`);
+          });
+        });
+        this.voicePlaybackQueue = [];
+        this.shouldStopPlayback = false;
+        break;
+      }
+
       const voicePath = this.voicePlaybackQueue.shift()!;
 
       try {
@@ -198,6 +215,8 @@ export class GptSoVitsApiService extends AbstractVoiceService {
   }
 
   public async textToVoice(text: string): Promise<void> {
+    this.shouldStopPlayback = false;
+
     return new Promise<void>((resolve, reject) => {
       const textChunks = this.splitTextIntoChunks(
         this.removeCodeReferences(text),
@@ -214,6 +233,14 @@ export class GptSoVitsApiService extends AbstractVoiceService {
         })
         .catch(reject);
     });
+  }
+
+  /**
+   * Stop the voice playback and clear the queues
+   */
+  public async stopVoice(): Promise<void> {
+    this.shouldStopPlayback = true;
+    this.textToVoiceQueue = [];
   }
 
   /**

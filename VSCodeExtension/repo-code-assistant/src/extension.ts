@@ -461,6 +461,24 @@ export const activate = async (ctx: vscode.ExtensionContext) => {
       // TODO: Record voice
       return 'Recorded voice as text';
     },
+    stopPlayVoice: async (voiceServiceType) => {
+      if (voiceServiceType === 'not set') {
+        vscode.window.showErrorMessage(
+          'You have not selected a voice service for voice playback, go to settings to select one',
+        );
+        return;
+      }
+
+      const voiceService = voiceServices[voiceServiceType].service;
+      if (!voiceService) {
+        vscode.window.showErrorMessage(
+          `Failed to stop voice playback for unknown voice service type: ${voiceServiceType}`,
+        );
+        return;
+      }
+
+      await voiceService.stopVoice();
+    },
     switchGptSoVitsReferenceVoice: async (voiceName) => {
       const voiceService = voiceServices.gptSoVits
         .service as GptSoVitsApiService;

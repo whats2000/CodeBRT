@@ -14,4 +14,9 @@ export type VoiceService = {
    * @returns A promise that resolves to text data in string format.
    */
   voiceToText: (voicePath: string) => Promise<string>;
+
+  /**
+   * Stops the voice playback and clears the queues.
+   */
+  stopVoice: () => Promise<void>;
 };

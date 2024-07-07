@@ -276,6 +276,12 @@ export type ViewApi = {
   convertVoiceToText: (voiceServiceType: VoiceType) => Promise<string>;
 
   /**
+   * Stop the voice which is being played.
+   * @param voiceServiceType - The type of the voice service to stop.
+   */
+  stopPlayVoice: (voiceServiceType: VoiceType) => void;
+
+  /**
    * Switch the reference voice for GPT-SoVits.
    * @param voiceName - The name of the reference voice to switch to.
    */
