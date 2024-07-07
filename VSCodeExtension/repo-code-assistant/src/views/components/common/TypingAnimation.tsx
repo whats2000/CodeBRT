@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import ReactMarkdown from 'react-markdown';
+
 import { RendererCode } from './RenderCode';
 
 export const TypingAnimation = ({

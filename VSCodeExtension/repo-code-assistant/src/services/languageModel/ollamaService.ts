@@ -1,9 +1,9 @@
 import * as vscode from 'vscode';
 import fs from 'fs';
-import { ChatResponse, Message } from 'ollama/src/interfaces';
-import { Ollama, Options } from 'ollama';
+import type { ChatResponse, Message, Options } from 'ollama';
+import { Ollama } from 'ollama';
 
-import { ConversationEntry } from '../../types/conversationHistory';
+import type { ConversationEntry } from '../../types';
 import { AbstractLanguageModelService } from './abstractLanguageModelService';
 import SettingsManager from '../../api/settingsManager';
 

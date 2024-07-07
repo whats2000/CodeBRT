@@ -3,9 +3,10 @@ import axios from 'axios';
 import * as fs from 'fs';
 import * as path from 'path';
 import FormData from 'form-data';
+
+import type { ConversationEntry } from '../../types';
 import { AbstractLanguageModelService } from './abstractLanguageModelService';
 import SettingsManager from '../../api/settingsManager';
-import { ConversationEntry } from '../../types/conversationHistory';
 
 export class CustomApiService extends AbstractLanguageModelService {
   private apiUrl: string;

@@ -1,21 +1,10 @@
 import React, { useContext, useEffect, useState } from 'react';
-import {
-  Drawer,
-  Form,
-  Input,
-  Button,
-  Select,
-  Checkbox,
-  Space,
-  Collapse,
-  List,
-} from 'antd';
-import { WebviewContext } from '../../../WebviewContext';
-import { CustomModelSettings } from '../../../../types/extensionSettings';
-import { ModelType } from '../../../../types/modelType';
+import { Drawer } from 'antd';
 
-const { Option } = Select;
-const { Panel } = Collapse;
+import type { CustomModelSettings, ModelType } from '../../../../types';
+import { WebviewContext } from '../../../WebviewContext';
+import { ModelForm } from './EditModelListBar/ModelForm';
+import { CustomModelForm } from './EditModelListBar/CustomModelForm';
 
 interface EditModelListBarProps {
   isOpen: boolean;
@@ -33,10 +22,10 @@ export const EditModelListBar: React.FC<EditModelListBarProps> = ({
   const { callApi } = useContext(WebviewContext);
   const [customModels, setCustomModels] = useState<CustomModelSettings[]>([]);
   const [availableModels, setAvailableModels] = useState<string[]>([]);
-  const [isModelListLoading, setIsModelListLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
-    setIsModelListLoading(true);
+    setIsLoading(true);
     if (activeModel === 'loading...') return;
 
     if (isOpen) {
@@ -44,7 +33,7 @@ export const EditModelListBar: React.FC<EditModelListBarProps> = ({
         callApi('getCustomModels')
           .then((models: CustomModelSettings[]) => {
             setCustomModels(models);
-            setIsModelListLoading(false);
+            setIsLoading(false);
           })
           .catch((error: any) => {
             callApi(
@@ -52,13 +41,13 @@ export const EditModelListBar: React.FC<EditModelListBarProps> = ({
               `Failed to load custom models: ${error}`,
               'error',
             ).catch(console.error);
-            setIsModelListLoading(false);
+            setIsLoading(false);
           });
       } else {
         callApi('getAvailableModels', activeModel)
           .then((models: string[]) => {
             setAvailableModels(models);
-            setIsModelListLoading(false);
+            setIsLoading(false);
           })
           .catch((error: any) => {
             callApi(
@@ -66,98 +55,11 @@ export const EditModelListBar: React.FC<EditModelListBarProps> = ({
               `Failed to load available models: ${error}`,
               'error',
             ).catch(console.error);
-            setIsModelListLoading(false);
+            setIsLoading(false);
           });
       }
     }
   }, [isOpen, activeModel]);
-
-  const handleSave = () => {
-    if (activeModel === 'loading...') return;
-
-    if (activeModel === 'custom') {
-      callApi('setCustomModels', customModels)
-        .then(() => {
-          callApi(
-            'alertMessage',
-            'Custom models saved successfully',
-            'info',
-          ).catch(console.error);
-          handleEditModelListSave(customModels.map((model) => model.name));
-          onClose();
-        })
-        .catch((error: any) => {
-          callApi(
-            'alertMessage',
-            `Failed to save custom models: ${error}`,
-            'error',
-          ).catch(console.error);
-        });
-    } else {
-      callApi('setAvailableModels', activeModel, availableModels)
-        .then(() => {
-          callApi(
-            'alertMessage',
-            'Available models saved successfully',
-            'info',
-          ).catch(console.error);
-          handleEditModelListSave(availableModels);
-          onClose();
-        })
-        .catch((error: any) => {
-          callApi(
-            'alertMessage',
-            `Failed to save available models: ${error}`,
-            'error',
-          ).catch(console.error);
-        });
-    }
-  };
-
-  const handleAddModel = () => {
-    setCustomModels([
-      ...customModels,
-      {
-        name: '',
-        apiUrl: '',
-        apiMethod: 'POST',
-        apiTextParam: '',
-        apiImageParam: '',
-        apiQueryParam: '',
-        includeQueryInHistory: true,
-      },
-    ]);
-  };
-
-  const handleModelChange = (
-    index: number,
-    field: keyof CustomModelSettings,
-    value: string | boolean,
-  ) => {
-    const updatedModels = [...customModels];
-    updatedModels[index][field] = value as never;
-    setCustomModels(updatedModels);
-  };
-
-  const handleRemoveModel = (index: number) => {
-    const updatedModels = customModels.filter((_, i) => i !== index);
-    setCustomModels(updatedModels);
-  };
-
-  const handleAvailableModelChange = (index: number, value: string) => {
-    const updatedModels = [...availableModels];
-    updatedModels[index] = value;
-    setAvailableModels(updatedModels);
-  };
-
-  const handleAddAvailableModel = () => {
-    setAvailableModels([...availableModels, '']);
-  };
-
-  const handleRemoveAvailableModel = (index: number) => {
-    const updatedModels = availableModels.filter((_, i) => i !== index);
-    setAvailableModels(updatedModels);
-  };
 
   return (
     <Drawer
@@ -166,139 +68,24 @@ export const EditModelListBar: React.FC<EditModelListBarProps> = ({
       open={isOpen}
       onClose={onClose}
       width={400}
-      loading={isModelListLoading}
+      loading={isLoading}
     >
       {activeModel === 'custom' ? (
-        <Form layout='vertical'>
-          <Space direction='vertical' style={{ width: '100%' }}>
-            <Collapse bordered={false} size={'large'}>
-              {customModels.map((model, index) => (
-                <Panel
-                  header={model.name || 'New Model'}
-                  key={index.toString()}
-                  extra={
-                    <Button danger onClick={() => handleRemoveModel(index)}>
-                      Remove
-                    </Button>
-                  }
-                >
-                  <Form.Item label='Name'>
-                    <Input
-                      value={model.name}
-                      onChange={(e) =>
-                        handleModelChange(index, 'name', e.target.value)
-                      }
-                    />
-                  </Form.Item>
-                  <Form.Item label='API URL'>
-                    <Input
-                      value={model.apiUrl}
-                      onChange={(e) =>
-                        handleModelChange(index, 'apiUrl', e.target.value)
-                      }
-                    />
-                  </Form.Item>
-                  <Form.Item label='API Method'>
-                    <Select
-                      value={model.apiMethod}
-                      onChange={(value) =>
-                        handleModelChange(index, 'apiMethod', value)
-                      }
-                    >
-                      <Option value='GET'>GET</Option>
-                      <Option value='POST'>POST</Option>
-                    </Select>
-                  </Form.Item>
-                  <Form.Item label='Text Parameter'>
-                    <Input
-                      value={model.apiTextParam}
-                      onChange={(e) =>
-                        handleModelChange(index, 'apiTextParam', e.target.value)
-                      }
-                    />
-                  </Form.Item>
-                  <Form.Item label='Image Parameter'>
-                    <Input
-                      value={model.apiImageParam}
-                      onChange={(e) =>
-                        handleModelChange(
-                          index,
-                          'apiImageParam',
-                          e.target.value,
-                        )
-                      }
-                    />
-                  </Form.Item>
-                  <Form.Item label='Query Parameter'>
-                    <Input
-                      value={model.apiQueryParam}
-                      onChange={(e) =>
-                        handleModelChange(
-                          index,
-                          'apiQueryParam',
-                          e.target.value,
-                        )
-                      }
-                    />
-                  </Form.Item>
-                  <Form.Item label='Include Query in History'>
-                    <Checkbox
-                      checked={model.includeQueryInHistory}
-                      onChange={(e) =>
-                        handleModelChange(
-                          index,
-                          'includeQueryInHistory',
-                          e.target.checked,
-                        )
-                      }
-                    />
-                  </Form.Item>
-                </Panel>
-              ))}
-            </Collapse>
-            <Button type='dashed' onClick={handleAddModel} block>
-              Add Model
-            </Button>
-            <Button type='primary' onClick={handleSave} block>
-              Save
-            </Button>
-          </Space>
-        </Form>
+        <CustomModelForm
+          activeModel={activeModel}
+          customModels={customModels}
+          setCustomModels={setCustomModels}
+          handleEditModelListSave={handleEditModelListSave}
+          onClose={onClose}
+        />
       ) : (
-        <Form layout='vertical'>
-          <Space direction='vertical' style={{ width: '100%' }}>
-            <List
-              dataSource={availableModels}
-              renderItem={(model, index) => (
-                <List.Item
-                  actions={[
-                    <Button
-                      danger
-                      onClick={() => handleRemoveAvailableModel(index)}
-                    >
-                      Remove
-                    </Button>,
-                  ]}
-                >
-                  <Form.Item label={`Model ${index + 1}`}>
-                    <Input
-                      value={model}
-                      onChange={(e) =>
-                        handleAvailableModelChange(index, e.target.value)
-                      }
-                    />
-                  </Form.Item>
-                </List.Item>
-              )}
-            />
-            <Button type='dashed' onClick={handleAddAvailableModel} block>
-              Add Model
-            </Button>
-            <Button type='primary' onClick={handleSave} block>
-              Save
-            </Button>
-          </Space>
-        </Form>
+        <ModelForm
+          activeModel={activeModel}
+          availableModels={availableModels}
+          setAvailableModels={setAvailableModels}
+          handleEditModelListSave={handleEditModelListSave}
+          onClose={onClose}
+        />
       )}
     </Drawer>
   );

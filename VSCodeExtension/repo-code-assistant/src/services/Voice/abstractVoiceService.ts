@@ -1,7 +1,7 @@
-import { VoiceService } from '../../types/voiceService';
 import { Promise } from 'promise-deferred';
 import * as vscode from 'vscode';
 
+import { VoiceService } from '../../types';
 import SettingsManager from '../../api/settingsManager';
 import path from 'node:path';
 import fs from 'node:fs/promises';

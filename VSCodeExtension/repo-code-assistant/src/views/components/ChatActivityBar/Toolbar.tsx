@@ -5,15 +5,14 @@ import {
   HistoryOutlined,
   SettingOutlined,
 } from '@ant-design/icons';
+import styled from 'styled-components';
 
-import { ModelType } from '../../../types/modelType';
-import { ConversationHistory } from '../../../types/conversationHistory';
+import { ConversationHistory, ModelType } from '../../../types';
 import { WebviewContext } from '../../WebviewContext';
+import { EditModelListBar } from './Toolbar/EditModelListBar';
 import { HistorySidebar } from './Toolbar/HistorySidebar';
 import { SettingsBar } from './Toolbar/SettingsBar';
 import { VoiceSettingsBar } from './Toolbar/VoiceSettingsBar';
-import styled from 'styled-components';
-import { EditModelListBar } from './Toolbar/EditModelListBar';
 
 const { Option } = Select;
 

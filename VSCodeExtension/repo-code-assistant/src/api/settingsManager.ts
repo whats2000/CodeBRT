@@ -1,9 +1,10 @@
 import * as vscode from 'vscode';
-import {
+
+import type {
   ExtensionSettings,
   CustomModelSettings,
   GptSoVitsVoiceSetting,
-} from '../types/extensionSettings';
+} from '../types';
 
 class SettingsManager {
   private static instance: SettingsManager;
