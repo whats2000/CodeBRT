@@ -1,6 +1,5 @@
 import axios, { AxiosResponse } from 'axios';
 import vscode from 'vscode';
-import path from 'node:path';
 import fs from 'node:fs/promises';
 
 import SettingsManager from '../../api/settingsManager';
@@ -12,7 +11,6 @@ export class GptSoVitsApiService extends AbstractVoiceService {
   private referWavPath: string = '';
   private referText: string = '';
   private promptLanguage: string = '';
-  private readonly ctx: vscode.ExtensionContext;
   private readonly settingsListener: vscode.Disposable;
   private textToVoiceQueue: string[] = [];
   private voicePlaybackQueue: string[] = [];
@@ -25,12 +23,11 @@ export class GptSoVitsApiService extends AbstractVoiceService {
     context: vscode.ExtensionContext,
     settingsManager: SettingsManager,
   ) {
-    super(settingsManager);
+    super(context, settingsManager);
 
     this.updateSettings();
 
     this.clientHost = settingsManager.get('gptSoVitsClientHost');
-    this.ctx = context;
     this.soundPlayer = new SoundPlay();
 
     // Listen for settings changes
@@ -96,57 +93,6 @@ export class GptSoVitsApiService extends AbstractVoiceService {
       console.error('Error during API call:', (error as Error).message);
       return `Error during API call: ${(error as Error).message}`;
     }
-  }
-
-  private async saveVoice(voice: Uint8Array): Promise<string> {
-    const mediaDir = path.join(this.ctx.extensionPath, 'media');
-
-    // Create the media directory if it does not exist
-    try {
-      await fs.mkdir(mediaDir, { recursive: true });
-    } catch (error) {
-      throw new Error('Failed to create media directory: ' + error);
-    }
-
-    // Generate a unique filename to avoid conflicts
-    const filename = path.join(mediaDir, `converted_voice_${Date.now()}.wav`);
-
-    try {
-      await fs.writeFile(filename, voice);
-    } catch (error) {
-      throw new Error('Failed to write image file: ' + error);
-    }
-
-    return filename;
-  }
-
-  private removeCodeReferences(text: string): string {
-    return text.replace(/```[\s\S]*?```/g, '');
-  }
-
-  private preprocessText(text: string): string {
-    text = text.replace(/#+/g, '');
-    text = text.replace(/[*+-]/g, '');
-    text = text.replace(/\[.*?]\(.*?\)/g, '');
-    text = text.replace(/(\*\*|__)(.*?)\1/g, '$2');
-    text = text.replace(/([*_])(.*?)\1/g, '$2');
-    text = text.replace(/~~(.*?)~~/g, '$1');
-    text = text.replace(/`{1,3}([^`]*)`{1,3}/g, '$1');
-    text = text.replace(/!\[.*?]\(.*?\)/g, '');
-    text = text.replace(/^>+\s?/gm, '');
-    text = text.replace(/\n/g, ' ').trim();
-    return text;
-  }
-
-  private splitTextIntoChunks(text: string, chunkSize: number = 4): string[] {
-    const sentences = text.split(
-      /(?<!\w\.\w.)(?<![A-Z][a-z]\.)(?<=[。.?！])\s/g,
-    );
-    const chunks = [];
-    for (let i = 0; i < sentences.length; i += chunkSize) {
-      chunks.push(sentences.slice(i, i + chunkSize).join(' '));
-    }
-    return chunks;
   }
 
   private async processTextToVoiceQueue(): Promise<void> {
@@ -240,9 +186,6 @@ export class GptSoVitsApiService extends AbstractVoiceService {
     });
   }
 
-  /**
-   * Stop the voice playback and clear the queues
-   */
   public async stopVoice(): Promise<void> {
     this.shouldStopPlayback = true;
     this.textToVoiceQueue = [];
