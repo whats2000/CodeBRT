@@ -75,12 +75,18 @@ export abstract class AbstractVoiceService implements VoiceService {
    * Splits the given text into chunks of the specified size.
    * @param text - The text to split.
    * @param chunkSize - The size of each chunk.
+   * @param sentenceEndings - A regular expression to match sentence endings.
    * @returns An array of text chunks.
    */
-  protected splitTextIntoChunks(text: string, chunkSize: number = 4): string[] {
-    const sentences = text.split(
-      /(?<!\w\.\w.)(?<![A-Z][a-z]\.)(?<=[。.?！])\s/g,
-    );
+  protected splitTextIntoChunks(
+    text: string,
+    chunkSize: number = 4,
+    sentenceEndings: RegExp = /(?<=[.!?。！？])/,
+  ): string[] {
+    const sentences = text
+      .split(sentenceEndings)
+      .map((sentence) => sentence.trim())
+      .filter((sentence) => sentence.length > 0);
     const chunks = [];
     for (let i = 0; i < sentences.length; i += chunkSize) {
       chunks.push(sentences.slice(i, i + chunkSize).join(' '));

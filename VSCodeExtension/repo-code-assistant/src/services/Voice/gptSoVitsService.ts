@@ -104,7 +104,7 @@ export class GptSoVitsApiService extends AbstractVoiceService {
 
     while (this.textToVoiceQueue.length > 0) {
       const textChunk = this.textToVoiceQueue.shift()!;
-      const response = await this.sendRequest(this.preprocessText(textChunk));
+      const response = await this.sendRequest(textChunk);
 
       if (typeof response === 'string') {
         vscode.window.showErrorMessage(response);
@@ -170,7 +170,8 @@ export class GptSoVitsApiService extends AbstractVoiceService {
     return new Promise<void>((resolve, reject) => {
       const textChunks = this.splitTextIntoChunks(
         this.removeCodeReferences(text),
-      );
+      ).map((chunk) => this.preprocessText(chunk));
+
       this.textToVoiceQueue.push(...textChunks);
       this.processTextToVoiceQueue()
         .then(() => {
