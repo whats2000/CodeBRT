@@ -1,9 +1,14 @@
-import { CustomModelSettings, ExtensionSettings } from './extensionSettings';
+import {
+  CustomModelSettings,
+  ExtensionSettings,
+  GptSoVitsVoiceSetting,
+} from './extensionSettings';
 import {
   ConversationHistory,
   ConversationHistoryList,
 } from './conversationHistory';
 import { ModelType } from './modelType';
+import { VoiceType } from './voiceType';
 
 /**
  * Represents the API request structure for the view.
@@ -53,18 +58,18 @@ export type ViewApi = {
   getFileContents: () => Promise<string>;
 
   /**
-   * Update the settings of the extension.
-   * @param key - The key of the setting to update.
+   * Set the target setting of the extension.
+   * @param key - The key of the setting to set.
    * @param value - The new value of the setting.
    * @returns A promise that resolves when the setting is updated.
    */
-  updateSetting: (
+  setSetting: (
     key: keyof ExtensionSettings,
     value: ExtensionSettings[typeof key],
   ) => Promise<void>;
 
   /**
-   * Get the settings of the extension.
+   * Get the target setting of the extension.
    * @param key - The key of the setting to get.
    * @returns The value of the setting.
    */
@@ -130,18 +135,6 @@ export type ViewApi = {
    * @param msg - The message chunk to add.
    */
   sendStreamResponse: (msg: string) => void;
-
-  /**
-   * Save the last used model.
-   * @param modelType - The type of the model to save.
-   */
-  saveLastUsedModel: (modelType: ModelType) => void;
-
-  /**
-   * Get the last used model.
-   * @returns The last used model.
-   */
-  getLastUsedModel: () => ModelType;
 
   /**
    * Add a conversation entry to the conversation history for a language model.
@@ -259,22 +252,45 @@ export type ViewApi = {
   getCustomModels: () => CustomModelSettings[];
 
   /**
-   * Add a custom model.
-   * @param model - The custom model settings to add.
-   */
-  addCustomModel: (model: CustomModelSettings) => void;
-
-  /**
    * Set the custom models settings list.
    * @param newCustomModelSettings - The new custom model settings.
    */
   setCustomModels: (newCustomModelSettings: CustomModelSettings[]) => void;
 
   /**
-   * Add a custom model.
-   * @param modelName - The name of the custom model.
+   * Convert text to voice and play it.
+   * @param voiceServiceType - The type of the voice service to use.
+   * @param text - The text to convert to voice.
    */
-  deleteCustomModel: (modelName: string) => void;
+  convertTextToVoice: (
+    voiceServiceType: VoiceType,
+    text: string,
+  ) => Promise<void>;
+
+  /**
+   * Start recording voice.
+   * After recording, the voice will be converted to text.
+   * @param voiceServiceType - The type of the voice service to use.
+   * @returns The recorded voice as text.
+   */
+  convertVoiceToText: (voiceServiceType: VoiceType) => Promise<string>;
+
+  /**
+   * Stop the voice which is being played.
+   * @param voiceServiceType - The type of the voice service to stop.
+   */
+  stopPlayVoice: (voiceServiceType: VoiceType) => void;
+
+  /**
+   * Switch the reference voice for GPT-SoVits.
+   * @param voiceName - The name of the reference voice to switch to.
+   */
+  switchGptSoVitsReferenceVoice: (voiceName: string) => void;
+
+  /**
+   * Get the selected reference voice for GPT-SoVits.
+   */
+  getSelectedGptSoVitsReferenceVoice: () => GptSoVitsVoiceSetting | undefined;
 };
 
 /**

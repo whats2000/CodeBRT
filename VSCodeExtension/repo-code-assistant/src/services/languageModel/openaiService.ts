@@ -2,14 +2,14 @@ import * as vscode from 'vscode';
 import OpenAI from 'openai';
 import fs from 'fs';
 import path from 'path';
-import {
+import type {
   ChatCompletionMessageParam,
   ChatCompletionContentPartImage,
   ChatCompletionCreateParamsStreaming,
   ChatCompletionCreateParamsNonStreaming,
-} from 'openai/src/resources/chat/completions';
+} from 'openai/resources';
 
-import { ConversationEntry } from '../../types/conversationHistory';
+import type { ConversationEntry } from '../../types';
 import { AbstractLanguageModelService } from './abstractLanguageModelService';
 import SettingsManager from '../../api/settingsManager';
 
@@ -72,7 +72,7 @@ export class OpenAIService extends AbstractLanguageModelService {
     entries: { [key: string]: ConversationEntry },
     query: string,
   ): ChatCompletionMessageParam[] {
-    const result: OpenAI.Chat.Completions.ChatCompletionMessageParam[] = [];
+    const result: ChatCompletionMessageParam[] = [];
     let currentEntry = entries[this.history.current];
 
     while (currentEntry) {

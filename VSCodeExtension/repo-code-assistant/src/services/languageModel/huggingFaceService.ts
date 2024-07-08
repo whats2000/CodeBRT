@@ -1,9 +1,10 @@
 import * as vscode from 'vscode';
+import type { ChatCompletionInputMessage } from '@huggingface/tasks/src/tasks/chat-completion/inference';
+import { HfInference } from '@huggingface/inference';
+
+import type { ConversationEntry } from '../../types';
 import { AbstractLanguageModelService } from './abstractLanguageModelService';
 import SettingsManager from '../../api/settingsManager';
-import { ConversationEntry } from '../../types/conversationHistory';
-import { HfInference } from '@huggingface/inference';
-import { ChatCompletionInputMessage } from '@huggingface/tasks/src/tasks/chat-completion/inference';
 
 export class HuggingFaceService extends AbstractLanguageModelService {
   private apiKey: string;

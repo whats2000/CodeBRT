@@ -10,9 +10,10 @@ import {
   Button,
 } from 'antd';
 
-import { ExtensionSettings } from '../../../../types/extensionSettings';
+import type { ExtensionSettings } from '../../../../types';
 import { WebviewContext } from '../../../WebviewContext';
 import type { Color } from 'antd/es/color-picker/color';
+import { ModelType } from '../../../../types/modelType';
 
 const StyledForm = styled(Form)`
   display: flex;
@@ -29,32 +30,28 @@ const CheckboxGroup = styled.div`
   gap: 10px;
 `;
 
-interface SettingSidebarProps {
+type SettingSidebarProps = {
   isOpen: boolean;
   onClose: () => void;
-}
+};
 
 export const SettingsBar: React.FC<SettingSidebarProps> = ({
   isOpen,
   onClose,
 }) => {
   const { callApi } = useContext(WebviewContext);
-  const [settings, setSettings] = useState<ExtensionSettings>({
-    lastUsedModel: 'gemini',
-    selectedCustomModel: '',
-    customModels: [],
+  const [partialSettings, setPartialSettings] = useState<
+    Partial<ExtensionSettings> & {
+      enableModel: { [key in ModelType]: boolean };
+    }
+  >({
     groqApiKey: '',
-    groqAvailableModels: [],
     geminiApiKey: '',
-    geminiAvailableModels: [],
     openaiApiKey: '',
-    openaiAvailableModels: [],
     cohereApiKey: '',
-    cohereAvailableModels: [],
     huggingFaceApiKey: '',
-    huggingFaceAvailableModels: [],
     ollamaClientHost: '',
-    ollamaAvailableModels: [],
+    gptSoVitsClientHost: '',
     enableModel: {
       gemini: false,
       openai: false,
@@ -68,35 +65,44 @@ export const SettingsBar: React.FC<SettingSidebarProps> = ({
     themeAlgorithm: 'defaultAlgorithm',
     themeBorderRadius: 4,
   });
-  const [settingBarLoading, setSettingBarLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
     if (isOpen) {
-      setSettingBarLoading(true);
-      Object.keys(settings).forEach((key) => {
-        callApi('getSetting', key as keyof typeof settings)
-          .then((value: any) => {
-            if (key === 'enableModel' && Object.keys(value).length === 0) {
-              value = settings.enableModel;
-            }
-            setSettings((prev) => ({ ...prev, [key]: value }));
-            setSettingBarLoading(false);
-          })
-          .catch((e) => {
-            console.error(`Failed to fetch setting ${key}:`, e);
-            setSettingBarLoading(false);
-          });
+      setIsLoading(true);
+
+      // Create an array of promises for the API calls
+      const promises = Object.keys(partialSettings).map(async (key) => {
+        try {
+          let value = await callApi(
+            'getSetting',
+            key as keyof typeof partialSettings,
+          );
+          if (key === 'enableModel' && Object.keys(value).length === 0) {
+            value = partialSettings.enableModel;
+          }
+          setPartialSettings((prev) => ({ ...prev, [key]: value }));
+        } catch (e) {
+          console.error(`Failed to fetch setting ${key}:`, e);
+        }
+      });
+
+      // Use Promise.all to wait for all API calls to complete
+      Promise.all(promises).finally(() => {
+        setIsLoading(false);
       });
     }
   }, [isOpen]);
 
   const handleSettingChange =
     (
-      key: keyof Partial<ExtensionSettings> | keyof typeof settings.enableModel,
+      key:
+        | keyof Partial<ExtensionSettings>
+        | keyof typeof partialSettings.enableModel,
     ) =>
     (event: any) => {
-      if (key in settings.enableModel) {
-        setSettings((prev) => ({
+      if (key in partialSettings.enableModel) {
+        setPartialSettings((prev) => ({
           ...prev,
           enableModel: {
             ...prev.enableModel,
@@ -104,70 +110,76 @@ export const SettingsBar: React.FC<SettingSidebarProps> = ({
           },
         }));
         saveSettings({
-          ...settings,
+          ...partialSettings,
           enableModel: {
-            ...settings.enableModel,
+            ...partialSettings.enableModel,
             [key]: event.target.checked,
           },
         });
       } else {
-        setSettings((prev) => ({ ...prev, [key]: event.target.value }));
+        setPartialSettings((prev) => ({ ...prev, [key]: event.target.value }));
       }
     };
 
   const handleBlurSave = () => {
-    saveSettings(settings);
+    saveSettings(partialSettings);
   };
 
   const handleColorChange = (color: Color) => {
-    setSettings((prev) => ({
+    setPartialSettings((prev) => ({
       ...prev,
       themePrimaryColor: color.toHexString(),
     }));
-    saveSettings({ ...settings, themePrimaryColor: color.toHexString() });
+    saveSettings({
+      ...partialSettings,
+      themePrimaryColor: color.toHexString(),
+    });
   };
 
   const handleAlgorithmChange = (
     value: 'darkAlgorithm' | 'defaultAlgorithm' | 'compactAlgorithm',
   ) => {
-    setSettings((prev) => ({ ...prev, themeAlgorithm: value }));
-    saveSettings({ ...settings, themeAlgorithm: value });
+    setPartialSettings((prev) => ({ ...prev, themeAlgorithm: value }));
+    saveSettings({ ...partialSettings, themeAlgorithm: value });
   };
 
   const handleBorderRadiusChange = (
     event: React.ChangeEvent<HTMLInputElement>,
   ) => {
     const value = parseInt(event.target.value);
-    setSettings((prev) => ({ ...prev, themeBorderRadius: value }));
-    saveSettings({ ...settings, themeBorderRadius: value });
+    setPartialSettings((prev) => ({ ...prev, themeBorderRadius: value }));
+    saveSettings({ ...partialSettings, themeBorderRadius: value });
   };
 
   const resetTheme = () => {
-    setSettings((prev) => ({
+    setPartialSettings((prev) => ({
       ...prev,
       themePrimaryColor: '#f1f1f1',
       themeAlgorithm: 'darkAlgorithm',
       themeBorderRadius: 4,
     }));
     saveSettings({
-      ...settings,
+      ...partialSettings,
       themePrimaryColor: '#f1f1f1',
       themeAlgorithm: 'darkAlgorithm',
       themeBorderRadius: 4,
     });
   };
 
-  const saveSettings = (updatedSettings: ExtensionSettings) => {
-    Object.entries(updatedSettings).forEach(([key, value]) => {
-      callApi('updateSetting', key as keyof ExtensionSettings, value).catch(
-        (e) =>
-          callApi(
-            'alertMessage',
-            `Failed to save settings: ${e.message}`,
-            'error',
-          ),
-      );
-    });
+  const saveSettings = (
+    updatedSettings: Partial<ExtensionSettings> & {
+      enableModel: { [key in ModelType]: boolean };
+    },
+  ) => {
+    Object.entries(updatedSettings).map(([key, value]) =>
+      callApi('setSetting', key as keyof ExtensionSettings, value).catch((e) =>
+        callApi(
+          'alertMessage',
+          `Failed to save settings: ${e.message}`,
+          'error',
+        ),
+      ),
+    );
   };
 
   return (
@@ -177,10 +189,13 @@ export const SettingsBar: React.FC<SettingSidebarProps> = ({
       onClose={onClose}
       placement='left'
       width={400}
-      loading={settingBarLoading}
+      loading={isLoading}
     >
-      <StyledForm layout='vertical' onFinish={() => saveSettings(settings)}>
-        {Object.entries(settings).map(([key, value]) => {
+      <StyledForm
+        layout='vertical'
+        onFinish={() => saveSettings(partialSettings)}
+      >
+        {Object.entries(partialSettings).map(([key, value]) => {
           if (key === 'enableModel') {
             return (
               <FormGroup
@@ -197,7 +212,7 @@ export const SettingsBar: React.FC<SettingSidebarProps> = ({
                       checked={modelValue}
                       onChange={(event) => {
                         handleSettingChange(
-                          modelKey as keyof typeof settings.enableModel,
+                          modelKey as keyof typeof partialSettings.enableModel,
                         )(event);
                       }}
                     >
@@ -218,7 +233,9 @@ export const SettingsBar: React.FC<SettingSidebarProps> = ({
               >
                 <Input.Password
                   value={(value as string) || ''}
-                  onChange={handleSettingChange(key as keyof typeof settings)}
+                  onChange={handleSettingChange(
+                    key as keyof typeof partialSettings,
+                  )}
                   onBlur={handleBlurSave}
                 />
               </FormGroup>

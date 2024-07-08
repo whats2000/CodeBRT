@@ -3,8 +3,7 @@ import styled from 'styled-components';
 import { v4 as uuidv4 } from 'uuid';
 import { Content } from 'antd/es/layout/layout';
 
-import { ConversationHistory } from '../../types/conversationHistory';
-import { ModelType } from '../../types/modelType';
+import { ConversationHistory, ModelType } from '../../types';
 import { WebviewContext } from '../WebviewContext';
 import { Toolbar } from './ChatActivityBar/Toolbar';
 import { InputContainer } from './ChatActivityBar/InputContainer';
@@ -104,7 +103,7 @@ export const ChatActivityBar = () => {
   useEffect(() => {
     if (activeModel === 'loading...') return;
 
-    callApi('saveLastUsedModel', activeModel).catch((error) =>
+    callApi('setSetting', 'lastUsedModel', activeModel).catch((error) =>
       callApi(
         'alertMessage',
         `Failed to save last used model: ${error}`,
@@ -131,7 +130,7 @@ export const ChatActivityBar = () => {
 
   useEffect(() => {
     setIsActiveModelLoading(true);
-    callApi('getLastUsedModel')
+    callApi('getSetting', 'lastUsedModel')
       .then((lastUsedModel) => {
         if (lastUsedModel) {
           setActiveModel(lastUsedModel as ModelType);

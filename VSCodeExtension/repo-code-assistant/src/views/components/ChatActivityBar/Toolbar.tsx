@@ -1,18 +1,18 @@
 import React, { useContext, useEffect, useState } from 'react';
-import { Select, Button, Space, Drawer } from 'antd';
+import { Select, Button, Space, Dropdown, Drawer, MenuProps } from 'antd';
 import {
   PlusOutlined,
   HistoryOutlined,
   SettingOutlined,
 } from '@ant-design/icons';
+import styled from 'styled-components';
 
-import { ModelType } from '../../../types/modelType';
-import { ConversationHistory } from '../../../types/conversationHistory';
+import { ConversationHistory, ModelType } from '../../../types';
 import { WebviewContext } from '../../WebviewContext';
+import { EditModelListBar } from './Toolbar/EditModelListBar';
 import { HistorySidebar } from './Toolbar/HistorySidebar';
 import { SettingsBar } from './Toolbar/SettingsBar';
-import styled from 'styled-components';
-import { EditModelListBar } from './Toolbar/EditModelListBar';
+import { VoiceSettingsBar } from './Toolbar/VoiceSettingsBar';
 
 const { Option } = Select;
 
@@ -60,6 +60,7 @@ export const Toolbar: React.FC<ToolbarProps> = ({
   const [selectedModel, setSelectedModel] = useState<string>('');
   const [isHistorySidebarOpen, setIsHistorySidebarOpen] = useState(false);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+  const [isVoiceSettingsOpen, setIsVoiceSettingsOpen] = useState(false);
   const [isOffCanvas, setIsOffCanvas] = useState(false);
   const [isSelectModelOpen, setIsSelectModelOpen] = useState(false);
   const [isEditModelListOpen, setIsEditModelListOpen] = useState(false);
@@ -141,13 +142,6 @@ export const Toolbar: React.FC<ToolbarProps> = ({
     }
   };
 
-  const toggleSettings = () => {
-    setIsSettingsOpen(!isSettingsOpen);
-    if (isHistorySidebarOpen) {
-      setIsHistorySidebarOpen(false);
-    }
-  };
-
   const openEditModelList = () => {
     setIsEditModelListOpen(true);
   };
@@ -161,7 +155,32 @@ export const Toolbar: React.FC<ToolbarProps> = ({
       setSelectedModel('');
       return;
     }
+
+    if (!newAvailableModels.includes(selectedModel)) {
+      callApi('switchModel', activeModel, newAvailableModels[0])
+        .then(() => setSelectedModel(newAvailableModels[0]))
+        .catch((error) =>
+          callApi(
+            'alertMessage',
+            `Failed to switch model: ${error}`,
+            'error',
+          ).catch(console.error),
+        );
+    }
   };
+
+  const settingMenuItems: MenuProps['items'] = [
+    {
+      key: 'general',
+      onClick: () => setIsSettingsOpen(true),
+      label: 'General Settings',
+    },
+    {
+      key: 'voice',
+      onClick: () => setIsVoiceSettingsOpen(true),
+      label: 'Voice Settings',
+    },
+  ];
 
   return (
     <>
@@ -262,7 +281,9 @@ export const Toolbar: React.FC<ToolbarProps> = ({
         <Space>
           <Button icon={<HistoryOutlined />} onClick={toggleHistorySidebar} />
           <Button icon={<PlusOutlined />} onClick={createNewChat} />
-          <Button icon={<SettingOutlined />} onClick={toggleSettings} />
+          <Dropdown menu={{ items: settingMenuItems }}>
+            <Button icon={<SettingOutlined />} />
+          </Dropdown>
         </Space>
       </StyledSpace>
       <HistorySidebar
@@ -272,7 +293,14 @@ export const Toolbar: React.FC<ToolbarProps> = ({
         activeModel={activeModel}
         setMessages={setMessages}
       />
-      <SettingsBar isOpen={isSettingsOpen} onClose={toggleSettings} />
+      <SettingsBar
+        isOpen={isSettingsOpen}
+        onClose={() => setIsSettingsOpen(false)}
+      />
+      <VoiceSettingsBar
+        isOpen={isVoiceSettingsOpen}
+        onClose={() => setIsVoiceSettingsOpen(false)}
+      />
       <EditModelListBar
         isOpen={isEditModelListOpen}
         onClose={() => setIsEditModelListOpen(false)}

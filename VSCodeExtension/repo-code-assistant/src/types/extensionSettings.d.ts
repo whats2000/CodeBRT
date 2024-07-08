@@ -1,4 +1,27 @@
 import { ModelType } from './modelType';
+import { VoiceType } from './voiceType';
+
+export type GptSoVitsVoiceSetting = {
+  /**
+   * The name of the voice setting.
+   */
+  name: string;
+
+  /**
+   * The path to the WAV file.
+   */
+  referWavPath: string;
+
+  /**
+   * The text reference of the WAV file.
+   */
+  referText: string;
+
+  /**
+   * The language spoken in the WAV file.
+   */
+  promptLanguage: string;
+};
 
 /**
  * Represents the settings for a custom API model.
@@ -103,6 +126,10 @@ export type ExtensionSettings = {
    * The available models for the Ollama API.
    */
   ollamaAvailableModels: string[];
+  /**
+   * The selected reference voice for the GPT-SoVits API.
+   */
+  selectedGptSoVitsReferenceVoice: string;
 
   /**
    * Determines if the model is enabled for code generation.
@@ -125,6 +152,26 @@ export type ExtensionSettings = {
    * The name of the currently selected custom model.
    */
   selectedCustomModel: string;
+
+  /**
+   * The selected text-to-voice service.
+   */
+  selectedTextToVoiceService: VoiceType;
+
+  /**
+   * The selected voice-to-text service.
+   */
+  selectedVoiceToTextService: VoiceType;
+
+  /**
+   * The APIUrl for the GPT-SoVits model.
+   */
+  gptSoVitsClientHost: string;
+
+  /**
+   * The available reference voices for the GPT-SoVits API.
+   */
+  gptSoVitsAvailableReferenceVoices: GptSoVitsVoiceSetting[];
 
   /**
    * The primary color for the Ant Design theme.

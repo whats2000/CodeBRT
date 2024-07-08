@@ -4,13 +4,13 @@ import { v4 as uuidv4 } from 'uuid';
 
 import * as vscode from 'vscode';
 
-import {
+import type {
   ConversationHistory,
   ConversationEntry,
   ConversationHistoryList,
-} from '../../types/conversationHistory';
+  LanguageModelService,
+} from '../../types';
 import SettingsManager from '../../api/settingsManager';
-import { LanguageModelService } from '../../types/languageModelService';
 
 /**
  * Abstract class for the Language Model Service

@@ -1,6 +1,5 @@
 import fs from 'node:fs/promises';
 import path from 'node:path';
-
 import * as vscode from 'vscode';
 
 import { ViewKey } from './views';
@@ -28,6 +27,8 @@ import { GroqService } from './services/languageModel/groqService';
 import { HuggingFaceService } from './services/languageModel/huggingFaceService';
 import { OllamaService } from './services/languageModel/ollamaService';
 import { CustomApiService } from './services/languageModel/customApiService';
+import { LoadedVoiceService } from './types/voiceType';
+import { GptSoVitsApiService } from './services/Voice/gptSoVitsService';
 
 export const activate = async (ctx: vscode.ExtensionContext) => {
   const connectedViews: Partial<Record<ViewKey, vscode.WebviewView>> = {};
@@ -63,6 +64,12 @@ export const activate = async (ctx: vscode.ExtensionContext) => {
     custom: {
       service: new CustomApiService(ctx, settingsManager, customModelNames),
       enabled: settingsManager.get('enableModel').custom,
+    },
+  };
+
+  const voiceServices: LoadedVoiceService = {
+    gptSoVits: {
+      service: new GptSoVitsApiService(ctx, settingsManager),
     },
   };
 
@@ -104,7 +111,7 @@ export const activate = async (ctx: vscode.ExtensionContext) => {
 
       return await fs.readFile(uris[0].fsPath, 'utf-8');
     },
-    updateSetting: async (
+    setSetting: async (
       key: keyof ExtensionSettings,
       value: ExtensionSettings[typeof key],
     ) => {
@@ -212,12 +219,6 @@ export const activate = async (ctx: vscode.ExtensionContext) => {
     },
     sendStreamResponse: (msg: string) => {
       triggerEvent('streamResponse', msg);
-    },
-    saveLastUsedModel: (modelType: ModelType) => {
-      settingsManager.set('lastUsedModel', modelType);
-    },
-    getLastUsedModel: () => {
-      return settingsManager.get('lastUsedModel');
     },
     addConversationEntry: async (
       modelType: ModelType,
@@ -420,14 +421,78 @@ export const activate = async (ctx: vscode.ExtensionContext) => {
     getCustomModels: () => {
       return settingsManager.get('customModels');
     },
-    addCustomModel: (model: CustomModelSettings) => {
-      settingsManager.addCustomModel(model);
-    },
     setCustomModels: (newCustomModelSettings: CustomModelSettings[]) => {
       settingsManager.set('customModels', newCustomModelSettings);
     },
-    deleteCustomModel: (modelName: string) => {
-      settingsManager.deleteCustomModel(modelName);
+    convertTextToVoice: async (voiceServiceType, text) => {
+      if (voiceServiceType === 'not set') {
+        vscode.window.showErrorMessage(
+          'You have not selected a voice service for text to voice conversion, go to settings to select one',
+        );
+        return;
+      }
+
+      const voiceService = voiceServices[voiceServiceType].service;
+      if (!voiceService) {
+        vscode.window.showErrorMessage(
+          `Failed to convert text to voice for unknown voice service type: ${voiceServiceType}`,
+        );
+        return;
+      }
+
+      await voiceService.textToVoice(text);
+    },
+    convertVoiceToText: async (voiceServiceType) => {
+      if (voiceServiceType === 'not set') {
+        vscode.window.showErrorMessage(
+          'You have not selected a voice service for voice to text conversion, go to settings to select one',
+        );
+        return '';
+      }
+
+      const voiceService = voiceServices[voiceServiceType].service;
+      if (!voiceService) {
+        vscode.window.showErrorMessage(
+          `Failed to convert voice to text for unknown voice service type: ${voiceServiceType}`,
+        );
+        return '';
+      }
+
+      // TODO: Record voice
+      return 'Recorded voice as text';
+    },
+    stopPlayVoice: async (voiceServiceType) => {
+      if (voiceServiceType === 'not set') {
+        vscode.window.showErrorMessage(
+          'You have not selected a voice service for voice playback, go to settings to select one',
+        );
+        return;
+      }
+
+      const voiceService = voiceServices[voiceServiceType].service;
+      if (!voiceService) {
+        vscode.window.showErrorMessage(
+          `Failed to stop voice playback for unknown voice service type: ${voiceServiceType}`,
+        );
+        return;
+      }
+
+      await voiceService.stopVoice();
+    },
+    switchGptSoVitsReferenceVoice: async (voiceName) => {
+      const voiceService = voiceServices.gptSoVits
+        .service as GptSoVitsApiService;
+      if (!voiceService) {
+        vscode.window.showErrorMessage(
+          `Failed to switch voice for GPT-SoVits service`,
+        );
+        return;
+      }
+
+      await voiceService.switchVoice(voiceName);
+    },
+    getSelectedGptSoVitsReferenceVoice: () => {
+      return settingsManager.getSelectedGptSoVitsReferenceVoice();
     },
   };
 

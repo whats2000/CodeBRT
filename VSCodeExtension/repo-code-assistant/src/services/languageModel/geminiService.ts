@@ -1,14 +1,13 @@
 import * as vscode from 'vscode';
 import fs from 'fs';
+import type { Content, InlineDataPart } from '@google/generative-ai';
 import {
-  Content,
   GoogleGenerativeAI,
   HarmBlockThreshold,
   HarmCategory,
-  InlineDataPart,
 } from '@google/generative-ai';
 
-import { ConversationEntry } from '../../types/conversationHistory';
+import type { ConversationEntry } from '../../types';
 import { AbstractLanguageModelService } from './abstractLanguageModelService';
 import SettingsManager from '../../api/settingsManager';
 

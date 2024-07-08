@@ -1,8 +1,10 @@
 import * as vscode from 'vscode';
-import {
+
+import type {
   ExtensionSettings,
   CustomModelSettings,
-} from '../types/extensionSettings';
+  GptSoVitsVoiceSetting,
+} from '../types';
 
 class SettingsManager {
   private static instance: SettingsManager;
@@ -40,7 +42,7 @@ class SettingsManager {
     );
   }
 
-  // Custom models
+  // For Custom models
   public getCustomModels(): CustomModelSettings[] {
     return this.get('customModels') || [];
   }
@@ -52,27 +54,31 @@ class SettingsManager {
     );
   }
 
-  public addCustomModel(model: CustomModelSettings): void {
-    const customModels = this.getCustomModels();
-    customModels.push(model);
-    this.set('customModels', customModels).then();
-  }
-
-  public deleteCustomModel(modelName: string): void {
-    let customModels = this.getCustomModels();
-    customModels = customModels.filter((m) => m.name !== modelName);
-    this.set('customModels', customModels).then(() => {
-      const selectedModel = this.get('selectedCustomModel');
-      if (selectedModel === modelName) {
-        this.set('selectedCustomModel', '').then();
-      }
-    });
-  }
-
   public selectCustomModel(modelName: string): void {
     const customModels = this.getCustomModels();
     if (customModels.find((m) => m.name === modelName)) {
       this.set('selectedCustomModel', modelName).then();
+    }
+  }
+
+  // For Custom voice reference settings
+  public getGptSoVitsAvailableReferenceVoices(): GptSoVitsVoiceSetting[] {
+    return this.get('gptSoVitsAvailableReferenceVoices') || [];
+  }
+
+  public getSelectedGptSoVitsReferenceVoice():
+    | GptSoVitsVoiceSetting
+    | undefined {
+    const selectedVoiceName = this.get('selectedGptSoVitsReferenceVoice');
+    return this.getGptSoVitsAvailableReferenceVoices().find(
+      (voice) => voice.name === selectedVoiceName,
+    );
+  }
+
+  public selectGptSoVitsReferenceVoice(voiceName: string): void {
+    const voices = this.getGptSoVitsAvailableReferenceVoices();
+    if (voices.find((v) => v.name === voiceName)) {
+      this.set('selectedGptSoVitsReferenceVoice', voiceName).then();
     }
   }
 
@@ -111,6 +117,11 @@ class SettingsManager {
       lastUsedModel: 'gemini',
       customModels: [],
       selectedCustomModel: '',
+      selectedVoiceToTextService: 'not set',
+      selectedTextToVoiceService: 'not set',
+      gptSoVitsClientHost: '',
+      gptSoVitsAvailableReferenceVoices: [],
+      selectedGptSoVitsReferenceVoice: '',
       themePrimaryColor: '#f0f0f0',
       themeAlgorithm: 'darkAlgorithm',
       themeBorderRadius: 4,

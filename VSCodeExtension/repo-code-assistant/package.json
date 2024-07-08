@@ -55,6 +55,7 @@
     "react-syntax-highlighter": "^15.5.0",
     "styled-components": "^6.1.8",
     "swc-loader": "^0.2.3",
+    "terminate": "^2.8.0",
     "typescript": "^5.2.2",
     "uuid": "^9.0.1",
     "webpack": "^5.89.0",
@@ -186,7 +187,7 @@
         },
         "repo-code-assistant.ollamaClientHost": {
           "type": "string",
-          "default": "http://localhost:11434",
+          "default": "http://127.0.0.1:11434",
           "description": "Ollama client host",
           "markdownDescription": "Host for Ollama client"
         },
@@ -299,6 +300,57 @@
           "default": "",
           "description": "Selected custom model"
         },
+        "repo-code-assistant.selectedTextToVoiceService": {
+          "type": "string",
+          "default": "not set",
+          "description": "Selected text-to-voice service"
+        },
+        "repo-code-assistant.selectedVoiceToTextService": {
+          "type": "string",
+          "default": "not set",
+          "description": "Selected voice-to-text service"
+        },
+        "repo-code-assistant.gptSoVitsClientHost": {
+          "type": "string",
+          "default": "http://127.0.0.1:9880/",
+          "description": "GPT-SoVits client host",
+          "markdownDescription": "Host for GPT-SoVits client"
+        },
+        "repo-code-assistant.gptSoVitsAvailableReferenceVoices": {
+          "type": "array",
+          "description": "Available reference voices setting for GPT-SoVits",
+          "items": {
+            "type": "object",
+            "properties": {
+              "name": {
+                "type": "string",
+                "description": "The name of the voice setting."
+              },
+              "referWavPath": {
+                "type": "string",
+                "description": "The path to the WAV file."
+              },
+              "referText": {
+                "type": "string",
+                "description": "The text reference of the WAV file."
+              },
+              "promptLanguage": {
+                "type": "string",
+                "description": "The language spoken in the WAV file.",
+                "enum": [
+                  "en",
+                  "zh",
+                  "ja"
+                ]
+              }
+            }
+          }
+        },
+        "repo-code-assistant.selectedGptSoVitsReferenceVoice": {
+          "type": "string",
+          "default": "",
+          "description": "Selected reference voice setting for GPT-SoVits"
+        },
         "repo-code-assistant.themePrimaryColor": {
           "type": "string",
           "default": "#f0f0f0",
@@ -353,6 +405,7 @@
     "openai": "^4.47.1",
     "react-markdown": "^9.0.1",
     "react-syntax-highlighter": "^15.5.0",
-    "styled-components": "^6.1.8"
+    "styled-components": "^6.1.8",
+    "terminate": "^2.8.0"
   }
 }
