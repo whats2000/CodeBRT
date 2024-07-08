@@ -1,5 +1,6 @@
 import { ModelType } from './modelType';
 import { VoiceType } from './voiceType';
+import type * as hljs from 'react-syntax-highlighter/dist/cjs/styles/hljs';
 
 export type GptSoVitsVoiceSetting = {
   /**
@@ -187,4 +188,6 @@ export type ExtensionSettings = {
    * The border radius for the Ant Design theme.
    */
   themeBorderRadius: number;
+
+  hljsTheme: keyof typeof hljs;
 };

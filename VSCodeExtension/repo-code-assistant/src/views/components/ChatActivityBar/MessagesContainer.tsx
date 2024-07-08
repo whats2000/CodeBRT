@@ -1,6 +1,6 @@
 import React, { useContext, useEffect, useState } from 'react';
 import ReactMarkdown from 'react-markdown';
-import { RendererCode } from '../common/RenderCode';
+import { RendererCode, RendererCodeProvider } from '../common/RenderCode';
 import styled from 'styled-components';
 import {
   ArrowLeftOutlined,
@@ -22,6 +22,7 @@ import {
   Flex,
   Tooltip,
 } from 'antd';
+import * as hljs from 'react-syntax-highlighter/dist/cjs/styles/hljs';
 
 import type {
   ConversationEntry,
@@ -141,6 +142,9 @@ export const MessagesContainer: React.FC<MessagesContainerProps> = ({
   const [imageUrls, setImageUrls] = useState<Record<string, string>>({});
   const [isAudioPlaying, setIsAudioPlaying] = useState(false);
   const [isStopAudio, setIsStopAudio] = useState(false);
+  const [partialSettings, setPartialSettings] = useState<{
+    hljsTheme: keyof typeof hljs;
+  }>({ hljsTheme: 'darcula' });
 
   const { callApi } = useContext(WebviewContext);
   const { token } = useToken();
@@ -160,6 +164,20 @@ export const MessagesContainer: React.FC<MessagesContainerProps> = ({
 
     loadImageUrls().then();
   }, [messages.entries, callApi]);
+
+  useEffect(() => {
+    Object.keys(partialSettings).map(async (key) => {
+      try {
+        let value = await callApi(
+          'getSetting',
+          key as keyof typeof partialSettings,
+        );
+        setPartialSettings((prev) => ({ ...prev, [key]: value }));
+      } catch (e) {
+        console.error(`Failed to fetch setting ${key}:`, e);
+      }
+    });
+  }, []);
 
   const handleCopy = (text: string, entryId: string) => {
     navigator.clipboard
@@ -283,6 +301,17 @@ export const MessagesContainer: React.FC<MessagesContainerProps> = ({
       });
   };
 
+  const setHljsTheme = (theme: keyof typeof hljs) => {
+    setPartialSettings((prev) => ({ ...prev, hljsTheme: theme }));
+    callApi('setSetting', 'hljsTheme', theme).catch((error) =>
+      callApi(
+        'alertMessage',
+        `Failed to set hljs theme: ${error}`,
+        'error',
+      ).catch(console.error),
+    );
+  };
+
   return (
     <>
       {isActiveModelLoading && (
@@ -403,12 +432,21 @@ export const MessagesContainer: React.FC<MessagesContainerProps> = ({
                         message={entry.message}
                         isLoading={isLoading}
                         scrollToBottom={scrollToBottom}
+                        hljsTheme={partialSettings.hljsTheme}
+                        setHljsTheme={setHljsTheme}
                       />
                     ) : (
-                      <ReactMarkdown
-                        components={RendererCode}
-                        children={entry.message}
-                      />
+                      <RendererCodeProvider
+                        value={{
+                          hljsTheme: partialSettings.hljsTheme,
+                          setHljsTheme: setHljsTheme,
+                        }}
+                      >
+                        <ReactMarkdown
+                          components={RendererCode}
+                          children={entry.message}
+                        />
+                      </RendererCodeProvider>
                     )}
                   </MessageText>
                   {entry.images &&

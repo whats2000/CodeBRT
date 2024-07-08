@@ -9,11 +9,10 @@ import {
   ColorPicker,
   Button,
 } from 'antd';
-
-import type { ExtensionSettings } from '../../../../types';
-import { WebviewContext } from '../../../WebviewContext';
 import type { Color } from 'antd/es/color-picker/color';
-import { ModelType } from '../../../../types/modelType';
+
+import type { ExtensionSettings, ModelType } from '../../../../types';
+import { WebviewContext } from '../../../WebviewContext';
 
 const StyledForm = styled(Form)`
   display: flex;

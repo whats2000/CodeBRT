@@ -1,9 +1,9 @@
 import React, { useContext, useEffect, useState } from 'react';
 import { Drawer, Form, Select, Button } from 'antd';
+
+import type { ExtensionSettings, VoiceType } from '../../../../types';
 import { WebviewContext } from '../../../WebviewContext';
-import { VoiceType } from '../../../../types/voiceType';
 import { GptSoVitsSettingsBar } from './VoiceSettingsBar/GptSoVitsSettingsBar';
-import { ExtensionSettings } from '../../../../types/extensionSettings';
 
 const { Option } = Select;
 

@@ -189,17 +189,17 @@ export const Toolbar: React.FC<ToolbarProps> = ({
           {isOffCanvas ? (
             <>
               <Select
+                showSearch
                 value={activeModel}
                 onChange={handleModelServiceChange}
                 style={{ width: 100 }}
                 loading={isActiveModelLoading}
-              >
-                {modelServices.map((service) => (
-                  <Option key={service} value={service}>
-                    {service}
-                  </Option>
-                ))}
-              </Select>
+                options={modelServices.map((service) => ({
+                  key: service,
+                  label: service,
+                  value: service,
+                }))}
+              />
               <Button onClick={() => setIsSelectModelOpen(true)}>
                 {selectedModel}
               </Button>
@@ -239,42 +239,46 @@ export const Toolbar: React.FC<ToolbarProps> = ({
           ) : (
             <>
               <Select
+                showSearch
                 value={activeModel}
                 onChange={handleModelServiceChange}
                 style={{ width: 150 }}
                 loading={isActiveModelLoading}
-              >
-                {modelServices.map((service) => (
-                  <Option key={service} value={service}>
-                    {service}
-                  </Option>
-                ))}
-              </Select>
+                options={modelServices.map((service) => ({
+                  key: service,
+                  label: service,
+                  value: service,
+                }))}
+              />
               <Select
+                showSearch
                 value={isActiveModelLoading ? 'Loading...' : selectedModel}
                 onChange={handleModelChange}
                 style={{ width: 200 }}
                 loading={isActiveModelLoading}
-              >
-                {availableModels.map((model) => (
-                  <Option key={model} value={model}>
-                    {model}
-                  </Option>
-                ))}
-                <Option
-                  value='edit'
-                  style={{ paddingLeft: 0, paddingRight: 0 }}
-                  disabled
-                >
-                  <EditModelListButton
-                    icon={<SettingOutlined />}
-                    onClick={openEditModelList}
-                    style={{ width: '100%' }}
-                  >
-                    Edit Model List
-                  </EditModelListButton>
-                </Option>
-              </Select>
+                options={[
+                  ...availableModels.map((model) => ({
+                    key: model,
+                    label: model,
+                    value: model,
+                  })),
+                  {
+                    key: 'edit',
+                    label: (
+                      <EditModelListButton
+                        icon={<SettingOutlined />}
+                        onClick={openEditModelList}
+                        style={{ width: '100%' }}
+                      >
+                        Edit Model List
+                      </EditModelListButton>
+                    ),
+                    value: 'edit',
+                    disabled: true,
+                    style: { paddingLeft: 0, paddingRight: 0 },
+                  },
+                ]}
+              />
             </>
           )}
         </Space>

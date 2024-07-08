@@ -22,6 +22,7 @@ const Container = styled(Content)`
 
 export const ChatActivityBar = () => {
   const { callApi, addListener, removeListener } = useContext(WebviewContext);
+
   const [inputMessage, setInputMessage] = useState('');
   const [messages, setMessages] = useState<ConversationHistory>({
     title: '',

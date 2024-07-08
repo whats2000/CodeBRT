@@ -24,6 +24,7 @@ export class OllamaService extends AbstractLanguageModelService {
     const availableModelNames = settingsManager.get(
       'ollamaAvailableModels',
     ) || [
+      'deepseek-coder-v2',
       'llama3',
       'llama3:70b',
       'phi3',
@@ -67,6 +68,7 @@ export class OllamaService extends AbstractLanguageModelService {
         this.availableModelNames = settingsManager.get(
           'ollamaAvailableModels',
         ) || [
+          'deepseek-coder-v2',
           'llama3',
           'llama3:70b',
           'phi3',

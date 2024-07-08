@@ -125,6 +125,7 @@ class SettingsManager {
       themePrimaryColor: '#f0f0f0',
       themeAlgorithm: 'darkAlgorithm',
       themeBorderRadius: 4,
+      hljsTheme: 'darcula',
     };
   }
 }
