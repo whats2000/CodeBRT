@@ -7,16 +7,17 @@ const macPlayCommand = (path: string, volume: number): string =>
   `afplay \"${path}\" -v ${volume}`;
 
 /* WINDOW PLAY COMMANDS */
-const addPresentationCore = `Add-Type -AssemblyName presentationCore;`;
-const createMediaPlayer = `$player = New-Object system.windows.media.mediaplayer;`;
+const addPresentationCore = `Add-Type -AssemblyName PresentationCore;`;
+const createMediaPlayer = `$player = New-Object System.Windows.Media.MediaPlayer;`;
 const loadAudioFile = (path: string): string => `$player.open('${path}');`;
+const waitForDuration = `do { $milliseconds = $player.NaturalDuration.TimeSpan.TotalMilliseconds;} until ($milliseconds);`;
 const playAudio = `$player.Play();`;
-const stopAudio = `Start-Sleep 1; Start-Sleep -s $player.NaturalDuration.TimeSpan.TotalSeconds;Exit;`;
+const stopAudio = `Start-Sleep -Milliseconds $milliseconds; $player.Stop(); $player.Close();exit;`;
 
 const windowPlayCommand = (path: string, volume: number): string =>
-  `powershell -c ${addPresentationCore} ${createMediaPlayer} ${loadAudioFile(
+  `powershell -c "${addPresentationCore} ${createMediaPlayer} ${loadAudioFile(
     path,
-  )} $player.Volume = ${volume}; ${playAudio} ${stopAudio}`;
+  )} $player.Volume = ${volume}; ${waitForDuration} ${playAudio} ${stopAudio}"`;
 
 class SoundPlay {
   private playProcess: ChildProcess | null = null;
@@ -29,6 +30,8 @@ class SoundPlay {
       process.platform === 'darwin'
         ? macPlayCommand(path, volumeAdjustedByOS)
         : windowPlayCommand(path, volumeAdjustedByOS);
+
+    console.log(playCommand);
 
     try {
       this.playProcess = spawn(playCommand, {

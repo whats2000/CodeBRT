@@ -62,7 +62,7 @@ const DeleteButton = styled.button`
 
 const UploadButton = styled(Button)``;
 
-interface InputContainerProps {
+type InputContainerProps = {
   inputMessage: string;
   setInputMessage: (message: string) => void;
   sendMessage: () => void;
@@ -70,7 +70,7 @@ interface InputContainerProps {
   uploadedImages: string[];
   handleImageUpload: (files: FileList | null) => void;
   handleImageRemove: (imagePath: string) => void;
-}
+};
 
 export const InputContainer = ({
   inputMessage,

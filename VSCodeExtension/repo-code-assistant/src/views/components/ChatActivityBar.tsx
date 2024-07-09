@@ -2,13 +2,14 @@ import { useContext, useState, useEffect, useRef } from 'react';
 import styled from 'styled-components';
 import { v4 as uuidv4 } from 'uuid';
 import { Content } from 'antd/es/layout/layout';
+import { ConfigProvider } from 'antd';
 
-import { ConversationHistory, ModelType } from '../../types';
+import type { ConversationHistory, ModelType } from '../../types';
+import { INPUT_MESSAGE_KEY, UPLOADED_IMAGES_KEY } from '../../constants';
 import { WebviewContext } from '../WebviewContext';
 import { Toolbar } from './ChatActivityBar/Toolbar';
 import { InputContainer } from './ChatActivityBar/InputContainer';
 import { MessagesContainer } from './ChatActivityBar/MessagesContainer';
-import { ConfigProvider } from 'antd';
 import { useThemeConfig } from '../hooks/useThemeConfig';
 
 const Container = styled(Content)`
@@ -23,20 +24,25 @@ const Container = styled(Content)`
 export const ChatActivityBar = () => {
   const { callApi, addListener, removeListener } = useContext(WebviewContext);
 
-  const [inputMessage, setInputMessage] = useState('');
-  const [messages, setMessages] = useState<ConversationHistory>({
-    title: '',
-    create_time: 0,
-    update_time: 0,
-    root: '',
-    current: '',
-    entries: {},
-  });
+  const [inputMessage, setInputMessage] = useState(
+    localStorage.getItem(INPUT_MESSAGE_KEY) || '',
+  );
+  const [conversationHistory, setConversationHistory] =
+    useState<ConversationHistory>({
+      title: '',
+      create_time: 0,
+      update_time: 0,
+      root: '',
+      current: '',
+      entries: {},
+    });
   const [isLoading, setIsLoading] = useState(false);
   const [activeModel, setActiveModel] = useState<ModelType | 'loading...'>(
     'loading...',
   );
-  const [uploadedImages, setUploadedImages] = useState<string[]>([]);
+  const [uploadedImages, setUploadedImages] = useState<string[]>(
+    JSON.parse(localStorage.getItem(UPLOADED_IMAGES_KEY) || '[]'),
+  );
   const [isActiveModelLoading, setIsActiveModelLoading] = useState(false);
 
   const messageEndRef = useRef<HTMLDivElement>(null);
@@ -65,9 +71,8 @@ export const ChatActivityBar = () => {
     return position < threshold;
   };
 
-  // Function to handle incoming streamed responses
   const handleStreamResponse = (responseFromMessage: string) => {
-    setMessages((prevMessages) => {
+    setConversationHistory((prevMessages) => {
       const newEntries = { ...prevMessages.entries };
       const currentID = prevMessages.current;
 
@@ -114,7 +119,7 @@ export const ChatActivityBar = () => {
     callApi('getLanguageModelConversationHistory', activeModel)
       .then((history) => {
         if (history) {
-          setMessages(history as ConversationHistory);
+          setConversationHistory(history as ConversationHistory);
         }
       })
       .then(() => {
@@ -148,23 +153,29 @@ export const ChatActivityBar = () => {
       });
   }, []);
 
-  // Function to send messages and handle responses
+  useEffect(() => {
+    localStorage.setItem(INPUT_MESSAGE_KEY, inputMessage);
+  }, [inputMessage]);
+
+  useEffect(() => {
+    localStorage.setItem(UPLOADED_IMAGES_KEY, JSON.stringify(uploadedImages));
+  }, [uploadedImages]);
+
   const sendMessage = async () => {
     if (isLoading) return;
     if (activeModel === 'loading...') return;
     if (!inputMessage.trim()) return;
     setIsLoading(true);
 
-    // Add a user message to conversation history
     const userEntryId = await callApi(
       'addConversationEntry',
       activeModel,
-      messages.current,
+      conversationHistory.current,
       'user',
       inputMessage,
       uploadedImages,
     );
-    setMessages((prevMessages): ConversationHistory => {
+    setConversationHistory((prevMessages): ConversationHistory => {
       const updatedEntries = {
         ...prevMessages.entries,
         [userEntryId]: {
@@ -172,12 +183,12 @@ export const ChatActivityBar = () => {
           role: 'user',
           message: inputMessage,
           images: uploadedImages,
-          parent: messages.current,
+          parent: conversationHistory.current,
           children: [],
         },
       };
 
-      const parentEntry = updatedEntries[messages.current];
+      const parentEntry = updatedEntries[conversationHistory.current];
       if (parentEntry) {
         parentEntry.children = [...parentEntry.children, userEntryId];
       }
@@ -190,9 +201,8 @@ export const ChatActivityBar = () => {
       };
     });
 
-    // Create a temporary AI response entry
     const tempId = `temp-${uuidv4()}`;
-    setMessages((prevMessages) => ({
+    setConversationHistory((prevMessages) => ({
       ...prevMessages,
       entries: {
         ...prevMessages.entries,
@@ -224,7 +234,6 @@ export const ChatActivityBar = () => {
               true,
             )) as string);
 
-      // Add AI response to conversation history and replace the temporary ID
       const aiEntryId = await callApi(
         'addConversationEntry',
         activeModel,
@@ -232,9 +241,8 @@ export const ChatActivityBar = () => {
         'AI',
         responseText,
       );
-      setMessages((prevMessages) => {
+      setConversationHistory((prevMessages) => {
         const newEntries = { ...prevMessages.entries };
-        // Update the temporary AI message entry with the actual AI response
         if (newEntries[tempId]) {
           delete newEntries[tempId];
         }
@@ -274,7 +282,6 @@ export const ChatActivityBar = () => {
     }
   };
 
-  // Function to handle saving an edited user message and generating a new AI response
   const handleEditUserMessageSave = async (
     entryId: string,
     editedMessage: string,
@@ -282,7 +289,7 @@ export const ChatActivityBar = () => {
     if (isLoading) return;
     if (activeModel === 'loading...') return;
 
-    const entry = messages.entries[entryId];
+    const entry = conversationHistory.entries[entryId];
     const newEntryId = await callApi(
       'addConversationEntry',
       activeModel,
@@ -292,7 +299,7 @@ export const ChatActivityBar = () => {
       entry.images,
     );
 
-    setMessages((prevMessages): ConversationHistory => {
+    setConversationHistory((prevMessages): ConversationHistory => {
       const updatedEntries = {
         ...prevMessages.entries,
         [newEntryId]: {
@@ -317,9 +324,8 @@ export const ChatActivityBar = () => {
       };
     });
 
-    // Create a temporary AI response entry
     const tempId = `temp-${uuidv4()}`;
-    setMessages((prevMessages) => ({
+    setConversationHistory((prevMessages) => ({
       ...prevMessages,
       entries: {
         ...prevMessages.entries,
@@ -353,7 +359,6 @@ export const ChatActivityBar = () => {
               newEntryId,
             )) as string);
 
-      // Add AI response to conversation history and replace the temporary ID
       const aiEntryId = await callApi(
         'addConversationEntry',
         activeModel,
@@ -361,9 +366,8 @@ export const ChatActivityBar = () => {
         'AI',
         responseText,
       );
-      setMessages((prevMessages) => {
+      setConversationHistory((prevMessages) => {
         const newEntries = { ...prevMessages.entries };
-        // Update the temporary AI message entry with the actual AI response
         if (newEntries[tempId]) {
           delete newEntries[tempId];
         }
@@ -401,7 +405,6 @@ export const ChatActivityBar = () => {
     }
   };
 
-  // Modified handleImageUpload function
   const handleImageUpload = (files: FileList | null) => {
     if (!(files && files.length > 0)) {
       return;
@@ -413,7 +416,6 @@ export const ChatActivityBar = () => {
       reader.readAsDataURL(file);
       reader.onload = async () => {
         if (reader.result) {
-          // Sending the file data as base64 string
           const fileName = await callApi(
             'uploadImage',
             reader.result as string,
@@ -434,19 +436,19 @@ export const ChatActivityBar = () => {
     <ConfigProvider theme={theme}>
       <Container>
         <Toolbar
-          messages={messages}
+          conversationHistory={conversationHistory}
           activeModel={activeModel}
           isActiveModelLoading={isActiveModelLoading}
           setIsActiveModelLoading={setIsActiveModelLoading}
-          setMessages={setMessages}
+          setConversationHistory={setConversationHistory}
           setActiveModel={setActiveModel}
         />
         <MessagesContainer
-          setMessages={setMessages}
+          conversationHistory={conversationHistory}
+          setConversationHistory={setConversationHistory}
           modelType={activeModel}
           isActiveModelLoading={isActiveModelLoading}
           messagesContainerRef={messagesContainerRef}
-          messages={messages}
           isLoading={isLoading}
           scrollToBottom={scrollToBottom}
           messageEndRef={messageEndRef}

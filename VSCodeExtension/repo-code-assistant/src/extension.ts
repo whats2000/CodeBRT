@@ -2,22 +2,22 @@ import fs from 'node:fs/promises';
 import path from 'node:path';
 import * as vscode from 'vscode';
 
-import { ViewKey } from './views';
-import {
+import type {
+  ConversationHistory,
+  CustomModelSettings,
+  ExtensionSettings,
+  LanguageModelService,
+  LoadedModels,
+  LoadedVoiceService,
+  ModelType,
   ViewApi,
   ViewApiError,
   ViewApiEvent,
   ViewApiRequest,
   ViewApiResponse,
   ViewEvents,
-} from './types/viewApi';
-import {
-  CustomModelSettings,
-  ExtensionSettings,
-} from './types/extensionSettings';
-import { LanguageModelService } from './types/languageModelService';
-import { LoadedModels, ModelType } from './types/modelType';
-import { ConversationHistory } from './types/conversationHistory';
+} from './types';
+import { ViewKey } from './views';
 import { viewRegistration } from './api/viewRegistration';
 import SettingsManager from './api/settingsManager';
 import { GeminiService } from './services/languageModel/geminiService';
@@ -27,7 +27,6 @@ import { GroqService } from './services/languageModel/groqService';
 import { HuggingFaceService } from './services/languageModel/huggingFaceService';
 import { OllamaService } from './services/languageModel/ollamaService';
 import { CustomApiService } from './services/languageModel/customApiService';
-import { LoadedVoiceService } from './types/voiceType';
 import { GptSoVitsApiService } from './services/Voice/gptSoVitsService';
 
 export const activate = async (ctx: vscode.ExtensionContext) => {

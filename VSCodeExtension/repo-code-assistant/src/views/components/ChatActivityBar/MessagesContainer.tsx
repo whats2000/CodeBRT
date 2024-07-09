@@ -91,12 +91,14 @@ const MessageImage = styled.img`
   margin-top: 10px;
 `;
 
-interface MessagesContainerProps {
-  setMessages: React.Dispatch<React.SetStateAction<ConversationHistory>>;
+type MessagesContainerProps = {
+  conversationHistory: ConversationHistory;
+  setConversationHistory: React.Dispatch<
+    React.SetStateAction<ConversationHistory>
+  >;
   modelType: ModelType | 'loading...';
   isActiveModelLoading: boolean;
   messagesContainerRef: React.RefObject<HTMLDivElement>;
-  messages: ConversationHistory;
   isLoading: boolean;
   scrollToBottom: (smooth?: boolean) => void;
   messageEndRef: React.RefObject<HTMLDivElement>;
@@ -104,7 +106,7 @@ interface MessagesContainerProps {
     entryId: string,
     editedMessage: string,
   ) => Promise<void>;
-}
+};
 
 const traverseHistory = (
   entries: { [key: string]: ConversationEntry },
@@ -126,11 +128,11 @@ const traverseHistory = (
 };
 
 export const MessagesContainer: React.FC<MessagesContainerProps> = ({
-  setMessages,
+  conversationHistory,
+  setConversationHistory,
   modelType,
   isActiveModelLoading,
   messagesContainerRef,
-  messages,
   isLoading,
   scrollToBottom,
   messageEndRef,
@@ -152,7 +154,7 @@ export const MessagesContainer: React.FC<MessagesContainerProps> = ({
   useEffect(() => {
     const loadImageUrls = async () => {
       const urls: Record<string, string> = {};
-      for (const entry of Object.values(messages.entries)) {
+      for (const entry of Object.values(conversationHistory.entries)) {
         if (entry.images) {
           for (const image of entry.images) {
             urls[image] = await callApi('getWebviewUri', image);
@@ -163,7 +165,7 @@ export const MessagesContainer: React.FC<MessagesContainerProps> = ({
     };
 
     loadImageUrls().then();
-  }, [messages.entries, callApi]);
+  }, [conversationHistory.entries, callApi]);
 
   useEffect(() => {
     Object.keys(partialSettings).map(async (key) => {
@@ -215,7 +217,7 @@ export const MessagesContainer: React.FC<MessagesContainerProps> = ({
   const handleSaveEdit = async (entryId: string) => {
     if (modelType === 'loading...') return;
 
-    if (messages.entries[entryId].role === 'user') {
+    if (conversationHistory.entries[entryId].role === 'user') {
       await handleEditUserMessageSave(entryId, editedMessage);
     } else {
       callApi(
@@ -225,9 +227,9 @@ export const MessagesContainer: React.FC<MessagesContainerProps> = ({
         editedMessage,
       )
         .then(() => {
-          const updatedEntries = { ...messages.entries };
+          const updatedEntries = { ...conversationHistory.entries };
           updatedEntries[entryId].message = editedMessage;
-          setMessages((prevMessages) => ({
+          setConversationHistory((prevMessages) => ({
             ...prevMessages,
             entries: updatedEntries,
           }));
@@ -245,7 +247,9 @@ export const MessagesContainer: React.FC<MessagesContainerProps> = ({
     entry: ConversationEntry,
     direction: 'next' | 'prev',
   ) => {
-    const parent = entry.parent ? messages.entries[entry.parent] : null;
+    const parent = entry.parent
+      ? conversationHistory.entries[entry.parent]
+      : null;
     if (parent && parent.children.length > 0) {
       const currentIndex = parent.children.indexOf(entry.id);
       let nextIndex = currentIndex;
@@ -258,23 +262,23 @@ export const MessagesContainer: React.FC<MessagesContainerProps> = ({
       }
 
       const nextChildId = parent.children[nextIndex];
-      let nextEntry = messages.entries[nextChildId];
+      let nextEntry = conversationHistory.entries[nextChildId];
 
       // Navigate to the leftmost leaf node
       while (nextEntry.children.length > 0) {
-        nextEntry = messages.entries[nextEntry.children[0]];
+        nextEntry = conversationHistory.entries[nextEntry.children[0]];
       }
 
-      setMessages((prevMessages) => ({
+      setConversationHistory((prevMessages) => ({
         ...prevMessages,
         current: nextEntry.id,
       }));
     }
   };
 
-  const conversationHistory = traverseHistory(
-    messages.entries,
-    messages.current,
+  const conversationHistoryEntries = traverseHistory(
+    conversationHistory.entries,
+    conversationHistory.current,
   );
 
   const handleConvertTextToVoice = (text: string) => {
@@ -323,8 +327,10 @@ export const MessagesContainer: React.FC<MessagesContainerProps> = ({
         $isActiveModelLoading={isActiveModelLoading}
         ref={messagesContainerRef}
       >
-        {conversationHistory.map((entry) => {
-          const parent = entry.parent ? messages.entries[entry.parent] : null;
+        {conversationHistoryEntries.map((entry) => {
+          const parent = entry.parent
+            ? conversationHistory.entries[entry.parent]
+            : null;
           const siblingCount = parent ? parent.children.length : 0;
           const currentIndex = parent
             ? parent.children.indexOf(entry.id) + 1
@@ -384,17 +390,18 @@ export const MessagesContainer: React.FC<MessagesContainerProps> = ({
                       disabled={isStopAudio}
                     />
                   </Tooltip>
-                  {messages.root !== entry.id && messages.root !== '' && (
-                    <Button
-                      icon={<EditOutlined />}
-                      type={'text'}
-                      onClick={() =>
-                        editingEntryId === entry.id
-                          ? handleCancelEdit()
-                          : handleEdit(entry.id, entry.message)
-                      }
-                    />
-                  )}
+                  {conversationHistory.root !== entry.id &&
+                    conversationHistory.root !== '' && (
+                      <Button
+                        icon={<EditOutlined />}
+                        type={'text'}
+                        onClick={() =>
+                          editingEntryId === entry.id
+                            ? handleCancelEdit()
+                            : handleEdit(entry.id, entry.message)
+                        }
+                      />
+                    )}
                   <Button
                     icon={copied[entry.id] ? <CopyFilled /> : <CopyOutlined />}
                     onClick={() => handleCopy(entry.message, entry.id)}
@@ -426,7 +433,7 @@ export const MessagesContainer: React.FC<MessagesContainerProps> = ({
                 <>
                   <MessageText>
                     {entry.role === 'AI' &&
-                    entry.id === messages.current &&
+                    entry.id === conversationHistory.current &&
                     isLoading ? (
                       <TypingAnimation
                         message={entry.message}

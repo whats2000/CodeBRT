@@ -32,20 +32,22 @@ const EditableTitle = styled(Input.TextArea)`
   margin-right: 10px;
 `;
 
-interface HistorySidebarProps {
+type HistorySidebarProps = {
   isOpen: boolean;
   onClose: () => void;
   activeModel: ModelType | 'loading...';
-  messages: ConversationHistory;
-  setMessages: React.Dispatch<React.SetStateAction<ConversationHistory>>;
-}
+  conversationHistory: ConversationHistory;
+  setConversationHistory: React.Dispatch<
+    React.SetStateAction<ConversationHistory>
+  >;
+};
 
 export const HistorySidebar: React.FC<HistorySidebarProps> = ({
   isOpen,
   onClose,
   activeModel,
-  messages,
-  setMessages,
+  conversationHistory,
+  setConversationHistory,
 }) => {
   const { callApi } = useContext(WebviewContext);
   const [histories, setHistories] = useState<ConversationHistoryList>({});
@@ -78,7 +80,7 @@ export const HistorySidebar: React.FC<HistorySidebarProps> = ({
   }, [isOpen, activeModel]);
 
   const switchHistory = (historyID: string) => {
-    if (historyID === messages.root) return;
+    if (historyID === conversationHistory.root) return;
 
     setIsLoading(true);
 
@@ -89,7 +91,7 @@ export const HistorySidebar: React.FC<HistorySidebarProps> = ({
     callApi('switchHistory', activeModel, historyID)
       .then(() => callApi('getLanguageModelConversationHistory', activeModel))
       .then((history) => {
-        setMessages(history);
+        setConversationHistory(history);
         setIsLoading(false);
       })
       .catch((error) => {
@@ -116,7 +118,7 @@ export const HistorySidebar: React.FC<HistorySidebarProps> = ({
           return updatedHistories;
         });
 
-        setMessages(newConversationHistory);
+        setConversationHistory(newConversationHistory);
       })
       .catch((error) =>
         callApi(
@@ -221,7 +223,11 @@ export const HistorySidebar: React.FC<HistorySidebarProps> = ({
           <Typography.Text>Nothing Currently</Typography.Text>
         </NoHistoryMessageContainer>
       ) : (
-        <Menu selectedKeys={[messages.root]} mode='inline' items={items} />
+        <Menu
+          selectedKeys={[conversationHistory.root]}
+          mode='inline'
+          items={items}
+        />
       )}
     </StyledDrawer>
   );

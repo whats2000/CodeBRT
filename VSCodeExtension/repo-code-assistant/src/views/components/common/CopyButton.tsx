@@ -12,10 +12,10 @@ const StyledCopyButton = styled(Button)`
   outline: none;
 `;
 
-interface CopyButtonProps {
+type CopyButtonProps = {
   copied: boolean;
   handleCopy: () => void;
-}
+};
 
 export const CopyButton: React.FC<CopyButtonProps> = ({
   copied,

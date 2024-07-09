@@ -27,23 +27,25 @@ const EditModelListButton = styled(Button)`
   align-items: center;
 `;
 
-interface ToolbarProps {
+type ToolbarProps = {
   activeModel: ModelType | 'loading...';
-  messages: ConversationHistory;
+  conversationHistory: ConversationHistory;
   isActiveModelLoading: boolean;
   setIsActiveModelLoading: React.Dispatch<React.SetStateAction<boolean>>;
-  setMessages: React.Dispatch<React.SetStateAction<ConversationHistory>>;
+  setConversationHistory: React.Dispatch<
+    React.SetStateAction<ConversationHistory>
+  >;
   setActiveModel: React.Dispatch<
     React.SetStateAction<ModelType | 'loading...'>
   >;
-}
+};
 
 export const Toolbar: React.FC<ToolbarProps> = ({
   activeModel,
-  messages,
+  conversationHistory,
   isActiveModelLoading,
   setIsActiveModelLoading,
-  setMessages,
+  setConversationHistory,
   setActiveModel,
 }) => {
   const { callApi } = useContext(WebviewContext);
@@ -103,7 +105,9 @@ export const Toolbar: React.FC<ToolbarProps> = ({
       return;
     }
     callApi('addNewConversationHistory', activeModel)
-      .then((newConversationHistory) => setMessages(newConversationHistory))
+      .then((newConversationHistory) =>
+        setConversationHistory(newConversationHistory),
+      )
       .catch((error) =>
         console.error('Failed to clear conversation history:', error),
       );
@@ -293,9 +297,9 @@ export const Toolbar: React.FC<ToolbarProps> = ({
       <HistorySidebar
         isOpen={isHistorySidebarOpen}
         onClose={toggleHistorySidebar}
-        messages={messages}
+        conversationHistory={conversationHistory}
         activeModel={activeModel}
-        setMessages={setMessages}
+        setConversationHistory={setConversationHistory}
       />
       <SettingsBar
         isOpen={isSettingsOpen}
