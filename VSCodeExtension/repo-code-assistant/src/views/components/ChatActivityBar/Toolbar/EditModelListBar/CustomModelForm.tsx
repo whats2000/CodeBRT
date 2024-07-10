@@ -156,7 +156,7 @@ export const CustomModelForm: React.FC<CustomModelFormProps> = ({
         <Button type='dashed' onClick={handleAddModel} block>
           Add Model
         </Button>
-        <Button type='primary' onClick={handleSave} block>
+        <Button type='primary' ghost={true} onClick={handleSave} block>
           Save
         </Button>
       </Space>

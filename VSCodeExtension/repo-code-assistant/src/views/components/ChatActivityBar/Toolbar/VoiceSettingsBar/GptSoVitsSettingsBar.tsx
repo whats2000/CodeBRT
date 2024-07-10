@@ -1,15 +1,16 @@
 import React, { useContext, useEffect, useState } from 'react';
 import { Drawer, Form, Input, Button, Select, Space, Collapse } from 'antd';
+
+import { GptSoVitsVoiceSetting } from '../../../../../types';
 import { WebviewContext } from '../../../../WebviewContext';
-import { GptSoVitsVoiceSetting } from '../../../../../types/extensionSettings';
 
 const { Panel } = Collapse;
 const { Option } = Select;
 
-interface GptSoVitsSettingsBarProps {
+type GptSoVitsSettingsBarProps = {
   isOpen: boolean;
   onClose: () => void;
-}
+};
 
 export const GptSoVitsSettingsBar: React.FC<GptSoVitsSettingsBarProps> = ({
   isOpen,
@@ -240,7 +241,7 @@ export const GptSoVitsSettingsBar: React.FC<GptSoVitsSettingsBarProps> = ({
           <Button type='dashed' onClick={handleAddVoice} block>
             Add Voice
           </Button>
-          <Button type='primary' onClick={handleSave} block>
+          <Button type='primary' ghost={true} onClick={handleSave} block>
             Save
           </Button>
         </Space>

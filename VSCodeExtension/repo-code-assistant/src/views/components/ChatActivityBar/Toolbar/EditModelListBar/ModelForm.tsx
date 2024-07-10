@@ -88,7 +88,7 @@ export const ModelForm: React.FC<ModelFormProps> = ({
         <Button type='dashed' onClick={handleAddAvailableModel} block>
           Add Model
         </Button>
-        <Button type='primary' onClick={handleSave} block>
+        <Button type='primary' ghost={true} onClick={handleSave} block>
           Save
         </Button>
       </Space>
