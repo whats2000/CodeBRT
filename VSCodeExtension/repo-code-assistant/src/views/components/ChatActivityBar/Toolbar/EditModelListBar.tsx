@@ -22,7 +22,7 @@ export const EditModelListBar: React.FC<EditModelListBarProps> = ({
   const { callApi } = useContext(WebviewContext);
   const [customModels, setCustomModels] = useState<CustomModelSettings[]>([]);
   const [availableModels, setAvailableModels] = useState<string[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     setIsLoading(true);

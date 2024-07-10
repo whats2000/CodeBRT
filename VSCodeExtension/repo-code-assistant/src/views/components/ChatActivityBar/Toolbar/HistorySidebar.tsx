@@ -51,7 +51,7 @@ export const HistorySidebar: React.FC<HistorySidebarProps> = ({
 }) => {
   const { callApi } = useContext(WebviewContext);
   const [histories, setHistories] = useState<ConversationHistoryList>({});
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
   const [editingHistoryID, setEditingHistoryID] = useState<string | null>(null);
   const [titleInput, setTitleInput] = useState('');
 

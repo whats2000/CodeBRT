@@ -64,7 +64,7 @@ export const SettingsBar: React.FC<SettingSidebarProps> = ({
     themeAlgorithm: 'defaultAlgorithm',
     themeBorderRadius: 4,
   });
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     if (isOpen) {
