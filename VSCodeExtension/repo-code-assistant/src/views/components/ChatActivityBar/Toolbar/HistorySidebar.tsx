@@ -6,7 +6,7 @@ import { DeleteOutlined } from '@ant-design/icons';
 import type {
   ConversationHistory,
   ConversationHistoryList,
-  ModelType,
+  ModelServiceType,
 } from '../../../../types';
 import { WebviewContext } from '../../../WebviewContext';
 
@@ -35,7 +35,7 @@ const EditableTitle = styled(Input.TextArea)`
 type HistorySidebarProps = {
   isOpen: boolean;
   onClose: () => void;
-  activeModel: ModelType | 'loading...';
+  activeModelService: ModelServiceType | 'loading...';
   conversationHistory: ConversationHistory;
   setConversationHistory: React.Dispatch<
     React.SetStateAction<ConversationHistory>
@@ -45,7 +45,7 @@ type HistorySidebarProps = {
 export const HistorySidebar: React.FC<HistorySidebarProps> = ({
   isOpen,
   onClose,
-  activeModel,
+  activeModelService,
   conversationHistory,
   setConversationHistory,
 }) => {
@@ -59,11 +59,11 @@ export const HistorySidebar: React.FC<HistorySidebarProps> = ({
     if (isOpen) {
       setIsLoading(true);
 
-      if (activeModel === 'loading...') {
+      if (activeModelService === 'loading...') {
         return;
       }
 
-      callApi('getHistories', activeModel)
+      callApi('getHistories', activeModelService)
         .then((histories) => {
           setHistories(histories as ConversationHistoryList);
           setIsLoading(false);
@@ -77,19 +77,21 @@ export const HistorySidebar: React.FC<HistorySidebarProps> = ({
           setIsLoading(false);
         });
     }
-  }, [isOpen, activeModel]);
+  }, [isOpen, activeModelService]);
 
   const switchHistory = (historyID: string) => {
     if (historyID === conversationHistory.root) return;
 
     setIsLoading(true);
 
-    if (activeModel === 'loading...') {
+    if (activeModelService === 'loading...') {
       return;
     }
 
-    callApi('switchHistory', activeModel, historyID)
-      .then(() => callApi('getLanguageModelConversationHistory', activeModel))
+    callApi('switchHistory', activeModelService, historyID)
+      .then(() =>
+        callApi('getLanguageModelConversationHistory', activeModelService),
+      )
       .then((history) => {
         setConversationHistory(history);
         setIsLoading(false);
@@ -106,11 +108,11 @@ export const HistorySidebar: React.FC<HistorySidebarProps> = ({
   };
 
   const deleteHistory = (historyID: string) => {
-    if (activeModel === 'loading...') {
+    if (activeModelService === 'loading...') {
       return;
     }
 
-    callApi('deleteHistory', activeModel, historyID)
+    callApi('deleteHistory', activeModelService, historyID)
       .then((newConversationHistory) => {
         setHistories((prevHistories) => {
           const updatedHistories = { ...prevHistories };
@@ -139,11 +141,11 @@ export const HistorySidebar: React.FC<HistorySidebarProps> = ({
   };
 
   const handleTitleBlur = (historyID: string) => {
-    if (activeModel === 'loading...') {
+    if (activeModelService === 'loading...') {
       return;
     }
 
-    callApi('updateHistoryTitleById', activeModel, historyID, titleInput)
+    callApi('updateHistoryTitleById', activeModelService, historyID, titleInput)
       .then(() => {
         setHistories((prevHistories) => ({
           ...prevHistories,

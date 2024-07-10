@@ -7,8 +7,8 @@ import {
   ConversationHistory,
   ConversationHistoryList,
 } from './conversationHistory';
-import { ModelType } from './modelType';
-import { VoiceType } from './voiceType';
+import { ModelServiceType } from './modelServiceType';
+import { VoiceServiceType } from './voiceServiceType';
 
 /**
  * Represents the API request structure for the view.
@@ -97,7 +97,7 @@ export type ViewApi = {
    */
   getLanguageModelResponse: (
     query: string,
-    modelType: ModelType,
+    modelType: ModelServiceType,
     useStream?: boolean,
     currentEntryID?: string,
   ) => Promise<string>;
@@ -108,7 +108,7 @@ export type ViewApi = {
    * @returns The conversation history.
    */
   getLanguageModelConversationHistory: (
-    modelType: ModelType,
+    modelType: ModelServiceType,
   ) => ConversationHistory;
 
   /**
@@ -116,7 +116,9 @@ export type ViewApi = {
    * @param modelType - The type of the model to add the conversation history for.
    * @returns The new conversation history.
    */
-  addNewConversationHistory: (modelType: ModelType) => ConversationHistory;
+  addNewConversationHistory: (
+    modelType: ModelServiceType,
+  ) => ConversationHistory;
 
   /**
    * Edit the conversation history for a language model.
@@ -125,7 +127,7 @@ export type ViewApi = {
    * @param newMessage - The new message to set.
    */
   editLanguageModelConversationHistory: (
-    modelType: ModelType,
+    modelType: ModelServiceType,
     entryID: string,
     newMessage: string,
   ) => void;
@@ -146,7 +148,7 @@ export type ViewApi = {
    * @returns The ID of the new entry.
    */
   addConversationEntry: (
-    modelType: ModelType,
+    modelType: ModelServiceType,
     parentID: string,
     sender: 'user' | 'AI',
     message: string,
@@ -157,14 +159,14 @@ export type ViewApi = {
    * Edit a conversation entry in the conversation history for a language model.
    * @param modelType - The type of the model to edit the conversation entry in.
    */
-  getHistories: (modelType: ModelType) => ConversationHistoryList;
+  getHistories: (modelType: ModelServiceType) => ConversationHistoryList;
 
   /**
    * Switch the conversation history for a language model.
    * @param modelType - The type of the model to switch the conversation history for.
    * @param historyID - The ID of the history to switch to.
    */
-  switchHistory: (modelType: ModelType, historyID: string) => void;
+  switchHistory: (modelType: ModelServiceType, historyID: string) => void;
 
   /**
    * Delete a conversation history for a language model.
@@ -173,7 +175,7 @@ export type ViewApi = {
    * @returns The new conversation history.
    */
   deleteHistory: (
-    modelType: ModelType,
+    modelType: ModelServiceType,
     historyID: string,
   ) => ConversationHistory;
 
@@ -184,7 +186,7 @@ export type ViewApi = {
    * @param title - The new title.
    */
   updateHistoryTitleById: (
-    modelType: ModelType,
+    modelType: ModelServiceType,
     historyID: string,
     title: string,
   ) => void;
@@ -193,7 +195,7 @@ export type ViewApi = {
    * Get the available models for a language model.
    * @param modelType - The type of the model to get the available models for.
    */
-  getAvailableModels: (modelType: ModelType) => string[];
+  getAvailableModels: (modelType: ModelServiceType) => string[];
 
   /**
    * Set the available models for a language model.
@@ -201,7 +203,7 @@ export type ViewApi = {
    * @param newAvailableModels - The new available models.
    */
   setAvailableModels: (
-    modelType: ModelType,
+    modelType: ModelServiceType,
     newAvailableModels: string[],
   ) => void;
 
@@ -210,7 +212,7 @@ export type ViewApi = {
    * @param modelType - The type of the model to switch to.
    * @param modelName - The name of the model to switch to.
    */
-  switchModel: (modelType: ModelType, modelName: string) => void;
+  switchModel: (modelType: ModelServiceType, modelName: string) => void;
 
   /**
    * Get the response for a query with an image.
@@ -222,7 +224,7 @@ export type ViewApi = {
    */
   getLanguageModelResponseWithImage: (
     query: string,
-    modelType: ModelType,
+    modelType: ModelServiceType,
     images: string[],
     currentEntryID?: string,
   ) => Promise<string>;
@@ -263,7 +265,7 @@ export type ViewApi = {
    * @param text - The text to convert to voice.
    */
   convertTextToVoice: (
-    voiceServiceType: VoiceType,
+    voiceServiceType: VoiceServiceType,
     text: string,
   ) => Promise<void>;
 
@@ -273,13 +275,13 @@ export type ViewApi = {
    * @param voiceServiceType - The type of the voice service to use.
    * @returns The recorded voice as text.
    */
-  convertVoiceToText: (voiceServiceType: VoiceType) => Promise<string>;
+  convertVoiceToText: (voiceServiceType: VoiceServiceType) => Promise<string>;
 
   /**
    * Stop the voice which is being played.
    * @param voiceServiceType - The type of the voice service to stop.
    */
-  stopPlayVoice: (voiceServiceType: VoiceType) => void;
+  stopPlayVoice: (voiceServiceType: VoiceServiceType) => void;
 
   /**
    * Switch the reference voice for GPT-SoVits.

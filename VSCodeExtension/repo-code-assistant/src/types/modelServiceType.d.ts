@@ -3,7 +3,7 @@ import { LanguageModelService } from './languageModelService';
 /**
  * Represents the type of models supported by the system.
  */
-export type ModelType =
+export type ModelServiceType =
   | 'gemini'
   | 'openai'
   | 'cohere'
@@ -15,8 +15,8 @@ export type ModelType =
 /**
  * Defines a structure for loaded models with detailed service and enabled status.
  */
-export type LoadedModels = {
-  [key in ModelType]: {
+export type LoadedModelServices = {
+  [key in ModelServiceType]: {
     /**
      * The service for the model
      */

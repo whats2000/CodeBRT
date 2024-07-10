@@ -27,7 +27,7 @@ import * as hljs from 'react-syntax-highlighter/dist/cjs/styles/hljs';
 import type {
   ConversationEntry,
   ConversationHistory,
-  ModelType,
+  ModelServiceType,
 } from '../../../types';
 import { WebviewContext } from '../../WebviewContext';
 import { TypingAnimation } from '../common/TypingAnimation';
@@ -96,7 +96,7 @@ type MessagesContainerProps = {
   setConversationHistory: React.Dispatch<
     React.SetStateAction<ConversationHistory>
   >;
-  modelType: ModelType | 'loading...';
+  modelType: ModelServiceType | 'loading...';
   isActiveModelLoading: boolean;
   messagesContainerRef: React.RefObject<HTMLDivElement>;
   isLoading: boolean;

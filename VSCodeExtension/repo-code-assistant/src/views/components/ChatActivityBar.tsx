@@ -4,7 +4,7 @@ import { v4 as uuidv4 } from 'uuid';
 import { Content } from 'antd/es/layout/layout';
 import { ConfigProvider } from 'antd';
 
-import type { ConversationHistory, ModelType } from '../../types';
+import type { ConversationHistory, ModelServiceType } from '../../types';
 import { INPUT_MESSAGE_KEY, UPLOADED_IMAGES_KEY } from '../../constants';
 import { WebviewContext } from '../WebviewContext';
 import { Toolbar } from './ChatActivityBar/Toolbar';
@@ -37,9 +37,9 @@ export const ChatActivityBar = () => {
       entries: {},
     });
   const [isLoading, setIsLoading] = useState(false);
-  const [activeModel, setActiveModel] = useState<ModelType | 'loading...'>(
-    'loading...',
-  );
+  const [activeModelService, setActiveModelService] = useState<
+    ModelServiceType | 'loading...'
+  >('loading...');
   const [uploadedImages, setUploadedImages] = useState<string[]>(
     JSON.parse(localStorage.getItem(UPLOADED_IMAGES_KEY) || '[]'),
   );
@@ -107,16 +107,16 @@ export const ChatActivityBar = () => {
   }, []);
 
   useEffect(() => {
-    if (activeModel === 'loading...') return;
+    if (activeModelService === 'loading...') return;
 
-    callApi('setSetting', 'lastUsedModel', activeModel).catch((error) =>
+    callApi('setSetting', 'lastUsedModel', activeModelService).catch((error) =>
       callApi(
         'alertMessage',
         `Failed to save last used model: ${error}`,
         'error',
       ).catch(console.error),
     );
-    callApi('getLanguageModelConversationHistory', activeModel)
+    callApi('getLanguageModelConversationHistory', activeModelService)
       .then((history) => {
         if (history) {
           setConversationHistory(history as ConversationHistory);
@@ -132,14 +132,14 @@ export const ChatActivityBar = () => {
           'error',
         ).catch(console.error),
       );
-  }, [activeModel]);
+  }, [activeModelService]);
 
   useEffect(() => {
     setIsActiveModelLoading(true);
     callApi('getSetting', 'lastUsedModel')
       .then((lastUsedModel) => {
         if (lastUsedModel) {
-          setActiveModel(lastUsedModel as ModelType);
+          setActiveModelService(lastUsedModel as ModelServiceType);
         }
         setIsActiveModelLoading(false);
       })
@@ -163,13 +163,13 @@ export const ChatActivityBar = () => {
 
   const sendMessage = async () => {
     if (isLoading) return;
-    if (activeModel === 'loading...') return;
+    if (activeModelService === 'loading...') return;
     if (!inputMessage.trim()) return;
     setIsLoading(true);
 
     const userEntryId = await callApi(
       'addConversationEntry',
-      activeModel,
+      activeModelService,
       conversationHistory.current,
       'user',
       inputMessage,
@@ -224,19 +224,19 @@ export const ChatActivityBar = () => {
           ? ((await callApi(
               'getLanguageModelResponseWithImage',
               inputMessage,
-              activeModel,
+              activeModelService,
               uploadedImages,
             )) as string)
           : ((await callApi(
               'getLanguageModelResponse',
               inputMessage,
-              activeModel,
+              activeModelService,
               true,
             )) as string);
 
       const aiEntryId = await callApi(
         'addConversationEntry',
-        activeModel,
+        activeModelService,
         userEntryId,
         'AI',
         responseText,
@@ -287,12 +287,12 @@ export const ChatActivityBar = () => {
     editedMessage: string,
   ) => {
     if (isLoading) return;
-    if (activeModel === 'loading...') return;
+    if (activeModelService === 'loading...') return;
 
     const entry = conversationHistory.entries[entryId];
     const newEntryId = await callApi(
       'addConversationEntry',
-      activeModel,
+      activeModelService,
       entry.parent ?? '',
       'user',
       editedMessage,
@@ -347,21 +347,21 @@ export const ChatActivityBar = () => {
           ? ((await callApi(
               'getLanguageModelResponseWithImage',
               editedMessage,
-              activeModel,
+              activeModelService,
               entry.images as string[],
               newEntryId,
             )) as string)
           : ((await callApi(
               'getLanguageModelResponse',
               editedMessage,
-              activeModel,
+              activeModelService,
               true,
               newEntryId,
             )) as string);
 
       const aiEntryId = await callApi(
         'addConversationEntry',
-        activeModel,
+        activeModelService,
         newEntryId,
         'AI',
         responseText,
@@ -437,16 +437,16 @@ export const ChatActivityBar = () => {
       <Container>
         <Toolbar
           conversationHistory={conversationHistory}
-          activeModel={activeModel}
+          activeModelService={activeModelService}
           isActiveModelLoading={isActiveModelLoading}
           setIsActiveModelLoading={setIsActiveModelLoading}
           setConversationHistory={setConversationHistory}
-          setActiveModel={setActiveModel}
+          setActiveModelService={setActiveModelService}
         />
         <MessagesContainer
           conversationHistory={conversationHistory}
           setConversationHistory={setConversationHistory}
-          modelType={activeModel}
+          modelType={activeModelService}
           isActiveModelLoading={isActiveModelLoading}
           messagesContainerRef={messagesContainerRef}
           isLoading={isLoading}

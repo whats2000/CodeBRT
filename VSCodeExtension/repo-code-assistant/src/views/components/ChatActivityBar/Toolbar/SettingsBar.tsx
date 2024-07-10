@@ -11,7 +11,7 @@ import {
 } from 'antd';
 import type { Color } from 'antd/es/color-picker/color';
 
-import type { ExtensionSettings, ModelType } from '../../../../types';
+import type { ExtensionSettings, ModelServiceType } from '../../../../types';
 import { WebviewContext } from '../../../WebviewContext';
 
 const StyledForm = styled(Form)`
@@ -41,7 +41,7 @@ export const SettingsBar: React.FC<SettingSidebarProps> = ({
   const { callApi } = useContext(WebviewContext);
   const [partialSettings, setPartialSettings] = useState<
     Partial<ExtensionSettings> & {
-      enableModel: { [key in ModelType]: boolean };
+      enableModel: { [key in ModelServiceType]: boolean };
     }
   >({
     groqApiKey: '',
@@ -167,7 +167,7 @@ export const SettingsBar: React.FC<SettingSidebarProps> = ({
 
   const saveSettings = (
     updatedSettings: Partial<ExtensionSettings> & {
-      enableModel: { [key in ModelType]: boolean };
+      enableModel: { [key in ModelServiceType]: boolean };
     },
   ) => {
     Object.entries(updatedSettings).map(([key, value]) =>

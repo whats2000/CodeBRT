@@ -7,9 +7,9 @@ import type {
   CustomModelSettings,
   ExtensionSettings,
   LanguageModelService,
-  LoadedModels,
-  LoadedVoiceService,
-  ModelType,
+  LoadedModelServices,
+  LoadedVoiceServices,
+  ModelServiceType,
   ViewApi,
   ViewApiError,
   ViewApiEvent,
@@ -35,7 +35,7 @@ export const activate = async (ctx: vscode.ExtensionContext) => {
   const customModels = settingsManager.getCustomModels();
   const customModelNames = customModels.map((model) => model.name);
 
-  const models: LoadedModels = {
+  const models: LoadedModelServices = {
     gemini: {
       service: new GeminiService(ctx, settingsManager),
       enabled: settingsManager.get('enableModel').gemini,
@@ -66,7 +66,7 @@ export const activate = async (ctx: vscode.ExtensionContext) => {
     },
   };
 
-  const voiceServices: LoadedVoiceService = {
+  const voiceServices: LoadedVoiceServices = {
     gptSoVits: {
       service: new GptSoVitsApiService(ctx, settingsManager),
     },
@@ -139,7 +139,7 @@ export const activate = async (ctx: vscode.ExtensionContext) => {
     },
     getLanguageModelResponse: async (
       query: string,
-      modelType: ModelType,
+      modelType: ModelServiceType,
       useStream?: boolean,
       currentEntryID?: string,
     ) => {
@@ -163,7 +163,7 @@ export const activate = async (ctx: vscode.ExtensionContext) => {
         return `Failed to get response from ${modelType} service: ${error}`;
       }
     },
-    getLanguageModelConversationHistory: (modelType: ModelType) => {
+    getLanguageModelConversationHistory: (modelType: ModelServiceType) => {
       const modelService: LanguageModelService = models[modelType].service;
       if (!modelService) {
         vscode.window.showErrorMessage(
@@ -181,7 +181,7 @@ export const activate = async (ctx: vscode.ExtensionContext) => {
 
       return modelService.getConversationHistory();
     },
-    addNewConversationHistory: (modelType: ModelType) => {
+    addNewConversationHistory: (modelType: ModelServiceType) => {
       const modelService: LanguageModelService = models[modelType].service;
 
       if (!modelService) {
@@ -201,7 +201,7 @@ export const activate = async (ctx: vscode.ExtensionContext) => {
       return modelService.addNewConversationHistory();
     },
     editLanguageModelConversationHistory: (
-      modelType: ModelType,
+      modelType: ModelServiceType,
       entryID: string,
       newMessage: string,
     ) => {
@@ -220,7 +220,7 @@ export const activate = async (ctx: vscode.ExtensionContext) => {
       triggerEvent('streamResponse', msg);
     },
     addConversationEntry: async (
-      modelType: ModelType,
+      modelType: ModelServiceType,
       parentID: string,
       sender: 'user' | 'AI',
       message: string,
@@ -242,7 +242,7 @@ export const activate = async (ctx: vscode.ExtensionContext) => {
         images,
       );
     },
-    getHistories: (modelType: ModelType) => {
+    getHistories: (modelType: ModelServiceType) => {
       const modelService: LanguageModelService = models[modelType].service;
 
       if (!modelService) {
@@ -254,7 +254,7 @@ export const activate = async (ctx: vscode.ExtensionContext) => {
 
       return modelService.getHistories();
     },
-    switchHistory: (modelType: ModelType, historyID: string) => {
+    switchHistory: (modelType: ModelServiceType, historyID: string) => {
       const modelService: LanguageModelService = models[modelType].service;
 
       if (!modelService) {
@@ -266,7 +266,7 @@ export const activate = async (ctx: vscode.ExtensionContext) => {
 
       modelService.switchHistory(historyID);
     },
-    deleteHistory: (modelType: ModelType, historyID: string) => {
+    deleteHistory: (modelType: ModelServiceType, historyID: string) => {
       const modelService: LanguageModelService = models[modelType].service;
 
       if (!modelService) {
@@ -285,7 +285,7 @@ export const activate = async (ctx: vscode.ExtensionContext) => {
 
       return modelService.deleteHistory(historyID);
     },
-    getAvailableModels: (modelType: ModelType) => {
+    getAvailableModels: (modelType: ModelServiceType) => {
       const modelService: LanguageModelService = models[modelType].service;
 
       if (!modelService) {
@@ -298,7 +298,7 @@ export const activate = async (ctx: vscode.ExtensionContext) => {
       return modelService.getAvailableModels();
     },
     setAvailableModels: (
-      modelType: ModelType,
+      modelType: ModelServiceType,
       newAvailableModels: string[],
     ) => {
       const modelService: LanguageModelService = models[modelType].service;
@@ -312,7 +312,7 @@ export const activate = async (ctx: vscode.ExtensionContext) => {
 
       settingsManager.set(`${modelType}AvailableModels`, newAvailableModels);
     },
-    switchModel: (modelType: ModelType, modelName: string) => {
+    switchModel: (modelType: ModelServiceType, modelName: string) => {
       const modelService: LanguageModelService = models[modelType].service;
 
       if (!modelService) {
@@ -325,7 +325,7 @@ export const activate = async (ctx: vscode.ExtensionContext) => {
       modelService.switchModel(modelName);
     },
     updateHistoryTitleById: (
-      modelType: ModelType,
+      modelType: ModelServiceType,
       historyID: string,
       title: string,
     ) => {
@@ -342,7 +342,7 @@ export const activate = async (ctx: vscode.ExtensionContext) => {
     },
     getLanguageModelResponseWithImage: async (
       query: string,
-      modelType: ModelType,
+      modelType: ModelServiceType,
       images: string[],
       currentEntryID?: string,
     ) => {

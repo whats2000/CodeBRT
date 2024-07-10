@@ -1,38 +1,42 @@
-import React, { useContext } from 'react';
+import React, { useContext, useEffect } from 'react';
 import { Button, Checkbox, Collapse, Form, Input, Select, Space } from 'antd';
 
-import type { CustomModelSettings, ModelType } from '../../../../../types';
+import type {
+  CustomModelSettings,
+  ModelServiceType,
+} from '../../../../../types';
 import { WebviewContext } from '../../../../WebviewContext';
 
 type CustomModelFormProps = {
-  activeModel: ModelType | 'loading...';
+  isOpen: boolean;
+  isLoading: boolean;
+  activeModel: ModelServiceType | 'loading...';
   customModels: CustomModelSettings[];
   setCustomModels: (models: CustomModelSettings[]) => void;
   handleEditModelListSave: (models: string[]) => void;
-  onClose: () => void;
 };
 
 export const CustomModelForm: React.FC<CustomModelFormProps> = ({
+  isOpen,
+  isLoading,
   activeModel,
   customModels,
   setCustomModels,
   handleEditModelListSave,
-  onClose,
 }) => {
   const { callApi } = useContext(WebviewContext);
 
-  const handleSave = () => {
-    if (activeModel === 'loading...') return;
+  const handleSave = (modelsToSave: CustomModelSettings[]) => {
+    if (activeModel === 'loading...' || isLoading) return;
 
-    callApi('setCustomModels', customModels)
+    callApi('setCustomModels', modelsToSave)
       .then(() => {
         callApi(
           'alertMessage',
           'Custom models saved successfully',
           'info',
         ).catch(console.error);
-        handleEditModelListSave(customModels.map((model) => model.name));
-        onClose();
+        handleEditModelListSave(modelsToSave.map((model) => model.name));
       })
       .catch((error: any) => {
         callApi(
@@ -42,6 +46,12 @@ export const CustomModelForm: React.FC<CustomModelFormProps> = ({
         ).catch(console.error);
       });
   };
+
+  useEffect(() => {
+    if (!isOpen) {
+      handleSave(customModels);
+    }
+  }, [isOpen]);
 
   const handleAddModel = () => {
     setCustomModels([
@@ -155,9 +165,6 @@ export const CustomModelForm: React.FC<CustomModelFormProps> = ({
         </Collapse>
         <Button type='dashed' onClick={handleAddModel} block>
           Add Model
-        </Button>
-        <Button type='primary' ghost={true} onClick={handleSave} block>
-          Save
         </Button>
       </Space>
     </Form>

@@ -26,7 +26,7 @@ export const GptSoVitsSettingsBar: React.FC<GptSoVitsSettingsBarProps> = ({
     gptSoVitsAvailableReferenceVoices: [],
     selectedGptSoVitsReferenceVoice: '',
   });
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     if (isOpen) {
@@ -52,10 +52,12 @@ export const GptSoVitsSettingsBar: React.FC<GptSoVitsSettingsBarProps> = ({
     }
   }, [isOpen]);
 
-  const handleSave = () => {
+  const handleSave = (settingsToSave: typeof partialSettings) => {
+    if (isLoading) return;
+
     setIsLoading(true);
 
-    const promises = Object.entries(partialSettings).map(([key, value]) =>
+    const promises = Object.entries(settingsToSave).map(([key, value]) =>
       callApi('setSetting', key as keyof typeof partialSettings, value).catch(
         (e) =>
           callApi(
@@ -74,6 +76,12 @@ export const GptSoVitsSettingsBar: React.FC<GptSoVitsSettingsBarProps> = ({
       })
       .finally(onClose);
   };
+
+  useEffect(() => {
+    if (!isOpen) {
+      handleSave(partialSettings);
+    }
+  }, [isOpen]);
 
   const handleVoiceChange = (
     index: number,
@@ -132,20 +140,24 @@ export const GptSoVitsSettingsBar: React.FC<GptSoVitsSettingsBarProps> = ({
   };
 
   const handleSelectedVoiceChange = (value: string) => {
-    callApi('switchGptSoVitsReferenceVoice', value)
-      .then(() =>
-        setPartialSettings({
-          ...partialSettings,
-          selectedGptSoVitsReferenceVoice: value,
-        }),
-      )
-      .catch((error: any) => {
-        callApi(
-          'alertMessage',
-          `Failed to switch reference voice: ${error}`,
-          'error',
-        ).catch(console.error);
+    const originalValue = partialSettings.selectedGptSoVitsReferenceVoice;
+
+    setPartialSettings({
+      ...partialSettings,
+      selectedGptSoVitsReferenceVoice: value,
+    });
+
+    callApi('switchGptSoVitsReferenceVoice', value).catch((error: any) => {
+      callApi(
+        'alertMessage',
+        `Failed to switch reference voice: ${error}`,
+        'error',
+      ).catch(console.error);
+      setPartialSettings({
+        ...partialSettings,
+        selectedGptSoVitsReferenceVoice: originalValue,
       });
+    });
   };
 
   const handleClientHostChange = (value: string) => {
@@ -240,9 +252,6 @@ export const GptSoVitsSettingsBar: React.FC<GptSoVitsSettingsBarProps> = ({
           </Collapse>
           <Button type='dashed' onClick={handleAddVoice} block>
             Add Voice
-          </Button>
-          <Button type='primary' ghost={true} onClick={handleSave} block>
-            Save
           </Button>
         </Space>
       </Form>

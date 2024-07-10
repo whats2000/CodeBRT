@@ -1,38 +1,39 @@
-import React, { useContext } from 'react';
+import React, { useContext, useEffect } from 'react';
 import { Button, Form, Input, List, Space } from 'antd';
 
-import { ModelType } from '../../../../../types';
+import { ModelServiceType } from '../../../../../types';
 import { WebviewContext } from '../../../../WebviewContext';
 
 type ModelFormProps = {
-  activeModel: ModelType | 'loading...';
+  isOpen: boolean;
+  isLoading: boolean;
+  activeModelService: ModelServiceType | 'loading...';
   availableModels: string[];
   setAvailableModels: (models: string[]) => void;
   handleEditModelListSave: (models: string[]) => void;
-  onClose: () => void;
 };
 
 export const ModelForm: React.FC<ModelFormProps> = ({
-  activeModel,
+  isOpen,
+  isLoading,
+  activeModelService,
   availableModels,
   setAvailableModels,
   handleEditModelListSave,
-  onClose,
 }) => {
   const { callApi } = useContext(WebviewContext);
 
-  const handleSave = () => {
-    if (activeModel === 'loading...') return;
+  const handleSave = (modelsToSave: string[]) => {
+    if (activeModelService === 'loading...' || isLoading) return;
 
-    callApi('setAvailableModels', activeModel, availableModels)
+    callApi('setAvailableModels', activeModelService, modelsToSave)
       .then(() => {
         callApi(
           'alertMessage',
           'Available models saved successfully',
           'info',
         ).catch(console.error);
-        handleEditModelListSave(availableModels);
-        onClose();
+        handleEditModelListSave(modelsToSave);
       })
       .catch((error: any) => {
         callApi(
@@ -42,6 +43,12 @@ export const ModelForm: React.FC<ModelFormProps> = ({
         ).catch(console.error);
       });
   };
+
+  useEffect(() => {
+    if (!isOpen) {
+      handleSave(availableModels);
+    }
+  }, [isOpen]);
 
   const handleAvailableModelChange = (index: number, value: string) => {
     const updatedModels = [...availableModels];
@@ -87,9 +94,6 @@ export const ModelForm: React.FC<ModelFormProps> = ({
         />
         <Button type='dashed' onClick={handleAddAvailableModel} block>
           Add Model
-        </Button>
-        <Button type='primary' ghost={true} onClick={handleSave} block>
-          Save
         </Button>
       </Space>
     </Form>

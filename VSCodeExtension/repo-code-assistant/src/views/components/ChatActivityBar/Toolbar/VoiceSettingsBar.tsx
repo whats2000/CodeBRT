@@ -1,7 +1,7 @@
 import React, { useContext, useEffect, useState } from 'react';
-import { Drawer, Form, Select, Button } from 'antd';
+import { Drawer, Form, Select, Button, Divider } from 'antd';
 
-import type { ExtensionSettings, VoiceType } from '../../../../types';
+import type { ExtensionSettings, VoiceServiceType } from '../../../../types';
 import { WebviewContext } from '../../../WebviewContext';
 import { GptSoVitsSettingsBar } from './VoiceSettingsBar/GptSoVitsSettingsBar';
 
@@ -19,15 +19,17 @@ export const VoiceSettingsBar: React.FC<VoiceSettingsBarProps> = ({
   const { callApi } = useContext(WebviewContext);
   const [isGptSoVitsSettingsOpen, setIsGptSoVitsSettingsOpen] = useState(false);
 
-  const textToVoiceServices: VoiceType[] = ['not set', 'gptSoVits'];
-  const voiceToTextServices: VoiceType[] = ['not set'];
+  const textToVoiceServices: VoiceServiceType[] = ['not set', 'gptSoVits'];
+  const voiceToTextServices: VoiceServiceType[] = ['not set'];
   const [partialSettings, setPartialSettings] = useState<
     Partial<ExtensionSettings>
   >({
     selectedTextToVoiceService: 'not set',
     selectedVoiceToTextService: 'not set',
+    selectedGptSoVitsReferenceVoice: '',
+    gptSoVitsAvailableReferenceVoices: [],
   });
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     if (isOpen) {
@@ -54,17 +56,42 @@ export const VoiceSettingsBar: React.FC<VoiceSettingsBarProps> = ({
   }, [isOpen]);
 
   const handleServiceChange = (
-    field: 'selectedTextToVoiceService' | 'selectedVoiceToTextService',
-    value: VoiceType,
+    field:
+      | 'selectedTextToVoiceService'
+      | 'selectedVoiceToTextService'
+      | 'selectedGptSoVitsReferenceVoice',
+    value: (typeof partialSettings)[keyof typeof partialSettings],
   ) => {
-    callApi('setSetting', field, value)
-      .then(() =>
-        setPartialSettings({
-          ...partialSettings,
-          [field]: value,
-        }),
-      )
-      .catch(console.error);
+    if (!value || isLoading) return;
+
+    const originalValue = partialSettings[field];
+
+    setPartialSettings({
+      ...partialSettings,
+      [field]: value,
+    });
+
+    callApi('setSetting', field, value).catch((e) => {
+      callApi(
+        'alertMessage',
+        `Failed to save settings: ${e.message}`,
+        'error',
+      ).catch(console.error);
+      setPartialSettings({
+        ...partialSettings,
+        [field]: originalValue,
+      });
+    });
+
+    if (field !== 'selectedGptSoVitsReferenceVoice') return;
+
+    callApi('switchGptSoVitsReferenceVoice', value as string).catch((e) =>
+      callApi(
+        'alertMessage',
+        `Failed to switch reference voice: ${e.message}`,
+        'error',
+      ).catch(console.error),
+    );
   };
 
   return (
@@ -104,6 +131,24 @@ export const VoiceSettingsBar: React.FC<VoiceSettingsBarProps> = ({
                   {service.charAt(0).toUpperCase() + service.slice(1)}
                 </Option>
               ))}
+            </Select>
+          </Form.Item>
+          <Divider />
+          <Form.Item label='GptSoVits Reference Voice'>
+            <Select
+              value={partialSettings.selectedGptSoVitsReferenceVoice}
+              onChange={(value) =>
+                handleServiceChange('selectedGptSoVitsReferenceVoice', value)
+              }
+              placeholder='Select a reference voice'
+            >
+              {partialSettings.gptSoVitsAvailableReferenceVoices?.map(
+                (voice) => (
+                  <Option key={voice.name} value={voice.name}>
+                    {voice.name}
+                  </Option>
+                ),
+              )}
             </Select>
           </Form.Item>
           <Button
