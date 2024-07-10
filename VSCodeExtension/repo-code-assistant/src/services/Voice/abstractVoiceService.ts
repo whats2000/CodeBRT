@@ -1,5 +1,6 @@
 import { Promise } from 'promise-deferred';
 import * as vscode from 'vscode';
+import natural from 'natural';
 
 import { VoiceService } from '../../types';
 import SettingsManager from '../../api/settingsManager';
@@ -75,22 +76,50 @@ export abstract class AbstractVoiceService implements VoiceService {
    * Splits the given text into chunks of the specified size.
    * @param text - The text to split.
    * @param chunkSize - The size of each chunk.
-   * @param sentenceEndings - A regular expression to match sentence endings.
    * @returns An array of text chunks.
    */
-  protected splitTextIntoChunks(
-    text: string,
-    chunkSize: number = 4,
-    sentenceEndings: RegExp = /(?<=[.!?。！？])/,
-  ): string[] {
-    const sentences = text
-      .split(sentenceEndings)
-      .map((sentence) => sentence.trim())
-      .filter((sentence) => sentence.length > 0);
-    const chunks = [];
-    for (let i = 0; i < sentences.length; i += chunkSize) {
-      chunks.push(sentences.slice(i, i + chunkSize).join(' '));
+  protected splitTextIntoChunks(text: string, chunkSize: number = 4): string[] {
+    const tokenizer = new natural.SentenceTokenizer();
+    const sentences = tokenizer.tokenize(text);
+
+    const mergedSentences: string[] = [];
+    let tempSentence = '';
+
+    sentences.forEach((sentence) => {
+      if (tempSentence) {
+        tempSentence += ' ' + sentence;
+        if (
+          sentence.match(/[.!?]$/) ||
+          sentence.match(/["'`][.!?]$/) ||
+          sentence.endsWith('"""') ||
+          sentence.endsWith('``')
+        ) {
+          mergedSentences.push(tempSentence.trim());
+          tempSentence = '';
+        }
+      } else {
+        if (
+          sentence.match(/[.!?]$/) ||
+          sentence.match(/["'`][.!?]$/) ||
+          sentence.endsWith('"""') ||
+          sentence.endsWith('``')
+        ) {
+          mergedSentences.push(sentence.trim());
+        } else {
+          tempSentence = sentence;
+        }
+      }
+    });
+
+    if (tempSentence) {
+      mergedSentences.push(tempSentence.trim());
     }
+
+    const chunks = [];
+    for (let i = 0; i < mergedSentences.length; i += chunkSize) {
+      chunks.push(mergedSentences.slice(i, i + chunkSize).join(' '));
+    }
+
     return chunks;
   }
 

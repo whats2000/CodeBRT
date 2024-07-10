@@ -33,7 +33,9 @@ export const ModelForm: React.FC<ModelFormProps> = ({
           'Available models saved successfully',
           'info',
         ).catch(console.error);
-        handleEditModelListSave(modelsToSave);
+        setTimeout(() => {
+          handleEditModelListSave(modelsToSave);
+        }, 200);
       })
       .catch((error: any) => {
         callApi(

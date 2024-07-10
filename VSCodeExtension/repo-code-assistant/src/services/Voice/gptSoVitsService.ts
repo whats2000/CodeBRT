@@ -68,10 +68,13 @@ export class GptSoVitsApiService extends AbstractVoiceService {
   private async sendRequest(text: string): Promise<Uint8Array | string> {
     const requestData = {
       refer_wav_path: this.referWavPath,
+      ref_audio_path: this.referWavPath,
       prompt_text: this.referText,
       prompt_language: this.promptLanguage,
+      prompt_lang: this.promptLanguage,
       text: text,
       text_language: this.promptLanguage,
+      text_lang: this.promptLanguage,
     };
 
     try {
