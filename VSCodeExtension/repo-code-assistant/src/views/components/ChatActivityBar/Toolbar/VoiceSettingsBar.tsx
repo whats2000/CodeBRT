@@ -1,9 +1,19 @@
 import React, { useContext, useEffect, useState } from 'react';
-import { Drawer, Form, Select, Button, Divider } from 'antd';
+import {
+  Drawer,
+  Form,
+  Select,
+  Button,
+  Divider,
+  Typography,
+  Tooltip,
+  Space,
+} from 'antd';
 
 import type { ExtensionSettings, VoiceServiceType } from '../../../../types';
 import { WebviewContext } from '../../../WebviewContext';
 import { GptSoVitsSettingsBar } from './VoiceSettingsBar/GptSoVitsSettingsBar';
+import { MODEL_SERVICE_LINKS } from '../../../../constants';
 
 const { Option } = Select;
 
@@ -94,6 +104,17 @@ export const VoiceSettingsBar: React.FC<VoiceSettingsBarProps> = ({
     );
   };
 
+  const openModelServiceLink = (
+    settingKey: keyof Partial<ExtensionSettings>,
+  ) => {
+    const link = MODEL_SERVICE_LINKS[settingKey];
+    if (link) {
+      callApi('openExternalLink', link)
+        .then(() => {})
+        .catch(console.error);
+    }
+  };
+
   return (
     <>
       <Drawer
@@ -134,7 +155,30 @@ export const VoiceSettingsBar: React.FC<VoiceSettingsBarProps> = ({
             </Select>
           </Form.Item>
           <Divider />
-          <Form.Item label='GptSoVits Reference Voice'>
+          <Form.Item
+            label={
+              <Space>
+                <span>
+                  Reference Voice{' '}
+                  <Typography.Text type={'secondary'}>
+                    (GPT-SoVits)
+                  </Typography.Text>
+                </span>
+                <Tooltip title='Find out more about set up GPT-SoVits client host'>
+                  <Typography.Link
+                    type={'secondary'}
+                    onClick={() =>
+                      openModelServiceLink(
+                        'gptSoVitsClientHost' as keyof ExtensionSettings,
+                      )
+                    }
+                  >
+                    Learn more
+                  </Typography.Link>
+                </Tooltip>
+              </Space>
+            }
+          >
             <Select
               value={partialSettings.selectedGptSoVitsReferenceVoice}
               onChange={(value) =>

@@ -1,8 +1,22 @@
 import React, { useContext, useEffect, useState } from 'react';
-import { Drawer, Form, Input, Button, Select, Space, Collapse } from 'antd';
+import {
+  Drawer,
+  Form,
+  Input,
+  Button,
+  Select,
+  Space,
+  Collapse,
+  Tooltip,
+  Typography,
+} from 'antd';
 
-import { GptSoVitsVoiceSetting } from '../../../../../types';
+import {
+  type ExtensionSettings,
+  GptSoVitsVoiceSetting,
+} from '../../../../../types';
 import { WebviewContext } from '../../../../WebviewContext';
+import { MODEL_SERVICE_LINKS } from '../../../../../constants';
 
 const { Panel } = Collapse;
 const { Option } = Select;
@@ -167,6 +181,17 @@ export const GptSoVitsSettingsBar: React.FC<GptSoVitsSettingsBarProps> = ({
     });
   };
 
+  const openModelServiceLink = (
+    settingKey: keyof Partial<ExtensionSettings>,
+  ) => {
+    const link = MODEL_SERVICE_LINKS[settingKey];
+    if (link) {
+      callApi('openExternalLink', link)
+        .then(() => {})
+        .catch(console.error);
+    }
+  };
+
   return (
     <Drawer
       title='GptSoVits Settings'
@@ -177,7 +202,30 @@ export const GptSoVitsSettingsBar: React.FC<GptSoVitsSettingsBarProps> = ({
       loading={isLoading}
     >
       <Form layout='vertical'>
-        <Form.Item label='Client Host'>
+        <Form.Item
+          label={
+            <Space>
+              <span>
+                Client Host{' '}
+                <Typography.Text type={'secondary'}>
+                  (e.g. http://127.0.0.1:9880/)
+                </Typography.Text>
+              </span>
+              <Tooltip title='Find out more about set up GPT-SoVits client host'>
+                <Typography.Link
+                  type={'secondary'}
+                  onClick={() =>
+                    openModelServiceLink(
+                      'gptSoVitsClientHost' as keyof ExtensionSettings,
+                    )
+                  }
+                >
+                  Learn more
+                </Typography.Link>
+              </Tooltip>
+            </Space>
+          }
+        >
           <Input.Password
             value={partialSettings.gptSoVitsClientHost}
             onChange={(e) => handleClientHostChange(e.target.value)}

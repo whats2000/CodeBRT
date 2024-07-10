@@ -189,7 +189,6 @@ export const SettingsBar: React.FC<SettingSidebarProps> = ({
     settingKey: keyof Partial<ExtensionSettings>,
   ) => {
     const link = MODEL_SERVICE_LINKS[settingKey];
-    console.log(`Opened link: ${link}`);
     if (link) {
       callApi('openExternalLink', link)
         .then(() => {})
