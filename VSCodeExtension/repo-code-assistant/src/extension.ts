@@ -28,6 +28,7 @@ import { HuggingFaceService } from './services/languageModel/huggingFaceService'
 import { OllamaService } from './services/languageModel/ollamaService';
 import { CustomApiService } from './services/languageModel/customApiService';
 import { GptSoVitsApiService } from './services/Voice/gptSoVitsService';
+import { Uri } from 'vscode';
 
 export const activate = async (ctx: vscode.ExtensionContext) => {
   const connectedViews: Partial<Record<ViewKey, vscode.WebviewView>> = {};
@@ -492,6 +493,9 @@ export const activate = async (ctx: vscode.ExtensionContext) => {
     },
     getSelectedGptSoVitsReferenceVoice: () => {
       return settingsManager.getSelectedGptSoVitsReferenceVoice();
+    },
+    openExternalLink: async (url) => {
+      await vscode.env.openExternal(Uri.parse(url));
     },
   };
 

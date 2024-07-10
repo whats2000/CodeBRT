@@ -293,6 +293,12 @@ export type ViewApi = {
    * Get the selected reference voice for GPT-SoVits.
    */
   getSelectedGptSoVitsReferenceVoice: () => GptSoVitsVoiceSetting | undefined;
+
+  /**
+   * Open an external link in the default browser.
+   * @param url - The URL to open.
+   */
+  openExternalLink: (url: string) => Promise<void>;
 };
 
 /**

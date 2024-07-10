@@ -8,11 +8,15 @@ import {
   Select,
   ColorPicker,
   Button,
+  Space,
+  Tooltip,
+  Typography,
 } from 'antd';
 import type { Color } from 'antd/es/color-picker/color';
 
 import type { ExtensionSettings, ModelServiceType } from '../../../../types';
 import { WebviewContext } from '../../../WebviewContext';
+import { MODEL_SERVICE_LINKS } from '../../../../constants';
 
 const StyledForm = styled(Form)`
   display: flex;
@@ -181,6 +185,18 @@ export const SettingsBar: React.FC<SettingSidebarProps> = ({
     );
   };
 
+  const openModelServiceLink = (
+    settingKey: keyof Partial<ExtensionSettings>,
+  ) => {
+    const link = MODEL_SERVICE_LINKS[settingKey];
+    console.log(`Opened link: ${link}`);
+    if (link) {
+      callApi('openExternalLink', link)
+        .then(() => {})
+        .catch(console.error);
+    }
+  };
+
   return (
     <Drawer
       title='Settings Bar'
@@ -226,8 +242,22 @@ export const SettingsBar: React.FC<SettingSidebarProps> = ({
               <FormGroup
                 key={key}
                 label={
-                  key.charAt(0).toUpperCase() +
-                  key.slice(1).replace(/([A-Z])/g, ' $1')
+                  <Space>
+                    <span>
+                      {key.charAt(0).toUpperCase() +
+                        key.slice(1).replace(/([A-Z])/g, ' $1')}
+                    </span>
+                    <Tooltip title='Find out more about API keys and client hosts'>
+                      <Typography.Link
+                        type={'secondary'}
+                        onClick={() =>
+                          openModelServiceLink(key as keyof ExtensionSettings)
+                        }
+                      >
+                        Learn more
+                      </Typography.Link>
+                    </Tooltip>
+                  </Space>
                 }
               >
                 <Input.Password
