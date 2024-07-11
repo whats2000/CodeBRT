@@ -219,8 +219,8 @@ export const Toolbar: React.FC<ToolbarProps> = ({
                   onChange={handleModelChange}
                   style={{ width: '100%' }}
                 >
-                  {availableModels.map((model) => (
-                    <Option key={model} value={model}>
+                  {availableModels.map((model, index) => (
+                    <Option key={`available-${index}`} value={model}>
                       {model}
                     </Option>
                   ))}
@@ -261,8 +261,8 @@ export const Toolbar: React.FC<ToolbarProps> = ({
                 style={{ width: 200 }}
                 loading={isActiveModelLoading}
                 options={[
-                  ...availableModels.map((model) => ({
-                    key: model,
+                  ...availableModels.map((model, index) => ({
+                    key: `available-${index}`,
                     label: model,
                     value: model,
                   })),

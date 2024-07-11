@@ -2,14 +2,14 @@ import React from 'react';
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { Button, Form, Input, Flex } from 'antd';
-import { HolderOutlined } from '@ant-design/icons';
+import { HolderOutlined, DeleteOutlined } from '@ant-design/icons';
 
 type ModelFormSortableItemProps = {
   id: string;
   index: number;
   value: string;
-  onChange: (index: number, value: string) => void;
-  onRemove: (index: number) => void;
+  onChange: (id: string, value: string) => void;
+  onRemove: (id: string) => void;
 };
 
 export const ModelFormSortableItem: React.FC<ModelFormSortableItemProps> = ({
@@ -19,7 +19,7 @@ export const ModelFormSortableItem: React.FC<ModelFormSortableItemProps> = ({
   onChange,
   onRemove,
 }) => {
-  const { listeners, setNodeRef, transform, transition, setActivatorNodeRef } =
+  const { attributes, listeners, setNodeRef, transform, transition } =
     useSortable({ id });
 
   const style = {
@@ -28,25 +28,26 @@ export const ModelFormSortableItem: React.FC<ModelFormSortableItemProps> = ({
   };
 
   return (
-    <Flex ref={setNodeRef} style={style} gap={10} align={'center'}>
-      <Button
-        ref={setActivatorNodeRef}
-        type='text'
-        size='small'
-        icon={<HolderOutlined />}
-        style={{ cursor: 'move' }}
-        {...listeners}
-      />
-      <Form.Item label={`Model ${index + 1}`} style={{ width: '100%' }}>
-        <Input
-          value={value}
-          onChange={(e) => onChange(index, e.target.value)}
+    <Flex ref={setNodeRef} style={style} align='center' gap={8}>
+      <Form.Item label=' '>
+        <Button
+          type='text'
+          icon={<HolderOutlined />}
+          style={{ cursor: 'move' }}
+          {...attributes}
+          {...listeners}
         />
       </Form.Item>
-      <Form.Item label={' '}>
-        <Button danger onClick={() => onRemove(index)}>
-          Remove
-        </Button>
+      <Form.Item label={`Model ${index + 1}`} style={{ width: '100%' }}>
+        <Input value={value} onChange={(e) => onChange(id, e.target.value)} />
+      </Form.Item>
+      <Form.Item label=' '>
+        <Button
+          danger
+          type='text'
+          icon={<DeleteOutlined />}
+          onClick={() => onRemove(id)}
+        />
       </Form.Item>
     </Flex>
   );

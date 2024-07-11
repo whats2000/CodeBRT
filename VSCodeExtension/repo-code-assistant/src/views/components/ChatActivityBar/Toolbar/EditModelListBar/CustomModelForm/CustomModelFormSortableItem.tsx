@@ -1,33 +1,36 @@
-import type { CustomModelSettings } from '../../../../../../types';
 import React from 'react';
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { Button, Checkbox, Collapse, Flex, Form, Input, Select } from 'antd';
 import { DeleteOutlined, HolderOutlined } from '@ant-design/icons';
 
-type SortableItemProps = {
+type CustomModelSettings = {
+  name: string;
+  apiUrl: string;
+  apiMethod: string;
+  apiTextParam: string;
+  apiImageParam: string;
+  apiQueryParam: string;
+  includeQueryInHistory: boolean;
+};
+
+type CustomModelSortableItemProps = {
   id: string;
   index: number;
   model: CustomModelSettings;
   onModelChange: (
-    index: number,
+    id: string,
     field: keyof CustomModelSettings,
     value: string | boolean,
   ) => void;
-  onRemoveModel: (index: number) => void;
+  onRemoveModel: (id: string) => void;
   activeKey: string[];
   setActiveKey: React.Dispatch<React.SetStateAction<string[]>>;
 };
 
-export const SortableItem: React.FC<SortableItemProps> = ({
-  id,
-  index,
-  model,
-  onModelChange,
-  onRemoveModel,
-  activeKey,
-  setActiveKey,
-}) => {
+export const CustomModelSortableItem: React.FC<
+  CustomModelSortableItemProps
+> = ({ id, model, onModelChange, onRemoveModel, activeKey, setActiveKey }) => {
   const {
     attributes,
     listeners,
@@ -60,32 +63,28 @@ export const SortableItem: React.FC<SortableItemProps> = ({
         onChange={(keys) => setActiveKey(keys as string[])}
         items={[
           {
-            key: index.toString(),
+            key: id,
             label: model.name || 'New Model',
             children: (
               <>
                 <Form.Item label='Name'>
                   <Input
                     value={model.name}
-                    onChange={(e) =>
-                      onModelChange(index, 'name', e.target.value)
-                    }
+                    onChange={(e) => onModelChange(id, 'name', e.target.value)}
                   />
                 </Form.Item>
                 <Form.Item label='API URL'>
                   <Input
                     value={model.apiUrl}
                     onChange={(e) =>
-                      onModelChange(index, 'apiUrl', e.target.value)
+                      onModelChange(id, 'apiUrl', e.target.value)
                     }
                   />
                 </Form.Item>
                 <Form.Item label='API Method'>
                   <Select
                     value={model.apiMethod}
-                    onChange={(value) =>
-                      onModelChange(index, 'apiMethod', value)
-                    }
+                    onChange={(value) => onModelChange(id, 'apiMethod', value)}
                   >
                     <Select.Option value='GET'>GET</Select.Option>
                     <Select.Option value='POST'>POST</Select.Option>
@@ -95,7 +94,7 @@ export const SortableItem: React.FC<SortableItemProps> = ({
                   <Input
                     value={model.apiTextParam}
                     onChange={(e) =>
-                      onModelChange(index, 'apiTextParam', e.target.value)
+                      onModelChange(id, 'apiTextParam', e.target.value)
                     }
                   />
                 </Form.Item>
@@ -103,7 +102,7 @@ export const SortableItem: React.FC<SortableItemProps> = ({
                   <Input
                     value={model.apiImageParam}
                     onChange={(e) =>
-                      onModelChange(index, 'apiImageParam', e.target.value)
+                      onModelChange(id, 'apiImageParam', e.target.value)
                     }
                   />
                 </Form.Item>
@@ -111,7 +110,7 @@ export const SortableItem: React.FC<SortableItemProps> = ({
                   <Input
                     value={model.apiQueryParam}
                     onChange={(e) =>
-                      onModelChange(index, 'apiQueryParam', e.target.value)
+                      onModelChange(id, 'apiQueryParam', e.target.value)
                     }
                   />
                 </Form.Item>
@@ -120,7 +119,7 @@ export const SortableItem: React.FC<SortableItemProps> = ({
                     checked={model.includeQueryInHistory}
                     onChange={(e) =>
                       onModelChange(
-                        index,
+                        id,
                         'includeQueryInHistory',
                         e.target.checked,
                       )
@@ -134,7 +133,7 @@ export const SortableItem: React.FC<SortableItemProps> = ({
                 danger={true}
                 type='text'
                 size='small'
-                onClick={() => onRemoveModel(index)}
+                onClick={() => onRemoveModel(id)}
               >
                 <DeleteOutlined style={{ cursor: 'pointer' }} />
               </Button>

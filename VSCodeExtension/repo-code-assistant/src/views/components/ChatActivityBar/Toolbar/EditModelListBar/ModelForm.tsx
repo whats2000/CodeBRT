@@ -1,4 +1,4 @@
-import React, { useContext, useEffect } from 'react';
+import React, { useContext, useEffect, useRef } from 'react';
 import { Button, Form, Space } from 'antd';
 import {
   DndContext,
@@ -13,6 +13,7 @@ import {
   SortableContext,
   verticalListSortingStrategy,
 } from '@dnd-kit/sortable';
+import { v4 as uuidv4 } from 'uuid';
 
 import { ModelServiceType } from '../../../../../types';
 import { WebviewContext } from '../../../../WebviewContext';
@@ -27,6 +28,11 @@ type ModelFormProps = {
   handleEditModelListSave: (models: string[]) => void;
 };
 
+type ModelWithId = {
+  id: string;
+  name: string;
+};
+
 export const ModelForm: React.FC<ModelFormProps> = ({
   isOpen,
   isLoading,
@@ -36,6 +42,9 @@ export const ModelForm: React.FC<ModelFormProps> = ({
   handleEditModelListSave,
 }) => {
   const { callApi } = useContext(WebviewContext);
+  const modelsWithId = useRef(
+    availableModels.map((model) => ({ id: uuidv4(), name: model })),
+  );
 
   const sensors = useSensors(
     useSensor(PointerSensor, {
@@ -45,10 +54,14 @@ export const ModelForm: React.FC<ModelFormProps> = ({
     }),
   );
 
-  const handleSave = (modelsToSave: string[]) => {
+  const handleSave = (modelsToSave: ModelWithId[]) => {
     if (activeModelService === 'loading...' || isLoading) return;
 
-    callApi('setAvailableModels', activeModelService, modelsToSave)
+    callApi(
+      'setAvailableModels',
+      activeModelService,
+      modelsToSave.map((model) => model.name).filter((model) => model !== ''),
+    )
       .then(() => {
         callApi(
           'alertMessage',
@@ -56,7 +69,11 @@ export const ModelForm: React.FC<ModelFormProps> = ({
           'info',
         ).catch(console.error);
         setTimeout(() => {
-          handleEditModelListSave(modelsToSave);
+          handleEditModelListSave(
+            modelsToSave
+              .map((model) => model.name)
+              .filter((model) => model !== ''),
+          );
         }, 200);
       })
       .catch((error) => {
@@ -70,23 +87,30 @@ export const ModelForm: React.FC<ModelFormProps> = ({
 
   useEffect(() => {
     if (!isOpen) {
-      handleSave(availableModels);
+      handleSave(modelsWithId.current);
     }
   }, [isOpen]);
 
-  const handleAvailableModelChange = (index: number, value: string) => {
-    const updatedModels = [...availableModels];
-    updatedModels[index] = value;
-    setAvailableModels(updatedModels);
+  const handleAvailableModelChange = (id: string, value: string) => {
+    const updatedModels = modelsWithId.current.map((model) =>
+      model.id === id ? { ...model, name: value } : model,
+    );
+    modelsWithId.current = updatedModels;
+    setAvailableModels(updatedModels.map((model) => model.name));
   };
 
   const handleAddAvailableModel = () => {
-    setAvailableModels([...availableModels, '']);
+    const newModel = { id: uuidv4(), name: '' };
+    modelsWithId.current = [...modelsWithId.current, newModel];
+    setAvailableModels(modelsWithId.current.map((model) => model.name));
   };
 
-  const handleRemoveAvailableModel = (index: number) => {
-    const updatedModels = availableModels.filter((_, i) => i !== index);
-    setAvailableModels(updatedModels);
+  const handleRemoveAvailableModel = (id: string) => {
+    const updatedModels = modelsWithId.current.filter(
+      (model) => model.id !== id,
+    );
+    modelsWithId.current = updatedModels;
+    setAvailableModels(updatedModels.map((model) => model.name));
   };
 
   const handleDragEnd = (event: DragEndEvent) => {
@@ -94,11 +118,21 @@ export const ModelForm: React.FC<ModelFormProps> = ({
 
     if (!over) return;
 
-    if (active.id !== over.id) {
-      const oldIndex = availableModels.indexOf(active.id as string);
-      const newIndex = availableModels.indexOf(over.id as string);
+    const activeIndex = modelsWithId.current.findIndex(
+      (model) => model.id === active.id,
+    );
+    const overIndex = modelsWithId.current.findIndex(
+      (model) => model.id === over.id,
+    );
 
-      setAvailableModels(arrayMove(availableModels, oldIndex, newIndex));
+    if (activeIndex !== overIndex) {
+      const updatedModels = arrayMove(
+        modelsWithId.current,
+        activeIndex,
+        overIndex,
+      );
+      modelsWithId.current = updatedModels;
+      setAvailableModels(updatedModels.map((model) => model.name));
     }
   };
 
@@ -111,15 +145,15 @@ export const ModelForm: React.FC<ModelFormProps> = ({
           onDragEnd={handleDragEnd}
         >
           <SortableContext
-            items={availableModels}
+            items={modelsWithId.current.map((model) => model.id)}
             strategy={verticalListSortingStrategy}
           >
-            {availableModels.map((model, index) => (
+            {modelsWithId.current.map((model, index) => (
               <ModelFormSortableItem
-                key={model}
-                id={model}
+                key={model.id}
+                id={model.id}
                 index={index}
-                value={model}
+                value={model.name}
                 onChange={handleAvailableModelChange}
                 onRemove={handleRemoveAvailableModel}
               />

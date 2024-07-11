@@ -115,6 +115,15 @@ export const VoiceSettingsBar: React.FC<VoiceSettingsBarProps> = ({
     }
   };
 
+  const handleEditGptSoVitsSettingsSave = (
+    newSettings: Partial<ExtensionSettings>,
+  ) => {
+    setPartialSettings((prev) => ({
+      ...prev,
+      ...newSettings,
+    }));
+  };
+
   return (
     <>
       <Drawer
@@ -187,8 +196,8 @@ export const VoiceSettingsBar: React.FC<VoiceSettingsBarProps> = ({
               placeholder='Select a reference voice'
             >
               {partialSettings.gptSoVitsAvailableReferenceVoices?.map(
-                (voice) => (
-                  <Option key={voice.name} value={voice.name}>
+                (voice, index) => (
+                  <Option key={`gptSoVitsVoice-${index}`} value={voice.name}>
                     {voice.name}
                   </Option>
                 ),
@@ -208,6 +217,7 @@ export const VoiceSettingsBar: React.FC<VoiceSettingsBarProps> = ({
       <GptSoVitsSettingsBar
         isOpen={isGptSoVitsSettingsOpen}
         onClose={() => setIsGptSoVitsSettingsOpen(false)}
+        handleEditGptSoVitsSettingsSave={handleEditGptSoVitsSettingsSave}
       />
     </>
   );
