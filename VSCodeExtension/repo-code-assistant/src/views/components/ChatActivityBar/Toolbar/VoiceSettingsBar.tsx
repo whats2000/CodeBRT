@@ -11,9 +11,9 @@ import {
 } from 'antd';
 
 import type { ExtensionSettings, VoiceServiceType } from '../../../../types';
+import { MODEL_SERVICE_LINKS } from '../../../../constants';
 import { WebviewContext } from '../../../WebviewContext';
 import { GptSoVitsSettingsBar } from './VoiceSettingsBar/GptSoVitsSettingsBar';
-import { MODEL_SERVICE_LINKS } from '../../../../constants';
 
 const { Option } = Select;
 

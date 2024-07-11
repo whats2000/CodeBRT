@@ -1,15 +1,29 @@
 import React, { useContext, useEffect } from 'react';
-import { Button, Form, Input, List, Space } from 'antd';
+import { Button, Form, Space } from 'antd';
+import {
+  DndContext,
+  closestCenter,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  DragEndEvent,
+} from '@dnd-kit/core';
+import {
+  arrayMove,
+  SortableContext,
+  verticalListSortingStrategy,
+} from '@dnd-kit/sortable';
 
 import { ModelServiceType } from '../../../../../types';
 import { WebviewContext } from '../../../../WebviewContext';
+import { ModelFormSortableItem } from './ModelForm/ModelFormSortableItem';
 
 type ModelFormProps = {
   isOpen: boolean;
   isLoading: boolean;
   activeModelService: ModelServiceType | 'loading...';
   availableModels: string[];
-  setAvailableModels: (models: string[]) => void;
+  setAvailableModels: React.Dispatch<React.SetStateAction<string[]>>;
   handleEditModelListSave: (models: string[]) => void;
 };
 
@@ -22,6 +36,14 @@ export const ModelForm: React.FC<ModelFormProps> = ({
   handleEditModelListSave,
 }) => {
   const { callApi } = useContext(WebviewContext);
+
+  const sensors = useSensors(
+    useSensor(PointerSensor, {
+      activationConstraint: {
+        distance: 5,
+      },
+    }),
+  );
 
   const handleSave = (modelsToSave: string[]) => {
     if (activeModelService === 'loading...' || isLoading) return;
@@ -37,7 +59,7 @@ export const ModelForm: React.FC<ModelFormProps> = ({
           handleEditModelListSave(modelsToSave);
         }, 200);
       })
-      .catch((error: any) => {
+      .catch((error) => {
         callApi(
           'alertMessage',
           `Failed to save available models: ${error}`,
@@ -67,33 +89,43 @@ export const ModelForm: React.FC<ModelFormProps> = ({
     setAvailableModels(updatedModels);
   };
 
+  const handleDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event;
+
+    if (!over) return;
+
+    if (active.id !== over.id) {
+      const oldIndex = availableModels.indexOf(active.id as string);
+      const newIndex = availableModels.indexOf(over.id as string);
+
+      setAvailableModels(arrayMove(availableModels, oldIndex, newIndex));
+    }
+  };
+
   return (
     <Form layout='vertical'>
       <Space direction='vertical' style={{ width: '100%' }}>
-        <List
-          dataSource={availableModels}
-          renderItem={(model, index) => (
-            <List.Item
-              actions={[
-                <Button
-                  danger
-                  onClick={() => handleRemoveAvailableModel(index)}
-                >
-                  Remove
-                </Button>,
-              ]}
-            >
-              <Form.Item label={`Model ${index + 1}`}>
-                <Input
-                  value={model}
-                  onChange={(e) =>
-                    handleAvailableModelChange(index, e.target.value)
-                  }
-                />
-              </Form.Item>
-            </List.Item>
-          )}
-        />
+        <DndContext
+          sensors={sensors}
+          collisionDetection={closestCenter}
+          onDragEnd={handleDragEnd}
+        >
+          <SortableContext
+            items={availableModels}
+            strategy={verticalListSortingStrategy}
+          >
+            {availableModels.map((model, index) => (
+              <ModelFormSortableItem
+                key={model}
+                id={model}
+                index={index}
+                value={model}
+                onChange={handleAvailableModelChange}
+                onRemove={handleRemoveAvailableModel}
+              />
+            ))}
+          </SortableContext>
+        </DndContext>
         <Button type='dashed' onClick={handleAddAvailableModel} block>
           Add Model
         </Button>

@@ -31,8 +31,6 @@ class SoundPlay {
         ? macPlayCommand(path, volumeAdjustedByOS)
         : windowPlayCommand(path, volumeAdjustedByOS);
 
-    console.log(playCommand);
-
     try {
       this.playProcess = spawn(playCommand, {
         shell: true,

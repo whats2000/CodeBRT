@@ -1,18 +1,31 @@
-import React, { useContext, useEffect } from 'react';
-import { Button, Checkbox, Collapse, Form, Input, Select, Space } from 'antd';
-
+import React, { useContext, useEffect, useState } from 'react';
+import { Button, Form, Space } from 'antd';
+import {
+  DndContext,
+  closestCenter,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  DragEndEvent,
+} from '@dnd-kit/core';
+import {
+  arrayMove,
+  SortableContext,
+  verticalListSortingStrategy,
+} from '@dnd-kit/sortable';
 import type {
   CustomModelSettings,
   ModelServiceType,
 } from '../../../../../types';
 import { WebviewContext } from '../../../../WebviewContext';
+import { SortableItem } from './CustomModelForm/CustomModelFormSortableItem';
 
 type CustomModelFormProps = {
   isOpen: boolean;
   isLoading: boolean;
   activeModel: ModelServiceType | 'loading...';
   customModels: CustomModelSettings[];
-  setCustomModels: (models: CustomModelSettings[]) => void;
+  setCustomModels: React.Dispatch<React.SetStateAction<CustomModelSettings[]>>;
   handleEditModelListSave: (models: string[]) => void;
 };
 
@@ -25,6 +38,16 @@ export const CustomModelForm: React.FC<CustomModelFormProps> = ({
   handleEditModelListSave,
 }) => {
   const { callApi } = useContext(WebviewContext);
+
+  const sensors = useSensors(
+    useSensor(PointerSensor, {
+      activationConstraint: {
+        distance: 5,
+      },
+    }),
+  );
+
+  const [activeKey, setActiveKey] = useState<string[]>([]);
 
   const handleSave = (modelsToSave: CustomModelSettings[]) => {
     if (activeModel === 'loading...' || isLoading) return;
@@ -57,7 +80,7 @@ export const CustomModelForm: React.FC<CustomModelFormProps> = ({
     setCustomModels([
       ...customModels,
       {
-        name: '',
+        name: 'New Model',
         apiUrl: '',
         apiMethod: 'POST',
         apiTextParam: '',
@@ -73,96 +96,63 @@ export const CustomModelForm: React.FC<CustomModelFormProps> = ({
     field: keyof CustomModelSettings,
     value: string | boolean,
   ) => {
-    const updatedModels = [...customModels];
-    updatedModels[index][field] = value as never;
-    setCustomModels(updatedModels);
+    setCustomModels((prevModels) => {
+      const updatedModels = [...prevModels];
+      updatedModels[index][field] = value as never;
+      return updatedModels;
+    });
   };
 
   const handleRemoveModel = (index: number) => {
     const updatedModels = customModels.filter((_, i) => i !== index);
     setCustomModels(updatedModels);
+    setActiveKey(activeKey.filter((key) => key !== index.toString()));
+  };
+
+  const handleDragEnd = (event: DragEndEvent) => {
+    const { active, over } = event;
+
+    if (!over) return;
+
+    if (active.id !== over.id) {
+      const oldIndex = customModels.findIndex(
+        (_, index) => `custom-model-${index}` === active.id,
+      );
+      const newIndex = customModels.findIndex(
+        (_, index) => `custom-model-${index}` === over.id,
+      );
+
+      setCustomModels(arrayMove(customModels, oldIndex, newIndex));
+      setActiveKey([]);
+    }
   };
 
   return (
     <Form layout='vertical'>
       <Space direction='vertical' style={{ width: '100%' }}>
-        <Collapse bordered={false} size={'large'}>
-          {customModels.map((model, index) => (
-            <Collapse.Panel
-              header={model.name || 'New Model'}
-              key={index.toString()}
-              extra={
-                <Button danger onClick={() => handleRemoveModel(index)}>
-                  Remove
-                </Button>
-              }
-            >
-              <Form.Item label='Name'>
-                <Input
-                  value={model.name}
-                  onChange={(e) =>
-                    handleModelChange(index, 'name', e.target.value)
-                  }
-                />
-              </Form.Item>
-              <Form.Item label='API URL'>
-                <Input
-                  value={model.apiUrl}
-                  onChange={(e) =>
-                    handleModelChange(index, 'apiUrl', e.target.value)
-                  }
-                />
-              </Form.Item>
-              <Form.Item label='API Method'>
-                <Select
-                  value={model.apiMethod}
-                  onChange={(value) =>
-                    handleModelChange(index, 'apiMethod', value)
-                  }
-                >
-                  <Select.Option value='GET'>GET</Select.Option>
-                  <Select.Option value='POST'>POST</Select.Option>
-                </Select>
-              </Form.Item>
-              <Form.Item label='Text Parameter'>
-                <Input
-                  value={model.apiTextParam}
-                  onChange={(e) =>
-                    handleModelChange(index, 'apiTextParam', e.target.value)
-                  }
-                />
-              </Form.Item>
-              <Form.Item label='Image Parameter'>
-                <Input
-                  value={model.apiImageParam}
-                  onChange={(e) =>
-                    handleModelChange(index, 'apiImageParam', e.target.value)
-                  }
-                />
-              </Form.Item>
-              <Form.Item label='Query Parameter'>
-                <Input
-                  value={model.apiQueryParam}
-                  onChange={(e) =>
-                    handleModelChange(index, 'apiQueryParam', e.target.value)
-                  }
-                />
-              </Form.Item>
-              <Form.Item label='Include Query in History'>
-                <Checkbox
-                  checked={model.includeQueryInHistory}
-                  onChange={(e) =>
-                    handleModelChange(
-                      index,
-                      'includeQueryInHistory',
-                      e.target.checked,
-                    )
-                  }
-                />
-              </Form.Item>
-            </Collapse.Panel>
-          ))}
-        </Collapse>
+        <DndContext
+          sensors={sensors}
+          collisionDetection={closestCenter}
+          onDragEnd={handleDragEnd}
+        >
+          <SortableContext
+            items={customModels.map((_, index) => `custom-model-${index}`)}
+            strategy={verticalListSortingStrategy}
+          >
+            {customModels.map((model, index) => (
+              <SortableItem
+                key={`custom-model-${index}`}
+                id={`custom-model-${index}`}
+                index={index}
+                model={model}
+                onModelChange={handleModelChange}
+                onRemoveModel={handleRemoveModel}
+                activeKey={activeKey}
+                setActiveKey={setActiveKey}
+              />
+            ))}
+          </SortableContext>
+        </DndContext>
         <Button type='dashed' onClick={handleAddModel} block>
           Add Model
         </Button>

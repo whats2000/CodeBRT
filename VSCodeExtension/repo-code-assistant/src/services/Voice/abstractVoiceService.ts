@@ -1,11 +1,11 @@
+import path from 'node:path';
+import fs from 'node:fs/promises';
 import { Promise } from 'promise-deferred';
 import * as vscode from 'vscode';
-import natural from 'natural';
+import { SentenceTokenizer } from 'natural';
 
 import { VoiceService } from '../../types';
 import SettingsManager from '../../api/settingsManager';
-import path from 'node:path';
-import fs from 'node:fs/promises';
 
 export abstract class AbstractVoiceService implements VoiceService {
   protected readonly context: vscode.ExtensionContext;
@@ -79,7 +79,7 @@ export abstract class AbstractVoiceService implements VoiceService {
    * @returns An array of text chunks.
    */
   protected splitTextIntoChunks(text: string, chunkSize: number = 4): string[] {
-    const tokenizer = new natural.SentenceTokenizer();
+    const tokenizer = new SentenceTokenizer();
     const sentences = tokenizer.tokenize(text);
 
     const mergedSentences: string[] = [];
