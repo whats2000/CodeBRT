@@ -43,6 +43,7 @@ export abstract class AbstractLanguageModelService
   protected history: ConversationHistory = {
     title: '',
     root: '',
+    top: [],
     current: '',
     create_time: Date.now(),
     update_time: Date.now(),
@@ -156,6 +157,7 @@ export abstract class AbstractLanguageModelService
     const newHistory: ConversationHistory = {
       title: '',
       root: '',
+      top: [],
       current: '',
       create_time: Date.now(),
       update_time: Date.now(),
@@ -206,9 +208,12 @@ export abstract class AbstractLanguageModelService
         return '';
       }
       this.history.entries[parentID].children.push(newID);
+    } else {
+      this.history.top.push(newID);
     }
 
     if (this.history.root === '') {
+      delete this.histories[this.history.root];
       this.history.root = newID;
       this.history.title = `${message.substring(0, 20)}...`;
     }
@@ -276,6 +281,7 @@ export abstract class AbstractLanguageModelService
     const newHistory: ConversationHistory = {
       title: this.history.title,
       root: this.history.root,
+      top: this.history.top,
       current: currentEntryID,
       create_time: this.history.create_time,
       update_time: Date.now(),

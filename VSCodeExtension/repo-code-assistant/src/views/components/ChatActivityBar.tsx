@@ -33,6 +33,7 @@ export const ChatActivityBar = () => {
       create_time: 0,
       update_time: 0,
       root: '',
+      top: [],
       current: '',
       entries: {},
     });
@@ -319,6 +320,9 @@ export const ChatActivityBar = () => {
 
       return {
         ...prevMessages,
+        top: entry.parent
+          ? prevMessages.top
+          : [...prevMessages.top, newEntryId],
         entries: updatedEntries as ConversationHistory['entries'],
         current: newEntryId,
       };

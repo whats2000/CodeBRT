@@ -2,26 +2,7 @@ import React, { useContext, useEffect, useState } from 'react';
 import ReactMarkdown from 'react-markdown';
 import { RendererCode, RendererCodeProvider } from '../common/RenderCode';
 import styled from 'styled-components';
-import {
-  ArrowLeftOutlined,
-  ArrowRightOutlined,
-  CopyFilled,
-  CopyOutlined,
-  EditOutlined,
-  LoadingOutlined,
-  PauseCircleOutlined,
-  SoundOutlined,
-} from '@ant-design/icons';
-import {
-  Button,
-  Space,
-  Spin,
-  Typography,
-  theme,
-  Input,
-  Flex,
-  Tooltip,
-} from 'antd';
+import { Button, Input, Space, Spin, theme } from 'antd';
 import * as hljs from 'react-syntax-highlighter/dist/cjs/styles/hljs';
 
 import type {
@@ -32,6 +13,7 @@ import type {
 import { WebviewContext } from '../../WebviewContext';
 import { TypingAnimation } from '../common/TypingAnimation';
 import { fadeIn, fadeOut } from '../../styles/animation';
+import { MessagesTopToolBar } from './MessagesContainer/TopToolBar';
 
 const { useToken } = theme;
 
@@ -56,13 +38,6 @@ const MessageBubble = styled.div<{ $user: string }>`
   margin: 10px 0;
   color: ${({ theme }) => theme.colorText};
   position: relative;
-`;
-
-const RespondCharacter = styled(Typography.Text)<{ $user: string }>`
-  color: ${({ $user, theme }) =>
-    $user === 'user' ? theme.colorPrimary : theme.colorSecondary};
-  font-weight: bold;
-  margin-bottom: 5px;
 `;
 
 const EditInputTextArea = styled(Input.TextArea)`
@@ -138,7 +113,6 @@ export const MessagesContainer: React.FC<MessagesContainerProps> = ({
   messageEndRef,
   handleEditUserMessageSave,
 }) => {
-  const [copied, setCopied] = useState<Record<string, boolean>>({});
   const [editingEntryId, setEditingEntryId] = useState<string | null>(null);
   const [editedMessage, setEditedMessage] = useState('');
   const [imageUrls, setImageUrls] = useState<Record<string, string>>({});
@@ -180,19 +154,6 @@ export const MessagesContainer: React.FC<MessagesContainerProps> = ({
       }
     });
   }, []);
-
-  const handleCopy = (text: string, entryId: string) => {
-    navigator.clipboard
-      .writeText(text)
-      .then(() => {
-        setCopied((prevState) => ({ ...prevState, [entryId]: true }));
-        setTimeout(
-          () => setCopied((prevState) => ({ ...prevState, [entryId]: false })),
-          2000,
-        );
-      })
-      .catch((err) => console.error('Failed to copy text: ', err));
-  };
 
   const handleInput = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     const input = e.target;
@@ -243,67 +204,10 @@ export const MessagesContainer: React.FC<MessagesContainerProps> = ({
     setEditingEntryId(null);
   };
 
-  const handleGoForward = (
-    entry: ConversationEntry,
-    direction: 'next' | 'prev',
-  ) => {
-    const parent = entry.parent
-      ? conversationHistory.entries[entry.parent]
-      : null;
-    if (parent && parent.children.length > 0) {
-      const currentIndex = parent.children.indexOf(entry.id);
-      let nextIndex = currentIndex;
-
-      if (direction === 'next') {
-        nextIndex = (currentIndex + 1) % parent.children.length;
-      } else if (direction === 'prev') {
-        nextIndex =
-          (currentIndex - 1 + parent.children.length) % parent.children.length;
-      }
-
-      const nextChildId = parent.children[nextIndex];
-      let nextEntry = conversationHistory.entries[nextChildId];
-
-      // Navigate to the leftmost leaf node
-      while (nextEntry.children.length > 0) {
-        nextEntry = conversationHistory.entries[nextEntry.children[0]];
-      }
-
-      setConversationHistory((prevMessages) => ({
-        ...prevMessages,
-        current: nextEntry.id,
-      }));
-    }
-  };
-
   const conversationHistoryEntries = traverseHistory(
     conversationHistory.entries,
     conversationHistory.current,
   );
-
-  const handleConvertTextToVoice = (text: string) => {
-    if (isAudioPlaying) {
-      setIsStopAudio(true);
-      callApi('stopPlayVoice', 'gptSoVits').catch(console.error);
-      return;
-    }
-
-    setIsAudioPlaying(true);
-    callApi('convertTextToVoice', 'gptSoVits', text)
-      .then(() => {
-        setIsAudioPlaying(false);
-        setIsStopAudio(false);
-      })
-      .catch((error: any) => {
-        callApi(
-          'alertMessage',
-          `Failed to convert text to voice: ${error}`,
-          'error',
-        ).catch(console.error);
-        setIsAudioPlaying(false);
-        setIsStopAudio(false);
-      });
-  };
 
   const setHljsTheme = (theme: keyof typeof hljs) => {
     setPartialSettings((prev) => ({ ...prev, hljsTheme: theme }));
@@ -327,88 +231,23 @@ export const MessagesContainer: React.FC<MessagesContainerProps> = ({
         $isActiveModelLoading={isActiveModelLoading}
         ref={messagesContainerRef}
       >
-        {conversationHistoryEntries.map((entry) => {
-          const parent = entry.parent
-            ? conversationHistory.entries[entry.parent]
-            : null;
-          const siblingCount = parent ? parent.children.length : 0;
-          const currentIndex = parent
-            ? parent.children.indexOf(entry.id) + 1
-            : 0;
-
+        {conversationHistoryEntries.map((entry, index) => {
           return (
             <MessageBubble key={entry.id} $user={entry.role} theme={token}>
-              <Flex align={'center'} justify={'space-between'}>
-                <RespondCharacter $user={entry.role} theme={token}>
-                  {entry.role === 'AI'
-                    ? modelType.charAt(0).toUpperCase() + modelType.slice(1)
-                    : 'You'}
-                </RespondCharacter>
-                <Flex gap={1}>
-                  {parent && siblingCount > 1 && (
-                    <Button
-                      onClick={() => handleGoForward(entry, 'prev')}
-                      type={'text'}
-                      disabled={currentIndex === 1}
-                    >
-                      <ArrowLeftOutlined />
-                    </Button>
-                  )}
-                  {parent && siblingCount > 1 && (
-                    <Button type={'text'}>
-                      {currentIndex}/{siblingCount}
-                    </Button>
-                  )}
-                  {parent && siblingCount > 1 && (
-                    <Button
-                      onClick={() => handleGoForward(entry, 'next')}
-                      type={'text'}
-                      disabled={currentIndex === siblingCount}
-                    >
-                      <ArrowRightOutlined />
-                    </Button>
-                  )}
-                  <Tooltip
-                    title={
-                      isAudioPlaying
-                        ? 'Stop audio, these will take a few seconds in current version'
-                        : ''
-                    }
-                  >
-                    <Button
-                      icon={
-                        isStopAudio ? (
-                          <LoadingOutlined spin={true} />
-                        ) : isAudioPlaying ? (
-                          <PauseCircleOutlined />
-                        ) : (
-                          <SoundOutlined />
-                        )
-                      }
-                      type={'text'}
-                      onClick={() => handleConvertTextToVoice(entry.message)}
-                      disabled={isStopAudio}
-                    />
-                  </Tooltip>
-                  {conversationHistory.root !== entry.id &&
-                    conversationHistory.root !== '' && (
-                      <Button
-                        icon={<EditOutlined />}
-                        type={'text'}
-                        onClick={() =>
-                          editingEntryId === entry.id
-                            ? handleCancelEdit()
-                            : handleEdit(entry.id, entry.message)
-                        }
-                      />
-                    )}
-                  <Button
-                    icon={copied[entry.id] ? <CopyFilled /> : <CopyOutlined />}
-                    onClick={() => handleCopy(entry.message, entry.id)}
-                    type={'text'}
-                  />
-                </Flex>
-              </Flex>
+              <MessagesTopToolBar
+                modelType={modelType}
+                conversationHistory={conversationHistory}
+                setConversationHistory={setConversationHistory}
+                index={index}
+                conversationHistoryEntries={conversationHistoryEntries}
+                isAudioPlaying={isAudioPlaying}
+                setIsAudioPlaying={setIsAudioPlaying}
+                isStopAudio={isStopAudio}
+                setIsStopAudio={setIsStopAudio}
+                editingEntryId={editingEntryId}
+                handleCancelEdit={handleCancelEdit}
+                handleEdit={handleEdit}
+              />
 
               {entry.id === editingEntryId ? (
                 <Space direction={'vertical'}>
