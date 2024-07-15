@@ -367,6 +367,18 @@ export const activate = async (ctx: vscode.ExtensionContext) => {
         return `Failed to get response from ${modelType} service: ${error}`;
       }
     },
+    getLatestAvailableModelNames: async (modelType: ModelServiceType) => {
+      const modelService: LanguageModelService = models[modelType].service;
+
+      if (!modelService) {
+        vscode.window.showErrorMessage(
+          `Failed to get latest available model names for unknown model type: ${modelType}`,
+        );
+        return [];
+      }
+
+      return await modelService.getLatestAvailableModelNames();
+    },
     uploadImage: async (base64Data: string) => {
       const matches = base64Data.match(/^data:([A-Za-z-+/]+);base64,(.+)$/);
       if (!matches || matches.length !== 3) {

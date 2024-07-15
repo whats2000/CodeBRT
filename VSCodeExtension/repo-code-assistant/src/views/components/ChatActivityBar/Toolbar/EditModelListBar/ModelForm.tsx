@@ -22,6 +22,7 @@ import { ModelFormSortableItem } from './ModelForm/ModelFormSortableItem';
 type ModelFormProps = {
   isOpen: boolean;
   isLoading: boolean;
+  setIsLoading: React.Dispatch<React.SetStateAction<boolean>>;
   activeModelService: ModelServiceType | 'loading...';
   availableModels: string[];
   setAvailableModels: React.Dispatch<React.SetStateAction<string[]>>;
@@ -36,12 +37,14 @@ type ModelWithId = {
 export const ModelForm: React.FC<ModelFormProps> = ({
   isOpen,
   isLoading,
+  setIsLoading,
   activeModelService,
   availableModels,
   setAvailableModels,
   handleEditModelListSave,
 }) => {
   const { callApi } = useContext(WebviewContext);
+
   const modelsWithId = useRef(
     availableModels.map((model) => ({ id: uuidv4(), name: model })),
   );
@@ -136,6 +139,23 @@ export const ModelForm: React.FC<ModelFormProps> = ({
     }
   };
 
+  const handleFetchLatestAvailableModels = async () => {
+    if (activeModelService === 'loading...') return;
+
+    setIsLoading(true);
+
+    const latestAvailableModels = (await callApi(
+      'getLatestAvailableModelNames',
+      activeModelService,
+    )) as string[];
+
+    setIsLoading(false);
+
+    if (latestAvailableModels === availableModels) return;
+
+    setAvailableModels(latestAvailableModels);
+  };
+
   return (
     <Form layout='vertical'>
       <Space direction='vertical' style={{ width: '100%' }}>
@@ -160,6 +180,14 @@ export const ModelForm: React.FC<ModelFormProps> = ({
             ))}
           </SortableContext>
         </DndContext>
+        <Button
+          type='primary'
+          ghost={true}
+          onClick={handleFetchLatestAvailableModels}
+          block
+        >
+          Fetch Latest Models
+        </Button>
         <Button type='dashed' onClick={handleAddAvailableModel} block>
           Add Model
         </Button>

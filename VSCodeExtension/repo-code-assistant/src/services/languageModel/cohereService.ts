@@ -88,6 +88,38 @@ export class CohereService extends AbstractLanguageModelService {
     return result;
   }
 
+  public async getLatestAvailableModelNames(): Promise<string[]> {
+    const cohere = new CohereClient({
+      token: this.apiKey,
+    });
+
+    let newAvailableModelNames: string[] = [...this.availableModelNames];
+
+    try {
+      const latestModels = (await cohere.models.list()).models;
+
+      // Filter the invalid models (Not existing in the latest models)
+      newAvailableModelNames = newAvailableModelNames.filter((name) =>
+        latestModels.some((model) => model.name === name),
+      );
+
+      // Append the models to the available models if they are not already there
+      latestModels.forEach((model) => {
+        if (!model.name || !model.endpoints) return;
+        if (newAvailableModelNames.includes(model.name)) return;
+        if (!model.endpoints.includes('chat')) return;
+
+        newAvailableModelNames.push(model.name);
+      });
+    } catch (error) {
+      vscode.window.showErrorMessage(
+        'Failed to fetch available models: ' + error,
+      );
+    }
+
+    return newAvailableModelNames;
+  }
+
   public async getResponseForQuery(
     query: string,
     currentEntryID?: string,

@@ -196,6 +196,7 @@ export const ChatActivityBar = () => {
 
       return {
         ...prevMessages,
+        top: prevMessages.top.length === 0 ? [userEntryId] : prevMessages.top,
         entries: updatedEntries as ConversationHistory['entries'],
         current: userEntryId,
         root: prevMessages.root === '' ? userEntryId : prevMessages.root,

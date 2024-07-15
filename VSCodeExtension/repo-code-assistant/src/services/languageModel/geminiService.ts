@@ -11,6 +11,24 @@ import type { ConversationEntry } from '../../types';
 import { AbstractLanguageModelService } from './abstractLanguageModelService';
 import SettingsManager from '../../api/settingsManager';
 
+type GeminiModel = {
+  name: string;
+  baseModelId: string;
+  version: string;
+  displayName: string;
+  description: string;
+  inputTokenLimit: number;
+  outputTokenLimit: number;
+  supportedGenerationMethods: string[];
+  temperature: number;
+  topP: number;
+  topK: number;
+};
+
+type GeminiModelsList = {
+  models: GeminiModel[];
+};
+
 export class GeminiService extends AbstractLanguageModelService {
   private apiKey: string;
   private readonly settingsListener: vscode.Disposable;
@@ -125,6 +143,49 @@ export class GeminiService extends AbstractLanguageModelService {
         mimeType,
       },
     };
+  }
+
+  public async getLatestAvailableModelNames(): Promise<string[]> {
+    const requestUrl = `https://generativelanguage.googleapis.com/v1beta/models?key=${this.apiKey}`;
+
+    let newAvailableModelNames: string[] = [...this.availableModelNames];
+
+    try {
+      const response = await fetch(requestUrl);
+
+      if (!response.ok) {
+        vscode.window.showErrorMessage(
+          'Failed to fetch available models from Gemini Service: ' +
+            response.statusText,
+        );
+        return this.availableModelNames;
+      }
+
+      const data: GeminiModelsList = await response.json();
+      const latestModels = data.models || [];
+
+      // Filter the invalid models (Not existing in the latest models)
+      newAvailableModelNames = newAvailableModelNames.filter((name) =>
+        latestModels.some((model) => model.name === `models/${name}`),
+      );
+
+      // Append the models to the available models if they are not already there
+      latestModels.forEach((model) => {
+        if (!model.name || !model.supportedGenerationMethods) return;
+        if (newAvailableModelNames.includes(model.name.replace('models/', '')))
+          return;
+        if (!model.supportedGenerationMethods.includes('generateContent'))
+          return;
+
+        newAvailableModelNames.push(model.name.replace('models/', ''));
+      });
+    } catch (error) {
+      vscode.window.showErrorMessage(
+        'Failed to fetch available models: ' + error,
+      );
+    }
+
+    return newAvailableModelNames;
   }
 
   public async getResponseForQuery(

@@ -126,7 +126,7 @@ export const MessagesTopToolBar: React.FC<MessagesTopToolBarProps> = ({
       // Navigate to the leftmost leaf node and set it as the current entry
       const nextRootId = history.top[nextIndex];
       let nextEntry = history.entries[nextRootId];
-      while (nextEntry.children.length > 0) {
+      while (nextEntry?.children?.length > 0) {
         nextEntry = history.entries[nextEntry.children[0]];
       }
 

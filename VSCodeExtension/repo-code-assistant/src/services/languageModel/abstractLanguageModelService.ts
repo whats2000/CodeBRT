@@ -107,6 +107,19 @@ export abstract class AbstractLanguageModelService
   }
 
   /**
+   * Get the latest version of the language model service
+   */
+  public async getLatestAvailableModelNames(): Promise<string[]> {
+    vscode.window
+      .showErrorMessage(
+        'Current this model service does not support updating available models, Please update it manually.',
+      )
+      .then();
+
+    return this.availableModelNames;
+  }
+
+  /**
    * Load all conversation histories from the history file
    */
   public async loadHistories(): Promise<void> {

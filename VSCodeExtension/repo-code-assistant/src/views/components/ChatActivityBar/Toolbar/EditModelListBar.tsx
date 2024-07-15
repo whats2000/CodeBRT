@@ -83,6 +83,7 @@ export const EditModelListBar: React.FC<EditModelListBarProps> = ({
         <ModelForm
           isOpen={isOpen}
           isLoading={isLoading}
+          setIsLoading={setIsLoading}
           activeModelService={activeModelService}
           availableModels={availableModels}
           setAvailableModels={setAvailableModels}

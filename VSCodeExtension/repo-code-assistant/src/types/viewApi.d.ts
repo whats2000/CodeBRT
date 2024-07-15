@@ -230,6 +230,14 @@ export type ViewApi = {
   ) => Promise<string>;
 
   /**
+   * Get the latest available model names.
+   * @param modelType - The type of the model to get the latest available model names for.
+   */
+  getLatestAvailableModelNames: (
+    modelType: ModelServiceType,
+  ) => Promise<string[]>;
+
+  /**
    * Get the response for a query with a file.
    * @param base64Data - The base64 data of the file.
    * @returns The path of the file.

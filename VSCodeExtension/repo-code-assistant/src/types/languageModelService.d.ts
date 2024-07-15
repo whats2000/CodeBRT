@@ -5,6 +5,11 @@ import {
 
 export type LanguageModelService = {
   /**
+   * Get the latest version of the language model service
+   */
+  getLatestAvailableModelNames: () => Promise<string[]>;
+
+  /**
    * Load the conversation histories from the file
    */
   loadHistories: () => Promise<void>;

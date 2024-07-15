@@ -1,7 +1,7 @@
 import React, { useContext, useEffect, useState } from 'react';
 import styled from 'styled-components';
 import { Drawer, Menu, Typography, Input, Spin, Flex, Button } from 'antd';
-import { DeleteOutlined } from '@ant-design/icons';
+import { DeleteOutlined, EditOutlined } from '@ant-design/icons';
 
 import type {
   ConversationHistory,
@@ -191,7 +191,20 @@ export const HistorySidebar: React.FC<HistorySidebarProps> = ({
               />
             ) : (
               <Typography.Text ellipsis>
-                {histories[historyID].title}
+                {histories[historyID].title}{' '}
+                {historyID === conversationHistory.root && (
+                  <Button
+                    type='text'
+                    size='small'
+                    icon={<EditOutlined />}
+                    onClick={() =>
+                      handleTitleDoubleClick(
+                        historyID,
+                        histories[historyID].title,
+                      )
+                    }
+                  />
+                )}
               </Typography.Text>
             )}
             <Button danger={true} type='text' size='small'>

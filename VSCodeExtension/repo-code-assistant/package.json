@@ -198,23 +198,7 @@
         "repo-code-assistant.ollamaAvailableModels": {
           "type": "array",
           "description": "Available models for Ollama",
-          "default": [
-            "deepseek-coder-v2",
-            "llama3",
-            "llama3:70b",
-            "phi3",
-            "phi3:medium",
-            "gemma:2b",
-            "gemma:7b",
-            "mistral",
-            "moondream",
-            "neural-chat",
-            "starling-lm",
-            "codellama",
-            "llama2-uncensored",
-            "llava",
-            "solar"
-          ],
+          "default": [],
           "items": {
             "type": "string"
           }
