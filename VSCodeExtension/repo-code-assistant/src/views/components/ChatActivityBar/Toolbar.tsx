@@ -1,5 +1,13 @@
 import React, { useContext, useEffect, useState } from 'react';
-import { Select, Button, Space, Dropdown, Drawer, MenuProps } from 'antd';
+import {
+  Select,
+  Button,
+  Space,
+  Dropdown,
+  Drawer,
+  MenuProps,
+  SelectProps,
+} from 'antd';
 import {
   PlusOutlined,
   HistoryOutlined,
@@ -13,8 +21,6 @@ import { EditModelListBar } from './Toolbar/EditModelListBar';
 import { HistorySidebar } from './Toolbar/HistorySidebar';
 import { SettingsBar } from './Toolbar/SettingsBar';
 import { VoiceSettingsBar } from './Toolbar/VoiceSettingsBar';
-
-const { Option } = Select;
 
 const StyledSpace = styled(Space)`
   display: flex;
@@ -186,6 +192,37 @@ export const Toolbar: React.FC<ToolbarProps> = ({
     },
   ];
 
+  const modelServiceOptions: SelectProps['options'] = modelServices.map(
+    (service) => ({
+      key: service,
+      label: service,
+      value: service,
+    }),
+  );
+
+  const modelOptions: SelectProps['options'] = [
+    ...availableModels.map((model, index) => ({
+      key: `available-${index}`,
+      label: model,
+      value: model,
+    })),
+    {
+      key: 'edit',
+      label: (
+        <EditModelListButton
+          icon={<SettingOutlined />}
+          onClick={openEditModelList}
+          style={{ width: '100%' }}
+        >
+          Edit Model List
+        </EditModelListButton>
+      ),
+      value: 'edit',
+      disabled: true,
+      style: { paddingLeft: 0, paddingRight: 0 },
+    },
+  ];
+
   return (
     <>
       <StyledSpace>
@@ -198,11 +235,7 @@ export const Toolbar: React.FC<ToolbarProps> = ({
                 onChange={handleModelServiceChange}
                 style={{ width: 100 }}
                 loading={isActiveModelLoading}
-                options={modelServices.map((service) => ({
-                  key: service,
-                  label: service,
-                  value: service,
-                }))}
+                options={modelServiceOptions}
               />
               <Button onClick={() => setIsSelectModelOpen(true)}>
                 {selectedModel}
@@ -218,26 +251,8 @@ export const Toolbar: React.FC<ToolbarProps> = ({
                   value={isActiveModelLoading ? 'Loading...' : selectedModel}
                   onChange={handleModelChange}
                   style={{ width: '100%' }}
-                >
-                  {availableModels.map((model, index) => (
-                    <Option key={`available-${index}`} value={model}>
-                      {model}
-                    </Option>
-                  ))}
-                  <Option
-                    value='edit'
-                    style={{ paddingLeft: 0, paddingRight: 0 }}
-                    disabled
-                  >
-                    <EditModelListButton
-                      icon={<SettingOutlined />}
-                      onClick={openEditModelList}
-                      style={{ width: '100%' }}
-                    >
-                      Edit Model List
-                    </EditModelListButton>
-                  </Option>
-                </Select>
+                  options={modelOptions}
+                />
               </Drawer>
             </>
           ) : (
@@ -248,11 +263,7 @@ export const Toolbar: React.FC<ToolbarProps> = ({
                 onChange={handleModelServiceChange}
                 style={{ width: 150 }}
                 loading={isActiveModelLoading}
-                options={modelServices.map((service) => ({
-                  key: service,
-                  label: service,
-                  value: service,
-                }))}
+                options={modelServiceOptions}
               />
               <Select
                 showSearch
@@ -260,28 +271,7 @@ export const Toolbar: React.FC<ToolbarProps> = ({
                 onChange={handleModelChange}
                 style={{ width: 200 }}
                 loading={isActiveModelLoading}
-                options={[
-                  ...availableModels.map((model, index) => ({
-                    key: `available-${index}`,
-                    label: model,
-                    value: model,
-                  })),
-                  {
-                    key: 'edit',
-                    label: (
-                      <EditModelListButton
-                        icon={<SettingOutlined />}
-                        onClick={openEditModelList}
-                        style={{ width: '100%' }}
-                      >
-                        Edit Model List
-                      </EditModelListButton>
-                    ),
-                    value: 'edit',
-                    disabled: true,
-                    style: { paddingLeft: 0, paddingRight: 0 },
-                  },
-                ]}
+                options={modelOptions}
               />
             </>
           )}
