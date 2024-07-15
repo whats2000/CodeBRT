@@ -198,7 +198,9 @@
         "repo-code-assistant.ollamaAvailableModels": {
           "type": "array",
           "description": "Available models for Ollama",
-          "default": [],
+          "default": [
+            "Auto Detect"
+          ],
           "items": {
             "type": "string"
           }
