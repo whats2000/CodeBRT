@@ -3,6 +3,7 @@ import fs from 'node:fs/promises';
 import { Promise } from 'promise-deferred';
 import * as vscode from 'vscode';
 import { SentenceTokenizer } from 'natural';
+import removeMarkdown from 'markdown-to-text';
 
 import { VoiceService } from '../../types';
 import SettingsManager from '../../api/settingsManager';
@@ -32,17 +33,10 @@ export abstract class AbstractVoiceService implements VoiceService {
    * @param text - The text to preprocess.
    */
   protected preprocessText(text: string): string {
-    text = text.replace(/#+/g, '');
-    text = text.replace(/[*+-]/g, '');
-    text = text.replace(/\[.*?]\(.*?\)/g, '');
-    text = text.replace(/(\*\*|__)(.*?)\1/g, '$2');
-    text = text.replace(/([*_])(.*?)\1/g, '$2');
-    text = text.replace(/~~(.*?)~~/g, '$1');
-    text = text.replace(/`{1,3}([^`]*)`{1,3}/g, '$1');
-    text = text.replace(/!\[.*?]\(.*?\)/g, '');
-    text = text.replace(/^>+\s?/gm, '');
-    text = text.replace(/\n/g, ' ').trim();
-    return text;
+    text = text.replace(/^([*-+]\s.*?)([.!?。！？]?)$/gm, (match, p1, p2) => {
+      return p2 ? match : p1 + '.';
+    });
+    return removeMarkdown(text);
   }
 
   /**
@@ -78,7 +72,7 @@ export abstract class AbstractVoiceService implements VoiceService {
    * @param chunkSize - The size of each chunk.
    * @returns An array of text chunks.
    */
-  protected splitTextIntoChunks(text: string, chunkSize: number = 4): string[] {
+  protected splitTextIntoChunks(text: string, chunkSize: number = 2): string[] {
     const tokenizer = new SentenceTokenizer();
     const sentences = tokenizer.tokenize(text);
 
@@ -89,8 +83,8 @@ export abstract class AbstractVoiceService implements VoiceService {
       if (tempSentence) {
         tempSentence += ' ' + sentence;
         if (
-          sentence.match(/[.!?]$/) ||
-          sentence.match(/["'`][.!?]$/) ||
+          sentence.match(/[.!?。！？]$/) ||
+          sentence.match(/["'`][.!?。！？]$/) ||
           sentence.endsWith('"""') ||
           sentence.endsWith('``')
         ) {
@@ -99,8 +93,8 @@ export abstract class AbstractVoiceService implements VoiceService {
         }
       } else {
         if (
-          sentence.match(/[.!?]$/) ||
-          sentence.match(/["'`][.!?]$/) ||
+          sentence.match(/[.!?。！？]$/) ||
+          sentence.match(/["'`][.!?。！？]$/) ||
           sentence.endsWith('"""') ||
           sentence.endsWith('``')
         ) {

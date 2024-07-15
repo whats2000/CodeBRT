@@ -94,7 +94,11 @@ export class GptSoVitsApiService extends AbstractVoiceService {
       }
     } catch (error) {
       console.error('Error during API call:', (error as Error).message);
-      return `Error during API call: ${(error as Error).message}`;
+      return (
+        `Error during API call: ${(error as Error).message}, ` +
+        `Please check the GPt-SoVits script is running at this address: ${this.clientHost}, ` +
+        `and the voice settings are correctly configured at the voice settings page.`
+      );
     }
   }
 
@@ -171,9 +175,9 @@ export class GptSoVitsApiService extends AbstractVoiceService {
     this.shouldStopPlayback = false;
 
     return new Promise<void>((resolve, reject) => {
-      const textChunks = this.splitTextIntoChunks(
-        this.removeCodeReferences(text),
-      ).map((chunk) => this.preprocessText(chunk));
+      const removeCodeReferencesText = this.removeCodeReferences(text);
+      const preprocessedText = this.preprocessText(removeCodeReferencesText);
+      const textChunks = this.splitTextIntoChunks(preprocessedText);
 
       this.textToVoiceQueue.push(...textChunks);
       this.processTextToVoiceQueue()

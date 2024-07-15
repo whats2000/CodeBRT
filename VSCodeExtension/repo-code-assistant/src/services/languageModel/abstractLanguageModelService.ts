@@ -121,6 +121,12 @@ export abstract class AbstractLanguageModelService
       const histories: ConversationHistoryList = JSON.parse(data);
       this.histories = histories;
       if (Object.keys(histories).length > 0) {
+        for (const historyID in histories) {
+          if (!histories[historyID].top) {
+            histories[historyID].top = [histories[historyID].root];
+          }
+        }
+
         this.history = histories[Object.keys(histories)[0]];
       }
     } catch (error) {
