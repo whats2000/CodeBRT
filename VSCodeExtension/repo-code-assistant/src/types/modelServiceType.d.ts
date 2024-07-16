@@ -21,10 +21,5 @@ export type LoadedModelServices = {
      * The service for the model
      */
     service: LanguageModelService;
-
-    /**
-     * Determines if the model is enabled for code generation
-     */
-    enabled: boolean;
   };
 };

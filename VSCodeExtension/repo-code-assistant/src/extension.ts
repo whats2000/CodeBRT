@@ -39,31 +39,24 @@ export const activate = async (ctx: vscode.ExtensionContext) => {
   const models: LoadedModelServices = {
     gemini: {
       service: new GeminiService(ctx, settingsManager),
-      enabled: settingsManager.get('enableModel').gemini,
     },
     cohere: {
       service: new CohereService(ctx, settingsManager),
-      enabled: settingsManager.get('enableModel').cohere,
     },
     openai: {
       service: new OpenAIService(ctx, settingsManager),
-      enabled: settingsManager.get('enableModel').openai,
     },
     groq: {
       service: new GroqService(ctx, settingsManager),
-      enabled: settingsManager.get('enableModel').groq,
     },
     huggingFace: {
       service: new HuggingFaceService(ctx, settingsManager),
-      enabled: settingsManager.get('enableModel').huggingFace,
     },
     ollama: {
       service: new OllamaService(ctx, settingsManager),
-      enabled: settingsManager.get('enableModel').ollama,
     },
     custom: {
       service: new CustomApiService(ctx, settingsManager, customModelNames),
-      enabled: settingsManager.get('enableModel').custom,
     },
   };
 

@@ -46,6 +46,7 @@
     "copy-webpack-plugin": "^11.0.0",
     "css-loader": "^7.1.2",
     "groq-sdk": "^0.4.0",
+    "markdown-to-text": "^0.1.1",
     "natural": "^7.1.0",
     "ollama": "^0.5.1",
     "openai": "^4.47.1",
