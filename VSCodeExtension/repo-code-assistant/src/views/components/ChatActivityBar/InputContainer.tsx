@@ -2,6 +2,7 @@ import React, { useState, useContext, useEffect, useRef } from 'react';
 import styled from 'styled-components';
 import { Button, Flex, Input } from 'antd';
 import {
+  AudioOutlined,
   CloseCircleFilled,
   LoadingOutlined,
   SendOutlined,
@@ -61,7 +62,7 @@ const DeleteButton = styled.button`
 
 type InputContainerProps = {
   inputMessage: string;
-  setInputMessage: (message: string) => void;
+  setInputMessage: React.Dispatch<React.SetStateAction<string>>;
   sendMessage: () => void;
   isLoading: boolean;
   uploadedImages: string[];
@@ -113,6 +114,15 @@ export const InputContainer = ({
     }
   };
 
+  const handleVoiceInput = async () => {
+    try {
+      const voiceInput = await callApi('convertVoiceToText');
+      setInputMessage((prev) => prev + voiceInput);
+    } catch (error) {
+      console.error(error);
+    }
+  };
+
   useEffect(() => {
     const updateImageUris = async () => {
       const uris = await Promise.all(
@@ -142,9 +152,18 @@ export const InputContainer = ({
         ))}
       </UploadedImageContainer>
       <Flex gap={10}>
-        <Button onClick={handleUploadButtonClick} disabled={isLoading}>
-          <UploadOutlined />
-        </Button>
+        <Button
+          type={'text'}
+          icon={<UploadOutlined />}
+          onClick={handleUploadButtonClick}
+          disabled={isLoading}
+        />
+        <Button
+          type={'text'}
+          icon={<AudioOutlined />}
+          onClick={handleVoiceInput}
+          disabled={isLoading}
+        />
         <input
           type='file'
           accept='image/*'

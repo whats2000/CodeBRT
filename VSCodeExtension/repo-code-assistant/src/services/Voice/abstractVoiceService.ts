@@ -119,13 +119,13 @@ export abstract class AbstractVoiceService implements VoiceService {
 
   public async textToVoice(_text: string): Promise<void> {
     vscode.window
-      .showInformationMessage('Text to voice is not supported in this service')
+      .showErrorMessage('Text to voice is not supported in this service')
       .then();
   }
 
   public async voiceToText(): Promise<string> {
     vscode.window
-      .showInformationMessage('Voice to text is not supported in this service')
+      .showErrorMessage('Voice to text is not supported in this service')
       .then();
 
     return Promise.resolve('');
@@ -133,7 +133,7 @@ export abstract class AbstractVoiceService implements VoiceService {
 
   public async stopVoice(): Promise<void> {
     vscode.window
-      .showInformationMessage('Stop voice is not supported in this service')
+      .showErrorMessage('Stop voice is not supported in this service')
       .then();
   }
 }
