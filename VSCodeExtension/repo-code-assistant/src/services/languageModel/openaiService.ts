@@ -22,7 +22,7 @@ export class OpenAIService extends AbstractLanguageModelService {
     settingsManager: SettingsManager,
   ) {
     const availableModelNames = settingsManager.get('openaiAvailableModels');
-    const defaultModelName = availableModelNames[0];
+    const defaultModelName = availableModelNames[0] || '';
 
     super(
       context,
@@ -142,6 +142,13 @@ export class OpenAIService extends AbstractLanguageModelService {
     query: string,
     currentEntryID?: string,
   ): Promise<string> {
+    if (this.currentModel === '') {
+      vscode.window.showErrorMessage(
+        'Make sure the model is selected before sending a message. Open the model selection dropdown and configure the model.',
+      );
+      return 'Missing model configuration. Check the model selection dropdown.';
+    }
+
     const openai = new OpenAI({
       apiKey: this.apiKey,
     });
@@ -174,6 +181,13 @@ export class OpenAIService extends AbstractLanguageModelService {
     sendStreamResponse: (msg: string) => void,
     currentEntryID?: string,
   ): Promise<string> {
+    if (this.currentModel === '') {
+      vscode.window.showErrorMessage(
+        'Make sure the model is selected before sending a message. Open the model selection dropdown and configure the model.',
+      );
+      return 'Missing model configuration. Check the model selection dropdown.';
+    }
+
     const openai = new OpenAI({
       apiKey: this.apiKey,
     });
@@ -216,6 +230,13 @@ export class OpenAIService extends AbstractLanguageModelService {
     images: string[],
     _currentEntryID?: string,
   ): Promise<string> {
+    if (this.currentModel === '') {
+      vscode.window.showErrorMessage(
+        'Make sure the model is selected before sending a message. Open the model selection dropdown and configure the model.',
+      );
+      return 'Missing model configuration. Check the model selection dropdown.';
+    }
+
     const openai = new OpenAI({ apiKey: this.apiKey });
 
     try {
@@ -251,6 +272,13 @@ export class OpenAIService extends AbstractLanguageModelService {
     sendStreamResponse: (msg: string) => void,
     _currentEntryID?: string,
   ): Promise<string> {
+    if (this.currentModel === '') {
+      vscode.window.showErrorMessage(
+        'Make sure the model is selected before sending a message. Open the model selection dropdown and configure the model.',
+      );
+      return 'Missing model configuration. Check the model selection dropdown.';
+    }
+
     const openai = new OpenAI({ apiKey: this.apiKey });
 
     try {

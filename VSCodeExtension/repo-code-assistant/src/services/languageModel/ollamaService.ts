@@ -36,7 +36,7 @@ export class OllamaService extends AbstractLanguageModelService {
     settingsManager: SettingsManager,
   ) {
     const availableModelNames = settingsManager.get('ollamaAvailableModels');
-    const defaultModelName = availableModelNames[0];
+    const defaultModelName = availableModelNames[0] || '';
 
     super(
       context,
@@ -200,6 +200,13 @@ export class OllamaService extends AbstractLanguageModelService {
     query: string,
     currentEntryID?: string,
   ): Promise<string> {
+    if (this.currentModel === '') {
+      vscode.window.showErrorMessage(
+        'Make sure the model is selected before sending a message. Open the model selection dropdown and configure the model.',
+      );
+      return 'Missing model configuration. Check the model selection dropdown.';
+    }
+
     const { client, conversationHistory, model } = await this.initModel(
       query,
       currentEntryID,
@@ -233,6 +240,13 @@ export class OllamaService extends AbstractLanguageModelService {
     sendStreamResponse: (msg: string) => void,
     currentEntryID?: string,
   ): Promise<string> {
+    if (this.currentModel === '') {
+      vscode.window.showErrorMessage(
+        'Make sure the model is selected before sending a message. Open the model selection dropdown and configure the model.',
+      );
+      return 'Missing model configuration. Check the model selection dropdown.';
+    }
+
     const { client, conversationHistory, model } = await this.initModel(
       query,
       currentEntryID,
@@ -275,6 +289,13 @@ export class OllamaService extends AbstractLanguageModelService {
     images: string[],
     currentEntryID?: string,
   ): Promise<string> {
+    if (this.currentModel === '') {
+      vscode.window.showErrorMessage(
+        'Make sure the model is selected before sending a message. Open the model selection dropdown and configure the model.',
+      );
+      return 'Missing model configuration. Check the model selection dropdown.';
+    }
+
     const { client, conversationHistory, model } = await this.initModel(
       query,
       currentEntryID,
@@ -310,6 +331,13 @@ export class OllamaService extends AbstractLanguageModelService {
     sendStreamResponse: (msg: string) => void,
     currentEntryID?: string,
   ): Promise<string> {
+    if (this.currentModel === '') {
+      vscode.window.showErrorMessage(
+        'Make sure the model is selected before sending a message. Open the model selection dropdown and configure the model.',
+      );
+      return 'Missing model configuration. Check the model selection dropdown.';
+    }
+
     const { client, conversationHistory, model } = await this.initModel(
       query,
       currentEntryID,
