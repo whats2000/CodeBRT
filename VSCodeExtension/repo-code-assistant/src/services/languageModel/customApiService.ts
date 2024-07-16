@@ -4,57 +4,36 @@ import * as fs from 'fs';
 import * as path from 'path';
 import FormData from 'form-data';
 
-import type { ConversationEntry } from '../../types';
+import type { ConversationEntry, CustomModelSettings } from '../../types';
 import { AbstractLanguageModelService } from './abstractLanguageModelService';
 import SettingsManager from '../../api/settingsManager';
 
 export class CustomApiService extends AbstractLanguageModelService {
-  private apiUrl: string;
-  private apiMethod: 'GET' | 'POST';
-  private apiTextParam: string;
-  private apiImageParam: string;
-  private apiQueryParam: string;
-  private includeQueryInHistory: boolean;
-  private readonly settingsListener: vscode.Disposable;
+  private apiUrl: string = '';
+  private apiMethod: 'GET' | 'POST' = 'POST';
+  private apiTextParam: string = 'message';
+  private apiImageParam: string = 'images';
+  private apiQueryParam: string = 'query';
+  private includeQueryInHistory: boolean = true;
 
   constructor(
     context: vscode.ExtensionContext,
     settingsManager: SettingsManager,
-    availableModelName: string[],
   ) {
+    const availableModelNames = settingsManager
+      .get('customModels')
+      .map((customModel) => customModel.name);
     const selectedModel = settingsManager.getSelectedCustomModel();
-    if (selectedModel) {
-      super(
-        context,
-        'customApiConversationHistory.json',
-        settingsManager,
-        selectedModel.name,
-        availableModelName,
-      );
-      this.apiUrl = selectedModel.apiUrl;
-      this.apiMethod = selectedModel.apiMethod;
-      this.apiTextParam = selectedModel.apiTextParam;
-      this.apiImageParam = selectedModel.apiImageParam;
-      this.apiQueryParam = selectedModel.apiQueryParam;
-      this.includeQueryInHistory = selectedModel.includeQueryInHistory;
-    } else {
-      super(
-        context,
-        'customApiConversationHistory.json',
-        settingsManager,
-        'custom',
-        availableModelName,
-      );
-      this.apiUrl = '';
-      this.apiMethod = 'POST';
-      this.apiTextParam = 'message';
-      this.apiImageParam = 'images';
-      this.apiQueryParam = 'query';
-      this.includeQueryInHistory = true;
-      console.log(
-        'No custom model configuration found. Please configure a custom model.',
-      );
-    }
+
+    super(
+      context,
+      'customApiConversationHistory.json',
+      settingsManager,
+      selectedModel?.name || 'not set',
+      availableModelNames,
+    );
+
+    this.updateSettings(selectedModel);
 
     // Initialize and load conversation history
     this.initialize().catch((error) =>
@@ -62,20 +41,6 @@ export class CustomApiService extends AbstractLanguageModelService {
         'Failed to initialize Custom API Service: ' + error,
       ),
     );
-
-    // Listen for settings changes
-    this.settingsListener = vscode.workspace.onDidChangeConfiguration((e) => {
-      if (
-        e.affectsConfiguration('repo-code-assistant.customModels') ||
-        e.affectsConfiguration('repo-code-assistant.selectedCustomModel')
-      ) {
-        this.updateSettings();
-        this.availableModelNames =
-          settingsManager.get('customModels').map((model) => model.name) || [];
-      }
-    });
-
-    context.subscriptions.push(this.settingsListener);
   }
 
   private async initialize() {
@@ -88,8 +53,7 @@ export class CustomApiService extends AbstractLanguageModelService {
     }
   }
 
-  private updateSettings() {
-    const selectedModel = this.settingsManager.getSelectedCustomModel();
+  private updateSettings(selectedModel: CustomModelSettings | undefined) {
     if (selectedModel) {
       this.apiUrl = selectedModel.apiUrl;
       this.apiMethod = selectedModel.apiMethod;
@@ -368,12 +332,7 @@ export class CustomApiService extends AbstractLanguageModelService {
     }
 
     this.settingsManager.selectCustomModel(modelName);
-    this.apiUrl = selectedModel.apiUrl;
-    this.apiMethod = selectedModel.apiMethod;
-    this.apiTextParam = selectedModel.apiTextParam;
-    this.apiImageParam = selectedModel.apiImageParam;
-    this.apiQueryParam = selectedModel.apiQueryParam;
-    this.includeQueryInHistory = selectedModel.includeQueryInHistory;
+    this.updateSettings(selectedModel);
 
     super.switchModel(modelName);
   }

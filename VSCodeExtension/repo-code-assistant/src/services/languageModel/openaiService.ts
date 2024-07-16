@@ -21,9 +21,7 @@ export class OpenAIService extends AbstractLanguageModelService {
     context: vscode.ExtensionContext,
     settingsManager: SettingsManager,
   ) {
-    const availableModelNames = settingsManager.get(
-      'openaiAvailableModels',
-    ) || ['gpt-3.5-turbo', 'gpt-4o'];
+    const availableModelNames = settingsManager.get('openaiAvailableModels');
     const defaultModelName = availableModelNames[0];
 
     super(
@@ -44,14 +42,8 @@ export class OpenAIService extends AbstractLanguageModelService {
 
     // Listen for settings changes
     this.settingsListener = vscode.workspace.onDidChangeConfiguration((e) => {
-      if (
-        e.affectsConfiguration('repo-code-assistant.openaiApiKey') ||
-        e.affectsConfiguration('repo-code-assistant.openaiAvailableModels')
-      ) {
+      if (e.affectsConfiguration('repo-code-assistant.openaiApiKey')) {
         this.apiKey = settingsManager.get('openaiApiKey');
-        this.availableModelNames = settingsManager.get(
-          'openaiAvailableModels',
-        ) || ['gpt-3.5-turbo', 'gpt-4o'];
       }
     });
 
@@ -110,6 +102,40 @@ export class OpenAIService extends AbstractLanguageModelService {
         url: `data:${mimeType};base64,${base64Data}`,
       },
     };
+  }
+
+  public async getLatestAvailableModelNames(): Promise<string[]> {
+    const openai = new OpenAI({
+      apiKey: this.apiKey,
+    });
+
+    let newAvailableModelNames: string[] = [...this.availableModelNames];
+
+    try {
+      const latestModels = (await openai.models.list()).data.sort((a, b) =>
+        a.created > b.created ? -1 : 1,
+      );
+
+      // Filter the invalid models (Not existing in the latest models)
+      newAvailableModelNames = newAvailableModelNames.filter((name) =>
+        latestModels.some((model) => model.id === name),
+      );
+
+      // Append the models to the available models if they are not already there
+      latestModels.forEach((model) => {
+        if (!model.id) return;
+        if (newAvailableModelNames.includes(model.id)) return;
+        if (!model.id.includes('gpt')) return;
+
+        newAvailableModelNames.push(model.id);
+      });
+    } catch (error) {
+      vscode.window.showErrorMessage(
+        'Failed to fetch available models: ' + error,
+      );
+    }
+
+    return newAvailableModelNames;
   }
 
   public async getResponseForQuery(

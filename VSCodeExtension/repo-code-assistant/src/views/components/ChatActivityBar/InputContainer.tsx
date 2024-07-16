@@ -1,13 +1,12 @@
 import React, { useState, useContext, useEffect, useRef } from 'react';
 import styled from 'styled-components';
-import { Button, Flex } from 'antd';
+import { Button, Flex, Input } from 'antd';
 import {
   CloseCircleFilled,
   LoadingOutlined,
   SendOutlined,
   UploadOutlined,
 } from '@ant-design/icons';
-import TextArea from 'antd/es/input/TextArea';
 
 import { WebviewContext } from '../../WebviewContext';
 
@@ -60,9 +59,7 @@ const DeleteButton = styled.button`
   }
 `;
 
-const UploadButton = styled(Button)``;
-
-interface InputContainerProps {
+type InputContainerProps = {
   inputMessage: string;
   setInputMessage: (message: string) => void;
   sendMessage: () => void;
@@ -70,7 +67,7 @@ interface InputContainerProps {
   uploadedImages: string[];
   handleImageUpload: (files: FileList | null) => void;
   handleImageRemove: (imagePath: string) => void;
-}
+};
 
 export const InputContainer = ({
   inputMessage,
@@ -145,9 +142,9 @@ export const InputContainer = ({
         ))}
       </UploadedImageContainer>
       <Flex gap={10}>
-        <UploadButton onClick={handleUploadButtonClick} disabled={isLoading}>
+        <Button onClick={handleUploadButtonClick} disabled={isLoading}>
           <UploadOutlined />
-        </UploadButton>
+        </Button>
         <input
           type='file'
           accept='image/*'
@@ -155,7 +152,7 @@ export const InputContainer = ({
           onInput={handleFileChange}
           style={{ display: 'none' }}
         />
-        <TextArea
+        <Input.TextArea
           value={inputMessage}
           onChange={(e) => setInputMessage(e.target.value)}
           onKeyDown={handleKeyDown}

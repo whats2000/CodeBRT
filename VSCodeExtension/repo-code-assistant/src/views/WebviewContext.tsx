@@ -2,14 +2,14 @@ import React, { createContext } from 'react';
 import DeferredPromise from 'promise-deferred';
 import { v4 as uuid } from 'uuid';
 
-import {
+import type {
   ViewApi,
   ViewApiError,
   ViewApiEvent,
   ViewApiRequest,
   ViewApiResponse,
   ViewEvents,
-} from '../types/viewApi';
+} from '../types';
 
 /**
  * Type definitions for context values of the Webview.

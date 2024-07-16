@@ -1,16 +1,23 @@
-import { useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import ReactMarkdown from 'react-markdown';
+import * as hljs from 'react-syntax-highlighter/dist/cjs/styles/hljs';
 
-import { RendererCode } from './RenderCode';
+import { RendererCode, RendererCodeProvider } from './RenderCode';
 
-export const TypingAnimation = ({
-  message,
-  isLoading,
-  scrollToBottom,
-}: {
+type TypingAnimationProps = {
   message: string;
   isLoading: boolean;
   scrollToBottom: (smooth: boolean) => void;
+  hljsTheme: keyof typeof hljs;
+  setHljsTheme: (theme: keyof typeof hljs) => void;
+};
+
+export const TypingAnimation: React.FC<TypingAnimationProps> = ({
+  message,
+  isLoading,
+  scrollToBottom,
+  hljsTheme,
+  setHljsTheme,
 }) => {
   const [displayedMessage, setDisplayedMessage] = useState(message);
 
@@ -43,6 +50,10 @@ export const TypingAnimation = ({
   }, [displayedMessage, message, scrollToBottom]);
 
   return (
-    <ReactMarkdown components={RendererCode}>{displayedMessage}</ReactMarkdown>
+    <RendererCodeProvider value={{ hljsTheme, setHljsTheme }}>
+      <ReactMarkdown components={RendererCode}>
+        {displayedMessage}
+      </ReactMarkdown>
+    </RendererCodeProvider>
   );
 };

@@ -43,6 +43,7 @@ export abstract class AbstractLanguageModelService
   protected history: ConversationHistory = {
     title: '',
     root: '',
+    top: [],
     current: '',
     create_time: Date.now(),
     update_time: Date.now(),
@@ -106,6 +107,58 @@ export abstract class AbstractLanguageModelService
   }
 
   /**
+   * Get the history before a given entry id
+   * @param currentEntryID - The entry id to get the history before
+   * @returns The conversation history before the given entry id
+   */
+  protected getHistoryBeforeEntry(currentEntryID: string): ConversationHistory {
+    const newHistory: ConversationHistory = {
+      title: this.history.title,
+      root: this.history.root,
+      top: this.history.top,
+      current: currentEntryID,
+      create_time: this.history.create_time,
+      update_time: Date.now(),
+      entries: {},
+    };
+
+    let currentEntry = this.history.entries[currentEntryID];
+    const entryStack: ConversationEntry[] = [];
+
+    while (currentEntry) {
+      entryStack.push(currentEntry);
+      if (currentEntry.parent) {
+        currentEntry = this.history.entries[currentEntry.parent];
+      } else {
+        break;
+      }
+    }
+
+    entryStack.reverse().forEach((entry) => {
+      newHistory.entries[entry.id] = entry;
+    });
+
+    return newHistory;
+  }
+
+  public updateAvailableModels(newAvailableModels: string[]): void {
+    this.availableModelNames = newAvailableModels;
+  }
+
+  /**
+   * Get the latest version of the language model service
+   */
+  public async getLatestAvailableModelNames(): Promise<string[]> {
+    vscode.window
+      .showErrorMessage(
+        'Current this model service does not support updating available models, Please update it manually.',
+      )
+      .then();
+
+    return this.availableModelNames;
+  }
+
+  /**
    * Load all conversation histories from the history file
    */
   public async loadHistories(): Promise<void> {
@@ -120,6 +173,12 @@ export abstract class AbstractLanguageModelService
       const histories: ConversationHistoryList = JSON.parse(data);
       this.histories = histories;
       if (Object.keys(histories).length > 0) {
+        for (const historyID in histories) {
+          if (!histories[historyID].top) {
+            histories[historyID].top = [histories[historyID].root];
+          }
+        }
+
         this.history = histories[Object.keys(histories)[0]];
       }
     } catch (error) {
@@ -156,6 +215,7 @@ export abstract class AbstractLanguageModelService
     const newHistory: ConversationHistory = {
       title: '',
       root: '',
+      top: [],
       current: '',
       create_time: Date.now(),
       update_time: Date.now(),
@@ -206,9 +266,12 @@ export abstract class AbstractLanguageModelService
         return '';
       }
       this.history.entries[parentID].children.push(newID);
+    } else {
+      this.history.top.push(newID);
     }
 
     if (this.history.root === '') {
+      delete this.histories[this.history.root];
       this.history.root = newID;
       this.history.title = `${message.substring(0, 20)}...`;
     }
@@ -268,40 +331,6 @@ export abstract class AbstractLanguageModelService
   }
 
   /**
-   * Get the history before a given entry id
-   * @param currentEntryID - The entry id to get the history before
-   * @returns The conversation history before the given entry id
-   */
-  protected getHistoryBeforeEntry(currentEntryID: string): ConversationHistory {
-    const newHistory: ConversationHistory = {
-      title: this.history.title,
-      root: this.history.root,
-      current: currentEntryID,
-      create_time: this.history.create_time,
-      update_time: Date.now(),
-      entries: {},
-    };
-
-    let currentEntry = this.history.entries[currentEntryID];
-    const entryStack: ConversationEntry[] = [];
-
-    while (currentEntry) {
-      entryStack.push(currentEntry);
-      if (currentEntry.parent) {
-        currentEntry = this.history.entries[currentEntry.parent];
-      } else {
-        break;
-      }
-    }
-
-    entryStack.reverse().forEach((entry) => {
-      newHistory.entries[entry.id] = entry;
-    });
-
-    return newHistory;
-  }
-
-  /**
    * Switch to a different conversation history
    * @param historyID - The ID of the history to switch to
    */
@@ -357,13 +386,6 @@ export abstract class AbstractLanguageModelService
       vscode.window.showErrorMessage('History not found: ' + historyID).then();
       return this.history;
     }
-  }
-
-  /**
-   * Get the available models
-   */
-  public getAvailableModels(): string[] {
-    return this.availableModelNames;
   }
 
   /**

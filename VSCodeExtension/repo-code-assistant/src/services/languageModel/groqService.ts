@@ -18,12 +18,7 @@ export class GroqService extends AbstractLanguageModelService {
     context: vscode.ExtensionContext,
     settingsManager: SettingsManager,
   ) {
-    const availableModelNames = settingsManager.get('groqAvailableModels') || [
-      'llama3-70b-8192',
-      'llama3-8b-8192',
-      'mixtral-8x7b-32768',
-      'gemma-7b-it',
-    ];
+    const availableModelNames = settingsManager.get('groqAvailableModels');
     const defaultModelName = availableModelNames[0];
 
     super(
@@ -45,19 +40,8 @@ export class GroqService extends AbstractLanguageModelService {
 
     // Listen for settings changes
     this.settingsListener = vscode.workspace.onDidChangeConfiguration((e) => {
-      if (
-        e.affectsConfiguration('repo-code-assistant.groqApiKey') ||
-        e.affectsConfiguration('repo-code-assistant.groqAvailableModels')
-      ) {
+      if (e.affectsConfiguration('repo-code-assistant.groqApiKey')) {
         this.apiKey = settingsManager.get('groqApiKey');
-        this.availableModelNames = settingsManager.get(
-          'groqAvailableModels',
-        ) || [
-          'llama3-70b-8192',
-          'llama3-8b-8192',
-          'mixtral-8x7b-32768',
-          'gemma-7b-it',
-        ];
       }
     });
 
@@ -103,6 +87,39 @@ export class GroqService extends AbstractLanguageModelService {
     }
 
     return result;
+  }
+
+  public async getLatestAvailableModelNames(): Promise<string[]> {
+    const groq = new Groq({
+      apiKey: this.apiKey,
+    });
+
+    let newAvailableModelNames: string[] = [...this.availableModelNames];
+
+    try {
+      const latestModels = (await groq.models.list()).data.sort((a, b) =>
+        a.created > b.created ? -1 : 1,
+      );
+
+      // Filter the invalid models (Not existing in the latest models)
+      newAvailableModelNames = newAvailableModelNames.filter((name) =>
+        latestModels.some((model) => model.id === name),
+      );
+
+      // Append the models to the available models if they are not already there
+      latestModels.forEach((model) => {
+        if (!model.id) return;
+        if (newAvailableModelNames.includes(model.id)) return;
+
+        newAvailableModelNames.push(model.id);
+      });
+    } catch (error) {
+      vscode.window.showErrorMessage(
+        'Failed to fetch available models: ' + error,
+      );
+    }
+
+    return newAvailableModelNames;
   }
 
   public async getResponseForQuery(

@@ -1,10 +1,12 @@
+import path from 'node:path';
+import fs from 'node:fs/promises';
 import { Promise } from 'promise-deferred';
 import * as vscode from 'vscode';
+import { SentenceTokenizer } from 'natural';
+import removeMarkdown from 'markdown-to-text';
 
 import { VoiceService } from '../../types';
 import SettingsManager from '../../api/settingsManager';
-import path from 'node:path';
-import fs from 'node:fs/promises';
 
 export abstract class AbstractVoiceService implements VoiceService {
   protected readonly context: vscode.ExtensionContext;
@@ -31,17 +33,10 @@ export abstract class AbstractVoiceService implements VoiceService {
    * @param text - The text to preprocess.
    */
   protected preprocessText(text: string): string {
-    text = text.replace(/#+/g, '');
-    text = text.replace(/[*+-]/g, '');
-    text = text.replace(/\[.*?]\(.*?\)/g, '');
-    text = text.replace(/(\*\*|__)(.*?)\1/g, '$2');
-    text = text.replace(/([*_])(.*?)\1/g, '$2');
-    text = text.replace(/~~(.*?)~~/g, '$1');
-    text = text.replace(/`{1,3}([^`]*)`{1,3}/g, '$1');
-    text = text.replace(/!\[.*?]\(.*?\)/g, '');
-    text = text.replace(/^>+\s?/gm, '');
-    text = text.replace(/\n/g, ' ').trim();
-    return text;
+    text = text.replace(/^([*-+]\s.*?)([.!?。！？]?)$/gm, (match, p1, p2) => {
+      return p2 ? match : p1 + '.';
+    });
+    return removeMarkdown(text);
   }
 
   /**
@@ -77,14 +72,48 @@ export abstract class AbstractVoiceService implements VoiceService {
    * @param chunkSize - The size of each chunk.
    * @returns An array of text chunks.
    */
-  protected splitTextIntoChunks(text: string, chunkSize: number = 4): string[] {
-    const sentences = text.split(
-      /(?<!\w\.\w.)(?<![A-Z][a-z]\.)(?<=[。.?！])\s/g,
-    );
-    const chunks = [];
-    for (let i = 0; i < sentences.length; i += chunkSize) {
-      chunks.push(sentences.slice(i, i + chunkSize).join(' '));
+  protected splitTextIntoChunks(text: string, chunkSize: number = 2): string[] {
+    const tokenizer = new SentenceTokenizer();
+    const sentences = tokenizer.tokenize(text);
+
+    const mergedSentences: string[] = [];
+    let tempSentence = '';
+
+    sentences.forEach((sentence) => {
+      if (tempSentence) {
+        tempSentence += ' ' + sentence;
+        if (
+          sentence.match(/[.!?。！？]$/) ||
+          sentence.match(/["'`][.!?。！？]$/) ||
+          sentence.endsWith('"""') ||
+          sentence.endsWith('``')
+        ) {
+          mergedSentences.push(tempSentence.trim());
+          tempSentence = '';
+        }
+      } else {
+        if (
+          sentence.match(/[.!?。！？]$/) ||
+          sentence.match(/["'`][.!?。！？]$/) ||
+          sentence.endsWith('"""') ||
+          sentence.endsWith('``')
+        ) {
+          mergedSentences.push(sentence.trim());
+        } else {
+          tempSentence = sentence;
+        }
+      }
+    });
+
+    if (tempSentence) {
+      mergedSentences.push(tempSentence.trim());
     }
+
+    const chunks = [];
+    for (let i = 0; i < mergedSentences.length; i += chunkSize) {
+      chunks.push(mergedSentences.slice(i, i + chunkSize).join(' '));
+    }
+
     return chunks;
   }
 
@@ -94,7 +123,7 @@ export abstract class AbstractVoiceService implements VoiceService {
       .then();
   }
 
-  public async voiceToText(_voicePath: string): Promise<string> {
+  public async voiceToText(): Promise<string> {
     vscode.window
       .showInformationMessage('Voice to text is not supported in this service')
       .then();

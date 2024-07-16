@@ -1,7 +1,13 @@
-import { ModelType } from './modelType';
-import { VoiceType } from './voiceType';
+import { ModelServiceType } from './modelServiceType';
+import { VoiceServiceType } from './voiceServiceType';
+import type * as hljs from 'react-syntax-highlighter/dist/cjs/styles/hljs';
 
 export type GptSoVitsVoiceSetting = {
+  /**
+   * Identifier for the voice setting.
+   */
+  id: string;
+
   /**
    * The name of the voice setting.
    */
@@ -27,6 +33,11 @@ export type GptSoVitsVoiceSetting = {
  * Represents the settings for a custom API model.
  */
 export type CustomModelSettings = {
+  /**
+   * Identifier for the custom model.
+   */
+  id: string;
+
   /**
    * The name of the custom model.
    */
@@ -132,16 +143,9 @@ export type ExtensionSettings = {
   selectedGptSoVitsReferenceVoice: string;
 
   /**
-   * Determines if the model is enabled for code generation.
-   */
-  enableModel: {
-    [key in ModelType]: boolean;
-  };
-
-  /**
    * The last used model.
    */
-  lastUsedModel: ModelType;
+  lastUsedModel: ModelServiceType;
 
   /**
    * A list of custom models.
@@ -156,12 +160,12 @@ export type ExtensionSettings = {
   /**
    * The selected text-to-voice service.
    */
-  selectedTextToVoiceService: VoiceType;
+  selectedTextToVoiceService: VoiceServiceType;
 
   /**
    * The selected voice-to-text service.
    */
-  selectedVoiceToTextService: VoiceType;
+  selectedVoiceToTextService: VoiceServiceType;
 
   /**
    * The APIUrl for the GPT-SoVits model.
@@ -187,4 +191,6 @@ export type ExtensionSettings = {
    * The border radius for the Ant Design theme.
    */
   themeBorderRadius: number;
+
+  hljsTheme: keyof typeof hljs;
 };
