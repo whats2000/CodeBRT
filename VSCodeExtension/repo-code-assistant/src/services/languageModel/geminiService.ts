@@ -63,9 +63,7 @@ export class GeminiService extends AbstractLanguageModelService {
     context: vscode.ExtensionContext,
     settingsManager: SettingsManager,
   ) {
-    const availableModelNames = settingsManager.get(
-      'geminiAvailableModels',
-    ) || ['gemini-1.5-pro-latest', 'gemini-1.5-flash-latest'];
+    const availableModelNames = settingsManager.get('geminiAvailableModels');
     const defaultModelName = availableModelNames[0];
 
     super(
@@ -85,14 +83,8 @@ export class GeminiService extends AbstractLanguageModelService {
 
     // Listen for settings changes
     this.settingsListener = vscode.workspace.onDidChangeConfiguration((e) => {
-      if (
-        e.affectsConfiguration('repo-code-assistant.geminiApiKey') ||
-        e.affectsConfiguration('repo-code-assistant.geminiAvailableModels')
-      ) {
+      if (e.affectsConfiguration('repo-code-assistant.geminiApiKey')) {
         this.apiKey = settingsManager.get('geminiApiKey');
-        this.availableModelNames = settingsManager.get(
-          'geminiAvailableModels',
-        ) || ['gemini-1.5-pro-latest', 'gemini-1.5-flash-latest'];
       }
     });
 

@@ -1,4 +1,4 @@
-import React, { useContext, useEffect, useRef, useState } from 'react';
+import React, { useContext, useEffect, useState } from 'react';
 import { Button, Form, Space } from 'antd';
 import {
   DndContext,
@@ -31,8 +31,6 @@ type CustomModelFormProps = {
   handleEditModelListSave: (models: string[]) => void;
 };
 
-type CustomModelWithId = CustomModelSettings & { id: string };
-
 export const CustomModelForm: React.FC<CustomModelFormProps> = ({
   isOpen,
   isLoading,
@@ -42,9 +40,6 @@ export const CustomModelForm: React.FC<CustomModelFormProps> = ({
   handleEditModelListSave,
 }) => {
   const { callApi } = useContext(WebviewContext);
-  const modelsWithId = useRef(
-    customModels.map((model) => ({ ...model, id: uuidv4() })),
-  );
 
   const sensors = useSensors(
     useSensor(PointerSensor, {
@@ -56,16 +51,16 @@ export const CustomModelForm: React.FC<CustomModelFormProps> = ({
 
   const [activeKey, setActiveKey] = useState<string[]>([]);
 
-  const handleSave = (modelsToSave: CustomModelWithId[]) => {
+  useEffect(() => {
+    if (!isOpen) {
+      handleSave(customModels);
+    }
+  }, [isOpen]);
+
+  const handleSave = (modelsToSave: CustomModelSettings[]) => {
     if (activeModel === 'loading...' || isLoading) return;
 
-    callApi(
-      'setCustomModels',
-      modelsToSave.map((model) => {
-        const { id, ...rest } = model;
-        return rest;
-      }),
-    )
+    callApi('setCustomModels', modelsToSave)
       .then(() => {
         callApi(
           'alertMessage',
@@ -83,14 +78,8 @@ export const CustomModelForm: React.FC<CustomModelFormProps> = ({
       });
   };
 
-  useEffect(() => {
-    if (!isOpen) {
-      handleSave(modelsWithId.current);
-    }
-  }, [isOpen]);
-
   const handleAddModel = () => {
-    const newModel: CustomModelWithId = {
+    const newModel: CustomModelSettings = {
       id: uuidv4(),
       name: '',
       apiUrl: '',
@@ -100,8 +89,7 @@ export const CustomModelForm: React.FC<CustomModelFormProps> = ({
       apiQueryParam: '',
       includeQueryInHistory: true,
     };
-    modelsWithId.current = [...modelsWithId.current, newModel];
-    setCustomModels(modelsWithId.current);
+    setCustomModels([...customModels, newModel]);
   };
 
   const handleModelChange = (
@@ -109,18 +97,17 @@ export const CustomModelForm: React.FC<CustomModelFormProps> = ({
     field: keyof CustomModelSettings,
     value: string | boolean,
   ) => {
-    const updatedModels = modelsWithId.current.map((model) =>
-      model.id === id ? { ...model, [field]: value } : model,
-    );
-    modelsWithId.current = updatedModels;
+    const updatedModels = customModels.map((model) => {
+      if (model.id === id) {
+        return { ...model, [field]: value };
+      }
+      return model;
+    });
     setCustomModels(updatedModels);
   };
 
   const handleRemoveModel = (id: string) => {
-    const updatedModels = modelsWithId.current.filter(
-      (model) => model.id !== id,
-    );
-    modelsWithId.current = updatedModels;
+    const updatedModels = customModels.filter((model) => model.id !== id);
     setCustomModels(updatedModels);
     setActiveKey(activeKey.filter((key) => key !== id));
   };
@@ -130,20 +117,14 @@ export const CustomModelForm: React.FC<CustomModelFormProps> = ({
 
     if (!over) return;
 
-    const activeIndex = modelsWithId.current.findIndex(
+    const activeIndex = customModels.findIndex(
       (model) => model.id === active.id,
     );
-    const overIndex = modelsWithId.current.findIndex(
-      (model) => model.id === over.id,
-    );
+
+    const overIndex = customModels.findIndex((model) => model.id === over.id);
 
     if (activeIndex !== overIndex) {
-      const updatedModels = arrayMove(
-        modelsWithId.current,
-        activeIndex,
-        overIndex,
-      );
-      modelsWithId.current = updatedModels;
+      const updatedModels = arrayMove(customModels, activeIndex, overIndex);
       setCustomModels(updatedModels);
       setActiveKey([]);
     }
@@ -158,10 +139,10 @@ export const CustomModelForm: React.FC<CustomModelFormProps> = ({
           onDragEnd={handleDragEnd}
         >
           <SortableContext
-            items={modelsWithId.current.map((model) => model.id)}
+            items={customModels.map((model) => model.id)}
             strategy={verticalListSortingStrategy}
           >
-            {modelsWithId.current.map((model, index) => (
+            {customModels.map((model, index) => (
               <CustomModelSortableItem
                 key={model.id}
                 id={model.id}

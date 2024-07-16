@@ -21,9 +21,7 @@ export class OpenAIService extends AbstractLanguageModelService {
     context: vscode.ExtensionContext,
     settingsManager: SettingsManager,
   ) {
-    const availableModelNames = settingsManager.get(
-      'openaiAvailableModels',
-    ) || ['gpt-3.5-turbo', 'gpt-4o'];
+    const availableModelNames = settingsManager.get('openaiAvailableModels');
     const defaultModelName = availableModelNames[0];
 
     super(
@@ -44,14 +42,8 @@ export class OpenAIService extends AbstractLanguageModelService {
 
     // Listen for settings changes
     this.settingsListener = vscode.workspace.onDidChangeConfiguration((e) => {
-      if (
-        e.affectsConfiguration('repo-code-assistant.openaiApiKey') ||
-        e.affectsConfiguration('repo-code-assistant.openaiAvailableModels')
-      ) {
+      if (e.affectsConfiguration('repo-code-assistant.openaiApiKey')) {
         this.apiKey = settingsManager.get('openaiApiKey');
-        this.availableModelNames = settingsManager.get(
-          'openaiAvailableModels',
-        ) || ['gpt-3.5-turbo', 'gpt-4o'];
       }
     });
 

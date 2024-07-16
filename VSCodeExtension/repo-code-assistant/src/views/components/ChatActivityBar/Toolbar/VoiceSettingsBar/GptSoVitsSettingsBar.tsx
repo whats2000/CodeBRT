@@ -1,4 +1,4 @@
-import React, { useContext, useEffect, useRef, useState } from 'react';
+import React, { useContext, useEffect, useState } from 'react';
 import {
   Button,
   Form,
@@ -42,19 +42,16 @@ type GptSoVitsSettingsBarProps = {
   ) => void;
 };
 
-type VoiceWithId = GptSoVitsVoiceSetting & { id: string };
-
 export const GptSoVitsSettingsBar: React.FC<GptSoVitsSettingsBarProps> = ({
   isOpen,
   onClose,
   handleEditGptSoVitsSettingsSave,
 }) => {
   const { callApi } = useContext(WebviewContext);
-  const idRef = useRef<string[]>([]);
 
   const [partialSettings, setPartialSettings] = useState<{
     gptSoVitsClientHost: string;
-    gptSoVitsAvailableReferenceVoices: VoiceWithId[];
+    gptSoVitsAvailableReferenceVoices: GptSoVitsVoiceSetting[];
     selectedGptSoVitsReferenceVoice: string;
   }>({
     gptSoVitsClientHost: '',
@@ -85,13 +82,10 @@ export const GptSoVitsSettingsBar: React.FC<GptSoVitsSettingsBarProps> = ({
           );
 
           if (key === 'gptSoVitsAvailableReferenceVoices') {
-            const voicesWithId = (value as GptSoVitsVoiceSetting[]).map(
-              (voice) => ({ ...voice, id: `voice-${uuidv4()}` }),
-            );
-            idRef.current = voicesWithId.map((voice) => voice.id);
             setPartialSettings((prev) => ({
               ...prev,
-              gptSoVitsAvailableReferenceVoices: voicesWithId,
+              gptSoVitsAvailableReferenceVoices:
+                value as GptSoVitsVoiceSetting[],
             }));
             return;
           }
@@ -105,14 +99,6 @@ export const GptSoVitsSettingsBar: React.FC<GptSoVitsSettingsBarProps> = ({
       Promise.all(promises).finally(() => {
         setIsLoading(false);
       });
-    }
-  }, [isOpen]);
-
-  useEffect(() => {
-    if (isOpen) {
-      idRef.current = partialSettings.gptSoVitsAvailableReferenceVoices.map(
-        () => `voice-${uuidv4()}`,
-      );
     }
   }, [isOpen]);
 
@@ -183,7 +169,6 @@ export const GptSoVitsSettingsBar: React.FC<GptSoVitsSettingsBarProps> = ({
         newVoice,
       ],
     }));
-    idRef.current.push(newVoice.id);
   };
 
   const handleRemoveVoice = (id: string) => {
@@ -201,7 +186,6 @@ export const GptSoVitsSettingsBar: React.FC<GptSoVitsSettingsBarProps> = ({
           ? ''
           : partialSettings.selectedGptSoVitsReferenceVoice,
     });
-    idRef.current = idRef.current.filter((refId) => refId !== id);
   };
 
   const handleSelectedVoiceChange = (value: string) => {
@@ -246,8 +230,14 @@ export const GptSoVitsSettingsBar: React.FC<GptSoVitsSettingsBarProps> = ({
 
     if (!over) return;
 
-    const activeIndex = idRef.current.indexOf(active.id.toString());
-    const overIndex = idRef.current.indexOf(over.id.toString());
+    const activeIndex =
+      partialSettings.gptSoVitsAvailableReferenceVoices.findIndex(
+        (voice) => voice.id === active.id,
+      );
+    const overIndex =
+      partialSettings.gptSoVitsAvailableReferenceVoices.findIndex(
+        (voice) => voice.id === over.id,
+      );
 
     if (activeIndex !== overIndex) {
       const updatedVoices = arrayMove(
@@ -259,7 +249,6 @@ export const GptSoVitsSettingsBar: React.FC<GptSoVitsSettingsBarProps> = ({
         ...partialSettings,
         gptSoVitsAvailableReferenceVoices: updatedVoices,
       });
-      idRef.current = arrayMove(idRef.current, activeIndex, overIndex);
       setActiveKey([]);
     }
   };

@@ -25,9 +25,6 @@ type OllamaRunningModel = {
 };
 
 export class OllamaService extends AbstractLanguageModelService {
-  private clientHost: string;
-  private readonly settingsListener: vscode.Disposable;
-
   private readonly generationConfig: Partial<Options> = {
     temperature: 1,
     top_p: 0.95,
@@ -38,25 +35,7 @@ export class OllamaService extends AbstractLanguageModelService {
     context: vscode.ExtensionContext,
     settingsManager: SettingsManager,
   ) {
-    const availableModelNames = settingsManager.get(
-      'ollamaAvailableModels',
-    ) || [
-      'deepseek-coder-v2',
-      'llama3',
-      'llama3:70b',
-      'phi3',
-      'phi3:medium',
-      'gemma:2b',
-      'gemma:7b',
-      'mistral',
-      'moondream',
-      'neural-chat',
-      'starling-lm',
-      'codellama',
-      'llama2-uncensored',
-      'llava',
-      'solar',
-    ];
+    const availableModelNames = settingsManager.get('ollamaAvailableModels');
     const defaultModelName = availableModelNames[0];
 
     super(
@@ -67,35 +46,11 @@ export class OllamaService extends AbstractLanguageModelService {
       availableModelNames,
     );
 
-    this.clientHost = settingsManager.get('ollamaClientHost');
-
     this.initialize().catch((error) =>
       vscode.window.showErrorMessage(
         'Failed to initialize Ollama Service History: ' + error,
       ),
     );
-
-    // Listen for settings changes
-    this.settingsListener = vscode.workspace.onDidChangeConfiguration((e) => {
-      if (
-        e.affectsConfiguration('repo-code-assistant.ollamaClientHost') ||
-        e.affectsConfiguration('repo-code-assistant.ollamaAvailableModels')
-      ) {
-        this.clientHost = settingsManager.get('ollamaClientHost');
-        this.availableModelNames = settingsManager.get(
-          'ollamaAvailableModels',
-        ) || ['Auto Detect'];
-
-        if (!this.availableModelNames.includes('Auto Detect')) {
-          this.availableModelNames = [
-            'Auto Detect',
-            ...this.availableModelNames,
-          ];
-        }
-      }
-    });
-
-    context.subscriptions.push(this.settingsListener);
   }
 
   private async initialize() {
@@ -154,7 +109,7 @@ export class OllamaService extends AbstractLanguageModelService {
   }
 
   private async getRunningModel(): Promise<string> {
-    const requestUrl = `${this.clientHost}/api/ps`;
+    const requestUrl = `${this.settingsManager.get('ollamaClientHost')}/api/ps`;
 
     try {
       const runningModels: OllamaRunningModel[] = (
@@ -175,9 +130,39 @@ export class OllamaService extends AbstractLanguageModelService {
     }
   }
 
+  private async initModel(
+    query: string,
+    currentEntryID?: string,
+    images?: string[],
+  ): Promise<{
+    client: Ollama;
+    conversationHistory: Message[];
+    model: string;
+  }> {
+    const client = new Ollama({
+      host: this.settingsManager.get('ollamaClientHost'),
+    });
+
+    const history = currentEntryID
+      ? this.getHistoryBeforeEntry(currentEntryID)
+      : this.history;
+    const conversationHistory = await this.conversationHistoryToContent(
+      history.entries,
+      query,
+      images,
+    );
+
+    const model =
+      this.currentModel === 'Auto Detect'
+        ? await this.getRunningModel()
+        : this.currentModel;
+
+    return { client, conversationHistory, model };
+  }
+
   public async getLatestAvailableModelNames(): Promise<string[]> {
     const client = new Ollama({
-      host: this.clientHost,
+      host: this.settingsManager.get('ollamaClientHost'),
     });
 
     let newAvailableModelNames: string[] = [...this.availableModelNames];
@@ -215,20 +200,10 @@ export class OllamaService extends AbstractLanguageModelService {
     query: string,
     currentEntryID?: string,
   ): Promise<string> {
-    const client = new Ollama({ host: this.clientHost });
-
-    const history = currentEntryID
-      ? this.getHistoryBeforeEntry(currentEntryID)
-      : this.history;
-    const conversationHistory = await this.conversationHistoryToContent(
-      history.entries,
+    const { client, conversationHistory, model } = await this.initModel(
       query,
+      currentEntryID,
     );
-
-    const model =
-      this.currentModel === 'Auto Detect'
-        ? await this.getRunningModel()
-        : this.currentModel;
 
     if (model === '') {
       return 'The ollama is seems to be down. Please start the ollama service.';
@@ -258,20 +233,10 @@ export class OllamaService extends AbstractLanguageModelService {
     sendStreamResponse: (msg: string) => void,
     currentEntryID?: string,
   ): Promise<string> {
-    const client = new Ollama({ host: this.clientHost });
-
-    const history = currentEntryID
-      ? this.getHistoryBeforeEntry(currentEntryID)
-      : this.history;
-    const conversationHistory = await this.conversationHistoryToContent(
-      history.entries,
+    const { client, conversationHistory, model } = await this.initModel(
       query,
+      currentEntryID,
     );
-
-    const model =
-      this.currentModel === 'Auto Detect'
-        ? await this.getRunningModel()
-        : this.currentModel;
 
     if (model === '') {
       return 'The ollama is seems to be down. Please start the ollama service.';
@@ -310,21 +275,11 @@ export class OllamaService extends AbstractLanguageModelService {
     images: string[],
     currentEntryID?: string,
   ): Promise<string> {
-    const client = new Ollama({ host: this.clientHost });
-
-    const history = currentEntryID
-      ? this.getHistoryBeforeEntry(currentEntryID)
-      : this.history;
-    const conversationHistory = await this.conversationHistoryToContent(
-      history.entries,
+    const { client, conversationHistory, model } = await this.initModel(
       query,
+      currentEntryID,
       images,
     );
-
-    const model =
-      this.currentModel === 'Auto Detect'
-        ? await this.getRunningModel()
-        : this.currentModel;
 
     if (model === '') {
       return 'The ollama is seems to be down. Please start the ollama service.';
@@ -355,21 +310,11 @@ export class OllamaService extends AbstractLanguageModelService {
     sendStreamResponse: (msg: string) => void,
     currentEntryID?: string,
   ): Promise<string> {
-    const client = new Ollama({ host: this.clientHost });
-
-    const history = currentEntryID
-      ? this.getHistoryBeforeEntry(currentEntryID)
-      : this.history;
-    const conversationHistory = await this.conversationHistoryToContent(
-      history.entries,
+    const { client, conversationHistory, model } = await this.initModel(
       query,
+      currentEntryID,
       images,
     );
-
-    const model =
-      this.currentModel === 'Auto Detect'
-        ? await this.getRunningModel()
-        : this.currentModel;
 
     if (model === '') {
       return 'The ollama is seems to be down. Please start the ollama service.';

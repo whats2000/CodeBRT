@@ -14,9 +14,7 @@ export class CohereService extends AbstractLanguageModelService {
     context: vscode.ExtensionContext,
     settingsManager: SettingsManager,
   ) {
-    const availableModelNames = settingsManager.get(
-      'cohereAvailableModels',
-    ) || ['command'];
+    const availableModelNames = settingsManager.get('cohereAvailableModels');
     const defaultModelName = availableModelNames[0];
 
     super(
@@ -37,14 +35,8 @@ export class CohereService extends AbstractLanguageModelService {
 
     // Listen for settings changes
     this.settingsListener = vscode.workspace.onDidChangeConfiguration((e) => {
-      if (
-        e.affectsConfiguration('repo-code-assistant.cohereApiKey') ||
-        e.affectsConfiguration('repo-code-assistant.cohereAvailableModels')
-      ) {
+      if (e.affectsConfiguration('repo-code-assistant.cohereApiKey')) {
         this.apiKey = settingsManager.get('cohereApiKey');
-        this.availableModelNames = settingsManager.get(
-          'cohereAvailableModels',
-        ) || ['command'];
       }
     });
 

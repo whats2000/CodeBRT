@@ -33,8 +33,6 @@ import { Uri } from 'vscode';
 export const activate = async (ctx: vscode.ExtensionContext) => {
   const connectedViews: Partial<Record<ViewKey, vscode.WebviewView>> = {};
   const settingsManager = SettingsManager.getInstance(ctx);
-  const customModels = settingsManager.getCustomModels();
-  const customModelNames = customModels.map((model) => model.name);
 
   const models: LoadedModelServices = {
     gemini: {
@@ -56,7 +54,7 @@ export const activate = async (ctx: vscode.ExtensionContext) => {
       service: new OllamaService(ctx, settingsManager),
     },
     custom: {
-      service: new CustomApiService(ctx, settingsManager, customModelNames),
+      service: new CustomApiService(ctx, settingsManager),
     },
   };
 
@@ -289,7 +287,11 @@ export const activate = async (ctx: vscode.ExtensionContext) => {
         return [];
       }
 
-      return modelService.getAvailableModels();
+      if (modelType === 'custom') {
+        return settingsManager.get('customModels').map((model) => model.name);
+      }
+
+      return settingsManager.get(`${modelType}AvailableModels`);
     },
     setAvailableModels: (
       modelType: ModelServiceType,
@@ -304,7 +306,11 @@ export const activate = async (ctx: vscode.ExtensionContext) => {
         return;
       }
 
-      settingsManager.set(`${modelType}AvailableModels`, newAvailableModels);
+      settingsManager
+        .set(`${modelType}AvailableModels`, newAvailableModels)
+        .then(() => {
+          modelService.updateAvailableModels(newAvailableModels);
+        });
     },
     switchModel: (modelType: ModelServiceType, modelName: string) => {
       const modelService: LanguageModelService = models[modelType].service;
@@ -427,7 +433,15 @@ export const activate = async (ctx: vscode.ExtensionContext) => {
       return settingsManager.get('customModels');
     },
     setCustomModels: (newCustomModelSettings: CustomModelSettings[]) => {
-      settingsManager.set('customModels', newCustomModelSettings);
+      const availableCustomModels = newCustomModelSettings.map(
+        (model) => model.name,
+      );
+
+      settingsManager
+        .set('customModels', newCustomModelSettings)
+        .then(() =>
+          models.custom.service.updateAvailableModels(availableCustomModels),
+        );
     },
     convertTextToVoice: async (voiceServiceType, text) => {
       if (voiceServiceType === 'not set') {

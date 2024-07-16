@@ -38,14 +38,8 @@ export class HuggingFaceService extends AbstractLanguageModelService {
 
     // Listen for settings changes
     this.settingsListener = vscode.workspace.onDidChangeConfiguration((e) => {
-      if (
-        e.affectsConfiguration('repo-code-assistant.huggingFaceApiKey') ||
-        e.affectsConfiguration('repo-code-assistant.huggingFaceAvailableModels')
-      ) {
+      if (e.affectsConfiguration('repo-code-assistant.huggingFaceApiKey')) {
         this.apiKey = settingsManager.get('huggingFaceApiKey');
-        this.availableModelNames = settingsManager.get(
-          'huggingFaceAvailableModels',
-        ) || ['HuggingFaceH4/zephyr-7b-beta'];
       }
     });
 

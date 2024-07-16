@@ -18,12 +18,7 @@ export class GroqService extends AbstractLanguageModelService {
     context: vscode.ExtensionContext,
     settingsManager: SettingsManager,
   ) {
-    const availableModelNames = settingsManager.get('groqAvailableModels') || [
-      'llama3-70b-8192',
-      'llama3-8b-8192',
-      'mixtral-8x7b-32768',
-      'gemma-7b-it',
-    ];
+    const availableModelNames = settingsManager.get('groqAvailableModels');
     const defaultModelName = availableModelNames[0];
 
     super(
@@ -45,19 +40,8 @@ export class GroqService extends AbstractLanguageModelService {
 
     // Listen for settings changes
     this.settingsListener = vscode.workspace.onDidChangeConfiguration((e) => {
-      if (
-        e.affectsConfiguration('repo-code-assistant.groqApiKey') ||
-        e.affectsConfiguration('repo-code-assistant.groqAvailableModels')
-      ) {
+      if (e.affectsConfiguration('repo-code-assistant.groqApiKey')) {
         this.apiKey = settingsManager.get('groqApiKey');
-        this.availableModelNames = settingsManager.get(
-          'groqAvailableModels',
-        ) || [
-          'llama3-70b-8192',
-          'llama3-8b-8192',
-          'mixtral-8x7b-32768',
-          'gemma-7b-it',
-        ];
       }
     });
 

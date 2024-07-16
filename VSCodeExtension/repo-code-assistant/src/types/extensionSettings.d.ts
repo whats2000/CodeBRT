@@ -4,6 +4,11 @@ import type * as hljs from 'react-syntax-highlighter/dist/cjs/styles/hljs';
 
 export type GptSoVitsVoiceSetting = {
   /**
+   * Identifier for the voice setting.
+   */
+  id: string;
+
+  /**
    * The name of the voice setting.
    */
   name: string;
@@ -28,6 +33,11 @@ export type GptSoVitsVoiceSetting = {
  * Represents the settings for a custom API model.
  */
 export type CustomModelSettings = {
+  /**
+   * Identifier for the custom model.
+   */
+  id: string;
+
   /**
    * The name of the custom model.
    */
