@@ -133,13 +133,6 @@ export type ExtensionSettings = {
   selectedGptSoVitsReferenceVoice: string;
 
   /**
-   * Determines if the model is enabled for code generation.
-   */
-  enableModel: {
-    [key in ModelServiceType]: boolean;
-  };
-
-  /**
    * The last used model.
    */
   lastUsedModel: ModelServiceType;

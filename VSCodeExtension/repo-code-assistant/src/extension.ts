@@ -32,7 +32,7 @@ import { Uri } from 'vscode';
 
 export const activate = async (ctx: vscode.ExtensionContext) => {
   const connectedViews: Partial<Record<ViewKey, vscode.WebviewView>> = {};
-  const settingsManager = SettingsManager.getInstance();
+  const settingsManager = SettingsManager.getInstance(ctx);
   const customModels = settingsManager.getCustomModels();
   const customModelNames = customModels.map((model) => model.name);
 

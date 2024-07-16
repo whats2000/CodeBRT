@@ -110,33 +110,11 @@
           "description": "Gemini API Key",
           "markdownDescription": "API key for Gemini model"
         },
-        "repo-code-assistant.geminiAvailableModels": {
-          "type": "array",
-          "description": "Available models for Gemini",
-          "default": [
-            "gemini-1.5-pro-latest",
-            "gemini-1.5-flash-latest"
-          ],
-          "items": {
-            "type": "string"
-          }
-        },
         "repo-code-assistant.openaiApiKey": {
           "type": "string",
           "default": "",
           "description": "OpenAI API Key",
           "markdownDescription": "API key for OpenAI model"
-        },
-        "repo-code-assistant.openaiAvailableModels": {
-          "type": "array",
-          "description": "Available models for OpenAI",
-          "default": [
-            "gpt-3.5-turbo",
-            "gpt-4o"
-          ],
-          "items": {
-            "type": "string"
-          }
         },
         "repo-code-assistant.cohereApiKey": {
           "type": "string",
@@ -144,203 +122,17 @@
           "description": "Cohere API Key",
           "markdownDescription": "API key for Cohere model"
         },
-        "repo-code-assistant.cohereAvailableModels": {
-          "type": "array",
-          "description": "Available models for Cohere",
-          "default": [
-            "command"
-          ],
-          "items": {
-            "type": "string"
-          }
-        },
         "repo-code-assistant.groqApiKey": {
           "type": "string",
           "default": "",
           "description": "Open Source LLM API Key",
           "markdownDescription": "API key for Open Source LLM model"
         },
-        "repo-code-assistant.groqAvailableModels": {
-          "type": "array",
-          "description": "Available models for Open Source LLM",
-          "default": [
-            "llama3-70b-8192",
-            "llama3-8b-8192",
-            "mixtral-8x7b-32768",
-            "gemma-7b-it"
-          ],
-          "items": {
-            "type": "string"
-          }
-        },
         "repo-code-assistant.huggingFaceApiKey": {
           "type": "string",
           "default": "",
           "description": "HuggingFace API Key",
           "markdownDescription": "API key for HuggingFace model"
-        },
-        "repo-code-assistant.huggingFaceAvailableModels": {
-          "type": "array",
-          "description": "Available models for HuggingFace",
-          "default": [
-            "HuggingFaceH4/zephyr-7b-beta"
-          ],
-          "items": {
-            "type": "string"
-          }
-        },
-        "repo-code-assistant.ollamaClientHost": {
-          "type": "string",
-          "default": "http://127.0.0.1:11434",
-          "description": "Ollama client host",
-          "markdownDescription": "Host for Ollama client"
-        },
-        "repo-code-assistant.ollamaAvailableModels": {
-          "type": "array",
-          "description": "Available models for Ollama",
-          "default": [
-            "Auto Detect"
-          ],
-          "items": {
-            "type": "string"
-          }
-        },
-        "repo-code-assistant.enableModel": {
-          "type": "object",
-          "properties": {
-            "gemini": {
-              "type": "boolean",
-              "default": false,
-              "description": "Enable Gemini model"
-            },
-            "openai": {
-              "type": "boolean",
-              "default": false,
-              "description": "Enable OpenAI model"
-            },
-            "cohere": {
-              "type": "boolean",
-              "default": false,
-              "description": "Enable Cohere model"
-            },
-            "groq": {
-              "type": "boolean",
-              "default": false,
-              "description": "Enable Open Source LLM model"
-            },
-            "huggingface": {
-              "type": "boolean",
-              "default": false,
-              "description": "Enable HuggingFace model"
-            },
-            "custom": {
-              "type": "boolean",
-              "default": false,
-              "description": "Enable custom model"
-            }
-          }
-        },
-        "repo-code-assistant.lastUsedModel": {
-          "type": "string",
-          "default": "gemini",
-          "description": "Last used model"
-        },
-        "repo-code-assistant.customModels": {
-          "type": "array",
-          "description": "Custom model configurations",
-          "items": {
-            "type": "object",
-            "properties": {
-              "name": {
-                "type": "string",
-                "description": "Custom model name"
-              },
-              "apiUrl": {
-                "type": "string",
-                "description": "API URL for the custom model"
-              },
-              "apiMethod": {
-                "type": "string",
-                "enum": [
-                  "GET",
-                  "POST"
-                ],
-                "description": "HTTP method to use for the custom model"
-              },
-              "apiTextParam": {
-                "type": "string",
-                "description": "Parameter name for the text input"
-              },
-              "apiImageParam": {
-                "type": "string",
-                "description": "Parameter name for the image input"
-              },
-              "apiQueryParam": {
-                "type": "string",
-                "description": "Parameter name for the query input"
-              },
-              "includeQueryInHistory": {
-                "type": "boolean",
-                "description": "Whether to include the query in the conversation history"
-              }
-            }
-          }
-        },
-        "repo-code-assistant.selectedCustomModel": {
-          "type": "string",
-          "default": "",
-          "description": "Selected custom model"
-        },
-        "repo-code-assistant.selectedTextToVoiceService": {
-          "type": "string",
-          "default": "not set",
-          "description": "Selected text-to-voice service"
-        },
-        "repo-code-assistant.selectedVoiceToTextService": {
-          "type": "string",
-          "default": "not set",
-          "description": "Selected voice-to-text service"
-        },
-        "repo-code-assistant.gptSoVitsClientHost": {
-          "type": "string",
-          "default": "http://127.0.0.1:9880/",
-          "description": "GPT-SoVits client host",
-          "markdownDescription": "Host for GPT-SoVits client"
-        },
-        "repo-code-assistant.gptSoVitsAvailableReferenceVoices": {
-          "type": "array",
-          "description": "Available reference voices setting for GPT-SoVits",
-          "items": {
-            "type": "object",
-            "properties": {
-              "name": {
-                "type": "string",
-                "description": "The name of the voice setting."
-              },
-              "referWavPath": {
-                "type": "string",
-                "description": "The path to the WAV file."
-              },
-              "referText": {
-                "type": "string",
-                "description": "The text reference of the WAV file."
-              },
-              "promptLanguage": {
-                "type": "string",
-                "description": "The language spoken in the WAV file.",
-                "enum": [
-                  "en",
-                  "zh",
-                  "ja"
-                ]
-              }
-            }
-          }
-        },
-        "repo-code-assistant.selectedGptSoVitsReferenceVoice": {
-          "type": "string",
-          "default": "",
-          "description": "Selected reference voice setting for GPT-SoVits"
         },
         "repo-code-assistant.themePrimaryColor": {
           "type": "string",
