@@ -140,12 +140,12 @@ export const MessagesTopToolBar: React.FC<MessagesTopToolBarProps> = ({
   const handleConvertTextToVoice = (text: string) => {
     if (isAudioPlaying) {
       setIsStopAudio(true);
-      callApi('stopPlayVoice', 'gptSoVits').catch(console.error);
+      callApi('stopPlayVoice').catch(console.error);
       return;
     }
 
     setIsAudioPlaying(true);
-    callApi('convertTextToVoice', 'gptSoVits', text)
+    callApi('convertTextToVoice', text)
       .then(() => {
         setIsAudioPlaying(false);
         setIsStopAudio(false);

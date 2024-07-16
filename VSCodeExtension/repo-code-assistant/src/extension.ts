@@ -443,7 +443,11 @@ export const activate = async (ctx: vscode.ExtensionContext) => {
           models.custom.service.updateAvailableModels(availableCustomModels),
         );
     },
-    convertTextToVoice: async (voiceServiceType, text) => {
+    convertTextToVoice: async (text) => {
+      const voiceServiceType = settingsManager.get(
+        'selectedTextToVoiceService',
+      );
+
       if (voiceServiceType === 'not set') {
         vscode.window.showErrorMessage(
           'You have not selected a voice service for text to voice conversion, go to settings to select one',
@@ -461,10 +465,14 @@ export const activate = async (ctx: vscode.ExtensionContext) => {
 
       await voiceService.textToVoice(text);
     },
-    convertVoiceToText: async (voiceServiceType) => {
+    convertVoiceToText: async () => {
+      const voiceServiceType = settingsManager.get(
+        'selectedVoiceToTextService',
+      );
+
       if (voiceServiceType === 'not set') {
         vscode.window.showErrorMessage(
-          'You have not selected a voice service for voice to text conversion, go to settings to select one',
+          'You have not selected a voice service for voice to text conversion, go to voice settings to select one',
         );
         return '';
       }
@@ -477,13 +485,16 @@ export const activate = async (ctx: vscode.ExtensionContext) => {
         return '';
       }
 
-      // TODO: Record voice
-      return 'Recorded voice as text';
+      return voiceService.voiceToText();
     },
-    stopPlayVoice: async (voiceServiceType) => {
+    stopPlayVoice: async () => {
+      const voiceServiceType = settingsManager.get(
+        'selectedTextToVoiceService',
+      );
+
       if (voiceServiceType === 'not set') {
         vscode.window.showErrorMessage(
-          'You have not selected a voice service for voice playback, go to settings to select one',
+          'You have not selected a voice service for voice playback, go to voice settings to select one',
         );
         return;
       }

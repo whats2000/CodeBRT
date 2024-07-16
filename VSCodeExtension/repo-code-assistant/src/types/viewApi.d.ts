@@ -269,27 +269,22 @@ export type ViewApi = {
 
   /**
    * Convert text to voice and play it.
-   * @param voiceServiceType - The type of the voice service to use.
    * @param text - The text to convert to voice.
    */
-  convertTextToVoice: (
-    voiceServiceType: VoiceServiceType,
-    text: string,
-  ) => Promise<void>;
+  convertTextToVoice: (text: string) => Promise<void>;
 
   /**
    * Start recording voice.
    * After recording, the voice will be converted to text.
-   * @param voiceServiceType - The type of the voice service to use.
    * @returns The recorded voice as text.
    */
-  convertVoiceToText: (voiceServiceType: VoiceServiceType) => Promise<string>;
+  convertVoiceToText: () => Promise<string>;
 
   /**
    * Stop the voice which is being played.
    * @param voiceServiceType - The type of the voice service to stop.
    */
-  stopPlayVoice: (voiceServiceType: VoiceServiceType) => void;
+  stopPlayVoice: () => void;
 
   /**
    * Switch the reference voice for GPT-SoVits.

@@ -123,7 +123,7 @@ export abstract class AbstractVoiceService implements VoiceService {
       .then();
   }
 
-  public async voiceToText(_voicePath: string): Promise<string> {
+  public async voiceToText(): Promise<string> {
     vscode.window
       .showInformationMessage('Voice to text is not supported in this service')
       .then();

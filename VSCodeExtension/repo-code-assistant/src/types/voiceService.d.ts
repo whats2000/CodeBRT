@@ -9,11 +9,10 @@ export type VoiceService = {
   textToVoice: (text: string) => Promise<void>;
 
   /**
-   * Converts the given voice to text.
-   * @param voicePath - The path to the voice file.
+   * Records voice and converts it to text.
    * @returns A promise that resolves to text data in string format.
    */
-  voiceToText: (voicePath: string) => Promise<string>;
+  voiceToText: () => Promise<string>;
 
   /**
    * Stops the voice playback and clears the queues.
