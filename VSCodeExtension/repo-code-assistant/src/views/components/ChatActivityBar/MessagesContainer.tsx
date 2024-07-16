@@ -13,7 +13,7 @@ import type {
 import { WebviewContext } from '../../WebviewContext';
 import { TypingAnimation } from '../common/TypingAnimation';
 import { fadeIn, fadeOut } from '../../styles/animation';
-import { MessagesTopToolBar } from './MessagesContainer/TopToolBar';
+import { MessagesTopToolBar } from './MessagesContainer/MessagesTopToolBar';
 
 const { useToken } = theme;
 

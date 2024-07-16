@@ -174,7 +174,7 @@ export abstract class AbstractLanguageModelService
       this.histories = histories;
       if (Object.keys(histories).length > 0) {
         for (const historyID in histories) {
-          if (!histories[historyID].top) {
+          if (!histories[historyID].top && histories[historyID].root !== '') {
             histories[historyID].top = [histories[historyID].root];
           }
         }
