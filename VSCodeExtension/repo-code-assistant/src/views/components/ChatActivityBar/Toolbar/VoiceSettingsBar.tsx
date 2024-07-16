@@ -29,7 +29,7 @@ export const VoiceSettingsBar: React.FC<VoiceSettingsBarProps> = ({
   const { callApi } = useContext(WebviewContext);
   const [isGptSoVitsSettingsOpen, setIsGptSoVitsSettingsOpen] = useState(false);
 
-  const textToVoiceServices: VoiceServiceType[] = ['not set', 'gptSoVits'];
+  const textToVoiceServices: VoiceServiceType[] = ['not set', 'gptSoVits','openai'];
   const voiceToTextServices: VoiceServiceType[] = ['not set'];
   const [partialSettings, setPartialSettings] = useState<
     Partial<ExtensionSettings>
