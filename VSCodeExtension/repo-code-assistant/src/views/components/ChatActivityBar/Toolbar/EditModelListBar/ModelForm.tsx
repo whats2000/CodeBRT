@@ -1,5 +1,5 @@
 import React, { useContext, useEffect, useRef } from 'react';
-import { Button, Form, Space } from 'antd';
+import { Button, Form, Space, Tooltip } from 'antd';
 import {
   DndContext,
   closestCenter,
@@ -168,26 +168,37 @@ export const ModelForm: React.FC<ModelFormProps> = ({
             items={modelsWithId.current.map((model) => model.id)}
             strategy={verticalListSortingStrategy}
           >
-            {modelsWithId.current.map((model, index) => (
-              <ModelFormSortableItem
-                key={model.id}
-                id={model.id}
-                index={index}
-                value={model.name}
-                onChange={handleAvailableModelChange}
-                onRemove={handleRemoveAvailableModel}
-              />
-            ))}
+            {modelsWithId.current
+              .filter(
+                (model, index) =>
+                  !(
+                    activeModelService === 'ollama' &&
+                    index === 0 &&
+                    model.name === 'Auto Detect'
+                  ),
+              )
+              .map((model, index) => (
+                <ModelFormSortableItem
+                  key={model.id}
+                  id={model.id}
+                  index={index}
+                  value={model.name}
+                  onChange={handleAvailableModelChange}
+                  onRemove={handleRemoveAvailableModel}
+                />
+              ))}
           </SortableContext>
         </DndContext>
-        <Button
-          type='primary'
-          ghost={true}
-          onClick={handleFetchLatestAvailableModels}
-          block
-        >
-          Fetch Latest Models
-        </Button>
+        <Tooltip title='Notice: This will also remove the outdated models from the list'>
+          <Button
+            type='primary'
+            ghost={true}
+            onClick={handleFetchLatestAvailableModels}
+            block
+          >
+            Fetch Latest Available Models
+          </Button>
+        </Tooltip>
         <Button type='dashed' onClick={handleAddAvailableModel} block>
           Add Model
         </Button>
