@@ -64,7 +64,7 @@ type InputContainerProps = {
   inputMessage: string;
   setInputMessage: React.Dispatch<React.SetStateAction<string>>;
   sendMessage: () => void;
-  isLoading: boolean;
+  isProcessing: boolean;
   uploadedImages: string[];
   handleImageUpload: (files: FileList | null) => void;
   handleImageRemove: (imagePath: string) => void;
@@ -74,7 +74,7 @@ export const InputContainer = ({
   inputMessage,
   setInputMessage,
   sendMessage,
-  isLoading,
+  isProcessing,
   uploadedImages,
   handleImageUpload,
   handleImageRemove,
@@ -94,7 +94,7 @@ export const InputContainer = ({
       }
       setEnterPressCount((prev) => prev + 1);
 
-      if (enterPressCount + 1 >= 2 && !isLoading) {
+      if (enterPressCount + 1 >= 2 && !isProcessing) {
         sendMessage();
         resetEnterPressCount();
       }
@@ -144,7 +144,7 @@ export const InputContainer = ({
             <UploadedImage src={imageUri} alt={`Uploaded ${index + 1}`} />
             <DeleteButton
               onClick={() => handleImageRemove(uploadedImages[index])}
-              disabled={isLoading}
+              disabled={isProcessing}
             >
               <CloseCircleFilled />
             </DeleteButton>
@@ -156,13 +156,13 @@ export const InputContainer = ({
           type={'text'}
           icon={<UploadOutlined />}
           onClick={handleUploadButtonClick}
-          disabled={isLoading}
+          disabled={isProcessing}
         />
         <Button
           type={'text'}
           icon={<AudioOutlined />}
           onClick={handleVoiceInput}
-          disabled={isLoading}
+          disabled={isProcessing}
         />
         <input
           type='file'
@@ -176,11 +176,11 @@ export const InputContainer = ({
           onChange={(e) => setInputMessage(e.target.value)}
           onKeyDown={handleKeyDown}
           placeholder='Type your message...'
-          disabled={isLoading}
+          disabled={isProcessing}
           autoSize={{ minRows: 1, maxRows: 10 }}
         />
-        <Button onClick={sendMessage} disabled={isLoading}>
-          {isLoading ? <LoadingOutlined /> : <SendOutlined />}
+        <Button onClick={sendMessage} disabled={isProcessing}>
+          {isProcessing ? <LoadingOutlined /> : <SendOutlined />}
         </Button>
       </Flex>
     </StyledInputContainer>

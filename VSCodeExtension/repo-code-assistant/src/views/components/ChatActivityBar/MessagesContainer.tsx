@@ -74,7 +74,7 @@ type MessagesContainerProps = {
   modelType: ModelServiceType | 'loading...';
   isActiveModelLoading: boolean;
   messagesContainerRef: React.RefObject<HTMLDivElement>;
-  isLoading: boolean;
+  isProcessing: boolean;
   scrollToBottom: (smooth?: boolean) => void;
   messageEndRef: React.RefObject<HTMLDivElement>;
   handleEditUserMessageSave: (
@@ -108,7 +108,7 @@ export const MessagesContainer: React.FC<MessagesContainerProps> = ({
   modelType,
   isActiveModelLoading,
   messagesContainerRef,
-  isLoading,
+  isProcessing,
   scrollToBottom,
   messageEndRef,
   handleEditUserMessageSave,
@@ -261,6 +261,7 @@ export const MessagesContainer: React.FC<MessagesContainerProps> = ({
                   <Button
                     onClick={() => handleSaveEdit(entry.id)}
                     style={{ width: '100%' }}
+                    disabled={isProcessing}
                   >
                     Save
                   </Button>
@@ -273,10 +274,10 @@ export const MessagesContainer: React.FC<MessagesContainerProps> = ({
                   <MessageText>
                     {entry.role === 'AI' &&
                     entry.id === conversationHistory.current &&
-                    isLoading ? (
+                    isProcessing ? (
                       <TypingAnimation
                         message={entry.message}
-                        isLoading={isLoading}
+                        isProcessing={isProcessing}
                         scrollToBottom={scrollToBottom}
                         hljsTheme={partialSettings.hljsTheme}
                         setHljsTheme={setHljsTheme}

@@ -37,7 +37,7 @@ export const ChatActivityBar = () => {
       current: '',
       entries: {},
     });
-  const [isLoading, setIsLoading] = useState(false);
+  const [isProcessing, setIsProcessing] = useState(false);
   const [activeModelService, setActiveModelService] = useState<
     ModelServiceType | 'loading...'
   >('loading...');
@@ -163,10 +163,10 @@ export const ChatActivityBar = () => {
   }, [uploadedImages]);
 
   const sendMessage = async () => {
-    if (isLoading) return;
+    if (isProcessing) return;
     if (activeModelService === 'loading...') return;
     if (!inputMessage.trim()) return;
-    setIsLoading(true);
+    setIsProcessing(true);
 
     const userEntryId = await callApi(
       'addConversationEntry',
@@ -271,7 +271,7 @@ export const ChatActivityBar = () => {
       setInputMessage('');
       setUploadedImages([]);
       setTimeout(() => {
-        setIsLoading(false);
+        setIsProcessing(false);
         scrollToBottom(true);
       }, 1000);
     } catch (error) {
@@ -280,7 +280,7 @@ export const ChatActivityBar = () => {
         `Failed to get response: ${error}`,
         'error',
       ).catch(console.error);
-      setIsLoading(false);
+      setIsProcessing(false);
     }
   };
 
@@ -288,8 +288,10 @@ export const ChatActivityBar = () => {
     entryId: string,
     editedMessage: string,
   ) => {
-    if (isLoading) return;
+    if (isProcessing) return;
     if (activeModelService === 'loading...') return;
+    if (!editedMessage.trim()) return;
+    setIsProcessing(true);
 
     const entry = conversationHistory.entries[entryId];
     const newEntryId = await callApi(
@@ -397,7 +399,7 @@ export const ChatActivityBar = () => {
       });
 
       setTimeout(() => {
-        setIsLoading(false);
+        setIsProcessing(false);
         scrollToBottom(true);
       }, 1000);
     } catch (error) {
@@ -406,7 +408,7 @@ export const ChatActivityBar = () => {
         `Failed to get response: ${error}`,
         'error',
       ).catch(console.error);
-      setIsLoading(false);
+      setIsProcessing(false);
     }
   };
 
@@ -454,7 +456,7 @@ export const ChatActivityBar = () => {
           modelType={activeModelService}
           isActiveModelLoading={isActiveModelLoading}
           messagesContainerRef={messagesContainerRef}
-          isLoading={isLoading}
+          isProcessing={isProcessing}
           scrollToBottom={scrollToBottom}
           messageEndRef={messageEndRef}
           handleEditUserMessageSave={handleEditUserMessageSave}
@@ -465,7 +467,7 @@ export const ChatActivityBar = () => {
           inputMessage={inputMessage}
           setInputMessage={setInputMessage}
           sendMessage={sendMessage}
-          isLoading={isLoading}
+          isProcessing={isProcessing}
           handleImageRemove={handleImageRemove}
         />
       </Container>
