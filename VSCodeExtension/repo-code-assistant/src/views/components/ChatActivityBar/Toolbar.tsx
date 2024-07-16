@@ -163,6 +163,13 @@ export const Toolbar: React.FC<ToolbarProps> = ({
 
     if (newAvailableModels.length === 0) {
       setSelectedModel('');
+      callApi('switchModel', activeModelService, '').catch((error) =>
+        callApi(
+          'alertMessage',
+          `Failed to switch model: ${error}`,
+          'error',
+        ).catch(console.error),
+      );
       return;
     }
 

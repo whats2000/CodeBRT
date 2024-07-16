@@ -64,7 +64,7 @@ export class GeminiService extends AbstractLanguageModelService {
     settingsManager: SettingsManager,
   ) {
     const availableModelNames = settingsManager.get('geminiAvailableModels');
-    const defaultModelName = availableModelNames[0];
+    const defaultModelName = availableModelNames[0] || '';
 
     super(
       context,
@@ -184,6 +184,13 @@ export class GeminiService extends AbstractLanguageModelService {
     query: string,
     currentEntryID?: string,
   ): Promise<string> {
+    if (this.currentModel === '') {
+      vscode.window.showErrorMessage(
+        'Make sure the model is selected before sending a message. Open the model selection dropdown and configure the model.',
+      );
+      return 'Missing model configuration. Check the model selection dropdown.';
+    }
+
     const genAI = new GoogleGenerativeAI(this.apiKey);
     const model = genAI.getGenerativeModel({ model: this.currentModel });
 
@@ -217,6 +224,13 @@ export class GeminiService extends AbstractLanguageModelService {
     sendStreamResponse: (msg: string) => void,
     currentEntryID?: string,
   ): Promise<string> {
+    if (this.currentModel === '') {
+      vscode.window.showErrorMessage(
+        'Make sure the model is selected before sending a message. Open the model selection dropdown and configure the model.',
+      );
+      return 'Missing model configuration. Check the model selection dropdown.';
+    }
+
     const genAI = new GoogleGenerativeAI(this.apiKey);
     const model = genAI.getGenerativeModel({ model: this.currentModel });
 
@@ -256,8 +270,14 @@ export class GeminiService extends AbstractLanguageModelService {
     query: string,
     images: string[],
   ): Promise<string> {
-    const genAI = new GoogleGenerativeAI(this.apiKey);
+    if (this.currentModel === '') {
+      vscode.window.showErrorMessage(
+        'Make sure the model is selected before sending a message. Open the model selection dropdown and configure the model.',
+      );
+      return 'Missing model configuration. Check the model selection dropdown.';
+    }
 
+    const genAI = new GoogleGenerativeAI(this.apiKey);
     const model = genAI.getGenerativeModel({ model: this.currentModel });
 
     try {
@@ -287,8 +307,13 @@ export class GeminiService extends AbstractLanguageModelService {
     images: string[],
     sendStreamResponse: (msg: string) => void,
   ): Promise<string> {
+    if (this.currentModel === '') {
+      vscode.window.showErrorMessage(
+        'Make sure the model is selected before sending a message. Open the model selection dropdown and configure the model.',
+      );
+      return 'Missing model configuration. Check the model selection dropdown.';
+    }
     const genAI = new GoogleGenerativeAI(this.apiKey);
-
     const model = genAI.getGenerativeModel({ model: this.currentModel });
 
     try {

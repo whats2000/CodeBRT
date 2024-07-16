@@ -15,7 +15,7 @@ export class CohereService extends AbstractLanguageModelService {
     settingsManager: SettingsManager,
   ) {
     const availableModelNames = settingsManager.get('cohereAvailableModels');
-    const defaultModelName = availableModelNames[0];
+    const defaultModelName = availableModelNames[0] || '';
 
     super(
       context,
@@ -116,6 +116,13 @@ export class CohereService extends AbstractLanguageModelService {
     query: string,
     currentEntryID?: string,
   ): Promise<string> {
+    if (this.currentModel === '') {
+      vscode.window.showErrorMessage(
+        'Make sure the model is selected before sending a message. Open the model selection dropdown and configure the model.',
+      );
+      return 'Missing model configuration. Check the model selection dropdown.';
+    }
+
     const model = new CohereClient({ token: this.apiKey });
 
     const history = currentEntryID
@@ -147,6 +154,13 @@ export class CohereService extends AbstractLanguageModelService {
     sendStreamResponse: (msg: string) => void,
     currentEntryID?: string,
   ): Promise<string> {
+    if (this.currentModel === '') {
+      vscode.window.showErrorMessage(
+        'Make sure the model is selected before sending a message. Open the model selection dropdown and configure the model.',
+      );
+      return 'Missing model configuration. Check the model selection dropdown.';
+    }
+
     const model = new CohereClient({
       token: this.apiKey,
     });

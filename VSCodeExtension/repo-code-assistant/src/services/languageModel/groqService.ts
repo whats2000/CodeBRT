@@ -19,7 +19,7 @@ export class GroqService extends AbstractLanguageModelService {
     settingsManager: SettingsManager,
   ) {
     const availableModelNames = settingsManager.get('groqAvailableModels');
-    const defaultModelName = availableModelNames[0];
+    const defaultModelName = availableModelNames[0] || '';
 
     super(
       context,
@@ -110,6 +110,7 @@ export class GroqService extends AbstractLanguageModelService {
       latestModels.forEach((model) => {
         if (!model.id) return;
         if (newAvailableModelNames.includes(model.id)) return;
+        if (model.id.includes('whisper')) return;
 
         newAvailableModelNames.push(model.id);
       });
@@ -126,6 +127,13 @@ export class GroqService extends AbstractLanguageModelService {
     query: string,
     currentEntryID?: string,
   ): Promise<string> {
+    if (this.currentModel === '') {
+      vscode.window.showErrorMessage(
+        'Make sure the model is selected before sending a message. Open the model selection dropdown and configure the model.',
+      );
+      return 'Missing model configuration. Check the model selection dropdown.';
+    }
+
     const groq = new Groq({
       apiKey: this.apiKey,
     });
@@ -163,6 +171,13 @@ export class GroqService extends AbstractLanguageModelService {
     sendStreamResponse: (msg: string) => void,
     currentEntryID?: string,
   ): Promise<string> {
+    if (this.currentModel === '') {
+      vscode.window.showErrorMessage(
+        'Make sure the model is selected before sending a message. Open the model selection dropdown and configure the model.',
+      );
+      return 'Missing model configuration. Check the model selection dropdown.';
+    }
+
     const groq = new Groq({
       apiKey: this.apiKey,
     });

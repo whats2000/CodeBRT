@@ -393,6 +393,16 @@ export abstract class AbstractLanguageModelService
    * @param newModel - The name of the model to switch to
    */
   public switchModel(newModel: string): void {
+    if (this.availableModelNames.length === 0) {
+      this.currentModel = '';
+      vscode.window
+        .showErrorMessage(
+          'No available models to switch to. Please configure the models first.',
+        )
+        .then();
+      return;
+    }
+
     if (this.availableModelNames.includes(newModel)) {
       this.currentModel = newModel;
       vscode.window
