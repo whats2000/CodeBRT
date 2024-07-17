@@ -3,6 +3,7 @@ import { ExtensionSettings } from '../types';
 export const MODEL_SERVICE_LINKS: {
   [key in keyof Partial<ExtensionSettings>]: string;
 } = {
+  anthropicApiKey: 'https://console.anthropic.com/settings/keys',
   cohereApiKey:
     'https://dashboard.cohere.com/welcome/login?redirect_uri=%2Fapi-keys',
   geminiApiKey: 'https://ai.google.dev/gemini-api',

@@ -39,6 +39,7 @@ export const SettingsBar: React.FC<SettingSidebarProps> = ({
   const [partialSettings, setPartialSettings] = useState<
     Partial<ExtensionSettings>
   >({
+    anthropicApiKey: '',
     groqApiKey: '',
     geminiApiKey: '',
     openaiApiKey: '',

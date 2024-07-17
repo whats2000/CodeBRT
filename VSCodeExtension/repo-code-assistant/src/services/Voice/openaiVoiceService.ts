@@ -139,7 +139,7 @@ export class OpenaiVoiceService extends AbstractVoiceService {
           }, 100);
         })
         .catch(reject);
-    });    
+    });
   }
 
   public async stopVoice(): Promise<void> {
@@ -154,17 +154,13 @@ export class OpenaiVoiceService extends AbstractVoiceService {
     });
     try {
       const transcription = await openai.audio.transcriptions.create({
-          file:fs1.createReadStream(this.speechfile),
-          model: "whisper-1",
+        file: fs1.createReadStream(this.speechfile),
+        model: 'whisper-1',
       });
       return transcription.text;
-    }catch(error){
-      vscode.window.showErrorMessage(
-          'Failed on Text to Speech. ' + error,
-        );
+    } catch (error) {
+      vscode.window.showErrorMessage('Failed on Text to Speech. ' + error);
       return 'Failed on Speech to Text.';
     }
   }
-
-
 }

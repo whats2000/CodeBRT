@@ -56,6 +56,7 @@ export const Toolbar: React.FC<ToolbarProps> = ({
 }) => {
   const { callApi } = useContext(WebviewContext);
   const modelServices: ModelServiceType[] = [
+    'anthropic',
     'gemini',
     'cohere',
     'openai',

@@ -4,6 +4,7 @@ import { LanguageModelService } from './languageModelService';
  * Represents the type of models supported by the system.
  */
 export type ModelServiceType =
+  | 'anthropic'
   | 'gemini'
   | 'openai'
   | 'cohere'

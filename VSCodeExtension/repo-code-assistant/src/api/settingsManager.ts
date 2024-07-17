@@ -32,6 +32,12 @@ class SettingsManager {
   }
 
   private localSettings: Partial<ExtensionSettings> = {
+    anthropicAvailableModels: [
+      'claude-3-5-sonnet-20240620',
+      'claude-3-haiku-20240307',
+      'claude-3-opus-20240229',
+      'claude-3-sonnet-20240229',
+    ],
     openaiAvailableModels: [
       'gpt-3.5-turbo',
       'gpt-4o',
@@ -112,6 +118,7 @@ class SettingsManager {
     setting: T,
   ): boolean {
     const crossDeviceSettingsKeys: (keyof ExtensionSettings)[] = [
+      'anthropicApiKey',
       'openaiApiKey',
       'geminiApiKey',
       'cohereApiKey',
@@ -169,6 +176,12 @@ class SettingsManager {
   private defaultSettings(): ExtensionSettings {
     return {
       // Local Settings
+      anthropicAvailableModels: [
+        'claude-3-5-sonnet-20240620',
+        'claude-3-haiku-20240307',
+        'claude-3-opus-20240229',
+        'claude-3-sonnet-20240229',
+      ],
       openaiAvailableModels: [
         'gpt-3.5-turbo',
         'gpt-4o',
@@ -200,6 +213,7 @@ class SettingsManager {
       gptSoVitsAvailableReferenceVoices: [],
       selectedGptSoVitsReferenceVoice: '',
       // Cross-Device Sync Settings
+      anthropicApiKey: '',
       openaiApiKey: '',
       geminiApiKey: '',
       cohereApiKey: '',

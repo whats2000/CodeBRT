@@ -20,6 +20,7 @@ import type {
 import { ViewKey } from './views';
 import { viewRegistration } from './api/viewRegistration';
 import SettingsManager from './api/settingsManager';
+import { AnthropicService } from './services/languageModel/anthropicService';
 import { GeminiService } from './services/languageModel/geminiService';
 import { CohereService } from './services/languageModel/cohereService';
 import { OpenAIService } from './services/languageModel/openaiService';
@@ -28,14 +29,17 @@ import { HuggingFaceService } from './services/languageModel/huggingFaceService'
 import { OllamaService } from './services/languageModel/ollamaService';
 import { CustomApiService } from './services/languageModel/customApiService';
 import { GptSoVitsApiService } from './services/Voice/gptSoVitsService';
-import { Uri } from 'vscode';
 import { OpenaiVoiceService } from './services/Voice/openaiVoiceService';
+import { Uri } from 'vscode';
 
 export const activate = async (ctx: vscode.ExtensionContext) => {
   const connectedViews: Partial<Record<ViewKey, vscode.WebviewView>> = {};
   const settingsManager = SettingsManager.getInstance(ctx);
 
   const models: LoadedModelServices = {
+    anthropic: {
+      service: new AnthropicService(ctx, settingsManager),
+    },
     gemini: {
       service: new GeminiService(ctx, settingsManager),
     },

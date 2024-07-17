@@ -79,6 +79,16 @@ export type CustomModelSettings = {
  */
 export type ExtensionSettings = {
   /**
+   * The API key for the Anthropic model.
+   */
+  anthropicApiKey: string;
+
+  /**
+   * The available models for the Anthropic API.
+   */
+  anthropicAvailableModels: string[];
+
+  /**
    * The API key for the Gemini model.
    */
   geminiApiKey: string;
