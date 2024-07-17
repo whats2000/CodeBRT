@@ -1,6 +1,10 @@
 import * as vscode from 'vscode';
 import fs from 'fs';
-import type { Content, InlineDataPart } from '@google/generative-ai';
+import {
+  Content,
+  GenerativeModel,
+  InlineDataPart,
+} from '@google/generative-ai';
 import {
   GoogleGenerativeAI,
   HarmBlockThreshold,
@@ -137,6 +141,44 @@ export class GeminiService extends AbstractLanguageModelService {
     };
   }
 
+  private initModel(currentEntryID?: string): {
+    generativeModel: GenerativeModel;
+    conversationHistory: Content[];
+    errorMessage?: string;
+  } {
+    const generativeModel = new GoogleGenerativeAI(
+      this.apiKey,
+    ).getGenerativeModel({
+      model: this.currentModel,
+    });
+
+    if (this.currentModel === '') {
+      vscode.window
+        .showErrorMessage(
+          'Make sure the model is selected before sending a message. Open the model selection dropdown and configure the model.',
+        )
+        .then();
+      return {
+        generativeModel,
+        conversationHistory: [],
+        errorMessage:
+          'Missing model configuration. Check the model selection dropdown.',
+      };
+    }
+
+    const history = currentEntryID
+      ? this.getHistoryBeforeEntry(currentEntryID)
+      : this.history;
+    const conversationHistory = this.conversationHistoryToContent(
+      history.entries,
+    );
+
+    return {
+      generativeModel,
+      conversationHistory,
+    };
+  }
+
   public async getLatestAvailableModelNames(): Promise<string[]> {
     const requestUrl = `https://generativelanguage.googleapis.com/v1beta/models?key=${this.apiKey}`;
 
@@ -184,26 +226,15 @@ export class GeminiService extends AbstractLanguageModelService {
     query: string,
     currentEntryID?: string,
   ): Promise<string> {
-    if (this.currentModel === '') {
-      vscode.window.showErrorMessage(
-        'Make sure the model is selected before sending a message. Open the model selection dropdown and configure the model.',
-      );
-      return 'Missing model configuration. Check the model selection dropdown.';
+    const { generativeModel, conversationHistory, errorMessage } =
+      this.initModel(currentEntryID);
+
+    if (errorMessage) {
+      return errorMessage;
     }
 
-    const genAI = new GoogleGenerativeAI(this.apiKey);
-    const model = genAI.getGenerativeModel({ model: this.currentModel });
-
-    const history = currentEntryID
-      ? this.getHistoryBeforeEntry(currentEntryID)
-      : this.history;
-
-    const conversationHistory = this.conversationHistoryToContent(
-      history.entries,
-    );
-
     try {
-      const chat = model.startChat({
+      const chat = generativeModel.startChat({
         generationConfig: this.generationConfig,
         safetySettings: this.safetySettings,
         history: conversationHistory,
@@ -224,26 +255,15 @@ export class GeminiService extends AbstractLanguageModelService {
     sendStreamResponse: (msg: string) => void,
     currentEntryID?: string,
   ): Promise<string> {
-    if (this.currentModel === '') {
-      vscode.window.showErrorMessage(
-        'Make sure the model is selected before sending a message. Open the model selection dropdown and configure the model.',
-      );
-      return 'Missing model configuration. Check the model selection dropdown.';
+    const { generativeModel, conversationHistory, errorMessage } =
+      this.initModel(currentEntryID);
+
+    if (errorMessage) {
+      return errorMessage;
     }
 
-    const genAI = new GoogleGenerativeAI(this.apiKey);
-    const model = genAI.getGenerativeModel({ model: this.currentModel });
-
-    const history = currentEntryID
-      ? this.getHistoryBeforeEntry(currentEntryID)
-      : this.history;
-
-    const conversationHistory = this.conversationHistoryToContent(
-      history.entries,
-    );
-
     try {
-      const chat = model.startChat({
+      const chat = generativeModel.startChat({
         generationConfig: this.generationConfig,
         safetySettings: this.safetySettings,
         history: conversationHistory,

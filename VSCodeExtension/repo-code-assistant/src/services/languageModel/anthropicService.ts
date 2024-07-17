@@ -102,16 +102,20 @@ export class AnthropicService extends AbstractLanguageModelService {
   private fileToImagePart(
     filePath: string,
     mimeType: 'image/jpeg' | 'image/png' | 'image/gif' | 'image/webp',
-  ): ImageBlockParam {
-    const base64Data = fs.readFileSync(filePath).toString('base64');
-    return {
-      type: 'image',
-      source: {
-        type: 'base64',
-        data: base64Data,
-        media_type: mimeType,
-      },
-    };
+  ): ImageBlockParam | undefined {
+    try {
+      const base64Data = fs.readFileSync(filePath).toString('base64');
+      return {
+        type: 'image',
+        source: {
+          type: 'base64',
+          data: base64Data,
+          media_type: mimeType,
+        },
+      };
+    } catch (error) {
+      console.error('Failed to read image file:', error);
+    }
   }
 
   private initModel(
@@ -123,6 +127,10 @@ export class AnthropicService extends AbstractLanguageModelService {
     conversationHistory: MessageParam[];
     errorMessage?: string;
   } {
+    const anthropic = new Anthropic({
+      apiKey: this.apiKey,
+    });
+
     if (this.currentModel === '') {
       vscode.window
         .showErrorMessage(
@@ -130,18 +138,12 @@ export class AnthropicService extends AbstractLanguageModelService {
         )
         .then();
       return {
-        anthropic: new Anthropic({
-          apiKey: this.apiKey,
-        }),
+        anthropic: anthropic,
         conversationHistory: [],
         errorMessage:
           'Missing model configuration. Check the model selection dropdown.',
       };
     }
-
-    const anthropic = new Anthropic({
-      apiKey: this.apiKey,
-    });
 
     const history = currentEntryID
       ? this.getHistoryBeforeEntry(currentEntryID)
@@ -174,14 +176,16 @@ export class AnthropicService extends AbstractLanguageModelService {
     }
 
     // Append the images to last message
-    const imageParts = images.map((image) => {
-      const mimeType = `image/${path.extname(image).slice(1)}` as
-        | 'image/jpeg'
-        | 'image/png'
-        | 'image/gif'
-        | 'image/webp';
-      return this.fileToImagePart(image, mimeType);
-    });
+    const imageParts = images
+      .map((image) => {
+        const mimeType = `image/${path.extname(image).slice(1)}` as
+          | 'image/jpeg'
+          | 'image/png'
+          | 'image/gif'
+          | 'image/webp';
+        return this.fileToImagePart(image, mimeType);
+      })
+      .filter((part) => part !== undefined) as ImageBlockParam[];
 
     (
       conversationHistory[conversationHistory.length - 1].content as (

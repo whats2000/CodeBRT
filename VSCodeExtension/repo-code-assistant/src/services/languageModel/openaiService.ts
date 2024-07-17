@@ -2,7 +2,7 @@ import * as vscode from 'vscode';
 import OpenAI from 'openai';
 import fs from 'fs';
 import path from 'path';
-import type {
+import {
   ChatCompletionMessageParam,
   ChatCompletionContentPartImage,
   ChatCompletionCreateParamsStreaming,
@@ -94,14 +94,18 @@ export class OpenAIService extends AbstractLanguageModelService {
   private fileToGenerativePart(
     filePath: string,
     mimeType: string,
-  ): ChatCompletionContentPartImage {
-    const base64Data = fs.readFileSync(filePath).toString('base64');
-    return {
-      type: 'image_url',
-      image_url: {
-        url: `data:${mimeType};base64,${base64Data}`,
-      },
-    };
+  ): ChatCompletionContentPartImage | undefined {
+    try {
+      const base64Data = fs.readFileSync(filePath).toString('base64');
+      return {
+        type: 'image_url',
+        image_url: {
+          url: `data:${mimeType};base64,${base64Data}`,
+        },
+      };
+    } catch (error) {
+      console.error('Failed to read image file:', error);
+    }
   }
 
   public async getLatestAvailableModelNames(): Promise<string[]> {
@@ -240,10 +244,14 @@ export class OpenAIService extends AbstractLanguageModelService {
     const openai = new OpenAI({ apiKey: this.apiKey });
 
     try {
-      const imageParts = images.map((image) => {
-        const mimeType = `image/${path.extname(image).slice(1)}`;
-        return this.fileToGenerativePart(image, mimeType);
-      });
+      const imageParts = images
+        .map((image) => {
+          const mimeType = `image/${path.extname(image).slice(1)}`;
+          return this.fileToGenerativePart(image, mimeType);
+        })
+        .filter(
+          (part) => part !== undefined,
+        ) as ChatCompletionContentPartImage[];
 
       const messages: ChatCompletionMessageParam[] = [
         {
@@ -284,10 +292,14 @@ export class OpenAIService extends AbstractLanguageModelService {
     try {
       let responseText = '';
 
-      const imageParts = images.map((image) => {
-        const mimeType = `image/${path.extname(image).slice(1)}`;
-        return this.fileToGenerativePart(image, mimeType);
-      });
+      const imageParts = images
+        .map((image) => {
+          const mimeType = `image/${path.extname(image).slice(1)}`;
+          return this.fileToGenerativePart(image, mimeType);
+        })
+        .filter(
+          (part) => part !== undefined,
+        ) as ChatCompletionContentPartImage[];
 
       const messages: ChatCompletionMessageParam[] = [
         {

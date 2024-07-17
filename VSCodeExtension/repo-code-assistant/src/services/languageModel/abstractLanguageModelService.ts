@@ -481,4 +481,15 @@ export abstract class AbstractLanguageModelService
 
     return 'This feature is not supported by the current model.';
   }
+
+  /**
+   * Stop current response
+   */
+  public async stopResponse(): Promise<void> {
+    vscode.window
+      .showInformationMessage(
+        'This feature is not supported by the current model.',
+      )
+      .then();
+  }
 }

@@ -144,4 +144,9 @@ export type LanguageModelService = {
     sendStreamResponse: (msg: string) => void,
     currentEntryID?: string,
   ) => Promise<string>;
+
+  /**
+   *
+   */
+  stopResponse: () => void;
 };

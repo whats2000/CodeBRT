@@ -117,12 +117,16 @@ export class CustomApiService extends AbstractLanguageModelService {
     }
 
     for (const [index, image] of images.entries()) {
-      const mimeType = `image/${path.extname(image).slice(1)}`;
-      const file = await fs.promises.readFile(image);
-      formData.append(`${this.apiImageParam}[${index}]`, file, {
-        filename: path.basename(image),
-        contentType: mimeType,
-      });
+      try {
+        const mimeType = `image/${path.extname(image).slice(1)}`;
+        const file = await fs.promises.readFile(image);
+        formData.append(`${this.apiImageParam}[${index}]`, file, {
+          filename: path.basename(image),
+          contentType: mimeType,
+        });
+      } catch (error) {
+        console.error('Failed to read image file:', error);
+      }
     }
 
     return formData;
