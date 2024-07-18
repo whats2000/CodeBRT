@@ -4,16 +4,18 @@ import {
   Drawer,
   Form,
   Input,
-  Checkbox,
   Select,
   ColorPicker,
   Button,
+  Space,
+  Tooltip,
+  Typography,
 } from 'antd';
+import type { Color } from 'antd/es/color-picker/color';
 
 import type { ExtensionSettings } from '../../../../types';
 import { WebviewContext } from '../../../WebviewContext';
-import type { Color } from 'antd/es/color-picker/color';
-import { ModelType } from '../../../../types/modelType';
+import { MODEL_SERVICE_LINKS } from '../../../../constants';
 
 const StyledForm = styled(Form)`
   display: flex;
@@ -22,12 +24,6 @@ const StyledForm = styled(Form)`
 
 const FormGroup = styled(Form.Item)`
   margin-bottom: 15px;
-`;
-
-const CheckboxGroup = styled.div`
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
 `;
 
 type SettingSidebarProps = {
@@ -41,9 +37,7 @@ export const SettingsBar: React.FC<SettingSidebarProps> = ({
 }) => {
   const { callApi } = useContext(WebviewContext);
   const [partialSettings, setPartialSettings] = useState<
-    Partial<ExtensionSettings> & {
-      enableModel: { [key in ModelType]: boolean };
-    }
+    Partial<ExtensionSettings>
   >({
     groqApiKey: '',
     geminiApiKey: '',
@@ -52,20 +46,11 @@ export const SettingsBar: React.FC<SettingSidebarProps> = ({
     huggingFaceApiKey: '',
     ollamaClientHost: '',
     gptSoVitsClientHost: '',
-    enableModel: {
-      gemini: false,
-      openai: false,
-      cohere: false,
-      groq: false,
-      huggingFace: false,
-      ollama: false,
-      custom: false,
-    },
     themePrimaryColor: '#1677ff',
     themeAlgorithm: 'defaultAlgorithm',
     themeBorderRadius: 4,
   });
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     if (isOpen) {
@@ -74,13 +59,10 @@ export const SettingsBar: React.FC<SettingSidebarProps> = ({
       // Create an array of promises for the API calls
       const promises = Object.keys(partialSettings).map(async (key) => {
         try {
-          let value = await callApi(
+          const value = await callApi(
             'getSetting',
             key as keyof typeof partialSettings,
           );
-          if (key === 'enableModel' && Object.keys(value).length === 0) {
-            value = partialSettings.enableModel;
-          }
           setPartialSettings((prev) => ({ ...prev, [key]: value }));
         } catch (e) {
           console.error(`Failed to fetch setting ${key}:`, e);
@@ -95,30 +77,8 @@ export const SettingsBar: React.FC<SettingSidebarProps> = ({
   }, [isOpen]);
 
   const handleSettingChange =
-    (
-      key:
-        | keyof Partial<ExtensionSettings>
-        | keyof typeof partialSettings.enableModel,
-    ) =>
-    (event: any) => {
-      if (key in partialSettings.enableModel) {
-        setPartialSettings((prev) => ({
-          ...prev,
-          enableModel: {
-            ...prev.enableModel,
-            [key]: event.target.checked,
-          },
-        }));
-        saveSettings({
-          ...partialSettings,
-          enableModel: {
-            ...partialSettings.enableModel,
-            [key]: event.target.checked,
-          },
-        });
-      } else {
-        setPartialSettings((prev) => ({ ...prev, [key]: event.target.value }));
-      }
+    (key: keyof Partial<ExtensionSettings>) => (event: any) => {
+      setPartialSettings((prev) => ({ ...prev, [key]: event.target.value }));
     };
 
   const handleBlurSave = () => {
@@ -166,11 +126,7 @@ export const SettingsBar: React.FC<SettingSidebarProps> = ({
     });
   };
 
-  const saveSettings = (
-    updatedSettings: Partial<ExtensionSettings> & {
-      enableModel: { [key in ModelType]: boolean };
-    },
-  ) => {
+  const saveSettings = (updatedSettings: Partial<ExtensionSettings>) => {
     Object.entries(updatedSettings).map(([key, value]) =>
       callApi('setSetting', key as keyof ExtensionSettings, value).catch((e) =>
         callApi(
@@ -180,6 +136,17 @@ export const SettingsBar: React.FC<SettingSidebarProps> = ({
         ),
       ),
     );
+  };
+
+  const openModelServiceLink = (
+    settingKey: keyof Partial<ExtensionSettings>,
+  ) => {
+    const link = MODEL_SERVICE_LINKS[settingKey];
+    if (link) {
+      callApi('openExternalLink', link)
+        .then(() => {})
+        .catch(console.error);
+    }
   };
 
   return (
@@ -196,39 +163,27 @@ export const SettingsBar: React.FC<SettingSidebarProps> = ({
         onFinish={() => saveSettings(partialSettings)}
       >
         {Object.entries(partialSettings).map(([key, value]) => {
-          if (key === 'enableModel') {
+          if (key.includes('ApiKey') || key.includes('ClientHost')) {
             return (
               <FormGroup
                 key={key}
                 label={
-                  key.charAt(0).toUpperCase() +
-                  key.slice(1).replace(/([A-Z])/g, ' $1')
-                }
-              >
-                <CheckboxGroup>
-                  {Object.entries(value).map(([modelKey, modelValue]) => (
-                    <Checkbox
-                      key={modelKey}
-                      checked={modelValue}
-                      onChange={(event) => {
-                        handleSettingChange(
-                          modelKey as keyof typeof partialSettings.enableModel,
-                        )(event);
-                      }}
-                    >
-                      {modelKey.charAt(0).toUpperCase() + modelKey.slice(1)}
-                    </Checkbox>
-                  ))}
-                </CheckboxGroup>
-              </FormGroup>
-            );
-          } else if (key.includes('ApiKey') || key.includes('ClientHost')) {
-            return (
-              <FormGroup
-                key={key}
-                label={
-                  key.charAt(0).toUpperCase() +
-                  key.slice(1).replace(/([A-Z])/g, ' $1')
+                  <Space>
+                    <span>
+                      {key.charAt(0).toUpperCase() +
+                        key.slice(1).replace(/([A-Z])/g, ' $1')}
+                    </span>
+                    <Tooltip title='Find out more about API keys and client hosts'>
+                      <Typography.Link
+                        type={'secondary'}
+                        onClick={() =>
+                          openModelServiceLink(key as keyof ExtensionSettings)
+                        }
+                      >
+                        Learn more
+                      </Typography.Link>
+                    </Tooltip>
+                  </Space>
                 }
               >
                 <Input.Password

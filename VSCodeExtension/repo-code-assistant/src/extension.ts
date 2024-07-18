@@ -2,22 +2,22 @@ import fs from 'node:fs/promises';
 import path from 'node:path';
 import * as vscode from 'vscode';
 
-import { ViewKey } from './views';
-import {
+import type {
+  ConversationHistory,
+  CustomModelSettings,
+  ExtensionSettings,
+  LanguageModelService,
+  LoadedModelServices,
+  LoadedVoiceServices,
+  ModelServiceType,
   ViewApi,
   ViewApiError,
   ViewApiEvent,
   ViewApiRequest,
   ViewApiResponse,
   ViewEvents,
-} from './types/viewApi';
-import {
-  CustomModelSettings,
-  ExtensionSettings,
-} from './types/extensionSettings';
-import { LanguageModelService } from './types/languageModelService';
-import { LoadedModels, ModelType } from './types/modelType';
-import { ConversationHistory } from './types/conversationHistory';
+} from './types';
+import { ViewKey } from './views';
 import { viewRegistration } from './api/viewRegistration';
 import SettingsManager from './api/settingsManager';
 import { GeminiService } from './services/languageModel/geminiService';
@@ -27,47 +27,38 @@ import { GroqService } from './services/languageModel/groqService';
 import { HuggingFaceService } from './services/languageModel/huggingFaceService';
 import { OllamaService } from './services/languageModel/ollamaService';
 import { CustomApiService } from './services/languageModel/customApiService';
-import { LoadedVoiceService } from './types/voiceType';
 import { GptSoVitsApiService } from './services/Voice/gptSoVitsService';
+import { Uri } from 'vscode';
 
 export const activate = async (ctx: vscode.ExtensionContext) => {
   const connectedViews: Partial<Record<ViewKey, vscode.WebviewView>> = {};
-  const settingsManager = SettingsManager.getInstance();
-  const customModels = settingsManager.getCustomModels();
-  const customModelNames = customModels.map((model) => model.name);
+  const settingsManager = SettingsManager.getInstance(ctx);
 
-  const models: LoadedModels = {
+  const models: LoadedModelServices = {
     gemini: {
       service: new GeminiService(ctx, settingsManager),
-      enabled: settingsManager.get('enableModel').gemini,
     },
     cohere: {
       service: new CohereService(ctx, settingsManager),
-      enabled: settingsManager.get('enableModel').cohere,
     },
     openai: {
       service: new OpenAIService(ctx, settingsManager),
-      enabled: settingsManager.get('enableModel').openai,
     },
     groq: {
       service: new GroqService(ctx, settingsManager),
-      enabled: settingsManager.get('enableModel').groq,
     },
     huggingFace: {
       service: new HuggingFaceService(ctx, settingsManager),
-      enabled: settingsManager.get('enableModel').huggingFace,
     },
     ollama: {
       service: new OllamaService(ctx, settingsManager),
-      enabled: settingsManager.get('enableModel').ollama,
     },
     custom: {
-      service: new CustomApiService(ctx, settingsManager, customModelNames),
-      enabled: settingsManager.get('enableModel').custom,
+      service: new CustomApiService(ctx, settingsManager),
     },
   };
 
-  const voiceServices: LoadedVoiceService = {
+  const voiceServices: LoadedVoiceServices = {
     gptSoVits: {
       service: new GptSoVitsApiService(ctx, settingsManager),
     },
@@ -140,7 +131,7 @@ export const activate = async (ctx: vscode.ExtensionContext) => {
     },
     getLanguageModelResponse: async (
       query: string,
-      modelType: ModelType,
+      modelType: ModelServiceType,
       useStream?: boolean,
       currentEntryID?: string,
     ) => {
@@ -164,7 +155,7 @@ export const activate = async (ctx: vscode.ExtensionContext) => {
         return `Failed to get response from ${modelType} service: ${error}`;
       }
     },
-    getLanguageModelConversationHistory: (modelType: ModelType) => {
+    getLanguageModelConversationHistory: (modelType: ModelServiceType) => {
       const modelService: LanguageModelService = models[modelType].service;
       if (!modelService) {
         vscode.window.showErrorMessage(
@@ -182,7 +173,7 @@ export const activate = async (ctx: vscode.ExtensionContext) => {
 
       return modelService.getConversationHistory();
     },
-    addNewConversationHistory: (modelType: ModelType) => {
+    addNewConversationHistory: (modelType: ModelServiceType) => {
       const modelService: LanguageModelService = models[modelType].service;
 
       if (!modelService) {
@@ -202,7 +193,7 @@ export const activate = async (ctx: vscode.ExtensionContext) => {
       return modelService.addNewConversationHistory();
     },
     editLanguageModelConversationHistory: (
-      modelType: ModelType,
+      modelType: ModelServiceType,
       entryID: string,
       newMessage: string,
     ) => {
@@ -221,7 +212,7 @@ export const activate = async (ctx: vscode.ExtensionContext) => {
       triggerEvent('streamResponse', msg);
     },
     addConversationEntry: async (
-      modelType: ModelType,
+      modelType: ModelServiceType,
       parentID: string,
       sender: 'user' | 'AI',
       message: string,
@@ -243,7 +234,7 @@ export const activate = async (ctx: vscode.ExtensionContext) => {
         images,
       );
     },
-    getHistories: (modelType: ModelType) => {
+    getHistories: (modelType: ModelServiceType) => {
       const modelService: LanguageModelService = models[modelType].service;
 
       if (!modelService) {
@@ -255,7 +246,7 @@ export const activate = async (ctx: vscode.ExtensionContext) => {
 
       return modelService.getHistories();
     },
-    switchHistory: (modelType: ModelType, historyID: string) => {
+    switchHistory: (modelType: ModelServiceType, historyID: string) => {
       const modelService: LanguageModelService = models[modelType].service;
 
       if (!modelService) {
@@ -267,7 +258,7 @@ export const activate = async (ctx: vscode.ExtensionContext) => {
 
       modelService.switchHistory(historyID);
     },
-    deleteHistory: (modelType: ModelType, historyID: string) => {
+    deleteHistory: (modelType: ModelServiceType, historyID: string) => {
       const modelService: LanguageModelService = models[modelType].service;
 
       if (!modelService) {
@@ -286,7 +277,7 @@ export const activate = async (ctx: vscode.ExtensionContext) => {
 
       return modelService.deleteHistory(historyID);
     },
-    getAvailableModels: (modelType: ModelType) => {
+    getAvailableModels: (modelType: ModelServiceType) => {
       const modelService: LanguageModelService = models[modelType].service;
 
       if (!modelService) {
@@ -296,10 +287,14 @@ export const activate = async (ctx: vscode.ExtensionContext) => {
         return [];
       }
 
-      return modelService.getAvailableModels();
+      if (modelType === 'custom') {
+        return settingsManager.get('customModels').map((model) => model.name);
+      }
+
+      return settingsManager.get(`${modelType}AvailableModels`);
     },
     setAvailableModels: (
-      modelType: ModelType,
+      modelType: ModelServiceType,
       newAvailableModels: string[],
     ) => {
       const modelService: LanguageModelService = models[modelType].service;
@@ -311,9 +306,13 @@ export const activate = async (ctx: vscode.ExtensionContext) => {
         return;
       }
 
-      settingsManager.set(`${modelType}AvailableModels`, newAvailableModels);
+      settingsManager
+        .set(`${modelType}AvailableModels`, newAvailableModels)
+        .then(() => {
+          modelService.updateAvailableModels(newAvailableModels);
+        });
     },
-    switchModel: (modelType: ModelType, modelName: string) => {
+    switchModel: (modelType: ModelServiceType, modelName: string) => {
       const modelService: LanguageModelService = models[modelType].service;
 
       if (!modelService) {
@@ -326,7 +325,7 @@ export const activate = async (ctx: vscode.ExtensionContext) => {
       modelService.switchModel(modelName);
     },
     updateHistoryTitleById: (
-      modelType: ModelType,
+      modelType: ModelServiceType,
       historyID: string,
       title: string,
     ) => {
@@ -343,7 +342,7 @@ export const activate = async (ctx: vscode.ExtensionContext) => {
     },
     getLanguageModelResponseWithImage: async (
       query: string,
-      modelType: ModelType,
+      modelType: ModelServiceType,
       images: string[],
       currentEntryID?: string,
     ) => {
@@ -366,6 +365,18 @@ export const activate = async (ctx: vscode.ExtensionContext) => {
       } catch (error) {
         return `Failed to get response from ${modelType} service: ${error}`;
       }
+    },
+    getLatestAvailableModelNames: async (modelType: ModelServiceType) => {
+      const modelService: LanguageModelService = models[modelType].service;
+
+      if (!modelService) {
+        vscode.window.showErrorMessage(
+          `Failed to get latest available model names for unknown model type: ${modelType}`,
+        );
+        return [];
+      }
+
+      return await modelService.getLatestAvailableModelNames();
     },
     uploadImage: async (base64Data: string) => {
       const matches = base64Data.match(/^data:([A-Za-z-+/]+);base64,(.+)$/);
@@ -422,9 +433,21 @@ export const activate = async (ctx: vscode.ExtensionContext) => {
       return settingsManager.get('customModels');
     },
     setCustomModels: (newCustomModelSettings: CustomModelSettings[]) => {
-      settingsManager.set('customModels', newCustomModelSettings);
+      const availableCustomModels = newCustomModelSettings.map(
+        (model) => model.name,
+      );
+
+      settingsManager
+        .set('customModels', newCustomModelSettings)
+        .then(() =>
+          models.custom.service.updateAvailableModels(availableCustomModels),
+        );
     },
-    convertTextToVoice: async (voiceServiceType, text) => {
+    convertTextToVoice: async (text) => {
+      const voiceServiceType = settingsManager.get(
+        'selectedTextToVoiceService',
+      );
+
       if (voiceServiceType === 'not set') {
         vscode.window.showErrorMessage(
           'You have not selected a voice service for text to voice conversion, go to settings to select one',
@@ -442,10 +465,14 @@ export const activate = async (ctx: vscode.ExtensionContext) => {
 
       await voiceService.textToVoice(text);
     },
-    convertVoiceToText: async (voiceServiceType) => {
+    convertVoiceToText: async () => {
+      const voiceServiceType = settingsManager.get(
+        'selectedVoiceToTextService',
+      );
+
       if (voiceServiceType === 'not set') {
         vscode.window.showErrorMessage(
-          'You have not selected a voice service for voice to text conversion, go to settings to select one',
+          'You have not selected a voice service for voice to text conversion, go to voice settings to select one',
         );
         return '';
       }
@@ -458,13 +485,16 @@ export const activate = async (ctx: vscode.ExtensionContext) => {
         return '';
       }
 
-      // TODO: Record voice
-      return 'Recorded voice as text';
+      return voiceService.voiceToText();
     },
-    stopPlayVoice: async (voiceServiceType) => {
+    stopPlayVoice: async () => {
+      const voiceServiceType = settingsManager.get(
+        'selectedTextToVoiceService',
+      );
+
       if (voiceServiceType === 'not set') {
         vscode.window.showErrorMessage(
-          'You have not selected a voice service for voice playback, go to settings to select one',
+          'You have not selected a voice service for voice playback, go to voice settings to select one',
         );
         return;
       }
@@ -493,6 +523,9 @@ export const activate = async (ctx: vscode.ExtensionContext) => {
     },
     getSelectedGptSoVitsReferenceVoice: () => {
       return settingsManager.getSelectedGptSoVitsReferenceVoice();
+    },
+    openExternalLink: async (url) => {
+      await vscode.env.openExternal(Uri.parse(url));
     },
   };
 

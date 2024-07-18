@@ -1,9 +1,19 @@
 import React, { useContext, useEffect, useState } from 'react';
-import { Drawer, Form, Select, Button } from 'antd';
+import {
+  Drawer,
+  Form,
+  Select,
+  Button,
+  Divider,
+  Typography,
+  Tooltip,
+  Space,
+} from 'antd';
+
+import type { ExtensionSettings, VoiceServiceType } from '../../../../types';
+import { MODEL_SERVICE_LINKS } from '../../../../constants';
 import { WebviewContext } from '../../../WebviewContext';
-import { VoiceType } from '../../../../types/voiceType';
 import { GptSoVitsSettingsBar } from './VoiceSettingsBar/GptSoVitsSettingsBar';
-import { ExtensionSettings } from '../../../../types/extensionSettings';
 
 const { Option } = Select;
 
@@ -19,15 +29,17 @@ export const VoiceSettingsBar: React.FC<VoiceSettingsBarProps> = ({
   const { callApi } = useContext(WebviewContext);
   const [isGptSoVitsSettingsOpen, setIsGptSoVitsSettingsOpen] = useState(false);
 
-  const textToVoiceServices: VoiceType[] = ['not set', 'gptSoVits'];
-  const voiceToTextServices: VoiceType[] = ['not set'];
+  const textToVoiceServices: VoiceServiceType[] = ['not set', 'gptSoVits'];
+  const voiceToTextServices: VoiceServiceType[] = ['not set'];
   const [partialSettings, setPartialSettings] = useState<
     Partial<ExtensionSettings>
   >({
     selectedTextToVoiceService: 'not set',
     selectedVoiceToTextService: 'not set',
+    selectedGptSoVitsReferenceVoice: '',
+    gptSoVitsAvailableReferenceVoices: [],
   });
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     if (isOpen) {
@@ -54,17 +66,62 @@ export const VoiceSettingsBar: React.FC<VoiceSettingsBarProps> = ({
   }, [isOpen]);
 
   const handleServiceChange = (
-    field: 'selectedTextToVoiceService' | 'selectedVoiceToTextService',
-    value: VoiceType,
+    field:
+      | 'selectedTextToVoiceService'
+      | 'selectedVoiceToTextService'
+      | 'selectedGptSoVitsReferenceVoice',
+    value: (typeof partialSettings)[keyof typeof partialSettings],
   ) => {
-    callApi('setSetting', field, value)
-      .then(() =>
-        setPartialSettings({
-          ...partialSettings,
-          [field]: value,
-        }),
-      )
-      .catch(console.error);
+    if (!value || isLoading) return;
+
+    const originalValue = partialSettings[field];
+
+    setPartialSettings({
+      ...partialSettings,
+      [field]: value,
+    });
+
+    callApi('setSetting', field, value).catch((e) => {
+      callApi(
+        'alertMessage',
+        `Failed to save settings: ${e.message}`,
+        'error',
+      ).catch(console.error);
+      setPartialSettings({
+        ...partialSettings,
+        [field]: originalValue,
+      });
+    });
+
+    if (field !== 'selectedGptSoVitsReferenceVoice') return;
+
+    callApi('switchGptSoVitsReferenceVoice', value as string).catch((e) =>
+      callApi(
+        'alertMessage',
+        `Failed to switch reference voice: ${e.message}`,
+        'error',
+      ).catch(console.error),
+    );
+  };
+
+  const openModelServiceLink = (
+    settingKey: keyof Partial<ExtensionSettings>,
+  ) => {
+    const link = MODEL_SERVICE_LINKS[settingKey];
+    if (link) {
+      callApi('openExternalLink', link)
+        .then(() => {})
+        .catch(console.error);
+    }
+  };
+
+  const handleEditGptSoVitsSettingsSave = (
+    newSettings: Partial<ExtensionSettings>,
+  ) => {
+    setPartialSettings((prev) => ({
+      ...prev,
+      ...newSettings,
+    }));
   };
 
   return (
@@ -106,6 +163,47 @@ export const VoiceSettingsBar: React.FC<VoiceSettingsBarProps> = ({
               ))}
             </Select>
           </Form.Item>
+          <Divider />
+          <Form.Item
+            label={
+              <Space>
+                <span>
+                  Reference Voice{' '}
+                  <Typography.Text type={'secondary'}>
+                    (GPT-SoVits)
+                  </Typography.Text>
+                </span>
+                <Tooltip title='Find out more about set up GPT-SoVits client host'>
+                  <Typography.Link
+                    type={'secondary'}
+                    onClick={() =>
+                      openModelServiceLink(
+                        'gptSoVitsClientHost' as keyof ExtensionSettings,
+                      )
+                    }
+                  >
+                    Learn more
+                  </Typography.Link>
+                </Tooltip>
+              </Space>
+            }
+          >
+            <Select
+              value={partialSettings.selectedGptSoVitsReferenceVoice}
+              onChange={(value) =>
+                handleServiceChange('selectedGptSoVitsReferenceVoice', value)
+              }
+              placeholder='Select a reference voice'
+            >
+              {partialSettings.gptSoVitsAvailableReferenceVoices?.map(
+                (voice, index) => (
+                  <Option key={`gptSoVitsVoice-${index}`} value={voice.name}>
+                    {voice.name}
+                  </Option>
+                ),
+              )}
+            </Select>
+          </Form.Item>
           <Button
             type='primary'
             onClick={() => setIsGptSoVitsSettingsOpen(true)}
@@ -119,6 +217,7 @@ export const VoiceSettingsBar: React.FC<VoiceSettingsBarProps> = ({
       <GptSoVitsSettingsBar
         isOpen={isGptSoVitsSettingsOpen}
         onClose={() => setIsGptSoVitsSettingsOpen(false)}
+        handleEditGptSoVitsSettingsSave={handleEditGptSoVitsSettingsSave}
       />
     </>
   );

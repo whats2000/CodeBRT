@@ -5,6 +5,17 @@ import {
 
 export type LanguageModelService = {
   /**
+   * Update the available models
+   * @param newAvailableModels - The new available models
+   */
+  updateAvailableModels: (newAvailableModels: string[]) => void;
+
+  /**
+   * Get the latest version of the language model service
+   */
+  getLatestAvailableModelNames: () => Promise<string[]>;
+
+  /**
    * Load the conversation histories from the file
    */
   loadHistories: () => Promise<void>;
@@ -71,11 +82,6 @@ export type LanguageModelService = {
    * @returns The deleted conversation history
    */
   deleteHistory: (historyID: string) => ConversationHistory;
-
-  /**
-   * Get the available models
-   */
-  getAvailableModels: () => string[];
 
   /**
    * Switch to a different model

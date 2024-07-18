@@ -1,7 +1,7 @@
 import React, { useContext, useEffect, useState } from 'react';
 import { Drawer } from 'antd';
 
-import type { CustomModelSettings, ModelType } from '../../../../types';
+import type { CustomModelSettings, ModelServiceType } from '../../../../types';
 import { WebviewContext } from '../../../WebviewContext';
 import { ModelForm } from './EditModelListBar/ModelForm';
 import { CustomModelForm } from './EditModelListBar/CustomModelForm';
@@ -9,27 +9,27 @@ import { CustomModelForm } from './EditModelListBar/CustomModelForm';
 interface EditModelListBarProps {
   isOpen: boolean;
   onClose: () => void;
-  activeModel: ModelType | 'loading...';
+  activeModelService: ModelServiceType | 'loading...';
   handleEditModelListSave: (models: string[]) => void;
 }
 
 export const EditModelListBar: React.FC<EditModelListBarProps> = ({
   isOpen,
   onClose,
-  activeModel,
+  activeModelService,
   handleEditModelListSave,
 }) => {
   const { callApi } = useContext(WebviewContext);
   const [customModels, setCustomModels] = useState<CustomModelSettings[]>([]);
   const [availableModels, setAvailableModels] = useState<string[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     setIsLoading(true);
-    if (activeModel === 'loading...') return;
+    if (activeModelService === 'loading...') return;
 
     if (isOpen) {
-      if (activeModel === 'custom') {
+      if (activeModelService === 'custom') {
         callApi('getCustomModels')
           .then((models: CustomModelSettings[]) => {
             setCustomModels(models);
@@ -44,7 +44,7 @@ export const EditModelListBar: React.FC<EditModelListBarProps> = ({
             setIsLoading(false);
           });
       } else {
-        callApi('getAvailableModels', activeModel)
+        callApi('getAvailableModels', activeModelService)
           .then((models: string[]) => {
             setAvailableModels(models);
             setIsLoading(false);
@@ -59,7 +59,7 @@ export const EditModelListBar: React.FC<EditModelListBarProps> = ({
           });
       }
     }
-  }, [isOpen, activeModel]);
+  }, [isOpen, activeModelService]);
 
   return (
     <Drawer
@@ -70,21 +70,24 @@ export const EditModelListBar: React.FC<EditModelListBarProps> = ({
       width={400}
       loading={isLoading}
     >
-      {activeModel === 'custom' ? (
+      {activeModelService === 'custom' ? (
         <CustomModelForm
-          activeModel={activeModel}
+          isOpen={isOpen}
+          isLoading={isLoading}
+          activeModel={activeModelService}
           customModels={customModels}
           setCustomModels={setCustomModels}
           handleEditModelListSave={handleEditModelListSave}
-          onClose={onClose}
         />
       ) : (
         <ModelForm
-          activeModel={activeModel}
+          isOpen={isOpen}
+          isLoading={isLoading}
+          setIsLoading={setIsLoading}
+          activeModelService={activeModelService}
           availableModels={availableModels}
           setAvailableModels={setAvailableModels}
           handleEditModelListSave={handleEditModelListSave}
-          onClose={onClose}
         />
       )}
     </Drawer>

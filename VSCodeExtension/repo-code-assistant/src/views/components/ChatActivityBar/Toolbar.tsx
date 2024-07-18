@@ -1,5 +1,13 @@
 import React, { useContext, useEffect, useState } from 'react';
-import { Select, Button, Space, Dropdown, Drawer, MenuProps } from 'antd';
+import {
+  Select,
+  Button,
+  Space,
+  Dropdown,
+  Drawer,
+  MenuProps,
+  SelectProps,
+} from 'antd';
 import {
   PlusOutlined,
   HistoryOutlined,
@@ -7,14 +15,12 @@ import {
 } from '@ant-design/icons';
 import styled from 'styled-components';
 
-import { ConversationHistory, ModelType } from '../../../types';
+import { ConversationHistory, ModelServiceType } from '../../../types';
 import { WebviewContext } from '../../WebviewContext';
 import { EditModelListBar } from './Toolbar/EditModelListBar';
 import { HistorySidebar } from './Toolbar/HistorySidebar';
 import { SettingsBar } from './Toolbar/SettingsBar';
 import { VoiceSettingsBar } from './Toolbar/VoiceSettingsBar';
-
-const { Option } = Select;
 
 const StyledSpace = styled(Space)`
   display: flex;
@@ -27,27 +33,29 @@ const EditModelListButton = styled(Button)`
   align-items: center;
 `;
 
-interface ToolbarProps {
-  activeModel: ModelType | 'loading...';
-  messages: ConversationHistory;
+type ToolbarProps = {
+  activeModelService: ModelServiceType | 'loading...';
+  setActiveModelService: React.Dispatch<
+    React.SetStateAction<ModelServiceType | 'loading...'>
+  >;
+  conversationHistory: ConversationHistory;
   isActiveModelLoading: boolean;
   setIsActiveModelLoading: React.Dispatch<React.SetStateAction<boolean>>;
-  setMessages: React.Dispatch<React.SetStateAction<ConversationHistory>>;
-  setActiveModel: React.Dispatch<
-    React.SetStateAction<ModelType | 'loading...'>
+  setConversationHistory: React.Dispatch<
+    React.SetStateAction<ConversationHistory>
   >;
-}
+};
 
 export const Toolbar: React.FC<ToolbarProps> = ({
-  activeModel,
-  messages,
+  activeModelService,
+  setActiveModelService,
+  conversationHistory,
   isActiveModelLoading,
   setIsActiveModelLoading,
-  setMessages,
-  setActiveModel,
+  setConversationHistory,
 }) => {
   const { callApi } = useContext(WebviewContext);
-  const modelServices: ModelType[] = [
+  const modelServices: ModelServiceType[] = [
     'gemini',
     'cohere',
     'openai',
@@ -67,11 +75,11 @@ export const Toolbar: React.FC<ToolbarProps> = ({
 
   useEffect(() => {
     setIsActiveModelLoading(true);
-    if (activeModel === 'loading...') {
+    if (activeModelService === 'loading...') {
       return;
     }
 
-    callApi('getAvailableModels', activeModel)
+    callApi('getAvailableModels', activeModelService)
       .then((models: string[]) => {
         setAvailableModels(models);
         setSelectedModel(models[0]);
@@ -96,37 +104,39 @@ export const Toolbar: React.FC<ToolbarProps> = ({
     return () => {
       window.removeEventListener('resize', handleResize);
     };
-  }, [activeModel]);
+  }, [activeModelService]);
 
   const createNewChat = () => {
-    if (activeModel === 'loading...') {
+    if (activeModelService === 'loading...') {
       return;
     }
-    callApi('addNewConversationHistory', activeModel)
-      .then((newConversationHistory) => setMessages(newConversationHistory))
+    callApi('addNewConversationHistory', activeModelService)
+      .then((newConversationHistory) =>
+        setConversationHistory(newConversationHistory),
+      )
       .catch((error) =>
         console.error('Failed to clear conversation history:', error),
       );
   };
 
-  const handleModelServiceChange = (value: ModelType | 'loading...') => {
+  const handleModelServiceChange = (value: ModelServiceType | 'loading...') => {
     setIsActiveModelLoading(true);
 
     if (value === 'loading...') {
       return;
     }
 
-    setActiveModel(value);
+    setActiveModelService(value);
   };
 
   const handleModelChange = (value: string) => {
     setSelectedModel(value);
 
-    if (activeModel === 'loading...') {
+    if (activeModelService === 'loading...') {
       return;
     }
 
-    callApi('switchModel', activeModel, value).catch((error) =>
+    callApi('switchModel', activeModelService, value).catch((error) =>
       callApi(
         'alertMessage',
         `Failed to switch model: ${error}`,
@@ -147,17 +157,24 @@ export const Toolbar: React.FC<ToolbarProps> = ({
   };
 
   const handleEditModelListSave = (newAvailableModels: string[]) => {
-    if (activeModel === 'loading...') return;
+    if (activeModelService === 'loading...') return;
 
     setAvailableModels(newAvailableModels);
 
     if (newAvailableModels.length === 0) {
       setSelectedModel('');
+      callApi('switchModel', activeModelService, '').catch((error) =>
+        callApi(
+          'alertMessage',
+          `Failed to switch model: ${error}`,
+          'error',
+        ).catch(console.error),
+      );
       return;
     }
 
     if (!newAvailableModels.includes(selectedModel)) {
-      callApi('switchModel', activeModel, newAvailableModels[0])
+      callApi('switchModel', activeModelService, newAvailableModels[0])
         .then(() => setSelectedModel(newAvailableModels[0]))
         .catch((error) =>
           callApi(
@@ -182,6 +199,37 @@ export const Toolbar: React.FC<ToolbarProps> = ({
     },
   ];
 
+  const modelServiceOptions: SelectProps['options'] = modelServices.map(
+    (service) => ({
+      key: service,
+      label: service,
+      value: service,
+    }),
+  );
+
+  const modelOptions: SelectProps['options'] = [
+    ...availableModels.map((model, index) => ({
+      key: `available-${index}`,
+      label: model,
+      value: model,
+    })),
+    {
+      key: 'edit',
+      label: (
+        <EditModelListButton
+          icon={<SettingOutlined />}
+          onClick={openEditModelList}
+          style={{ width: '100%' }}
+        >
+          Edit Model List
+        </EditModelListButton>
+      ),
+      value: 'edit',
+      disabled: true,
+      style: { paddingLeft: 0, paddingRight: 0 },
+    },
+  ];
+
   return (
     <>
       <StyledSpace>
@@ -189,17 +237,13 @@ export const Toolbar: React.FC<ToolbarProps> = ({
           {isOffCanvas ? (
             <>
               <Select
-                value={activeModel}
+                showSearch
+                value={activeModelService}
                 onChange={handleModelServiceChange}
                 style={{ width: 100 }}
                 loading={isActiveModelLoading}
-              >
-                {modelServices.map((service) => (
-                  <Option key={service} value={service}>
-                    {service}
-                  </Option>
-                ))}
-              </Select>
+                options={modelServiceOptions}
+              />
               <Button onClick={() => setIsSelectModelOpen(true)}>
                 {selectedModel}
               </Button>
@@ -214,67 +258,28 @@ export const Toolbar: React.FC<ToolbarProps> = ({
                   value={isActiveModelLoading ? 'Loading...' : selectedModel}
                   onChange={handleModelChange}
                   style={{ width: '100%' }}
-                >
-                  {availableModels.map((model) => (
-                    <Option key={model} value={model}>
-                      {model}
-                    </Option>
-                  ))}
-                  <Option
-                    value='edit'
-                    style={{ paddingLeft: 0, paddingRight: 0 }}
-                    disabled
-                  >
-                    <EditModelListButton
-                      icon={<SettingOutlined />}
-                      onClick={openEditModelList}
-                      style={{ width: '100%' }}
-                    >
-                      Edit Model List
-                    </EditModelListButton>
-                  </Option>
-                </Select>
+                  options={modelOptions}
+                />
               </Drawer>
             </>
           ) : (
             <>
               <Select
-                value={activeModel}
+                showSearch
+                value={activeModelService}
                 onChange={handleModelServiceChange}
                 style={{ width: 150 }}
                 loading={isActiveModelLoading}
-              >
-                {modelServices.map((service) => (
-                  <Option key={service} value={service}>
-                    {service}
-                  </Option>
-                ))}
-              </Select>
+                options={modelServiceOptions}
+              />
               <Select
+                showSearch
                 value={isActiveModelLoading ? 'Loading...' : selectedModel}
                 onChange={handleModelChange}
                 style={{ width: 200 }}
                 loading={isActiveModelLoading}
-              >
-                {availableModels.map((model) => (
-                  <Option key={model} value={model}>
-                    {model}
-                  </Option>
-                ))}
-                <Option
-                  value='edit'
-                  style={{ paddingLeft: 0, paddingRight: 0 }}
-                  disabled
-                >
-                  <EditModelListButton
-                    icon={<SettingOutlined />}
-                    onClick={openEditModelList}
-                    style={{ width: '100%' }}
-                  >
-                    Edit Model List
-                  </EditModelListButton>
-                </Option>
-              </Select>
+                options={modelOptions}
+              />
             </>
           )}
         </Space>
@@ -289,9 +294,9 @@ export const Toolbar: React.FC<ToolbarProps> = ({
       <HistorySidebar
         isOpen={isHistorySidebarOpen}
         onClose={toggleHistorySidebar}
-        messages={messages}
-        activeModel={activeModel}
-        setMessages={setMessages}
+        conversationHistory={conversationHistory}
+        activeModelService={activeModelService}
+        setConversationHistory={setConversationHistory}
       />
       <SettingsBar
         isOpen={isSettingsOpen}
@@ -304,7 +309,7 @@ export const Toolbar: React.FC<ToolbarProps> = ({
       <EditModelListBar
         isOpen={isEditModelListOpen}
         onClose={() => setIsEditModelListOpen(false)}
-        activeModel={activeModel}
+        activeModelService={activeModelService}
         handleEditModelListSave={handleEditModelListSave}
       />
     </>

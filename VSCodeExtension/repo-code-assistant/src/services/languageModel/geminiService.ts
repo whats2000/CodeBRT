@@ -11,6 +11,24 @@ import type { ConversationEntry } from '../../types';
 import { AbstractLanguageModelService } from './abstractLanguageModelService';
 import SettingsManager from '../../api/settingsManager';
 
+type GeminiModel = {
+  name: string;
+  baseModelId: string;
+  version: string;
+  displayName: string;
+  description: string;
+  inputTokenLimit: number;
+  outputTokenLimit: number;
+  supportedGenerationMethods: string[];
+  temperature: number;
+  topP: number;
+  topK: number;
+};
+
+type GeminiModelsList = {
+  models: GeminiModel[];
+};
+
 export class GeminiService extends AbstractLanguageModelService {
   private apiKey: string;
   private readonly settingsListener: vscode.Disposable;
@@ -45,10 +63,8 @@ export class GeminiService extends AbstractLanguageModelService {
     context: vscode.ExtensionContext,
     settingsManager: SettingsManager,
   ) {
-    const availableModelNames = settingsManager.get(
-      'geminiAvailableModels',
-    ) || ['gemini-1.5-pro-latest', 'gemini-1.5-flash-latest'];
-    const defaultModelName = availableModelNames[0];
+    const availableModelNames = settingsManager.get('geminiAvailableModels');
+    const defaultModelName = availableModelNames[0] || '';
 
     super(
       context,
@@ -67,14 +83,8 @@ export class GeminiService extends AbstractLanguageModelService {
 
     // Listen for settings changes
     this.settingsListener = vscode.workspace.onDidChangeConfiguration((e) => {
-      if (
-        e.affectsConfiguration('repo-code-assistant.geminiApiKey') ||
-        e.affectsConfiguration('repo-code-assistant.geminiAvailableModels')
-      ) {
+      if (e.affectsConfiguration('repo-code-assistant.geminiApiKey')) {
         this.apiKey = settingsManager.get('geminiApiKey');
-        this.availableModelNames = settingsManager.get(
-          'geminiAvailableModels',
-        ) || ['gemini-1.5-pro-latest', 'gemini-1.5-flash-latest'];
       }
     });
 
@@ -127,10 +137,60 @@ export class GeminiService extends AbstractLanguageModelService {
     };
   }
 
+  public async getLatestAvailableModelNames(): Promise<string[]> {
+    const requestUrl = `https://generativelanguage.googleapis.com/v1beta/models?key=${this.apiKey}`;
+
+    let newAvailableModelNames: string[] = [...this.availableModelNames];
+
+    try {
+      const response = await fetch(requestUrl);
+
+      if (!response.ok) {
+        vscode.window.showErrorMessage(
+          'Failed to fetch available models from Gemini Service: ' +
+            response.statusText,
+        );
+        return this.availableModelNames;
+      }
+
+      const data: GeminiModelsList = await response.json();
+      const latestModels = data.models || [];
+
+      // Filter the invalid models (Not existing in the latest models)
+      newAvailableModelNames = newAvailableModelNames.filter((name) =>
+        latestModels.some((model) => model.name === `models/${name}`),
+      );
+
+      // Append the models to the available models if they are not already there
+      latestModels.forEach((model) => {
+        if (!model.name || !model.supportedGenerationMethods) return;
+        if (newAvailableModelNames.includes(model.name.replace('models/', '')))
+          return;
+        if (!model.supportedGenerationMethods.includes('generateContent'))
+          return;
+
+        newAvailableModelNames.push(model.name.replace('models/', ''));
+      });
+    } catch (error) {
+      vscode.window.showErrorMessage(
+        'Failed to fetch available models: ' + error,
+      );
+    }
+
+    return newAvailableModelNames;
+  }
+
   public async getResponseForQuery(
     query: string,
     currentEntryID?: string,
   ): Promise<string> {
+    if (this.currentModel === '') {
+      vscode.window.showErrorMessage(
+        'Make sure the model is selected before sending a message. Open the model selection dropdown and configure the model.',
+      );
+      return 'Missing model configuration. Check the model selection dropdown.';
+    }
+
     const genAI = new GoogleGenerativeAI(this.apiKey);
     const model = genAI.getGenerativeModel({ model: this.currentModel });
 
@@ -164,6 +224,13 @@ export class GeminiService extends AbstractLanguageModelService {
     sendStreamResponse: (msg: string) => void,
     currentEntryID?: string,
   ): Promise<string> {
+    if (this.currentModel === '') {
+      vscode.window.showErrorMessage(
+        'Make sure the model is selected before sending a message. Open the model selection dropdown and configure the model.',
+      );
+      return 'Missing model configuration. Check the model selection dropdown.';
+    }
+
     const genAI = new GoogleGenerativeAI(this.apiKey);
     const model = genAI.getGenerativeModel({ model: this.currentModel });
 
@@ -203,8 +270,14 @@ export class GeminiService extends AbstractLanguageModelService {
     query: string,
     images: string[],
   ): Promise<string> {
-    const genAI = new GoogleGenerativeAI(this.apiKey);
+    if (this.currentModel === '') {
+      vscode.window.showErrorMessage(
+        'Make sure the model is selected before sending a message. Open the model selection dropdown and configure the model.',
+      );
+      return 'Missing model configuration. Check the model selection dropdown.';
+    }
 
+    const genAI = new GoogleGenerativeAI(this.apiKey);
     const model = genAI.getGenerativeModel({ model: this.currentModel });
 
     try {
@@ -234,8 +307,13 @@ export class GeminiService extends AbstractLanguageModelService {
     images: string[],
     sendStreamResponse: (msg: string) => void,
   ): Promise<string> {
+    if (this.currentModel === '') {
+      vscode.window.showErrorMessage(
+        'Make sure the model is selected before sending a message. Open the model selection dropdown and configure the model.',
+      );
+      return 'Missing model configuration. Check the model selection dropdown.';
+    }
     const genAI = new GoogleGenerativeAI(this.apiKey);
-
     const model = genAI.getGenerativeModel({ model: this.currentModel });
 
     try {

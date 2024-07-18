@@ -14,10 +14,8 @@ export class CohereService extends AbstractLanguageModelService {
     context: vscode.ExtensionContext,
     settingsManager: SettingsManager,
   ) {
-    const availableModelNames = settingsManager.get(
-      'cohereAvailableModels',
-    ) || ['command'];
-    const defaultModelName = availableModelNames[0];
+    const availableModelNames = settingsManager.get('cohereAvailableModels');
+    const defaultModelName = availableModelNames[0] || '';
 
     super(
       context,
@@ -37,14 +35,8 @@ export class CohereService extends AbstractLanguageModelService {
 
     // Listen for settings changes
     this.settingsListener = vscode.workspace.onDidChangeConfiguration((e) => {
-      if (
-        e.affectsConfiguration('repo-code-assistant.cohereApiKey') ||
-        e.affectsConfiguration('repo-code-assistant.cohereAvailableModels')
-      ) {
+      if (e.affectsConfiguration('repo-code-assistant.cohereApiKey')) {
         this.apiKey = settingsManager.get('cohereApiKey');
-        this.availableModelNames = settingsManager.get(
-          'cohereAvailableModels',
-        ) || ['command'];
       }
     });
 
@@ -88,10 +80,49 @@ export class CohereService extends AbstractLanguageModelService {
     return result;
   }
 
+  public async getLatestAvailableModelNames(): Promise<string[]> {
+    const cohere = new CohereClient({
+      token: this.apiKey,
+    });
+
+    let newAvailableModelNames: string[] = [...this.availableModelNames];
+
+    try {
+      const latestModels = (await cohere.models.list()).models;
+
+      // Filter the invalid models (Not existing in the latest models)
+      newAvailableModelNames = newAvailableModelNames.filter((name) =>
+        latestModels.some((model) => model.name === name),
+      );
+
+      // Append the models to the available models if they are not already there
+      latestModels.forEach((model) => {
+        if (!model.name || !model.endpoints) return;
+        if (newAvailableModelNames.includes(model.name)) return;
+        if (!model.endpoints.includes('chat')) return;
+
+        newAvailableModelNames.push(model.name);
+      });
+    } catch (error) {
+      vscode.window.showErrorMessage(
+        'Failed to fetch available models: ' + error,
+      );
+    }
+
+    return newAvailableModelNames;
+  }
+
   public async getResponseForQuery(
     query: string,
     currentEntryID?: string,
   ): Promise<string> {
+    if (this.currentModel === '') {
+      vscode.window.showErrorMessage(
+        'Make sure the model is selected before sending a message. Open the model selection dropdown and configure the model.',
+      );
+      return 'Missing model configuration. Check the model selection dropdown.';
+    }
+
     const model = new CohereClient({ token: this.apiKey });
 
     const history = currentEntryID
@@ -123,6 +154,13 @@ export class CohereService extends AbstractLanguageModelService {
     sendStreamResponse: (msg: string) => void,
     currentEntryID?: string,
   ): Promise<string> {
+    if (this.currentModel === '') {
+      vscode.window.showErrorMessage(
+        'Make sure the model is selected before sending a message. Open the model selection dropdown and configure the model.',
+      );
+      return 'Missing model configuration. Check the model selection dropdown.';
+    }
+
     const model = new CohereClient({
       token: this.apiKey,
     });

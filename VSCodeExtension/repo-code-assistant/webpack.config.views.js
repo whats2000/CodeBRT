@@ -61,6 +61,7 @@ module.exports = (env, { mode }) => {
         overlay: true,
       },
       compress: true,
+      host: 'localhost',
       port: 18080,
     },
     plugins: [

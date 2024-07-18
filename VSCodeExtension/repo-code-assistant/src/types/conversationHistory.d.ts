@@ -58,6 +58,11 @@ export type ConversationHistory = {
   root: string;
 
   /**
+   * Top entries in the conversation history
+   */
+  top: string[];
+
+  /**
    * The current entry of the conversation history
    */
   current: string;

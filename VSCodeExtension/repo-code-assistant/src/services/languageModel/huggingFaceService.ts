@@ -16,8 +16,8 @@ export class HuggingFaceService extends AbstractLanguageModelService {
   ) {
     const availableModelNames = settingsManager.get(
       'huggingFaceAvailableModels',
-    ) || ['HuggingFaceH4/zephyr-7b-beta'];
-    const defaultModelName = availableModelNames[0];
+    );
+    const defaultModelName = availableModelNames[0] || '';
 
     super(
       context,
@@ -38,14 +38,8 @@ export class HuggingFaceService extends AbstractLanguageModelService {
 
     // Listen for settings changes
     this.settingsListener = vscode.workspace.onDidChangeConfiguration((e) => {
-      if (
-        e.affectsConfiguration('repo-code-assistant.huggingFaceApiKey') ||
-        e.affectsConfiguration('repo-code-assistant.huggingFaceAvailableModels')
-      ) {
+      if (e.affectsConfiguration('repo-code-assistant.huggingFaceApiKey')) {
         this.apiKey = settingsManager.get('huggingFaceApiKey');
-        this.availableModelNames = settingsManager.get(
-          'huggingFaceAvailableModels',
-        ) || ['HuggingFaceH4/zephyr-7b-beta'];
       }
     });
 
@@ -97,6 +91,13 @@ export class HuggingFaceService extends AbstractLanguageModelService {
     query: string,
     currentEntryID?: string,
   ): Promise<string> {
+    if (this.currentModel === '') {
+      vscode.window.showErrorMessage(
+        'Make sure the model is selected before sending a message. Open the model selection dropdown and configure the model.',
+      );
+      return 'Missing model configuration. Check the model selection dropdown.';
+    }
+
     const huggerFace = new HfInference(this.apiKey);
 
     const history = currentEntryID
@@ -121,6 +122,13 @@ export class HuggingFaceService extends AbstractLanguageModelService {
     sendStreamResponse: (msg: string) => void,
     currentEntryID?: string,
   ): Promise<string> {
+    if (this.currentModel === '') {
+      vscode.window.showErrorMessage(
+        'Make sure the model is selected before sending a message. Open the model selection dropdown and configure the model.',
+      );
+      return 'Missing model configuration. Check the model selection dropdown.';
+    }
+
     const huggerFace = new HfInference(this.apiKey);
 
     const history = currentEntryID

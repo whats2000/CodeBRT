@@ -5,13 +5,12 @@ import fs from 'node:fs/promises';
 import SettingsManager from '../../api/settingsManager';
 import { AbstractVoiceService } from './abstractVoiceService';
 import SoundPlay from '../../utils/audioPlayer';
+import { GptSoVitsVoiceSetting } from '../../types';
 
 export class GptSoVitsApiService extends AbstractVoiceService {
-  private clientHost: string;
   private referWavPath: string = '';
   private referText: string = '';
   private promptLanguage: string = '';
-  private readonly settingsListener: vscode.Disposable;
   private textToVoiceQueue: string[] = [];
   private voicePlaybackQueue: string[] = [];
   private isTextToVoiceProcessing: boolean = false;
@@ -25,34 +24,22 @@ export class GptSoVitsApiService extends AbstractVoiceService {
   ) {
     super(context, settingsManager);
 
-    this.updateSettings();
+    const voiceSettings =
+      this.settingsManager.getGptSoVitsAvailableReferenceVoices();
+    const selectedVoice = voiceSettings.find(
+      (voice) =>
+        voice.name ===
+        this.settingsManager.get('selectedGptSoVitsReferenceVoice'),
+    );
 
-    this.clientHost = settingsManager.get('gptSoVitsClientHost');
+    this.updateSettings(selectedVoice);
+
     this.soundPlayer = new SoundPlay();
-
-    // Listen for settings changes
-    this.settingsListener = vscode.workspace.onDidChangeConfiguration((e) => {
-      if (
-        e.affectsConfiguration('repo-code-assistant.gptSoVitsClientHost') ||
-        e.affectsConfiguration(
-          'repo-code-assistant.gptSoVitsAvailableReferenceVoices',
-        ) ||
-        e.affectsConfiguration(
-          'repo-code-assistant.selectedGptSoVitsReferenceVoice',
-        )
-      ) {
-        this.updateSettings();
-        this.clientHost = settingsManager.get('gptSoVitsClientHost');
-      }
-    });
-
-    context.subscriptions.push(this.settingsListener);
   }
 
-  private updateSettings(): void {
-    const selectedVoiceSettings =
-      this.settingsManager.getSelectedGptSoVitsReferenceVoice();
-
+  private updateSettings(
+    selectedVoiceSettings: GptSoVitsVoiceSetting | undefined,
+  ): void {
     if (selectedVoiceSettings) {
       this.referWavPath = selectedVoiceSettings.referWavPath;
       this.referText = selectedVoiceSettings.referText;
@@ -68,15 +55,18 @@ export class GptSoVitsApiService extends AbstractVoiceService {
   private async sendRequest(text: string): Promise<Uint8Array | string> {
     const requestData = {
       refer_wav_path: this.referWavPath,
+      ref_audio_path: this.referWavPath,
       prompt_text: this.referText,
       prompt_language: this.promptLanguage,
+      prompt_lang: this.promptLanguage,
       text: text,
       text_language: this.promptLanguage,
+      text_lang: this.promptLanguage,
     };
 
     try {
       const response: AxiosResponse<ArrayBuffer> = await axios.post(
-        `${this.clientHost}`,
+        `${this.settingsManager.get('gptSoVitsClientHost')}`,
         requestData,
         {
           responseType: 'arraybuffer',
@@ -91,7 +81,11 @@ export class GptSoVitsApiService extends AbstractVoiceService {
       }
     } catch (error) {
       console.error('Error during API call:', (error as Error).message);
-      return `Error during API call: ${(error as Error).message}`;
+      return (
+        `Error during API call: ${(error as Error).message}, ` +
+        `Please check the GPt-SoVits script is running at this address: ${this.settingsManager.get('gptSoVitsClientHost')}, ` +
+        `and the voice settings are correctly configured at the voice settings page.`
+      );
     }
   }
 
@@ -104,7 +98,7 @@ export class GptSoVitsApiService extends AbstractVoiceService {
 
     while (this.textToVoiceQueue.length > 0) {
       const textChunk = this.textToVoiceQueue.shift()!;
-      const response = await this.sendRequest(this.preprocessText(textChunk));
+      const response = await this.sendRequest(textChunk);
 
       if (typeof response === 'string') {
         vscode.window.showErrorMessage(response);
@@ -168,9 +162,10 @@ export class GptSoVitsApiService extends AbstractVoiceService {
     this.shouldStopPlayback = false;
 
     return new Promise<void>((resolve, reject) => {
-      const textChunks = this.splitTextIntoChunks(
-        this.removeCodeReferences(text),
-      );
+      const removeCodeReferencesText = this.removeCodeReferences(text);
+      const preprocessedText = this.preprocessText(removeCodeReferencesText);
+      const textChunks = this.splitTextIntoChunks(preprocessedText);
+
       this.textToVoiceQueue.push(...textChunks);
       this.processTextToVoiceQueue()
         .then(() => {
@@ -210,9 +205,7 @@ export class GptSoVitsApiService extends AbstractVoiceService {
     }
 
     this.settingsManager.selectGptSoVitsReferenceVoice(voiceName);
-    this.referWavPath = selectedVoice.referWavPath;
-    this.referText = selectedVoice.referText;
-    this.promptLanguage = selectedVoice.promptLanguage;
+    this.updateSettings(selectedVoice);
 
     vscode.window.showInformationMessage(`Voice switched to ${voiceName}`);
   }
