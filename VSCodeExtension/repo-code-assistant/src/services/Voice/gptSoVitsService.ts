@@ -1,22 +1,15 @@
 import axios, { AxiosResponse } from 'axios';
 import vscode from 'vscode';
-import fs from 'node:fs/promises';
 
+import type { GptSoVitsVoiceSetting } from '../../types';
 import SettingsManager from '../../api/settingsManager';
-import { AbstractVoiceService } from './abstractVoiceService';
 import SoundPlay from '../../utils/audioPlayer';
-import { GptSoVitsVoiceSetting } from '../../types';
+import { AbstractVoiceService } from './abstractVoiceService';
 
 export class GptSoVitsApiService extends AbstractVoiceService {
   private referWavPath: string = '';
   private referText: string = '';
   private promptLanguage: string = '';
-  private textToVoiceQueue: string[] = [];
-  private voicePlaybackQueue: string[] = [];
-  private isTextToVoiceProcessing: boolean = false;
-  private isVoicePlaying: boolean = false;
-  private shouldStopPlayback: boolean = false;
-  private soundPlayer: SoundPlay;
 
   constructor(
     context: vscode.ExtensionContext,
@@ -52,7 +45,7 @@ export class GptSoVitsApiService extends AbstractVoiceService {
     }
   }
 
-  private async sendRequest(text: string): Promise<Uint8Array | string> {
+  protected async sendRequest(text: string): Promise<Uint8Array | string> {
     const requestData = {
       refer_wav_path: this.referWavPath,
       ref_audio_path: this.referWavPath,
@@ -87,103 +80,6 @@ export class GptSoVitsApiService extends AbstractVoiceService {
         `and the voice settings are correctly configured at the voice settings page.`
       );
     }
-  }
-
-  private async processTextToVoiceQueue(): Promise<void> {
-    if (this.isTextToVoiceProcessing || this.textToVoiceQueue.length === 0) {
-      return;
-    }
-
-    this.isTextToVoiceProcessing = true;
-
-    while (this.textToVoiceQueue.length > 0) {
-      const textChunk = this.textToVoiceQueue.shift()!;
-      const response = await this.sendRequest(textChunk);
-
-      if (typeof response === 'string') {
-        vscode.window.showErrorMessage(response);
-        this.isTextToVoiceProcessing = false;
-        return;
-      }
-
-      if (this.shouldStopPlayback) {
-        this.isTextToVoiceProcessing = false;
-        return;
-      }
-
-      const voicePath = await this.saveVoice(response as Uint8Array);
-
-      this.voicePlaybackQueue.push(voicePath);
-      this.processVoicePlaybackQueue().then();
-    }
-
-    this.isTextToVoiceProcessing = false;
-  }
-
-  private async processVoicePlaybackQueue(): Promise<void> {
-    if (this.isVoicePlaying || this.voicePlaybackQueue.length === 0) {
-      return;
-    }
-
-    this.isVoicePlaying = true;
-
-    while (this.voicePlaybackQueue.length > 0) {
-      if (this.shouldStopPlayback) {
-        this.voicePlaybackQueue.forEach((filePath) => {
-          fs.unlink(filePath).catch((error) =>
-            console.error(`Failed to delete voice file: ${error}`),
-          );
-        });
-        this.voicePlaybackQueue = [];
-        break;
-      }
-
-      const voicePath = this.voicePlaybackQueue.shift()!;
-
-      try {
-        await this.soundPlayer.play(voicePath).finally(() =>
-          setTimeout(() => {
-            fs.unlink(voicePath).catch((error) =>
-              console.error(`Failed to delete voice file: ${error}`),
-            );
-          }, 500),
-        );
-      } catch (error) {
-        vscode.window.showErrorMessage(`Failed to play voice: ${error}`);
-        this.isVoicePlaying = false;
-        return;
-      }
-    }
-
-    this.isVoicePlaying = false;
-  }
-
-  public async textToVoice(text: string): Promise<void> {
-    this.shouldStopPlayback = false;
-
-    return new Promise<void>((resolve, reject) => {
-      const removeCodeReferencesText = this.removeCodeReferences(text);
-      const preprocessedText = this.preprocessText(removeCodeReferencesText);
-      const textChunks = this.splitTextIntoChunks(preprocessedText);
-
-      this.textToVoiceQueue.push(...textChunks);
-      this.processTextToVoiceQueue()
-        .then(() => {
-          const interval = setInterval(() => {
-            if (!this.isTextToVoiceProcessing && !this.isVoicePlaying) {
-              clearInterval(interval);
-              resolve();
-            }
-          }, 100);
-        })
-        .catch(reject);
-    });
-  }
-
-  public async stopVoice(): Promise<void> {
-    this.shouldStopPlayback = true;
-    this.textToVoiceQueue = [];
-    this.soundPlayer.stop();
   }
 
   /**

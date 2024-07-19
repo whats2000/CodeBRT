@@ -3,11 +3,11 @@ import {
   Button,
   Form,
   Space,
-  Select,
   Tooltip,
   Typography,
   Drawer,
   Input,
+  Select,
 } from 'antd';
 import {
   DndContext,
@@ -31,8 +31,6 @@ import type {
 import { MODEL_SERVICE_LINKS } from '../../../../../constants';
 import { WebviewContext } from '../../../../WebviewContext';
 import { GptSoVitsSettingsBarSortableItem } from './GptSoVitsSettingsBar/GptSoVitsSettingsBarSortableItem';
-
-const { Option } = Select;
 
 type GptSoVitsSettingsBarProps = {
   isOpen: boolean;
@@ -109,14 +107,20 @@ export const GptSoVitsSettingsBar: React.FC<GptSoVitsSettingsBarProps> = ({
     handleEditGptSoVitsSettingsSave(settingsToSave);
 
     const promises = Object.entries(settingsToSave).map(([key, value]) =>
-      callApi('setSetting', key as keyof typeof partialSettings, value).catch(
-        (e) =>
+      callApi('setSetting', key as keyof typeof partialSettings, value)
+        .then(() => {
+          callApi(
+            'switchGptSoVitsReferenceVoice',
+            settingsToSave.selectedGptSoVitsReferenceVoice,
+          ).catch(console.error);
+        })
+        .catch((e) =>
           callApi(
             'alertMessage',
             `Failed to save settings: ${e.message}`,
             'error',
           ),
-      ),
+        ),
     );
 
     Promise.all(promises).then(() => {
@@ -189,23 +193,9 @@ export const GptSoVitsSettingsBar: React.FC<GptSoVitsSettingsBarProps> = ({
   };
 
   const handleSelectedVoiceChange = (value: string) => {
-    const originalValue = partialSettings.selectedGptSoVitsReferenceVoice;
-
     setPartialSettings({
       ...partialSettings,
       selectedGptSoVitsReferenceVoice: value,
-    });
-
-    callApi('switchGptSoVitsReferenceVoice', value).catch((error: any) => {
-      callApi(
-        'alertMessage',
-        `Failed to switch reference voice: ${error}`,
-        'error',
-      ).catch(console.error);
-      setPartialSettings({
-        ...partialSettings,
-        selectedGptSoVitsReferenceVoice: originalValue,
-      });
     });
   };
 
@@ -293,56 +283,58 @@ export const GptSoVitsSettingsBar: React.FC<GptSoVitsSettingsBarProps> = ({
             value={partialSettings.selectedGptSoVitsReferenceVoice}
             onChange={handleSelectedVoiceChange}
             placeholder='Select a reference voice'
-          >
-            {partialSettings.gptSoVitsAvailableReferenceVoices.map(
-              (voice, index) => (
-                <Option
-                  key={`gpvSoVitsVoice-inner-${index}`}
-                  value={voice.name}
-                >
-                  {voice.name}
-                </Option>
-              ),
+            options={partialSettings.gptSoVitsAvailableReferenceVoices.map(
+              (voice, index) => ({
+                key: `gpvSoVitsVoice-${index}`,
+                label: voice.name,
+                value: voice.name,
+              }),
             )}
-          </Select>
+          />
         </Form.Item>
-        <Space direction='vertical' style={{ width: '100%' }}>
-          <DndContext
-            sensors={sensors}
-            collisionDetection={closestCenter}
-            onDragEnd={handleDragEnd}
-          >
-            <SortableContext
-              items={partialSettings.gptSoVitsAvailableReferenceVoices.map(
-                (voice) => {
-                  return {
-                    key: voice.id,
-                    id: voice.id,
-                    name: voice.name,
-                  };
-                },
-              )}
-              strategy={verticalListSortingStrategy}
+        <Form.Item label={'Reference Voices'}>
+          <Space direction='vertical' style={{ width: '100%' }}>
+            <DndContext
+              sensors={sensors}
+              collisionDetection={closestCenter}
+              onDragEnd={handleDragEnd}
             >
-              {partialSettings.gptSoVitsAvailableReferenceVoices.map(
-                (voice) => (
-                  <GptSoVitsSettingsBarSortableItem
-                    key={voice.id}
-                    id={voice.id}
-                    voice={voice}
-                    onVoiceChange={handleVoiceChange}
-                    onRemoveVoice={handleRemoveVoice}
-                    activeKey={activeKey}
-                    setActiveKey={setActiveKey}
-                  />
-                ),
-              )}
-            </SortableContext>
-          </DndContext>
-          <Button type='dashed' onClick={handleAddVoice} block>
-            Add Voice
-          </Button>
-        </Space>
+              <SortableContext
+                items={partialSettings.gptSoVitsAvailableReferenceVoices.map(
+                  (voice) => {
+                    return {
+                      key: voice.id,
+                      id: voice.id,
+                      name: voice.name,
+                    };
+                  },
+                )}
+                strategy={verticalListSortingStrategy}
+              >
+                {partialSettings.gptSoVitsAvailableReferenceVoices.map(
+                  (voice) => (
+                    <GptSoVitsSettingsBarSortableItem
+                      key={voice.id}
+                      id={voice.id}
+                      voice={voice}
+                      onVoiceChange={handleVoiceChange}
+                      onRemoveVoice={handleRemoveVoice}
+                      activeKey={activeKey}
+                      setActiveKey={setActiveKey}
+                    />
+                  ),
+                )}
+              </SortableContext>
+            </DndContext>
+            <Button type='dashed' onClick={handleAddVoice} block>
+              Add Voice
+            </Button>
+            <Typography.Text type={'secondary'}>
+              Note: Chinese also support English content above
+              GPT-SoVITS-beta0706 version.
+            </Typography.Text>
+          </Space>
+        </Form.Item>
       </Form>
     </Drawer>
   );

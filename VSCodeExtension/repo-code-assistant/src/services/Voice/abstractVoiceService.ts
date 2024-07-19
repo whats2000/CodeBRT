@@ -5,12 +5,20 @@ import * as vscode from 'vscode';
 import { SentenceTokenizer } from 'natural';
 import removeMarkdown from 'markdown-to-text';
 
-import { VoiceService } from '../../types';
+import type { VoiceService } from '../../types';
 import SettingsManager from '../../api/settingsManager';
+import SoundPlay from '../../utils/audioPlayer';
 
 export abstract class AbstractVoiceService implements VoiceService {
   protected readonly context: vscode.ExtensionContext;
   protected readonly settingsManager: SettingsManager;
+
+  protected isTextToVoiceProcessing: boolean = false;
+  protected shouldStopPlayback: boolean = false;
+  protected isVoicePlaying: boolean = false;
+  protected textToVoiceQueue: string[] = [];
+  protected voicePlaybackQueue: string[] = [];
+  protected soundPlayer: SoundPlay = new SoundPlay();
 
   protected constructor(
     context: vscode.ExtensionContext,
@@ -24,7 +32,7 @@ export abstract class AbstractVoiceService implements VoiceService {
    * Removes code references from the given text.
    * @param text - The text to remove code references from.
    */
-  protected removeCodeReferences(text: string): string {
+  private removeCodeReferences(text: string): string {
     return text.replace(/```[\s\S]*?```/g, '');
   }
 
@@ -32,7 +40,7 @@ export abstract class AbstractVoiceService implements VoiceService {
    * Preprocesses the given text to remove unnecessary characters.
    * @param text - The text to preprocess.
    */
-  protected preprocessText(text: string): string {
+  private preprocessText(text: string): string {
     text = text.replace(/^([*-+]\s.*?)([.!?。！？]?)$/gm, (match, p1, p2) => {
       return p2 ? match : p1 + '.';
     });
@@ -44,7 +52,7 @@ export abstract class AbstractVoiceService implements VoiceService {
    * @param voice - The voice data to save.
    * @returns The path to the saved voice file.
    */
-  protected async saveVoice(voice: Uint8Array): Promise<string> {
+  private async saveVoice(voice: Uint8Array): Promise<string> {
     const mediaDir = path.join(this.context.extensionPath, 'media');
 
     // Create the media directory if it does not exist
@@ -72,7 +80,7 @@ export abstract class AbstractVoiceService implements VoiceService {
    * @param chunkSize - The size of each chunk.
    * @returns An array of text chunks.
    */
-  protected splitTextIntoChunks(text: string, chunkSize: number = 2): string[] {
+  private splitTextIntoChunks(text: string, chunkSize: number = 2): string[] {
     const tokenizer = new SentenceTokenizer();
     const sentences = tokenizer.tokenize(text);
 
@@ -117,12 +125,117 @@ export abstract class AbstractVoiceService implements VoiceService {
     return chunks;
   }
 
-  public async textToVoice(_text: string): Promise<void> {
-    vscode.window
-      .showErrorMessage('Text to voice is not supported in this service')
-      .then();
+  /**
+   * Processes the text to voice queue.
+   */
+  private async processTextToVoiceQueue(): Promise<void> {
+    if (this.isTextToVoiceProcessing || this.textToVoiceQueue.length === 0) {
+      return;
+    }
+
+    this.isTextToVoiceProcessing = true;
+
+    while (this.textToVoiceQueue.length > 0) {
+      const textChunk = this.textToVoiceQueue.shift()!;
+      const response = await this.sendRequest(textChunk);
+
+      if (typeof response === 'string') {
+        vscode.window.showErrorMessage(response);
+        this.isTextToVoiceProcessing = false;
+        return;
+      }
+
+      if (this.shouldStopPlayback) {
+        this.isTextToVoiceProcessing = false;
+        return;
+      }
+
+      const voicePath = await this.saveVoice(response as Uint8Array);
+
+      this.voicePlaybackQueue.push(voicePath);
+      this.processVoicePlaybackQueue().then();
+    }
+
+    this.isTextToVoiceProcessing = false;
   }
 
+  /**
+   * Processes the voice playback queue.
+   */
+  private async processVoicePlaybackQueue(): Promise<void> {
+    if (this.isVoicePlaying || this.voicePlaybackQueue.length === 0) {
+      return;
+    }
+
+    this.isVoicePlaying = true;
+
+    while (this.voicePlaybackQueue.length > 0) {
+      if (this.shouldStopPlayback) {
+        this.voicePlaybackQueue.forEach((filePath) => {
+          fs.unlink(filePath).catch((error) =>
+            console.error(`Failed to delete voice file: ${error}`),
+          );
+        });
+        this.voicePlaybackQueue = [];
+        break;
+      }
+
+      const voicePath = this.voicePlaybackQueue.shift()!;
+
+      try {
+        await this.soundPlayer.play(voicePath).finally(() =>
+          setTimeout(() => {
+            fs.unlink(voicePath).catch((error) =>
+              console.error(`Failed to delete voice file: ${error}`),
+            );
+          }, 500),
+        );
+      } catch (error) {
+        vscode.window.showErrorMessage(`Failed to play voice: ${error}`);
+        this.isVoicePlaying = false;
+        return;
+      }
+    }
+
+    this.isVoicePlaying = false;
+  }
+
+  /**
+   * Sends a request to the voice service to convert the given text to voice.
+   * @param text - The text to convert to voice.
+   * @protected
+   */
+  protected abstract sendRequest(text: string): Promise<Uint8Array | string>;
+
+  /**
+   * Converts the given text to voice.
+   * @param text - The text to convert to voice.
+   */
+  public async textToVoice(text: string): Promise<void> {
+    this.shouldStopPlayback = false;
+
+    return new Promise<void>((resolve, reject) => {
+      const removeCodeReferencesText = this.removeCodeReferences(text);
+      const preprocessedText = this.preprocessText(removeCodeReferencesText);
+      const textChunks = this.splitTextIntoChunks(preprocessedText);
+
+      this.textToVoiceQueue.push(...textChunks);
+      this.processTextToVoiceQueue()
+        .then(() => {
+          const interval = setInterval(() => {
+            if (!this.isTextToVoiceProcessing && !this.isVoicePlaying) {
+              clearInterval(interval);
+              resolve();
+            }
+          }, 100);
+        })
+        .catch(reject);
+    });
+  }
+
+  /**
+   * Records voice and converts it to text.
+   */
   public async voiceToText(): Promise<string> {
     vscode.window
       .showErrorMessage('Voice to text is not supported in this service')
@@ -131,9 +244,12 @@ export abstract class AbstractVoiceService implements VoiceService {
     return Promise.resolve('');
   }
 
+  /**
+   * Stops the voice playback and clears the queues.
+   */
   public async stopVoice(): Promise<void> {
-    vscode.window
-      .showErrorMessage('Stop voice is not supported in this service')
-      .then();
+    this.shouldStopPlayback = true;
+    this.textToVoiceQueue = [];
+    this.soundPlayer.stop();
   }
 }
