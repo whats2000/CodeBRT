@@ -245,7 +245,7 @@ export const GptSoVitsSettingsBar: React.FC<GptSoVitsSettingsBarProps> = ({
 
   return (
     <Drawer
-      title='GptSoVits Settings'
+      title='GPT-SoVits Settings'
       placement='left'
       open={isOpen}
       onClose={onClose}

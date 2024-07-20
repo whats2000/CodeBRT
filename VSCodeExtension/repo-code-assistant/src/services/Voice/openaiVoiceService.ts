@@ -32,7 +32,7 @@ export class OpenaiVoiceService extends AbstractVoiceService {
     try {
       const mp3 = await openai.audio.speech.create({
         model: 'tts-1',
-        voice: 'nova',
+        voice: this.settingsManager.get('openaiSelectedVoice'),
         input: Text,
       });
       return Buffer.from(await mp3.arrayBuffer());

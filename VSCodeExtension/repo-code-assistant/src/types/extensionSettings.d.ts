@@ -1,6 +1,8 @@
+import type * as hljs from 'react-syntax-highlighter/dist/cjs/styles/hljs';
+import { SpeechCreateParams } from 'openai/resources/audio';
+
 import { ModelServiceType } from './modelServiceType';
 import { VoiceServiceType } from './voiceServiceType';
-import type * as hljs from 'react-syntax-highlighter/dist/cjs/styles/hljs';
 
 export type GptSoVitsVoiceSetting = {
   /**
@@ -93,12 +95,12 @@ export type ExtensionSettingsLocal = {
   /**
    * The available voices for the OpenAI API.
    */
-  openaiAvailableVoices: string[];
+  openaiAvailableVoices: SpeechCreateParams.voice[];
 
   /**
    * The selected voice for the OpenAI API.
    */
-  openaiSelectedVoice: string;
+  openaiSelectedVoice: SpeechCreateParams.voice;
 
   /**
    * The available models for the Cohere API.

@@ -11,5 +11,7 @@ export const MODEL_SERVICE_LINKS: {
   huggingFaceApiKey: 'https://huggingface.co/settings/tokens',
   ollamaClientHost: 'https://ollama.com/download',
   openaiApiKey: 'https://platform.openai.com/api-keys',
+  openaiAvailableVoices:
+    'https://platform.openai.com/docs/guides/text-to-speech/voice-options',
   gptSoVitsClientHost: 'https://github.com/RVC-Boss/GPT-SoVITS',
 };
