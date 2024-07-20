@@ -15,17 +15,13 @@ import {
 } from '@dnd-kit/sortable';
 import { v4 as uuidv4 } from 'uuid';
 
-import type {
-  CustomModelSettings,
-  ModelServiceType,
-} from '../../../../../types';
+import type { CustomModelSettings } from '../../../../../types';
 import { WebviewContext } from '../../../../WebviewContext';
 import { CustomModelSortableItem } from './CustomModelForm/CustomModelFormSortableItem';
 
 type CustomModelFormProps = {
   isOpen: boolean;
   isLoading: boolean;
-  activeModel: ModelServiceType | 'loading...';
   customModels: CustomModelSettings[];
   setCustomModels: React.Dispatch<React.SetStateAction<CustomModelSettings[]>>;
   handleEditModelListSave: (models: string[]) => void;
@@ -34,7 +30,6 @@ type CustomModelFormProps = {
 export const CustomModelForm: React.FC<CustomModelFormProps> = ({
   isOpen,
   isLoading,
-  activeModel,
   customModels,
   setCustomModels,
   handleEditModelListSave,
@@ -58,7 +53,7 @@ export const CustomModelForm: React.FC<CustomModelFormProps> = ({
   }, [isOpen]);
 
   const handleSave = (modelsToSave: CustomModelSettings[]) => {
-    if (activeModel === 'loading...' || isLoading) return;
+    if (isLoading) return;
 
     callApi('setCustomModels', modelsToSave)
       .then(() => {

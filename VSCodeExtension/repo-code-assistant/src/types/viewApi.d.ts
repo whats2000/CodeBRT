@@ -203,9 +203,16 @@ export type ViewApi = {
    * @param newAvailableModels - The new available models.
    */
   setAvailableModels: (
-    modelType: ModelServiceType,
+    modelType: Exclude<ModelServiceType, 'custom'>,
     newAvailableModels: string[],
   ) => void;
+
+  /**
+   * Set the custom models.
+   * @param newCustomModels - The new custom models.
+   * @returns The new custom models.
+   */
+  setCustomModels: (newCustomModels: CustomModelSettings[]) => void;
 
   /**
    * Switch to a different model.
@@ -257,17 +264,6 @@ export type ViewApi = {
   getWebviewUri: (absolutePath: string) => string;
 
   /**
-   * Get the custom models settings list.
-   */
-  getCustomModels: () => CustomModelSettings[];
-
-  /**
-   * Set the custom models settings list.
-   * @param newCustomModelSettings - The new custom model settings.
-   */
-  setCustomModels: (newCustomModelSettings: CustomModelSettings[]) => void;
-
-  /**
    * Convert text to voice and play it.
    * @param text - The text to convert to voice.
    */
@@ -291,11 +287,6 @@ export type ViewApi = {
    * @param voiceName - The name of the reference voice to switch to.
    */
   switchGptSoVitsReferenceVoice: (voiceName: string) => void;
-
-  /**
-   * Get the selected reference voice for GPT-SoVits.
-   */
-  getSelectedGptSoVitsReferenceVoice: () => GptSoVitsVoiceSetting | undefined;
 
   /**
    * Open an external link in the default browser.

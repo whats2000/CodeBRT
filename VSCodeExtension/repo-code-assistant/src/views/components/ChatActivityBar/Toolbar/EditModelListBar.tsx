@@ -30,9 +30,9 @@ export const EditModelListBar: React.FC<EditModelListBarProps> = ({
 
     if (isOpen) {
       if (activeModelService === 'custom') {
-        callApi('getCustomModels')
-          .then((models: CustomModelSettings[]) => {
-            setCustomModels(models);
+        callApi('getSetting', 'customModels')
+          .then((models) => {
+            setCustomModels(models as CustomModelSettings[]);
             setIsLoading(false);
           })
           .catch((error: any) => {
@@ -74,7 +74,6 @@ export const EditModelListBar: React.FC<EditModelListBarProps> = ({
         <CustomModelForm
           isOpen={isOpen}
           isLoading={isLoading}
-          activeModel={activeModelService}
           customModels={customModels}
           setCustomModels={setCustomModels}
           handleEditModelListSave={handleEditModelListSave}

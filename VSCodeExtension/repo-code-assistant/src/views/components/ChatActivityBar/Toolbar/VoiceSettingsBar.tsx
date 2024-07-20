@@ -29,15 +29,21 @@ export const VoiceSettingsBar: React.FC<VoiceSettingsBarProps> = ({
   const { callApi } = useContext(WebviewContext);
   const [isGptSoVitsSettingsOpen, setIsGptSoVitsSettingsOpen] = useState(false);
 
-  const textToVoiceServices: VoiceServiceType[] = ['not set', 'gptSoVits','openai'];
+  const textToVoiceServices: VoiceServiceType[] = [
+    'not set',
+    'gptSoVits',
+    'openai',
+  ];
   const voiceToTextServices: VoiceServiceType[] = ['not set'];
   const [partialSettings, setPartialSettings] = useState<
     Partial<ExtensionSettings>
   >({
     selectedTextToVoiceService: 'not set',
     selectedVoiceToTextService: 'not set',
-    selectedGptSoVitsReferenceVoice: '',
+    gptSoVitsSelectedReferenceVoice: '',
     gptSoVitsAvailableReferenceVoices: [],
+    openaiAvailableVoices: [],
+    openaiSelectedVoice: '',
   });
   const [isLoading, setIsLoading] = useState(true);
 
@@ -69,7 +75,8 @@ export const VoiceSettingsBar: React.FC<VoiceSettingsBarProps> = ({
     field:
       | 'selectedTextToVoiceService'
       | 'selectedVoiceToTextService'
-      | 'selectedGptSoVitsReferenceVoice',
+      | 'gptSoVitsSelectedReferenceVoice'
+      | 'openaiSelectedVoice',
     value: (typeof partialSettings)[keyof typeof partialSettings],
   ) => {
     if (!value || isLoading) return;
@@ -93,7 +100,7 @@ export const VoiceSettingsBar: React.FC<VoiceSettingsBarProps> = ({
       });
     });
 
-    if (field !== 'selectedGptSoVitsReferenceVoice') return;
+    if (field !== 'gptSoVitsSelectedReferenceVoice') return;
 
     callApi('switchGptSoVitsReferenceVoice', value as string).catch((e) =>
       callApi(
@@ -189,9 +196,9 @@ export const VoiceSettingsBar: React.FC<VoiceSettingsBarProps> = ({
             }
           >
             <Select
-              value={partialSettings.selectedGptSoVitsReferenceVoice}
+              value={partialSettings.gptSoVitsSelectedReferenceVoice}
               onChange={(value) =>
-                handleServiceChange('selectedGptSoVitsReferenceVoice', value)
+                handleServiceChange('gptSoVitsSelectedReferenceVoice', value)
               }
               placeholder='Select a reference voice'
             >

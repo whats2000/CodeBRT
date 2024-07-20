@@ -302,12 +302,12 @@ export const activate = async (ctx: vscode.ExtensionContext) => {
       return settingsManager.get(`${modelType}AvailableModels`);
     },
     setAvailableModels: (
-      modelType: ModelServiceType,
+      modelType: Exclude<ModelServiceType, 'custom'>,
       newAvailableModels: string[],
     ) => {
       const modelService: LanguageModelService = models[modelType].service;
 
-      if (!modelService || modelType === 'custom') {
+      if (!modelService) {
         vscode.window.showErrorMessage(
           `Failed to set available models for unknown model type: ${modelType}`,
         );
@@ -319,6 +319,13 @@ export const activate = async (ctx: vscode.ExtensionContext) => {
         .then(() => {
           modelService.updateAvailableModels(newAvailableModels);
         });
+    },
+    setCustomModels: (newCustomModels: CustomModelSettings[]) => {
+      settingsManager.set('customModels', newCustomModels).then(() => {
+        models.custom.service.updateAvailableModels(
+          newCustomModels.map((model) => model.name),
+        );
+      });
     },
     switchModel: (modelType: ModelServiceType, modelName: string) => {
       const modelService: LanguageModelService = models[modelType].service;
@@ -437,20 +444,6 @@ export const activate = async (ctx: vscode.ExtensionContext) => {
 
       return imageUri.toString();
     },
-    getCustomModels: () => {
-      return settingsManager.get('customModels');
-    },
-    setCustomModels: (newCustomModelSettings: CustomModelSettings[]) => {
-      const availableCustomModels = newCustomModelSettings.map(
-        (model) => model.name,
-      );
-
-      settingsManager
-        .set('customModels', newCustomModelSettings)
-        .then(() =>
-          models.custom.service.updateAvailableModels(availableCustomModels),
-        );
-    },
     convertTextToVoice: async (text) => {
       const voiceServiceType = settingsManager.get(
         'selectedTextToVoiceService',
@@ -528,9 +521,6 @@ export const activate = async (ctx: vscode.ExtensionContext) => {
       }
 
       await voiceService.switchVoice(voiceName);
-    },
-    getSelectedGptSoVitsReferenceVoice: () => {
-      return settingsManager.getSelectedGptSoVitsReferenceVoice();
     },
     openExternalLink: async (url) => {
       await vscode.env.openExternal(Uri.parse(url));

@@ -74,24 +74,11 @@ export type CustomModelSettings = {
   includeQueryInHistory: boolean;
 };
 
-/**
- * Represents the settings for the extension.
- */
-export type ExtensionSettings = {
-  /**
-   * The API key for the Anthropic model.
-   */
-  anthropicApiKey: string;
-
+export type ExtensionSettingsLocal = {
   /**
    * The available models for the Anthropic API.
    */
   anthropicAvailableModels: string[];
-
-  /**
-   * The API key for the Gemini model.
-   */
-  geminiApiKey: string;
 
   /**
    * The available models for the Gemini API.
@@ -99,19 +86,19 @@ export type ExtensionSettings = {
   geminiAvailableModels: string[];
 
   /**
-   * The API key for the OpenAI model.
-   */
-  openaiApiKey: string;
-
-  /**
    * The available models for the OpenAI API.
    */
   openaiAvailableModels: string[];
 
   /**
-   * The API key for the Cohere model.
+   * The available voices for the OpenAI API.
    */
-  cohereApiKey: string;
+  openaiAvailableVoices: string[];
+
+  /**
+   * The selected voice for the OpenAI API.
+   */
+  openaiSelectedVoice: string;
 
   /**
    * The available models for the Cohere API.
@@ -119,19 +106,9 @@ export type ExtensionSettings = {
   cohereAvailableModels: string[];
 
   /**
-   * The API key for the Groq model.
-   */
-  groqApiKey: string;
-
-  /**
    * The available models for the Groq API.
    */
   groqAvailableModels: string[];
-
-  /**
-   * The API key for the Hugging Face model.
-   */
-  huggingFaceApiKey: string;
 
   /**
    * The available models for the Hugging Face API.
@@ -147,10 +124,6 @@ export type ExtensionSettings = {
    * The available models for the Ollama API.
    */
   ollamaAvailableModels: string[];
-  /**
-   * The selected reference voice for the GPT-SoVits API.
-   */
-  selectedGptSoVitsReferenceVoice: string;
 
   /**
    * The last used model.
@@ -188,6 +161,43 @@ export type ExtensionSettings = {
   gptSoVitsAvailableReferenceVoices: GptSoVitsVoiceSetting[];
 
   /**
+   * The selected reference voice for the GPT-SoVits API.
+   */
+  gptSoVitsSelectedReferenceVoice: string;
+};
+
+export type ExtensionSettingsCrossDevice = {
+  /**
+   * The API key for the Anthropic model.
+   */
+  anthropicApiKey: string;
+
+  /**
+   * The API key for the Cohere model.
+   */
+  cohereApiKey: string;
+
+  /**
+   * The API key for the Gemini model.
+   */
+  geminiApiKey: string;
+
+  /**
+   * The API key for the Groq model.
+   */
+  groqApiKey: string;
+
+  /**
+   * The API key for the Hugging Face model.
+   */
+  huggingFaceApiKey: string;
+
+  /**
+   * The API key for the OpenAI model.
+   */
+  openaiApiKey: string;
+
+  /**
    * The primary color for the Ant Design theme.
    */
   themePrimaryColor: string;
@@ -202,5 +212,14 @@ export type ExtensionSettings = {
    */
   themeBorderRadius: number;
 
+  /**
+   * The theme for the code highlighter.
+   */
   hljsTheme: keyof typeof hljs;
 };
+
+/**
+ * Represents the settings for the extension.
+ */
+export type ExtensionSettings = ExtensionSettingsLocal &
+  ExtensionSettingsCrossDevice;

@@ -15,7 +15,7 @@ import {
 } from '@dnd-kit/sortable';
 import { v4 as uuidv4 } from 'uuid';
 
-import { ModelServiceType } from '../../../../../types';
+import type { ModelServiceType } from '../../../../../types';
 import { WebviewContext } from '../../../../WebviewContext';
 import { ModelFormSortableItem } from './ModelForm/ModelFormSortableItem';
 
@@ -23,7 +23,7 @@ type ModelFormProps = {
   isOpen: boolean;
   isLoading: boolean;
   setIsLoading: React.Dispatch<React.SetStateAction<boolean>>;
-  activeModelService: ModelServiceType | 'loading...';
+  activeModelService: Exclude<ModelServiceType, 'custom'> | 'loading...';
   availableModels: string[];
   setAvailableModels: React.Dispatch<React.SetStateAction<string[]>>;
   handleEditModelListSave: (models: string[]) => void;

@@ -23,7 +23,11 @@ export class CustomApiService extends AbstractLanguageModelService {
     const availableModelNames = settingsManager
       .get('customModels')
       .map((customModel) => customModel.name);
-    const selectedModel = settingsManager.getSelectedCustomModel();
+
+    const selectedModelName = settingsManager.get('selectedCustomModel');
+    const selectedModel = settingsManager
+      .get('customModels')
+      .find((model) => model.name === selectedModelName);
 
     super(
       context,
@@ -325,7 +329,7 @@ export class CustomApiService extends AbstractLanguageModelService {
   }
 
   public async switchModel(modelName: string): Promise<void> {
-    const customModels = this.settingsManager.getCustomModels();
+    const customModels = this.settingsManager.get('customModels');
     const selectedModel = customModels.find(
       (model) => model.name === modelName,
     );
@@ -334,10 +338,8 @@ export class CustomApiService extends AbstractLanguageModelService {
       vscode.window.showErrorMessage(`Custom model ${modelName} not found.`);
       return;
     }
-
-    this.settingsManager.selectCustomModel(modelName);
+    this.settingsManager.set('selectedCustomModel', modelName).then();
     this.updateSettings(selectedModel);
-
     super.switchModel(modelName);
   }
 }

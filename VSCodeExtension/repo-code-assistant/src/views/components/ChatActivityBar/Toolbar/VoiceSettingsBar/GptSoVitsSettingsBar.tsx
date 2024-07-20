@@ -50,11 +50,11 @@ export const GptSoVitsSettingsBar: React.FC<GptSoVitsSettingsBarProps> = ({
   const [partialSettings, setPartialSettings] = useState<{
     gptSoVitsClientHost: string;
     gptSoVitsAvailableReferenceVoices: GptSoVitsVoiceSetting[];
-    selectedGptSoVitsReferenceVoice: string;
+    gptSoVitsSelectedReferenceVoice: string;
   }>({
     gptSoVitsClientHost: '',
     gptSoVitsAvailableReferenceVoices: [],
-    selectedGptSoVitsReferenceVoice: '',
+    gptSoVitsSelectedReferenceVoice: '',
   });
 
   const [isLoading, setIsLoading] = useState(true);
@@ -111,7 +111,7 @@ export const GptSoVitsSettingsBar: React.FC<GptSoVitsSettingsBarProps> = ({
         .then(() => {
           callApi(
             'switchGptSoVitsReferenceVoice',
-            settingsToSave.selectedGptSoVitsReferenceVoice,
+            settingsToSave.gptSoVitsSelectedReferenceVoice,
           ).catch(console.error);
         })
         .catch((e) =>
@@ -147,14 +147,14 @@ export const GptSoVitsSettingsBar: React.FC<GptSoVitsSettingsBarProps> = ({
     setPartialSettings({
       ...partialSettings,
       gptSoVitsAvailableReferenceVoices: updatedVoices,
-      selectedGptSoVitsReferenceVoice:
+      gptSoVitsSelectedReferenceVoice:
         field === 'name' &&
-        partialSettings.selectedGptSoVitsReferenceVoice ===
+        partialSettings.gptSoVitsSelectedReferenceVoice ===
           partialSettings.gptSoVitsAvailableReferenceVoices.find(
             (voice) => voice.id === id,
           )?.name
           ? value
-          : partialSettings.selectedGptSoVitsReferenceVoice,
+          : partialSettings.gptSoVitsSelectedReferenceVoice,
     });
   };
 
@@ -183,19 +183,19 @@ export const GptSoVitsSettingsBar: React.FC<GptSoVitsSettingsBarProps> = ({
     setPartialSettings({
       ...partialSettings,
       gptSoVitsAvailableReferenceVoices: updatedVoices,
-      selectedGptSoVitsReferenceVoice:
+      gptSoVitsSelectedReferenceVoice:
         partialSettings.gptSoVitsAvailableReferenceVoices.find(
           (voice) => voice.id === id,
-        )?.name === partialSettings.selectedGptSoVitsReferenceVoice
+        )?.name === partialSettings.gptSoVitsSelectedReferenceVoice
           ? ''
-          : partialSettings.selectedGptSoVitsReferenceVoice,
+          : partialSettings.gptSoVitsSelectedReferenceVoice,
     });
   };
 
   const handleSelectedVoiceChange = (value: string) => {
     setPartialSettings({
       ...partialSettings,
-      selectedGptSoVitsReferenceVoice: value,
+      gptSoVitsSelectedReferenceVoice: value,
     });
   };
 
@@ -280,7 +280,7 @@ export const GptSoVitsSettingsBar: React.FC<GptSoVitsSettingsBarProps> = ({
         </Form.Item>
         <Form.Item label='Selected Reference Voice'>
           <Select
-            value={partialSettings.selectedGptSoVitsReferenceVoice}
+            value={partialSettings.gptSoVitsSelectedReferenceVoice}
             onChange={handleSelectedVoiceChange}
             placeholder='Select a reference voice'
             options={partialSettings.gptSoVitsAvailableReferenceVoices.map(

@@ -17,12 +17,13 @@ export class GptSoVitsApiService extends AbstractVoiceService {
   ) {
     super(context, settingsManager);
 
-    const voiceSettings =
-      this.settingsManager.getGptSoVitsAvailableReferenceVoices();
+    const voiceSettings = this.settingsManager.get(
+      'gptSoVitsAvailableReferenceVoices',
+    );
     const selectedVoice = voiceSettings.find(
       (voice) =>
         voice.name ===
-        this.settingsManager.get('selectedGptSoVitsReferenceVoice'),
+        this.settingsManager.get('gptSoVitsSelectedReferenceVoice'),
     );
 
     this.updateSettings(selectedVoice);
@@ -87,8 +88,9 @@ export class GptSoVitsApiService extends AbstractVoiceService {
    * @param voiceName - The name of the voice to switch to
    */
   public async switchVoice(voiceName: string): Promise<void> {
-    const voiceSettings =
-      this.settingsManager.getGptSoVitsAvailableReferenceVoices();
+    const voiceSettings = this.settingsManager.get(
+      'gptSoVitsAvailableReferenceVoices',
+    );
     const selectedVoice = voiceSettings.find(
       (voice) => voice.name === voiceName,
     );
@@ -100,7 +102,9 @@ export class GptSoVitsApiService extends AbstractVoiceService {
       return;
     }
 
-    this.settingsManager.selectGptSoVitsReferenceVoice(voiceName);
+    this.settingsManager
+      .set('gptSoVitsSelectedReferenceVoice', voiceName)
+      .then();
     this.updateSettings(selectedVoice);
 
     vscode.window.showInformationMessage(`Voice switched to ${voiceName}`);
