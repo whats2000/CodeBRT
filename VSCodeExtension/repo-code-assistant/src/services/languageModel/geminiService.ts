@@ -11,7 +11,7 @@ import {
   HarmCategory,
 } from '@google/generative-ai';
 
-import type { ConversationEntry } from '../../types';
+import type { ConversationEntry, GetResponseOptions } from '../../types';
 import { AbstractLanguageModelService } from './abstractLanguageModelService';
 import { SettingsManager } from '../../api';
 
@@ -141,44 +141,6 @@ export class GeminiService extends AbstractLanguageModelService {
     };
   }
 
-  private initModel(currentEntryID?: string): {
-    generativeModel: GenerativeModel;
-    conversationHistory: Content[];
-    errorMessage?: string;
-  } {
-    const generativeModel = new GoogleGenerativeAI(
-      this.apiKey,
-    ).getGenerativeModel({
-      model: this.currentModel,
-    });
-
-    if (this.currentModel === '') {
-      vscode.window
-        .showErrorMessage(
-          'Make sure the model is selected before sending a message. Open the model selection dropdown and configure the model.',
-        )
-        .then();
-      return {
-        generativeModel,
-        conversationHistory: [],
-        errorMessage:
-          'Missing model configuration. Check the model selection dropdown.',
-      };
-    }
-
-    const history = currentEntryID
-      ? this.getHistoryBeforeEntry(currentEntryID)
-      : this.history;
-    const conversationHistory = this.conversationHistoryToContent(
-      history.entries,
-    );
-
-    return {
-      generativeModel,
-      conversationHistory,
-    };
-  }
-
   public async getLatestAvailableModelNames(): Promise<string[]> {
     const requestUrl = `https://generativelanguage.googleapis.com/v1beta/models?key=${this.apiKey}`;
 
@@ -222,47 +184,25 @@ export class GeminiService extends AbstractLanguageModelService {
     return newAvailableModelNames;
   }
 
-  public async getResponseForQuery(
+  private async getResponseChunksWithTextPayload(
+    generativeModel: GenerativeModel,
     query: string,
-    currentEntryID?: string,
+    conversationHistory: Content[],
+    sendStreamResponse?: (message: string) => void,
   ): Promise<string> {
-    const { generativeModel, conversationHistory, errorMessage } =
-      this.initModel(currentEntryID);
-
-    if (errorMessage) {
-      return errorMessage;
-    }
-
     try {
-      const chat = generativeModel.startChat({
-        generationConfig: this.generationConfig,
-        safetySettings: this.safetySettings,
-        history: conversationHistory,
-      });
+      if (!sendStreamResponse) {
+        return (
+          await generativeModel
+            .startChat({
+              generationConfig: this.generationConfig,
+              safetySettings: this.safetySettings,
+              history: conversationHistory,
+            })
+            .sendMessage(query)
+        ).response.text();
+      }
 
-      const result = await chat.sendMessage(query);
-      return result.response.text();
-    } catch (error) {
-      vscode.window.showErrorMessage(
-        'Failed to get response from Gemini Service: ' + error,
-      );
-      return 'Failed to connect to the language model service.';
-    }
-  }
-
-  public async getResponseChunksForQuery(
-    query: string,
-    sendStreamResponse: (msg: string) => void,
-    currentEntryID?: string,
-  ): Promise<string> {
-    const { generativeModel, conversationHistory, errorMessage } =
-      this.initModel(currentEntryID);
-
-    if (errorMessage) {
-      return errorMessage;
-    }
-
-    try {
       const chat = generativeModel.startChat({
         generationConfig: this.generationConfig,
         safetySettings: this.safetySettings,
@@ -286,20 +226,13 @@ export class GeminiService extends AbstractLanguageModelService {
     }
   }
 
-  public async getResponseForQueryWithImage(
+  private async getResponseChunksWithImagePayload(
+    generativeModel: GenerativeModel,
     query: string,
     images: string[],
+    _conversationHistory: Content[],
+    sendStreamResponse?: (message: string) => void,
   ): Promise<string> {
-    if (this.currentModel === '') {
-      vscode.window.showErrorMessage(
-        'Make sure the model is selected before sending a message. Open the model selection dropdown and configure the model.',
-      );
-      return 'Missing model configuration. Check the model selection dropdown.';
-    }
-
-    const genAI = new GoogleGenerativeAI(this.apiKey);
-    const model = genAI.getGenerativeModel({ model: this.currentModel });
-
     try {
       const imageParts = images.map((image) => {
         return this.fileToGenerativePart(
@@ -308,45 +241,17 @@ export class GeminiService extends AbstractLanguageModelService {
         );
       });
 
-      const result = await model.generateContent({
-        generationConfig: this.generationConfig,
-        contents: [{ role: 'user', parts: [{ text: query }, ...imageParts] }],
-      });
+      if (!sendStreamResponse) {
+        const result = await generativeModel.generateContent({
+          generationConfig: this.generationConfig,
+          contents: [{ role: 'user', parts: [{ text: query }, ...imageParts] }],
+        });
 
-      return result.response.text();
-    } catch (error) {
-      vscode.window.showErrorMessage(
-        'Failed to get response from Gemini Service: ' + error,
-      );
-      return 'Failed to connect to the language model service.';
-    }
-  }
+        return result.response.text();
+      }
 
-  public async getResponseChunksForQueryWithImage(
-    query: string,
-    images: string[],
-    sendStreamResponse: (msg: string) => void,
-  ): Promise<string> {
-    if (this.currentModel === '') {
-      vscode.window.showErrorMessage(
-        'Make sure the model is selected before sending a message. Open the model selection dropdown and configure the model.',
-      );
-      return 'Missing model configuration. Check the model selection dropdown.';
-    }
-    const genAI = new GoogleGenerativeAI(this.apiKey);
-    const model = genAI.getGenerativeModel({ model: this.currentModel });
-
-    try {
       let responseText = '';
-
-      const imageParts = images.map((image) => {
-        return this.fileToGenerativePart(
-          image,
-          `image/${image.split('.').pop()}`,
-        );
-      });
-
-      const result = await model.generateContentStream({
+      const result = await generativeModel.generateContentStream({
         generationConfig: this.generationConfig,
         contents: [{ role: 'user', parts: [{ text: query }, ...imageParts] }],
       });
@@ -364,5 +269,46 @@ export class GeminiService extends AbstractLanguageModelService {
       );
       return 'Failed to connect to the language model service.';
     }
+  }
+
+  public async getResponse(options: GetResponseOptions): Promise<string> {
+    if (this.currentModel === '') {
+      vscode.window.showErrorMessage(
+        'Make sure the model is selected before sending a message. Open the model selection dropdown and configure the model.',
+      );
+      return 'Missing model configuration. Check the model selection dropdown.';
+    }
+
+    const { query, images, sendStreamResponse, currentEntryID } = options;
+
+    const generativeModel = new GoogleGenerativeAI(
+      this.apiKey,
+    ).getGenerativeModel({
+      model: this.currentModel,
+    });
+
+    const history = currentEntryID
+      ? this.getHistoryBeforeEntry(currentEntryID)
+      : this.history;
+    const conversationHistory = this.conversationHistoryToContent(
+      history.entries,
+    );
+
+    if (images && images.length > 0) {
+      return this.getResponseChunksWithImagePayload(
+        generativeModel,
+        query,
+        images,
+        conversationHistory,
+        sendStreamResponse,
+      );
+    }
+
+    return this.getResponseChunksWithTextPayload(
+      generativeModel,
+      query,
+      conversationHistory,
+      sendStreamResponse,
+    );
   }
 }

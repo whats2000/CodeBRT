@@ -1,18 +1,25 @@
 import * as vscode from 'vscode';
 import Groq from 'groq-sdk';
-import type {
+import {
+  ChatCompletionCreateParamsBase,
   ChatCompletionCreateParamsNonStreaming,
   ChatCompletionCreateParamsStreaming,
   ChatCompletionMessageParam,
 } from 'groq-sdk/src/resources/chat/completions';
 
-import { ConversationEntry } from '../../types';
+import { ConversationEntry, GetResponseOptions } from '../../types';
 import { AbstractLanguageModelService } from './abstractLanguageModelService';
 import { SettingsManager } from '../../api';
 
 export class GroqService extends AbstractLanguageModelService {
   private apiKey: string;
   private readonly settingsListener: vscode.Disposable;
+  private readonly generationConfig: Partial<ChatCompletionCreateParamsBase> = {
+    temperature: 0.5,
+    max_tokens: 1024,
+    top_p: 1,
+    stop: null,
+  };
 
   constructor(
     context: vscode.ExtensionContext,
@@ -123,15 +130,22 @@ export class GroqService extends AbstractLanguageModelService {
     return newAvailableModelNames;
   }
 
-  public async getResponseForQuery(
-    query: string,
-    currentEntryID?: string,
-  ): Promise<string> {
+  public async getResponse(options: GetResponseOptions): Promise<string> {
     if (this.currentModel === '') {
-      vscode.window.showErrorMessage(
-        'Make sure the model is selected before sending a message. Open the model selection dropdown and configure the model.',
-      );
+      vscode.window
+        .showErrorMessage(
+          'Make sure the model is selected before sending a message. Open the model selection dropdown and configure the model.',
+        )
+        .then();
       return 'Missing model configuration. Check the model selection dropdown.';
+    }
+
+    const { query, images, sendStreamResponse, currentEntryID } = options;
+
+    if (images && images.length > 0) {
+      vscode.window.showWarningMessage(
+        'The images inference is not supported currently. The images will be ignored.',
+      );
     }
 
     const groq = new Groq({
@@ -147,63 +161,25 @@ export class GroqService extends AbstractLanguageModelService {
     );
 
     try {
-      const chatCompletion = await groq.chat.completions.create({
-        messages: conversationHistory,
-        model: this.currentModel,
-        temperature: 0.5,
-        max_tokens: 1024,
-        top_p: 1,
-        stop: null,
-        stream: false,
-      } as ChatCompletionCreateParamsNonStreaming);
+      if (!sendStreamResponse) {
+        return (
+          await groq.chat.completions.create({
+            messages: conversationHistory,
+            model: this.currentModel,
+            stream: false,
+            ...this.generationConfig,
+          } as ChatCompletionCreateParamsNonStreaming)
+        ).choices[0]?.message?.content!;
+      }
 
-      return chatCompletion.choices[0]?.message?.content!;
-    } catch (error) {
-      vscode.window.showErrorMessage(
-        'Failed to get response from Groq Service: ' + error,
-      );
-      return 'Failed to connect to the language model service.';
-    }
-  }
-
-  public async getResponseChunksForQuery(
-    query: string,
-    sendStreamResponse: (msg: string) => void,
-    currentEntryID?: string,
-  ): Promise<string> {
-    if (this.currentModel === '') {
-      vscode.window.showErrorMessage(
-        'Make sure the model is selected before sending a message. Open the model selection dropdown and configure the model.',
-      );
-      return 'Missing model configuration. Check the model selection dropdown.';
-    }
-
-    const groq = new Groq({
-      apiKey: this.apiKey,
-    });
-
-    const history = currentEntryID
-      ? this.getHistoryBeforeEntry(currentEntryID)
-      : this.history;
-    const conversationHistory = this.conversationHistoryToContent(
-      history.entries,
-      query,
-    );
-
-    try {
       const stream = await groq.chat.completions.create({
         messages: conversationHistory,
         model: this.currentModel,
-        temperature: 0.5,
-        max_tokens: 1024,
-        top_p: 1,
-        stop: null,
         stream: true,
+        ...this.generationConfig,
       } as ChatCompletionCreateParamsStreaming);
 
       let responseText: string = '';
-
-      // Update streaming response
       for await (const chunk of stream) {
         const partText = chunk.choices[0]?.delta?.content || '';
         sendStreamResponse(partText);

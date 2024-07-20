@@ -12,7 +12,7 @@ import type {
 } from '@anthropic-ai/sdk/src/resources/messages';
 import Anthropic from '@anthropic-ai/sdk';
 
-import type { ConversationEntry } from '../../types';
+import { ConversationEntry, GetResponseOptions } from '../../types';
 import { SettingsManager } from '../../api';
 import { AbstractLanguageModelService } from './abstractLanguageModelService';
 
@@ -247,75 +247,9 @@ export class AnthropicService extends AbstractLanguageModelService {
     return newAvailableModelNames;
   }
 
-  public async getResponseForQuery(
-    query: string,
-    currentEntryID?: string,
-  ): Promise<string> {
-    const { anthropic, conversationHistory, errorMessage } = this.initModel(
-      query,
-      currentEntryID,
-    );
+  public async getResponse(options: GetResponseOptions): Promise<string> {
+    const { query, images, sendStreamResponse, currentEntryID } = options;
 
-    if (errorMessage) {
-      return errorMessage;
-    }
-
-    try {
-      const message = await anthropic.messages.create({
-        max_tokens: 4096,
-        messages: conversationHistory,
-        model: this.currentModel,
-      });
-
-      return (message.content[0] as TextBlock).text;
-    } catch (error) {
-      vscode.window.showErrorMessage(
-        'Failed to get response from Anthropic Service: ' + error,
-      );
-      return 'Failed to connect to the language model service.';
-    }
-  }
-
-  public async getResponseChunksForQuery(
-    query: string,
-    sendStreamResponse: (msg: string) => void,
-    currentEntryID?: string,
-  ): Promise<string> {
-    const { anthropic, conversationHistory, errorMessage } = this.initModel(
-      query,
-      currentEntryID,
-    );
-
-    if (errorMessage) {
-      return errorMessage;
-    }
-
-    try {
-      const stream = anthropic.messages
-        .stream({
-          max_tokens: 4096,
-          messages: conversationHistory,
-          model: this.currentModel,
-          stream: true,
-        })
-        .on('text', (text) => {
-          sendStreamResponse(text);
-        });
-
-      return await stream.finalText();
-    } catch (error) {
-      vscode.window.showErrorMessage(
-        'Failed to get response from Anthropic Service: ' + error,
-      );
-      return 'Failed to connect to the language model service.';
-    }
-  }
-
-  public async getResponseForQueryWithImage(
-    query: string,
-    images: string[],
-    currentEntryID?: string,
-  ): Promise<string> {
     const { anthropic, conversationHistory, errorMessage } = this.initModel(
       query,
       currentEntryID,
@@ -326,46 +260,21 @@ export class AnthropicService extends AbstractLanguageModelService {
       return errorMessage;
     }
 
-    try {
-      const message = await anthropic.messages.create({
-        max_tokens: 4096,
-        model: this.currentModel,
-        messages: conversationHistory,
-      });
-
-      return (message.content[0] as TextBlock).text;
-    } catch (error) {
-      vscode.window.showErrorMessage(
-        'Failed to get response from Anthropic Service: ' + error,
-      );
-      return 'Failed to connect to the language model service';
-    }
-  }
-
-  public async getResponseChunksForQueryWithImage(
-    query: string,
-    images: string[],
-    sendStreamResponse: (msg: string) => void,
-    currentEntryID?: string,
-  ): Promise<string> {
-    const { anthropic, conversationHistory, errorMessage } = this.initModel(
-      query,
-      currentEntryID,
-      images,
-    );
-
-    if (errorMessage) {
-      return errorMessage;
-    }
+    const requestData = {
+      max_tokens: 4096,
+      model: this.currentModel,
+      messages: conversationHistory,
+    };
 
     try {
+      if (!sendStreamResponse) {
+        const message = await anthropic.messages.create(requestData);
+
+        return (message.content[0] as TextBlock).text;
+      }
+
       const stream = anthropic.messages
-        .stream({
-          max_tokens: 4096,
-          model: this.currentModel,
-          messages: conversationHistory,
-          stream: true,
-        })
+        .stream({ ...requestData, stream: true })
         .on('text', (text) => {
           sendStreamResponse(text);
         });

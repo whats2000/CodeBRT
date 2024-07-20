@@ -1,9 +1,9 @@
 import * as vscode from 'vscode';
 import fs from 'fs';
-import type { ChatResponse, Message, Options } from 'ollama';
+import type { Message, Options } from 'ollama';
 import { Ollama } from 'ollama';
 
-import type { ConversationEntry } from '../../types';
+import type { ConversationEntry, GetResponseOptions } from '../../types';
 import { AbstractLanguageModelService } from './abstractLanguageModelService';
 import { SettingsManager } from '../../api';
 
@@ -201,10 +201,7 @@ export class OllamaService extends AbstractLanguageModelService {
     return newAvailableModelNames;
   }
 
-  public async getResponseForQuery(
-    query: string,
-    currentEntryID?: string,
-  ): Promise<string> {
+  public async getResponse(options: GetResponseOptions): Promise<string> {
     if (this.currentModel === '') {
       vscode.window.showErrorMessage(
         'Make sure the model is selected before sending a message. Open the model selection dropdown and configure the model.',
@@ -212,94 +209,7 @@ export class OllamaService extends AbstractLanguageModelService {
       return 'Missing model configuration. Check the model selection dropdown.';
     }
 
-    const { client, conversationHistory, model } = await this.initModel(
-      query,
-      currentEntryID,
-    );
-
-    if (model === '') {
-      return 'The ollama is seems to be down. Please start the ollama service.';
-    }
-
-    try {
-      const response: ChatResponse = await client.chat({
-        model,
-        messages: conversationHistory,
-        options: this.generationConfig,
-      });
-
-      return response.message.content;
-    } catch (error) {
-      vscode.window.showErrorMessage(
-        'Failed to get response from Ollama Service: ' + error,
-      );
-      return (
-        'Failed to connect to the language model service. Make sure the ollama service is running. ' +
-        'Also, check the model has been downloaded.'
-      );
-    }
-  }
-
-  public async getResponseChunksForQuery(
-    query: string,
-    sendStreamResponse: (msg: string) => void,
-    currentEntryID?: string,
-  ): Promise<string> {
-    if (this.currentModel === '') {
-      vscode.window.showErrorMessage(
-        'Make sure the model is selected before sending a message. Open the model selection dropdown and configure the model.',
-      );
-      return 'Missing model configuration. Check the model selection dropdown.';
-    }
-
-    const { client, conversationHistory, model } = await this.initModel(
-      query,
-      currentEntryID,
-    );
-
-    if (model === '') {
-      return 'The ollama is seems to be down. Please start the ollama service.';
-    }
-
-    try {
-      const response = await client.chat({
-        model,
-        messages: conversationHistory,
-        stream: true,
-        options: this.generationConfig,
-      });
-
-      let responseText = '';
-
-      for await (const part of response) {
-        const partText = part.message.content;
-        sendStreamResponse(partText);
-        responseText += partText;
-      }
-
-      return responseText;
-    } catch (error) {
-      vscode.window.showErrorMessage(
-        'Failed to get response from Ollama Service: ' + error,
-      );
-      return (
-        'Failed to connect to the language model service. Make sure the ollama service is running. ' +
-        'Also, check the model has been downloaded.'
-      );
-    }
-  }
-
-  public async getResponseForQueryWithImage(
-    query: string,
-    images: string[],
-    currentEntryID?: string,
-  ): Promise<string> {
-    if (this.currentModel === '') {
-      vscode.window.showErrorMessage(
-        'Make sure the model is selected before sending a message. Open the model selection dropdown and configure the model.',
-      );
-      return 'Missing model configuration. Check the model selection dropdown.';
-    }
+    const { query, images, sendStreamResponse, currentEntryID } = options;
 
     const { client, conversationHistory, model } = await this.initModel(
       query,
@@ -312,48 +222,16 @@ export class OllamaService extends AbstractLanguageModelService {
     }
 
     try {
-      const response: ChatResponse = await client.chat({
-        model,
-        messages: conversationHistory,
-        options: this.generationConfig,
-      });
+      if (!sendStreamResponse) {
+        return (
+          await client.chat({
+            model,
+            messages: conversationHistory,
+            options: this.generationConfig,
+          })
+        ).message.content;
+      }
 
-      return response.message.content;
-    } catch (error) {
-      vscode.window.showErrorMessage(
-        'Failed to get response from Ollama Service with image: ' + error,
-      );
-      return (
-        'Failed to connect to the language model service with image. ' +
-        'Make sure the ollama service is running. Also, check the model has been downloaded.'
-      );
-    }
-  }
-
-  public async getResponseChunksForQueryWithImage(
-    query: string,
-    images: string[],
-    sendStreamResponse: (msg: string) => void,
-    currentEntryID?: string,
-  ): Promise<string> {
-    if (this.currentModel === '') {
-      vscode.window.showErrorMessage(
-        'Make sure the model is selected before sending a message. Open the model selection dropdown and configure the model.',
-      );
-      return 'Missing model configuration. Check the model selection dropdown.';
-    }
-
-    const { client, conversationHistory, model } = await this.initModel(
-      query,
-      currentEntryID,
-      images,
-    );
-
-    if (model === '') {
-      return 'The ollama is seems to be down. Please start the ollama service.';
-    }
-
-    try {
       const response = await client.chat({
         model,
         messages: conversationHistory,
@@ -362,7 +240,6 @@ export class OllamaService extends AbstractLanguageModelService {
       });
 
       let responseText = '';
-
       for await (const part of response) {
         const partText = part.message.content;
         sendStreamResponse(partText);
@@ -372,10 +249,10 @@ export class OllamaService extends AbstractLanguageModelService {
       return responseText;
     } catch (error) {
       vscode.window.showErrorMessage(
-        'Failed to get response from Ollama Service with image: ' + error,
+        'Failed to get response from Ollama Service: ' + error,
       );
       return (
-        'Failed to connect to the language model service with image. ' +
+        'Failed to connect to the language model service. ' +
         'Make sure the ollama service is running. Also, check the model has been downloaded.'
       );
     }

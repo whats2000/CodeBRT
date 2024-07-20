@@ -221,20 +221,14 @@ export const ChatActivityBar = () => {
     scrollToBottom(false);
 
     try {
-      const responseText =
-        uploadedImages.length > 0
-          ? ((await callApi(
-              'getLanguageModelResponseWithImage',
-              inputMessage,
-              activeModelService,
-              uploadedImages,
-            )) as string)
-          : ((await callApi(
-              'getLanguageModelResponse',
-              inputMessage,
-              activeModelService,
-              true,
-            )) as string);
+      const responseText = (await callApi(
+        'getLanguageModelResponse',
+        activeModelService,
+        inputMessage,
+        uploadedImages.length > 0 ? uploadedImages : undefined,
+        undefined,
+        true,
+      )) as string;
 
       const aiEntryId = await callApi(
         'addConversationEntry',
@@ -349,22 +343,14 @@ export const ChatActivityBar = () => {
     scrollToBottom(false);
 
     try {
-      const responseText =
-        entry.images && entry.images.length > 0
-          ? ((await callApi(
-              'getLanguageModelResponseWithImage',
-              editedMessage,
-              activeModelService,
-              entry.images as string[],
-              newEntryId,
-            )) as string)
-          : ((await callApi(
-              'getLanguageModelResponse',
-              editedMessage,
-              activeModelService,
-              true,
-              newEntryId,
-            )) as string);
+      const responseText = (await callApi(
+        'getLanguageModelResponse',
+        activeModelService,
+        editedMessage,
+        entry.images && entry.images.length > 0 ? entry.images : undefined,
+        newEntryId,
+        true,
+      )) as string;
 
       const aiEntryId = await callApi(
         'addConversationEntry',

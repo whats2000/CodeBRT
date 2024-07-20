@@ -2,13 +2,8 @@ import fs from 'node:fs/promises';
 import * as vscode from 'vscode';
 
 import type {
-  ConversationHistory,
-  CustomModelSettings,
-  ExtensionSettings,
-  LanguageModelService,
   LoadedModelServices,
   LoadedVoiceServices,
-  ModelServiceType,
   ViewApi,
   ViewApiError,
   ViewApiEvent,
@@ -109,16 +104,13 @@ export const activate = async (ctx: vscode.ExtensionContext) => {
 
       return await fs.readFile(uris[0].fsPath, 'utf-8');
     },
-    setSetting: async (
-      key: keyof ExtensionSettings,
-      value: ExtensionSettings[typeof key],
-    ) => {
+    setSetting: async (key, value) => {
       return settingsManager.set(key, value);
     },
-    getSetting: (key: keyof ExtensionSettings) => {
+    getSetting: (key) => {
       return settingsManager.get(key);
     },
-    alertMessage: (msg: string, type: 'info' | 'warning' | 'error') => {
+    alertMessage: (msg, type) => {
       switch (type) {
         case 'info':
           vscode.window.showInformationMessage(msg);
@@ -133,266 +125,89 @@ export const activate = async (ctx: vscode.ExtensionContext) => {
           vscode.window.showInformationMessage(msg);
       }
     },
-    sendMessageToExampleB: (msg: string) => {
+    sendMessageToExampleB: (msg) => {
       triggerEvent('exampleBMessage', msg);
     },
     getLanguageModelResponse: async (
-      query: string,
-      modelType: ModelServiceType,
-      useStream?: boolean,
-      currentEntryID?: string,
+      modelType,
+      query,
+      images?,
+      currentEntryID?,
+      useStream?,
     ) => {
-      const modelService = models[modelType].service;
-      if (!modelService) {
-        vscode.window.showErrorMessage(
-          `Failed to get response for unknown model type: ${modelType}`,
-        );
-        return `Model service not found for type: ${modelType}`;
-      }
-
-      try {
-        return useStream
-          ? modelService.getResponseChunksForQuery(
-              query,
-              api.sendStreamResponse,
-              currentEntryID,
-            )
-          : modelService.getResponseForQuery(query, currentEntryID);
-      } catch (error) {
-        return `Failed to get response from ${modelType} service: ${error}`;
-      }
+      return await models[modelType].service.getResponse({
+        query,
+        images,
+        currentEntryID,
+        sendStreamResponse: useStream ? api.sendStreamResponse : undefined,
+      });
     },
-    getLanguageModelConversationHistory: (modelType: ModelServiceType) => {
-      const modelService: LanguageModelService = models[modelType].service;
-      if (!modelService) {
-        vscode.window.showErrorMessage(
-          `Failed to get conversation history for unknown model type: ${modelType}`,
-        );
-        return {
-          title: '',
-          create_time: 0,
-          update_time: 0,
-          root: '',
-          current: '',
-          entries: {},
-        } as ConversationHistory;
-      }
-
-      return modelService.getConversationHistory();
+    getLanguageModelConversationHistory: (modelType) => {
+      return models[modelType].service.getConversationHistory();
     },
-    addNewConversationHistory: (modelType: ModelServiceType) => {
-      const modelService: LanguageModelService = models[modelType].service;
-
-      if (!modelService) {
-        vscode.window.showErrorMessage(
-          `Failed to clear conversation history for unknown model type: ${modelType}`,
-        );
-        return {
-          title: '',
-          create_time: 0,
-          update_time: 0,
-          root: '',
-          current: '',
-          entries: {},
-        } as ConversationHistory;
-      }
-
-      return modelService.addNewConversationHistory();
+    addNewConversationHistory: (modelType) => {
+      return models[modelType].service.addNewConversationHistory();
     },
-    editLanguageModelConversationHistory: (
-      modelType: ModelServiceType,
-      entryID: string,
-      newMessage: string,
-    ) => {
-      const modelService: LanguageModelService = models[modelType].service;
-
-      if (!modelService) {
-        vscode.window.showErrorMessage(
-          `Failed to edit conversation history for unknown model type: ${modelType}`,
-        );
-        return;
-      }
-
-      modelService.editConversationEntry(entryID, newMessage);
+    editLanguageModelConversationHistory: (modelType, entryID, newMessage) => {
+      models[modelType].service.editConversationEntry(entryID, newMessage);
     },
-    sendStreamResponse: (msg: string) => {
+    sendStreamResponse: (msg) => {
       triggerEvent('streamResponse', msg);
     },
     addConversationEntry: async (
-      modelType: ModelServiceType,
-      parentID: string,
-      sender: 'user' | 'AI',
-      message: string,
-      images?: string[],
+      modelType,
+      parentID,
+      sender,
+      message,
+      images?,
     ) => {
-      const modelService: LanguageModelService = models[modelType].service;
-
-      if (!modelService) {
-        vscode.window.showErrorMessage(
-          `Failed to add conversation entry for unknown model type: ${modelType}`,
-        );
-        return '';
-      }
-
-      return modelService.addConversationEntry(
+      return models[modelType].service.addConversationEntry(
         parentID,
         sender,
         message,
         images,
       );
     },
-    getHistories: (modelType: ModelServiceType) => {
-      const modelService: LanguageModelService = models[modelType].service;
-
-      if (!modelService) {
-        vscode.window.showErrorMessage(
-          `Failed to load conversation histories for unknown model type: ${modelType}`,
-        );
-        return {};
-      }
-
-      return modelService.getHistories();
+    getHistories: (modelType) => {
+      return models[modelType].service.getHistories();
     },
-    switchHistory: (modelType: ModelServiceType, historyID: string) => {
-      const modelService: LanguageModelService = models[modelType].service;
-
-      if (!modelService) {
-        vscode.window.showErrorMessage(
-          `Failed to switch conversation history for unknown model type: ${modelType}`,
-        );
-        return;
-      }
-
-      modelService.switchHistory(historyID);
+    switchHistory: (modelType, historyID) => {
+      models[modelType].service.switchHistory(historyID);
     },
-    deleteHistory: (modelType: ModelServiceType, historyID: string) => {
-      const modelService: LanguageModelService = models[modelType].service;
-
-      if (!modelService) {
-        vscode.window.showErrorMessage(
-          `Failed to delete conversation history for unknown model type: ${modelType}`,
-        );
-        return {
-          title: '',
-          create_time: 0,
-          update_time: 0,
-          root: '',
-          current: '',
-          entries: {},
-        } as ConversationHistory;
-      }
-
-      return modelService.deleteHistory(historyID);
+    deleteHistory: (modelType, historyID) => {
+      return models[modelType].service.deleteHistory(historyID);
     },
-    getAvailableModels: (modelType: ModelServiceType) => {
-      const modelService: LanguageModelService = models[modelType].service;
-
-      if (!modelService) {
-        vscode.window.showErrorMessage(
-          `Failed to get available models for unknown model type: ${modelType}`,
-        );
-        return [];
-      }
-
+    getAvailableModels: (modelType) => {
       if (modelType === 'custom') {
         return settingsManager.get('customModels').map((model) => model.name);
       }
 
       return settingsManager.get(`${modelType}AvailableModels`);
     },
-    setAvailableModels: (
-      modelType: Exclude<ModelServiceType, 'custom'>,
-      newAvailableModels: string[],
-    ) => {
-      const modelService: LanguageModelService = models[modelType].service;
-
-      if (!modelService) {
-        vscode.window.showErrorMessage(
-          `Failed to set available models for unknown model type: ${modelType}`,
-        );
-        return;
-      }
-
+    setAvailableModels: (modelType, newAvailableModels) => {
       settingsManager
         .set(`${modelType}AvailableModels`, newAvailableModels)
         .then(() => {
-          modelService.updateAvailableModels(newAvailableModels);
+          models[modelType].service.updateAvailableModels(newAvailableModels);
         });
     },
-    setCustomModels: (newCustomModels: CustomModelSettings[]) => {
+    setCustomModels: (newCustomModels) => {
       settingsManager.set('customModels', newCustomModels).then(() => {
         models.custom.service.updateAvailableModels(
           newCustomModels.map((model) => model.name),
         );
       });
     },
-    switchModel: (modelType: ModelServiceType, modelName: string) => {
-      const modelService: LanguageModelService = models[modelType].service;
-
-      if (!modelService) {
-        vscode.window.showErrorMessage(
-          `Failed to switch language model for unknown model type: ${modelType}`,
-        );
-        return;
-      }
-
-      modelService.switchModel(modelName);
+    switchModel: (modelType, modelName) => {
+      models[modelType].service.switchModel(modelName);
     },
-    updateHistoryTitleById: (
-      modelType: ModelServiceType,
-      historyID: string,
-      title: string,
-    ) => {
-      const modelService: LanguageModelService = models[modelType].service;
-
-      if (!modelService) {
-        vscode.window.showErrorMessage(
-          `Failed to update conversation history title for unknown model type: ${modelType}`,
-        );
-        return;
-      }
-
-      modelService.updateHistoryTitleById(historyID, title);
+    updateHistoryTitleById: (modelType, historyID, title) => {
+      models[modelType].service.updateHistoryTitleById(historyID, title);
     },
-    getLanguageModelResponseWithImage: async (
-      query: string,
-      modelType: ModelServiceType,
-      images: string[],
-      currentEntryID?: string,
-    ) => {
-      const modelService: LanguageModelService = models[modelType].service;
-
-      if (!modelService) {
-        vscode.window.showErrorMessage(
-          `Failed to get response for unknown model type: ${modelType}`,
-        );
-        return `Model service not found for type: ${modelType}`;
-      }
-
-      try {
-        return modelService.getResponseChunksForQueryWithImage(
-          query,
-          images,
-          api.sendStreamResponse,
-          currentEntryID,
-        );
-      } catch (error) {
-        return `Failed to get response from ${modelType} service: ${error}`;
-      }
+    getLatestAvailableModelNames: async (modelType) => {
+      return await models[modelType].service.getLatestAvailableModelNames();
     },
-    getLatestAvailableModelNames: async (modelType: ModelServiceType) => {
-      const modelService: LanguageModelService = models[modelType].service;
-
-      if (!modelService) {
-        vscode.window.showErrorMessage(
-          `Failed to get latest available model names for unknown model type: ${modelType}`,
-        );
-        return [];
-      }
-
-      return await modelService.getLatestAvailableModelNames();
-    },
-    uploadImage: async (base64Data: string) => {
+    uploadImage: async (base64Data) => {
       return FileUtils.uploadFile(ctx, base64Data);
     },
     deleteImage: FileUtils.deleteFile,
@@ -411,15 +226,7 @@ export const activate = async (ctx: vscode.ExtensionContext) => {
         return;
       }
 
-      const voiceService = voiceServices[voiceServiceType].service;
-      if (!voiceService) {
-        vscode.window.showErrorMessage(
-          `Failed to convert text to voice for unknown voice service type: ${voiceServiceType}`,
-        );
-        return;
-      }
-
-      await voiceService.textToVoice(text);
+      await voiceServices[voiceServiceType].service.textToVoice(text);
     },
     convertVoiceToText: async () => {
       const voiceServiceType = settingsManager.get(
@@ -433,15 +240,7 @@ export const activate = async (ctx: vscode.ExtensionContext) => {
         return '';
       }
 
-      const voiceService = voiceServices[voiceServiceType].service;
-      if (!voiceService) {
-        vscode.window.showErrorMessage(
-          `Failed to convert voice to text for unknown voice service type: ${voiceServiceType}`,
-        );
-        return '';
-      }
-
-      return voiceService.voiceToText();
+      return voiceServices[voiceServiceType].service.voiceToText();
     },
     stopPlayVoice: async () => {
       const voiceServiceType = settingsManager.get(
@@ -455,27 +254,12 @@ export const activate = async (ctx: vscode.ExtensionContext) => {
         return;
       }
 
-      const voiceService = voiceServices[voiceServiceType].service;
-      if (!voiceService) {
-        vscode.window.showErrorMessage(
-          `Failed to stop voice playback for unknown voice service type: ${voiceServiceType}`,
-        );
-        return;
-      }
-
-      await voiceService.stopVoice();
+      await voiceServices[voiceServiceType].service.stopVoice();
     },
     switchGptSoVitsReferenceVoice: async (voiceName) => {
-      const voiceService = voiceServices.gptSoVits
-        .service as GptSoVitsApiService;
-      if (!voiceService) {
-        vscode.window.showErrorMessage(
-          `Failed to switch voice for GPT-SoVits service`,
-        );
-        return;
-      }
-
-      await voiceService.switchVoice(voiceName);
+      await (
+        voiceServices.gptSoVits.service as GptSoVitsApiService
+      ).switchVoice(voiceName);
     },
     openExternalLink: async (url) => {
       await vscode.env.openExternal(vscode.Uri.parse(url));

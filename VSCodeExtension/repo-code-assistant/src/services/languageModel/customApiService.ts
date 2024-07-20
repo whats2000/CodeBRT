@@ -4,17 +4,27 @@ import * as fs from 'fs';
 import * as path from 'path';
 import FormData from 'form-data';
 
-import type { ConversationEntry, CustomModelSettings } from '../../types';
+import {
+  ConversationEntry,
+  CustomModelSettings,
+  GetResponseOptions,
+} from '../../types';
 import { AbstractLanguageModelService } from './abstractLanguageModelService';
 import { SettingsManager } from '../../api';
 
 export class CustomApiService extends AbstractLanguageModelService {
-  private apiUrl: string = '';
-  private apiMethod: 'GET' | 'POST' = 'POST';
-  private apiTextParam: string = 'message';
-  private apiImageParam: string = 'images';
-  private apiQueryParam: string = 'query';
-  private includeQueryInHistory: boolean = true;
+  private readonly defaultCustomModelSettings: CustomModelSettings = {
+    id: '',
+    name: '',
+    apiUrl: '',
+    apiMethod: 'POST',
+    apiTextParam: 'message',
+    apiImageParam: 'images',
+    apiQueryParam: 'query',
+    includeQueryInHistory: true,
+  };
+  private selectedCustomModelSettings: CustomModelSettings =
+    this.defaultCustomModelSettings;
 
   constructor(
     context: vscode.ExtensionContext,
@@ -58,24 +68,8 @@ export class CustomApiService extends AbstractLanguageModelService {
   }
 
   private updateSettings(selectedModel: CustomModelSettings | undefined) {
-    if (selectedModel) {
-      this.apiUrl = selectedModel.apiUrl;
-      this.apiMethod = selectedModel.apiMethod;
-      this.apiTextParam = selectedModel.apiTextParam;
-      this.apiImageParam = selectedModel.apiImageParam;
-      this.apiQueryParam = selectedModel.apiQueryParam;
-      this.includeQueryInHistory = selectedModel.includeQueryInHistory;
-    } else {
-      this.apiUrl = '';
-      this.apiMethod = 'POST';
-      this.apiTextParam = 'message';
-      this.apiImageParam = 'images';
-      this.apiQueryParam = 'query';
-      this.includeQueryInHistory = true;
-      console.log(
-        'No custom model configuration found. Please configure a custom model.',
-      );
-    }
+    this.selectedCustomModelSettings =
+      selectedModel || this.defaultCustomModelSettings;
   }
 
   private conversationHistoryToJson(entries: {
@@ -98,7 +92,7 @@ export class CustomApiService extends AbstractLanguageModelService {
 
     // If the API format history doesn't include the query message and the last message is a user message, remove it
     if (
-      !this.includeQueryInHistory &&
+      !this.selectedCustomModelSettings.includeQueryInHistory &&
       historyArray.length > 0 &&
       historyArray[historyArray.length - 1].role === 'user'
     ) {
@@ -114,20 +108,27 @@ export class CustomApiService extends AbstractLanguageModelService {
     query: string,
   ): Promise<FormData> {
     const formData = new FormData();
-    formData.append(this.apiTextParam, conversationHistory);
+    formData.append(
+      this.selectedCustomModelSettings.apiTextParam,
+      conversationHistory,
+    );
 
-    if (!this.includeQueryInHistory) {
-      formData.append(this.apiQueryParam, query);
+    if (!this.selectedCustomModelSettings.includeQueryInHistory) {
+      formData.append(this.selectedCustomModelSettings.apiQueryParam, query);
     }
 
     for (const [index, image] of images.entries()) {
       try {
         const mimeType = `image/${path.extname(image).slice(1)}`;
         const file = await fs.promises.readFile(image);
-        formData.append(`${this.apiImageParam}[${index}]`, file, {
-          filename: path.basename(image),
-          contentType: mimeType,
-        });
+        formData.append(
+          `${this.selectedCustomModelSettings.apiImageParam}[${index}]`,
+          file,
+          {
+            filename: path.basename(image),
+            contentType: mimeType,
+          },
+        );
       } catch (error) {
         console.error('Failed to read image file:', error);
       }
@@ -136,71 +137,47 @@ export class CustomApiService extends AbstractLanguageModelService {
     return formData;
   }
 
-  public async getResponseForQuery(
+  private async getResponseChunksWithTextPayload(
     query: string,
-    currentEntryID?: string,
+    conversationHistory: string,
+    sendStreamResponse?: (message: string) => void,
   ): Promise<string> {
-    const history = currentEntryID
-      ? this.getHistoryBeforeEntry(currentEntryID)
-      : this.history;
-    const conversationHistory = this.conversationHistoryToJson(history.entries);
-
     const requestPayload: any = {
-      [this.apiTextParam]: conversationHistory,
+      [this.selectedCustomModelSettings.apiTextParam]: conversationHistory,
     };
 
-    if (!this.includeQueryInHistory) {
-      requestPayload[this.apiQueryParam] = query;
+    if (!this.selectedCustomModelSettings.includeQueryInHistory) {
+      requestPayload[this.selectedCustomModelSettings.apiQueryParam] = query;
     }
 
     try {
-      let response;
-      if (this.apiMethod === 'GET') {
-        response = await axios.get(this.apiUrl, {
-          params: requestPayload,
-        });
-      } else {
-        response = await axios.post(this.apiUrl, requestPayload);
+      if (!sendStreamResponse) {
+        return (
+          this.selectedCustomModelSettings.apiMethod === 'GET'
+            ? await axios.get(this.selectedCustomModelSettings.apiUrl, {
+                params: requestPayload,
+              })
+            : await axios.post(
+                this.selectedCustomModelSettings.apiUrl,
+                requestPayload,
+              )
+        ).data.response;
       }
 
-      return response.data.response;
-    } catch (error) {
-      vscode.window.showErrorMessage(
-        'Failed to get response from Custom API Service: ' + error,
-      );
-      return 'Failed to connect to the custom API service.';
-    }
-  }
-
-  public async getResponseChunksForQuery(
-    query: string,
-    sendStreamResponse: (msg: string) => void,
-    currentEntryID?: string,
-  ): Promise<string> {
-    const history = currentEntryID
-      ? this.getHistoryBeforeEntry(currentEntryID)
-      : this.history;
-    const conversationHistory = this.conversationHistoryToJson(history.entries);
-
-    const requestPayload: any = {
-      [this.apiTextParam]: conversationHistory,
-    };
-
-    if (!this.includeQueryInHistory) {
-      requestPayload[this.apiQueryParam] = query;
-    }
-
-    try {
       let responseText = '';
       const response =
-        this.apiMethod === 'GET'
-          ? await axios.get(this.apiUrl, {
+        this.selectedCustomModelSettings.apiMethod === 'GET'
+          ? await axios.get(this.selectedCustomModelSettings.apiUrl, {
               params: requestPayload,
               responseType: 'stream',
             })
-          : await axios.post(this.apiUrl, requestPayload, {
-              responseType: 'stream',
-            });
+          : await axios.post(
+              this.selectedCustomModelSettings.apiUrl,
+              requestPayload,
+              {
+                responseType: 'stream',
+              },
+            );
 
       return new Promise<string>((resolve, reject) => {
         response.data.on('data', (chunk: Buffer) => {
@@ -228,103 +205,113 @@ export class CustomApiService extends AbstractLanguageModelService {
     }
   }
 
-  public async getResponseForQueryWithImage(
+  private async getResponseChunksWithImagePayload(
     query: string,
     images: string[],
-    currentEntryID?: string,
+    conversationHistory: string,
+    sendStreamResponse?: (message: string) => void,
   ): Promise<string> {
-    if (this.apiMethod === 'GET') {
-      vscode.window.showErrorMessage(
-        'This API uses GET method and cannot be used with image uploads.',
-      );
-      return 'This API uses GET method and cannot be used with image uploads.';
-    }
+    const formData = await this.createImageFormData(
+      conversationHistory,
+      images,
+      query,
+    );
 
-    const history = currentEntryID
-      ? this.getHistoryBeforeEntry(currentEntryID)
-      : this.history;
-    const conversationHistory = this.conversationHistoryToJson(history.entries);
-
-    try {
-      const formData = await this.createImageFormData(
-        conversationHistory,
-        images,
-        query,
-      );
-
-      const response = await axios.post(this.apiUrl, formData, {
-        headers: {
-          ...formData.getHeaders(),
+    if (!sendStreamResponse) {
+      const response = await axios.post(
+        this.selectedCustomModelSettings.apiUrl,
+        formData,
+        {
+          headers: {
+            ...formData.getHeaders(),
+          },
         },
-      });
+      );
 
       return response.data.response;
-    } catch (error) {
-      vscode.window.showErrorMessage(
-        'Failed to get response from Custom API Service: ' + error,
-      );
-      return 'Failed to connect to the custom API service.';
-    }
-  }
-
-  public async getResponseChunksForQueryWithImage(
-    query: string,
-    images: string[],
-    sendStreamResponse: (msg: string) => void,
-    currentEntryID?: string,
-  ): Promise<string> {
-    if (this.apiMethod === 'GET') {
-      vscode.window.showErrorMessage(
-        'This API uses GET method and cannot be used with image uploads.',
-      );
-      return 'This API uses GET method and cannot be used with image uploads.';
     }
 
-    const history = currentEntryID
-      ? this.getHistoryBeforeEntry(currentEntryID)
-      : this.history;
-    const conversationHistory = this.conversationHistoryToJson(history.entries);
-
-    try {
-      const formData = await this.createImageFormData(
-        conversationHistory,
-        images,
-        query,
-      );
-
-      const response = await axios.post(this.apiUrl, formData, {
+    const response = await axios.post(
+      this.selectedCustomModelSettings.apiUrl,
+      formData,
+      {
         headers: {
           ...formData.getHeaders(),
         },
         responseType: 'stream',
+      },
+    );
+
+    return new Promise<string>((resolve, reject) => {
+      let responseText = '';
+
+      response.data.on('data', (chunk: Buffer) => {
+        const partText = chunk.toString();
+        sendStreamResponse(partText);
+        responseText += partText;
       });
 
-      return new Promise<string>((resolve, reject) => {
-        let responseText = '';
-
-        response.data.on('data', (chunk: Buffer) => {
-          const partText = chunk.toString();
-          sendStreamResponse(partText);
-          responseText += partText;
-        });
-
-        response.data.on('end', () => {
-          resolve(responseText);
-        });
-
-        response.data.on('error', (error: Error) => {
-          vscode.window.showErrorMessage(
-            'Failed to get response from Custom API Service with image: ' +
-              error,
-          );
-          reject('Failed to connect to the custom API service with image.');
-        });
+      response.data.on('end', () => {
+        resolve(responseText);
       });
+
+      response.data.on('error', (error: Error) => {
+        vscode.window.showErrorMessage(
+          'Failed to get response from Custom API Service with image: ' + error,
+        );
+        reject('Failed to connect to the custom API service with image.');
+      });
+    });
+  }
+
+  public async getResponse(options: GetResponseOptions): Promise<string> {
+    if (this.currentModel === '') {
+      vscode.window.showErrorMessage(
+        'Make sure the model is selected before sending a message. Open the model selection dropdown and configure the model.',
+      );
+      return 'Missing model configuration. Check the model selection dropdown.';
+    }
+
+    const { query, images, sendStreamResponse, currentEntryID } = options;
+
+    const canSendWithImages =
+      this.selectedCustomModelSettings.apiMethod === 'GET' &&
+      images &&
+      images.length > 0;
+
+    if (canSendWithImages) {
+      vscode.window.showWarningMessage(
+        'This API uses GET method currently and cannot be used with image uploads.',
+      );
+    }
+
+    const history = currentEntryID
+      ? this.getHistoryBeforeEntry(currentEntryID)
+      : this.history;
+    const conversationHistory = this.conversationHistoryToJson(history.entries);
+
+    try {
+      if (canSendWithImages) {
+        return this.getResponseChunksWithImagePayload(
+          query,
+          images,
+          conversationHistory,
+          sendStreamResponse,
+        );
+      }
+
+      return this.getResponseChunksWithTextPayload(
+        query,
+        conversationHistory,
+        sendStreamResponse,
+      );
     } catch (error) {
       vscode.window.showErrorMessage(
-        'Failed to get response from Custom API Service with image: ' + error,
+        `Failed to get response from Custom API Service ${
+          images && images.length > 0 ? 'with image' : ''
+        }: ${error}`,
       );
-      return 'Failed to connect to the custom API service with image.';
+      return `Failed to get response from Custom API Service ${images && images.length > 0 ? 'with image' : ''}: ${error}`;
     }
   }
 

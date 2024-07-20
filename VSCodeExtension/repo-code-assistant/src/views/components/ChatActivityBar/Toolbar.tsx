@@ -1,5 +1,5 @@
 import React, { useContext, useEffect, useState } from 'react';
-import type { MenuProps, SelectProps } from 'antd';
+import { Flex, MenuProps, SelectProps } from 'antd';
 import { Select, Button, Space, Dropdown, Drawer } from 'antd';
 import {
   PlusOutlined,
@@ -89,7 +89,7 @@ export const Toolbar: React.FC<ToolbarProps> = ({
       });
 
     const handleResize = () => {
-      setIsOffCanvas(window.innerWidth < 600);
+      setIsOffCanvas(window.innerWidth < 560);
     };
 
     window.addEventListener('resize', handleResize);
@@ -238,11 +238,29 @@ export const Toolbar: React.FC<ToolbarProps> = ({
                 loading={isActiveModelLoading}
                 options={modelServiceOptions}
               />
-              <Button onClick={() => setIsSelectModelOpen(true)}>
-                {selectedModel}
+              <Button
+                onClick={() => setIsSelectModelOpen(true)}
+                loading={isActiveModelLoading}
+                style={{ whiteSpace: 'nowrap', overflow: 'hidden' }}
+              >
+                {isActiveModelLoading ? 'Loading...' : selectedModel}
               </Button>
               <Drawer
-                title='Select Model'
+                title={
+                  <Flex justify={'space-between'} align={'center'}>
+                    <span>Select Model</span>
+                    <Space>
+                      <Button
+                        icon={<HistoryOutlined />}
+                        onClick={toggleHistorySidebar}
+                      />
+                      <Button icon={<PlusOutlined />} onClick={createNewChat} />
+                      <Dropdown menu={{ items: settingMenuItems }}>
+                        <Button icon={<SettingOutlined />} />
+                      </Dropdown>
+                    </Space>
+                  </Flex>
+                }
                 placement='right'
                 open={isSelectModelOpen}
                 onClose={() => setIsSelectModelOpen(false)}
