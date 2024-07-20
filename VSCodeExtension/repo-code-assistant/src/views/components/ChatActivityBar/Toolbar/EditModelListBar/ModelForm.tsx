@@ -196,7 +196,9 @@ export const ModelForm: React.FC<ModelFormProps> = ({
             onClick={handleFetchLatestAvailableModels}
             block
           >
-            Fetch Latest Available Models
+            {activeModelService === 'ollama'
+              ? 'Fetch available models from host server'
+              : 'Fetch Latest Available Models'}
           </Button>
         </Tooltip>
         <Button type='dashed' onClick={handleAddAvailableModel} block>
