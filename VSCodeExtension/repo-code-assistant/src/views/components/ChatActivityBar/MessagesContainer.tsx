@@ -10,9 +10,9 @@ import type {
   ConversationHistory,
   ModelServiceType,
 } from '../../../types';
+import { fadeIn, fadeOut } from '../../styles';
 import { WebviewContext } from '../../WebviewContext';
 import { TypingAnimation } from '../common/TypingAnimation';
-import { fadeIn, fadeOut } from '../../styles/animation';
 import { MessagesTopToolBar } from './MessagesContainer/MessagesTopToolBar';
 
 const { useToken } = theme;

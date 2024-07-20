@@ -7,10 +7,10 @@ import { ConfigProvider } from 'antd';
 import type { ConversationHistory, ModelServiceType } from '../../types';
 import { INPUT_MESSAGE_KEY, UPLOADED_IMAGES_KEY } from '../../constants';
 import { WebviewContext } from '../WebviewContext';
+import { useThemeConfig } from '../hooks';
 import { Toolbar } from './ChatActivityBar/Toolbar';
 import { InputContainer } from './ChatActivityBar/InputContainer';
 import { MessagesContainer } from './ChatActivityBar/MessagesContainer';
-import { useThemeConfig } from '../hooks/useThemeConfig';
 
 const Container = styled(Content)`
   display: flex;
