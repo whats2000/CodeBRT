@@ -13,7 +13,7 @@ import type {
 import Anthropic from '@anthropic-ai/sdk';
 
 import type { ConversationEntry } from '../../types';
-import SettingsManager from '../../api/settingsManager';
+import { SettingsManager } from '../../api';
 import { AbstractLanguageModelService } from './abstractLanguageModelService';
 
 export class AnthropicService extends AbstractLanguageModelService {

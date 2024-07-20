@@ -13,7 +13,7 @@ import {
 
 import type { ConversationEntry } from '../../types';
 import { AbstractLanguageModelService } from './abstractLanguageModelService';
-import SettingsManager from '../../api/settingsManager';
+import { SettingsManager } from '../../api';
 
 type GeminiModel = {
   name: string;

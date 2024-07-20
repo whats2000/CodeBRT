@@ -16,21 +16,20 @@ import type {
   ViewApiResponse,
   ViewEvents,
 } from './types';
+import { FileUtils } from './utils';
 import { ViewKey } from './views';
-import { viewRegistration } from './api/viewRegistration';
-import SettingsManager from './api/settingsManager';
-import { AnthropicService } from './services/languageModel/anthropicService';
-import { GeminiService } from './services/languageModel/geminiService';
-import { CohereService } from './services/languageModel/cohereService';
-import { OpenAIService } from './services/languageModel/openaiService';
-import { GroqService } from './services/languageModel/groqService';
-import { HuggingFaceService } from './services/languageModel/huggingFaceService';
-import { OllamaService } from './services/languageModel/ollamaService';
-import { CustomApiService } from './services/languageModel/customApiService';
-import { GptSoVitsApiService } from './services/Voice/gptSoVitsService';
-import { OpenaiVoiceService } from './services/Voice/openaiVoiceService';
-import { Uri } from 'vscode';
-import { FileUtils } from './utils/fileUtils';
+import { viewRegistration, SettingsManager } from './api';
+import {
+  AnthropicService,
+  CohereService,
+  CustomApiService,
+  GeminiService,
+  GroqService,
+  HuggingFaceService,
+  OllamaService,
+  OpenAIService,
+} from './services/languageModel';
+import { GptSoVitsApiService, OpenaiVoiceService } from './services/Voice';
 
 export const activate = async (ctx: vscode.ExtensionContext) => {
   const connectedViews: Partial<Record<ViewKey, vscode.WebviewView>> = {};
@@ -479,7 +478,7 @@ export const activate = async (ctx: vscode.ExtensionContext) => {
       await voiceService.switchVoice(voiceName);
     },
     openExternalLink: async (url) => {
-      await vscode.env.openExternal(Uri.parse(url));
+      await vscode.env.openExternal(vscode.Uri.parse(url));
     },
   };
 

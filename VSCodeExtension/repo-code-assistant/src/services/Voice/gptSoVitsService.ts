@@ -2,8 +2,7 @@ import axios, { AxiosResponse } from 'axios';
 import vscode from 'vscode';
 
 import type { GptSoVitsVoiceSetting } from '../../types';
-import SettingsManager from '../../api/settingsManager';
-import SoundPlay from '../../utils/audioPlayer';
+import { SettingsManager } from '../../api';
 import { AbstractVoiceService } from './abstractVoiceService';
 
 export class GptSoVitsApiService extends AbstractVoiceService {
@@ -27,8 +26,6 @@ export class GptSoVitsApiService extends AbstractVoiceService {
     );
 
     this.updateSettings(selectedVoice);
-
-    this.soundPlayer = new SoundPlay();
   }
 
   private updateSettings(

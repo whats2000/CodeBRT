@@ -11,7 +11,7 @@ import {
 
 import type { ConversationEntry } from '../../types';
 import { AbstractLanguageModelService } from './abstractLanguageModelService';
-import SettingsManager from '../../api/settingsManager';
+import { SettingsManager } from '../../api';
 
 export class OpenAIService extends AbstractLanguageModelService {
   private apiKey: string;

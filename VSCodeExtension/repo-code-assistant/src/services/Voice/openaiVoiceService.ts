@@ -2,7 +2,7 @@ import * as fs1 from 'node:fs';
 import vscode from 'vscode';
 import OpenAI from 'openai';
 
-import SettingsManager from '../../api/settingsManager';
+import { SettingsManager } from '../../api';
 import { AbstractVoiceService } from './abstractVoiceService';
 
 export class OpenaiVoiceService extends AbstractVoiceService {

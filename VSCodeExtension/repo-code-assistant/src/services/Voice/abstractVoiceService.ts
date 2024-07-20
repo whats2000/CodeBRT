@@ -6,8 +6,8 @@ import { SentenceTokenizer } from 'natural';
 import removeMarkdown from 'markdown-to-text';
 
 import type { VoiceService } from '../../types';
-import SettingsManager from '../../api/settingsManager';
-import SoundPlay from '../../utils/audioPlayer';
+import { SettingsManager } from '../../api/settingsManager';
+import { SoundPlay } from '../../utils';
 
 export abstract class AbstractVoiceService implements VoiceService {
   protected readonly context: vscode.ExtensionContext;

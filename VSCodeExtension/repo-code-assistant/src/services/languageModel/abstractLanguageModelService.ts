@@ -10,7 +10,7 @@ import type {
   ConversationHistoryList,
   LanguageModelService,
 } from '../../types';
-import SettingsManager from '../../api/settingsManager';
+import { SettingsManager } from '../../api';
 
 /**
  * Abstract class for the Language Model Service

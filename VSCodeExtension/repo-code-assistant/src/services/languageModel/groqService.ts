@@ -8,7 +8,7 @@ import type {
 
 import { ConversationEntry } from '../../types';
 import { AbstractLanguageModelService } from './abstractLanguageModelService';
-import SettingsManager from '../../api/settingsManager';
+import { SettingsManager } from '../../api';
 
 export class GroqService extends AbstractLanguageModelService {
   private apiKey: string;

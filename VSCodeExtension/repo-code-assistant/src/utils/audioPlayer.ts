@@ -19,7 +19,7 @@ const windowPlayCommand = (path: string, volume: number): string =>
     path,
   )} $player.Volume = ${volume}; ${waitForDuration} ${playAudio} ${stopAudio}"`;
 
-class SoundPlay {
+export class SoundPlay {
   private playProcess: ChildProcess | null = null;
 
   async play(path: string, volume = 0.5): Promise<void> {

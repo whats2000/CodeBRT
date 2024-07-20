@@ -8,7 +8,7 @@ import type {
   ExtensionSettingsLocal,
 } from '../types';
 
-class SettingsManager {
+export class SettingsManager {
   private static instance: SettingsManager;
   private readonly localSettingsPath: string;
   private readonly defaultLocalSettings: ExtensionSettingsLocal = {
