@@ -63,25 +63,32 @@ export abstract class FileUtils {
    * @param connectedViews - The connected views.
    * @param absolutePath - The absolute path to get the URI for.
    */
-  static getWebviewUri(
+  static async getWebviewUri(
     ctx: vscode.ExtensionContext,
     connectedViews: Partial<Record<ViewKey, vscode.WebviewView>>,
     absolutePath: string,
   ) {
-    const extensionPath = ctx.extensionPath.endsWith(path.sep)
-      ? ctx.extensionPath
-      : ctx.extensionPath + path.sep;
+    try {
+      await fs.access(absolutePath);
 
-    const relativePath = path.relative(extensionPath, absolutePath);
+      const extensionPath = ctx.extensionPath.endsWith(path.sep)
+        ? ctx.extensionPath
+        : ctx.extensionPath + path.sep;
 
-    const panel = connectedViews?.chatActivityBar;
+      const relativePath = path.relative(extensionPath, absolutePath);
 
-    if (!panel) return '';
+      const panel = connectedViews?.chatActivityBar;
 
-    const imagePath = path.join(ctx.extensionPath, relativePath);
+      if (!panel) return '';
 
-    const imageUri = panel.webview.asWebviewUri(vscode.Uri.file(imagePath));
+      const imagePath = path.join(ctx.extensionPath, relativePath);
 
-    return imageUri.toString();
+      const imageUri = panel.webview.asWebviewUri(vscode.Uri.file(imagePath));
+
+      return imageUri.toString();
+    } catch (error) {
+      console.error('Failed to get webview URI:', error);
+      return '';
+    }
   }
 }

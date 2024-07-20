@@ -2,7 +2,17 @@ import React, { useContext, useEffect, useState } from 'react';
 import ReactMarkdown from 'react-markdown';
 import { RendererCode, RendererCodeProvider } from '../common/RenderCode';
 import styled from 'styled-components';
-import { Button, Input, Space, Spin, theme } from 'antd';
+import {
+  Button,
+  Input,
+  Space,
+  Spin,
+  theme,
+  Typography,
+  Image as ImageComponent,
+  Flex,
+  Card,
+} from 'antd';
 import * as hljs from 'react-syntax-highlighter/dist/cjs/styles/hljs';
 
 import type {
@@ -14,6 +24,7 @@ import { fadeIn, fadeOut } from '../../styles';
 import { WebviewContext } from '../../WebviewContext';
 import { TypingAnimation } from '../common/TypingAnimation';
 import { MessagesTopToolBar } from './MessagesContainer/MessagesTopToolBar';
+import { WarningOutlined } from '@ant-design/icons';
 
 const { useToken } = theme;
 
@@ -58,12 +69,6 @@ const EditInputTextArea = styled(Input.TextArea)`
 const MessageText = styled.span`
   word-wrap: break-word;
   margin: 10px 0;
-`;
-
-const MessageImage = styled.img`
-  max-width: 100%;
-  border-radius: 10px;
-  margin-top: 10px;
 `;
 
 type MessagesContainerProps = {
@@ -296,14 +301,34 @@ export const MessagesContainer: React.FC<MessagesContainerProps> = ({
                       </RendererCodeProvider>
                     )}
                   </MessageText>
-                  {entry.images &&
-                    entry.images.map((image, index) => (
-                      <MessageImage
-                        key={index}
-                        src={imageUrls[image] || image}
-                        alt='Referenced Image'
-                      />
-                    ))}
+                  <ImageComponent.PreviewGroup>
+                    <Flex wrap={true}>
+                      {entry.images &&
+                        entry.images.map((image, index) =>
+                          imageUrls[image] !== '' ? (
+                            <Card
+                              size={'small'}
+                              style={{
+                                width: '45%',
+                                margin: '2.5%',
+                                display: 'flex',
+                                alignItems: 'center',
+                              }}
+                              key={`${image}-${index}`}
+                            >
+                              <ImageComponent
+                                src={imageUrls[image] || image}
+                                alt='Referenced Image'
+                              />
+                            </Card>
+                          ) : (
+                            <Typography.Text key={index} type={'warning'}>
+                              <WarningOutlined /> Referenced image not found
+                            </Typography.Text>
+                          ),
+                        )}
+                    </Flex>
+                  </ImageComponent.PreviewGroup>
                 </>
               )}
             </MessageBubble>

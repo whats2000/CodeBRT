@@ -396,8 +396,8 @@ export const activate = async (ctx: vscode.ExtensionContext) => {
       return FileUtils.uploadFile(ctx, base64Data);
     },
     deleteImage: FileUtils.deleteFile,
-    getWebviewUri: (absolutePath: string) => {
-      return FileUtils.getWebviewUri(ctx, connectedViews, absolutePath);
+    getWebviewUri: async (absolutePath: string) => {
+      return await FileUtils.getWebviewUri(ctx, connectedViews, absolutePath);
     },
     convertTextToVoice: async (text) => {
       const voiceServiceType = settingsManager.get(

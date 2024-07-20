@@ -368,7 +368,7 @@ export abstract class AbstractLanguageModelService
             try {
               await fs.promises.unlink(imagePath);
             } catch (error) {
-              vscode.window.showErrorMessage(
+              console.error(
                 `Failed to delete image: ${imagePath}, error: ${error}`,
               );
             }

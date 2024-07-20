@@ -261,7 +261,7 @@ export type ViewApi = {
    * Get the webview URI for a path.
    * @param absolutePath - The absolute path to get the URI for.
    */
-  getWebviewUri: (absolutePath: string) => string;
+  getWebviewUri: (absolutePath: string) => Promise<string>;
 
   /**
    * Convert text to voice and play it.

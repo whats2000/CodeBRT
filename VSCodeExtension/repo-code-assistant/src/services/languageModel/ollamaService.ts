@@ -88,27 +88,25 @@ export class OllamaService extends AbstractLanguageModelService {
 
     // Ollama's API requires the query message at the end of the history
     if (result.length > 0 && result[result.length - 1].role !== 'user') {
-      const lastUserMessage: Message = {
+      result.push({
         role: 'user',
         content: query,
-      };
+      });
+    }
 
-      if (images) {
-        lastUserMessage.images = await Promise.all(
-          images
-            .map(async (imagePath) => {
-              try {
-                const imageBuffer = await fs.promises.readFile(imagePath);
-                return imageBuffer.toString('base64');
-              } catch (error) {
-                console.error('Failed to read image file:', error);
-              }
-            })
-            .filter((image) => image !== undefined) as Promise<string>[],
-        );
-      }
-
-      result.push(lastUserMessage);
+    if (images) {
+      result[result.length - 1].images = await Promise.all(
+        images
+          .map(async (imagePath) => {
+            try {
+              const imageBuffer = await fs.promises.readFile(imagePath);
+              return imageBuffer.toString('base64');
+            } catch (error) {
+              console.error('Failed to read image file:', error);
+            }
+          })
+          .filter((image) => image !== undefined) as Promise<string>[],
+      );
     }
 
     return result;
