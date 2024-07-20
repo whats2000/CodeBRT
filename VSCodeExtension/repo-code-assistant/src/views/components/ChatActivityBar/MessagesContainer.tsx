@@ -13,6 +13,7 @@ import {
   Flex,
   Card,
 } from 'antd';
+import { WarningOutlined } from '@ant-design/icons';
 import * as hljs from 'react-syntax-highlighter/dist/cjs/styles/hljs';
 
 import type {
@@ -24,9 +25,6 @@ import { fadeIn, fadeOut } from '../../styles';
 import { WebviewContext } from '../../WebviewContext';
 import { TypingAnimation } from '../common/TypingAnimation';
 import { MessagesTopToolBar } from './MessagesContainer/MessagesTopToolBar';
-import { WarningOutlined } from '@ant-design/icons';
-
-const { useToken } = theme;
 
 const StyledMessagesContainer = styled.div<{ $isActiveModelLoading: boolean }>`
   flex-grow: 1;
@@ -128,7 +126,7 @@ export const MessagesContainer: React.FC<MessagesContainerProps> = ({
   }>({ hljsTheme: 'darcula' });
 
   const { callApi } = useContext(WebviewContext);
-  const { token } = useToken();
+  const { token } = theme.useToken();
 
   useEffect(() => {
     const loadImageUrls = async () => {

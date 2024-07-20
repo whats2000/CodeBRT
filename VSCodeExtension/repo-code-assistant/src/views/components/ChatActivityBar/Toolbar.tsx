@@ -1,13 +1,6 @@
 import React, { useContext, useEffect, useState } from 'react';
-import {
-  Select,
-  Button,
-  Space,
-  Dropdown,
-  Drawer,
-  MenuProps,
-  SelectProps,
-} from 'antd';
+import type { MenuProps, SelectProps } from 'antd';
+import { Select, Button, Space, Dropdown, Drawer } from 'antd';
 import {
   PlusOutlined,
   HistoryOutlined,

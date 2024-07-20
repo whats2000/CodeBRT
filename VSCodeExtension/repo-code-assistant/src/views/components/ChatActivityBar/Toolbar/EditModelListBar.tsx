@@ -6,12 +6,12 @@ import { WebviewContext } from '../../../WebviewContext';
 import { ModelForm } from './EditModelListBar/ModelForm';
 import { CustomModelForm } from './EditModelListBar/CustomModelForm';
 
-interface EditModelListBarProps {
+type EditModelListBarProps = {
   isOpen: boolean;
   onClose: () => void;
   activeModelService: ModelServiceType | 'loading...';
   handleEditModelListSave: (models: string[]) => void;
-}
+};
 
 export const EditModelListBar: React.FC<EditModelListBarProps> = ({
   isOpen,

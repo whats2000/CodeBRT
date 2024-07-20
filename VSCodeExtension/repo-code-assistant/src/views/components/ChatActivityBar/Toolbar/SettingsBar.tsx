@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useContext } from 'react';
 import styled from 'styled-components';
+import type { Color } from 'antd/es/color-picker/color';
 import {
   Drawer,
   Form,
@@ -11,7 +12,6 @@ import {
   Tooltip,
   Typography,
 } from 'antd';
-import type { Color } from 'antd/es/color-picker/color';
 
 import type { ExtensionSettings } from '../../../../types';
 import { WebviewContext } from '../../../WebviewContext';

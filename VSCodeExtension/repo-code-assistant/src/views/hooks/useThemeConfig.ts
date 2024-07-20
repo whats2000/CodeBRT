@@ -1,5 +1,6 @@
 import { useContext, useEffect, useState } from 'react';
-import { theme, ThemeConfig } from 'antd';
+import type { ThemeConfig } from 'antd';
+import { theme } from 'antd';
 
 import { WebviewContext } from '../WebviewContext';
 

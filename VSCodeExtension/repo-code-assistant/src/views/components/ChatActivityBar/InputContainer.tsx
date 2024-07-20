@@ -1,6 +1,7 @@
 import React, { useState, useContext, useEffect, useRef } from 'react';
 import styled from 'styled-components';
-import { Button, Flex, Input, Image, Upload, UploadFile } from 'antd';
+import type { UploadFile } from 'antd/lib/upload/interface';
+import { Button, Flex, Input, Image, Upload } from 'antd';
 import {
   AudioOutlined,
   LoadingOutlined,

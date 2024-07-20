@@ -1,12 +1,12 @@
 import React, { useContext, useEffect, useRef } from 'react';
 import { Button, Form, Space, Tooltip } from 'antd';
+import type { DragEndEvent } from '@dnd-kit/core';
 import {
+  PointerSensor,
   DndContext,
   closestCenter,
-  PointerSensor,
   useSensor,
   useSensors,
-  DragEndEvent,
 } from '@dnd-kit/core';
 import {
   arrayMove,
