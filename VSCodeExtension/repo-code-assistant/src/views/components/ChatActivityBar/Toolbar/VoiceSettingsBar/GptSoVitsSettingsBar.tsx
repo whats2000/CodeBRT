@@ -22,7 +22,7 @@ import {
   SortableContext,
   verticalListSortingStrategy,
 } from '@dnd-kit/sortable';
-import { v4 as uuidv4 } from 'uuid';
+import { v4 as uuidV4 } from 'uuid';
 
 import type {
   ExtensionSettings,
@@ -160,7 +160,7 @@ export const GptSoVitsSettingsBar: React.FC<GptSoVitsSettingsBarProps> = ({
 
   const handleAddVoice = () => {
     const newVoice = {
-      id: `voice-${uuidv4()}`,
+      id: `voice-${uuidV4()}`,
       name: 'New Voice',
       referWavPath: '',
       referText: '',

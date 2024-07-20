@@ -1,6 +1,6 @@
 import { useContext, useState, useEffect, useRef } from 'react';
 import styled from 'styled-components';
-import { v4 as uuidv4 } from 'uuid';
+import { v4 as uuidV4 } from 'uuid';
 import { Content } from 'antd/es/layout/layout';
 import { ConfigProvider } from 'antd';
 
@@ -83,7 +83,7 @@ export const ChatActivityBar = () => {
           message: newEntries[currentID].message + responseFromMessage,
         };
       } else {
-        const tempId = `temp-${uuidv4()}`;
+        const tempId = `temp-${uuidV4()}`;
         newEntries[tempId] = {
           id: tempId,
           role: 'AI',
@@ -203,7 +203,7 @@ export const ChatActivityBar = () => {
       };
     });
 
-    const tempId = `temp-${uuidv4()}`;
+    const tempId = `temp-${uuidV4()}`;
     setConversationHistory((prevMessages) => ({
       ...prevMessages,
       entries: {
@@ -331,7 +331,7 @@ export const ChatActivityBar = () => {
       };
     });
 
-    const tempId = `temp-${uuidv4()}`;
+    const tempId = `temp-${uuidV4()}`;
     setConversationHistory((prevMessages) => ({
       ...prevMessages,
       entries: {

@@ -13,7 +13,7 @@ import {
   SortableContext,
   verticalListSortingStrategy,
 } from '@dnd-kit/sortable';
-import { v4 as uuidv4 } from 'uuid';
+import { v4 as uuidV4 } from 'uuid';
 
 import type { ModelServiceType } from '../../../../../types';
 import { WebviewContext } from '../../../../WebviewContext';
@@ -46,7 +46,7 @@ export const ModelForm: React.FC<ModelFormProps> = ({
   const { callApi } = useContext(WebviewContext);
 
   const modelsWithId = useRef(
-    availableModels.map((model) => ({ id: uuidv4(), name: model })),
+    availableModels.map((model) => ({ id: uuidV4(), name: model })),
   );
 
   const sensors = useSensors(
@@ -103,7 +103,7 @@ export const ModelForm: React.FC<ModelFormProps> = ({
   };
 
   const handleAddAvailableModel = () => {
-    const newModel = { id: uuidv4(), name: '' };
+    const newModel = { id: uuidV4(), name: '' };
     modelsWithId.current = [...modelsWithId.current, newModel];
     setAvailableModels(modelsWithId.current.map((model) => model.name));
   };

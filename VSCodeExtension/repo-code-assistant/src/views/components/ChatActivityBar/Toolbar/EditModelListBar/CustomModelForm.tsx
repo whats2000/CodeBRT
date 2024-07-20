@@ -13,7 +13,7 @@ import {
   SortableContext,
   verticalListSortingStrategy,
 } from '@dnd-kit/sortable';
-import { v4 as uuidv4 } from 'uuid';
+import { v4 as uuidV4 } from 'uuid';
 
 import type { CustomModelSettings } from '../../../../../types';
 import { WebviewContext } from '../../../../WebviewContext';
@@ -75,7 +75,7 @@ export const CustomModelForm: React.FC<CustomModelFormProps> = ({
 
   const handleAddModel = () => {
     const newModel: CustomModelSettings = {
-      id: uuidv4(),
+      id: uuidV4(),
       name: '',
       apiUrl: '',
       apiMethod: 'POST',

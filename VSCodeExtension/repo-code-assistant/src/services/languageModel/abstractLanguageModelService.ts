@@ -1,6 +1,6 @@
 import * as fs from 'fs';
 import * as path from 'path';
-import { v4 as uuidv4 } from 'uuid';
+import { v4 as uuidV4 } from 'uuid';
 
 import * as vscode from 'vscode';
 
@@ -248,7 +248,7 @@ export abstract class AbstractLanguageModelService
     message: string,
     images?: string[],
   ): string {
-    const newID = uuidv4();
+    const newID = uuidV4();
     const newEntry: ConversationEntry = {
       id: newID,
       role: role,

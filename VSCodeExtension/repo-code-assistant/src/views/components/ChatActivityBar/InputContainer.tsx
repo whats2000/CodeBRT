@@ -1,9 +1,8 @@
 import React, { useState, useContext, useEffect, useRef } from 'react';
 import styled from 'styled-components';
-import { Button, Flex, Input } from 'antd';
+import { Button, Flex, Input, Image, Upload, UploadFile } from 'antd';
 import {
   AudioOutlined,
-  CloseCircleFilled,
   LoadingOutlined,
   SendOutlined,
   UploadOutlined,
@@ -22,41 +21,9 @@ const UploadedImageContainer = styled.div`
   flex-wrap: wrap;
 `;
 
-const UploadedImageWrapper = styled.div`
-  position: relative;
-  margin: 5px 5px 15px;
-
-  &:hover button {
-    display: flex;
-  }
-`;
-
-const UploadedImage = styled.img`
-  max-width: 100px;
-  max-height: 100px;
-  border-radius: 4px;
-`;
-
-const DeleteButton = styled.button`
-  display: none;
-  position: absolute;
-  align-items: center;
-  justify-content: center;
-  top: 0;
-  right: 0;
-  background-color: rgba(0, 0, 0, 0.5);
-  color: white;
-  border: none;
-  border-radius: 50%;
-  cursor: pointer;
-  padding: 0;
-  opacity: 0.8;
-
-  &:hover {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    opacity: 1;
+const StyledUpload = styled(Upload)`
+  div.ant-upload-list-item-container {
+    margin-bottom: 10px;
   }
 `;
 
@@ -81,8 +48,18 @@ export const InputContainer = ({
 }: InputContainerProps) => {
   const { callApi } = useContext(WebviewContext);
   const [enterPressCount, setEnterPressCount] = useState(0);
-  const [imageUris, setImageUris] = useState<string[]>([]);
+  const [previewOpen, setPreviewOpen] = useState(false);
+  const [previewImage, setPreviewImage] = useState('');
+  const [fileList, setFileList] = useState<UploadFile[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    // Note: The link will break in vscode webview, so we need to remove the href attribute to prevent it.
+    const links = document.querySelectorAll<HTMLLinkElement>('a');
+    links.forEach((link) => {
+      link.href = '';
+    });
+  }, [fileList]);
 
   const resetEnterPressCount = () => setEnterPressCount(0);
 
@@ -125,31 +102,58 @@ export const InputContainer = ({
 
   useEffect(() => {
     const updateImageUris = async () => {
-      const uris = await Promise.all(
+      const urls = await Promise.all(
         uploadedImages.map(async (imagePath) => {
           const uri = await callApi('getWebviewUri', imagePath);
           return uri as string;
         }),
       );
-      setImageUris(uris);
+      setFileList(
+        urls.map((url, index) => ({
+          uid: index.toString(),
+          name: `image-${index + 1}`,
+          status: 'done',
+          url,
+        })),
+      );
     };
     updateImageUris().catch((error) => console.error(error));
   }, [uploadedImages, callApi]);
 
+  const handleRemove = (file: UploadFile) => {
+    const index = fileList.indexOf(file);
+    const newFileList = [...fileList];
+    newFileList.splice(index, 1);
+    handleImageRemove(uploadedImages[index]);
+    setFileList(newFileList);
+  };
+
+  const handlePreview = async (file: UploadFile) => {
+    setPreviewImage(file.url || (file.preview as string));
+    setPreviewOpen(true);
+  };
+
   return (
     <StyledInputContainer>
+      {previewImage && (
+        <Image
+          wrapperStyle={{ display: 'none' }}
+          preview={{
+            visible: previewOpen,
+            onVisibleChange: (visible) => setPreviewOpen(visible),
+            afterOpenChange: (visible) => !visible && setPreviewImage(''),
+          }}
+          src={previewImage}
+        />
+      )}
       <UploadedImageContainer>
-        {imageUris.map((imageUri, index) => (
-          <UploadedImageWrapper key={index}>
-            <UploadedImage src={imageUri} alt={`Uploaded ${index + 1}`} />
-            <DeleteButton
-              onClick={() => handleImageRemove(uploadedImages[index])}
-              disabled={isProcessing}
-            >
-              <CloseCircleFilled />
-            </DeleteButton>
-          </UploadedImageWrapper>
-        ))}
+        <StyledUpload
+          fileList={fileList}
+          listType='picture-card'
+          onRemove={handleRemove}
+          onPreview={handlePreview}
+          supportServerRender={false}
+        />
       </UploadedImageContainer>
       <Flex gap={10}>
         <Button
@@ -158,18 +162,18 @@ export const InputContainer = ({
           onClick={handleUploadButtonClick}
           disabled={isProcessing}
         />
-        <Button
-          type={'text'}
-          icon={<AudioOutlined />}
-          onClick={handleVoiceInput}
-          disabled={isProcessing}
-        />
         <input
           type='file'
           accept='image/*'
           ref={fileInputRef}
           onInput={handleFileChange}
           style={{ display: 'none' }}
+        />
+        <Button
+          type={'text'}
+          icon={<AudioOutlined />}
+          onClick={handleVoiceInput}
+          disabled={isProcessing}
         />
         <Input.TextArea
           value={inputMessage}

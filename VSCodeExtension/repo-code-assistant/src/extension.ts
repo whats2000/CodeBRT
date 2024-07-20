@@ -1,5 +1,4 @@
 import fs from 'node:fs/promises';
-import path from 'node:path';
 import * as vscode from 'vscode';
 
 import type {
@@ -31,6 +30,7 @@ import { CustomApiService } from './services/languageModel/customApiService';
 import { GptSoVitsApiService } from './services/Voice/gptSoVitsService';
 import { OpenaiVoiceService } from './services/Voice/openaiVoiceService';
 import { Uri } from 'vscode';
+import { FileUtils } from './utils/fileUtils';
 
 export const activate = async (ctx: vscode.ExtensionContext) => {
   const connectedViews: Partial<Record<ViewKey, vscode.WebviewView>> = {};
@@ -394,55 +394,11 @@ export const activate = async (ctx: vscode.ExtensionContext) => {
       return await modelService.getLatestAvailableModelNames();
     },
     uploadImage: async (base64Data: string) => {
-      const matches = base64Data.match(/^data:([A-Za-z-+/]+);base64,(.+)$/);
-      if (!matches || matches.length !== 3) {
-        throw new Error('Invalid input string');
-      }
-
-      const buffer = Buffer.from(matches[2], 'base64');
-      const mediaDir = path.join(ctx.extensionPath, 'media');
-
-      // Create the media directory if it does not exist
-      try {
-        await fs.mkdir(mediaDir, { recursive: true });
-      } catch (error) {
-        throw new Error('Failed to create media directory: ' + error);
-      }
-
-      // Generate a unique filename to avoid conflicts
-      const filename = path.join(mediaDir, `uploaded_image_${Date.now()}.png`);
-
-      try {
-        await fs.writeFile(filename, buffer);
-      } catch (error) {
-        throw new Error('Failed to write image file: ' + error);
-      }
-
-      return filename;
+      return FileUtils.uploadFile(ctx, base64Data);
     },
-    deleteImage: async (imagePath: string) => {
-      try {
-        await fs.unlink(imagePath);
-      } catch (error) {
-        vscode.window.showErrorMessage(`Failed to delete image: ${error}`);
-      }
-    },
+    deleteImage: FileUtils.deleteFile,
     getWebviewUri: (absolutePath: string) => {
-      const extensionPath = ctx.extensionPath.endsWith(path.sep)
-        ? ctx.extensionPath
-        : ctx.extensionPath + path.sep;
-
-      const relativePath = path.relative(extensionPath, absolutePath);
-
-      const panel = connectedViews?.chatActivityBar;
-
-      if (!panel) return '';
-
-      const imagePath = path.join(ctx.extensionPath, relativePath);
-
-      const imageUri = panel.webview.asWebviewUri(vscode.Uri.file(imagePath));
-
-      return imageUri.toString();
+      return FileUtils.getWebviewUri(ctx, connectedViews, absolutePath);
     },
     convertTextToVoice: async (text) => {
       const voiceServiceType = settingsManager.get(
