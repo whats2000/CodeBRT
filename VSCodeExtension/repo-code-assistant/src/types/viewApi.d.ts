@@ -1,14 +1,9 @@
-import {
-  CustomModelSettings,
-  ExtensionSettings,
-  GptSoVitsVoiceSetting,
-} from './extensionSettings';
+import { CustomModelSettings, ExtensionSettings } from './extensionSettings';
 import {
   ConversationHistory,
   ConversationHistoryList,
 } from './conversationHistory';
 import { ModelServiceType } from './modelServiceType';
-import { VoiceServiceType } from './voiceServiceType';
 
 /**
  * Represents the API request structure for the view.

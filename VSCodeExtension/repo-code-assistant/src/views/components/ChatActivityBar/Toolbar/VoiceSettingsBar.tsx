@@ -10,7 +10,11 @@ import {
   Space,
 } from 'antd';
 
-import type { ExtensionSettings, VoiceServiceType } from '../../../../types';
+import type {
+  ExtensionSettings,
+  TextToVoiceServiceType,
+  VoiceToTextServiceType,
+} from '../../../../types';
 import { MODEL_SERVICE_LINKS } from '../../../../constants';
 import { WebviewContext } from '../../../WebviewContext';
 import { GptSoVitsSettingsBar } from './VoiceSettingsBar/GptSoVitsSettingsBar';
@@ -27,12 +31,15 @@ export const VoiceSettingsBar: React.FC<VoiceSettingsBarProps> = ({
   const { callApi } = useContext(WebviewContext);
   const [isGptSoVitsSettingsOpen, setIsGptSoVitsSettingsOpen] = useState(false);
 
-  const textToVoiceServices: VoiceServiceType[] = [
+  const textToVoiceServices: TextToVoiceServiceType[] = [
     'not set',
     'openai',
     'gptSoVits',
   ];
-  const voiceToTextServices: VoiceServiceType[] = ['not set', 'openai'];
+  const voiceToTextServices: VoiceToTextServiceType[] = [
+    'not set',
+    'visualStudioCodeBuiltIn',
+  ];
   const [partialSettings, setPartialSettings] = useState<
     Partial<ExtensionSettings>
   >({

@@ -25,6 +25,7 @@ import {
   OpenAIService,
 } from './services/languageModel';
 import { GptSoVitsApiService, OpenaiVoiceService } from './services/Voice';
+import { VisualStudioCodeBuiltInService } from './services/Voice/visualStudioCodeBuildInService';
 
 export const activate = async (ctx: vscode.ExtensionContext) => {
   const connectedViews: Partial<Record<ViewKey, vscode.WebviewView>> = {};
@@ -58,6 +59,9 @@ export const activate = async (ctx: vscode.ExtensionContext) => {
   };
 
   const voiceServices: LoadedVoiceServices = {
+    visualStudioCodeBuiltIn: {
+      service: new VisualStudioCodeBuiltInService(ctx, settingsManager),
+    },
     gptSoVits: {
       service: new GptSoVitsApiService(ctx, settingsManager),
     },
@@ -254,7 +258,7 @@ export const activate = async (ctx: vscode.ExtensionContext) => {
         return;
       }
 
-      await voiceServices[voiceServiceType].service.stopVoice();
+      await voiceServices[voiceServiceType].service.stopTextToVoice();
     },
     switchGptSoVitsReferenceVoice: async (voiceName) => {
       await (

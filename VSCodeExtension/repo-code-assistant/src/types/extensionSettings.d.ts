@@ -2,7 +2,10 @@ import type * as hljs from 'react-syntax-highlighter/dist/cjs/styles/hljs';
 import { SpeechCreateParams } from 'openai/resources/audio';
 
 import { ModelServiceType } from './modelServiceType';
-import { VoiceServiceType } from './voiceServiceType';
+import {
+  TextToVoiceServiceType,
+  VoiceToTextServiceType,
+} from './voiceServiceType';
 
 export type GptSoVitsVoiceSetting = {
   /**
@@ -145,12 +148,12 @@ export type ExtensionSettingsLocal = {
   /**
    * The selected text-to-voice service.
    */
-  selectedTextToVoiceService: VoiceServiceType;
+  selectedTextToVoiceService: TextToVoiceServiceType;
 
   /**
    * The selected voice-to-text service.
    */
-  selectedVoiceToTextService: VoiceServiceType;
+  selectedVoiceToTextService: VoiceToTextServiceType;
 
   /**
    * The APIUrl for the GPT-SoVits model.

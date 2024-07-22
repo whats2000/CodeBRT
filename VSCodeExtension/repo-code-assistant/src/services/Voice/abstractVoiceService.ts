@@ -6,7 +6,7 @@ import { SentenceTokenizer } from 'natural';
 import removeMarkdown from 'markdown-to-text';
 
 import type { VoiceService } from '../../types';
-import { SettingsManager } from '../../api/settingsManager';
+import { SettingsManager } from '../../api';
 import { SoundPlay } from '../../utils';
 
 export abstract class AbstractVoiceService implements VoiceService {
@@ -202,10 +202,18 @@ export abstract class AbstractVoiceService implements VoiceService {
 
   /**
    * Sends a request to the voice service to convert the given text to voice.
-   * @param text - The text to convert to voice.
+   * @param _text - The text to convert to voice.
    * @protected
    */
-  protected abstract sendRequest(text: string): Promise<Uint8Array | string>;
+  protected sendRequest(_text: string): Promise<Uint8Array | string> {
+    vscode.window
+      .showErrorMessage(
+        'The sendRequest method is not implemented, how did you get here?',
+      )
+      .then();
+
+    return Promise.resolve(new Uint8Array());
+  }
 
   /**
    * Converts the given text to voice.
@@ -247,9 +255,18 @@ export abstract class AbstractVoiceService implements VoiceService {
   /**
    * Stops the voice playback and clears the queues.
    */
-  public async stopVoice(): Promise<void> {
+  public async stopTextToVoice(): Promise<void> {
     this.shouldStopPlayback = true;
     this.textToVoiceQueue = [];
     this.soundPlayer.stop();
+  }
+
+  /**
+   * Stops the voice recording and clears the queues.
+   */
+  public async stopVoiceToText(): Promise<void> {
+    vscode.window
+      .showErrorMessage('Voice to text is not supported in this service')
+      .then();
   }
 }

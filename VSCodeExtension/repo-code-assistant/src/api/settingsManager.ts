@@ -163,5 +163,3 @@ export class SettingsManager {
     );
   }
 }
-
-export default SettingsManager;
