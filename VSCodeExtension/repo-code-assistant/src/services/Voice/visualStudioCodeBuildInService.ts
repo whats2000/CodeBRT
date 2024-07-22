@@ -54,6 +54,23 @@ export class VisualStudioCodeBuiltInService extends AbstractVoiceService {
 
   public async voiceToText(): Promise<string> {
     try {
+      if (!vscode.extensions.getExtension('ms-vscode.vscode-speech')) {
+        vscode.window
+          .showInformationMessage(
+            'Please install the "VS Code Speech" extension to use voice dictation.',
+            'Install',
+          )
+          .then(async (value) => {
+            if (value === 'Install') {
+              await vscode.commands.executeCommand(
+                'workbench.extensions.search',
+                'ms-vscode.vscode-speech',
+              );
+            }
+          });
+        return '';
+      }
+
       fs.writeFileSync(this.tempFilePath, '');
 
       // Save the current active editor
