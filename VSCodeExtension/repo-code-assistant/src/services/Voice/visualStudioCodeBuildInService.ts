@@ -29,13 +29,10 @@ export class VisualStudioCodeBuiltInService extends AbstractVoiceService {
         fs.mkdirSync(vscodeDir);
       }
 
-      this.tempFilePath = path.join(vscodeDir, 'tempVoiceInput.txt');
+      this.tempFilePath = path.join(vscodeDir, 'VoiceInput.txt');
     } else {
       // Store at extension root if no workspace is open
-      this.tempFilePath = path.join(
-        context.extensionPath,
-        'tempVoiceInput.txt',
-      );
+      this.tempFilePath = path.join(context.extensionPath, 'VoiceInput.txt');
     }
   }
 
@@ -52,7 +49,6 @@ export class VisualStudioCodeBuiltInService extends AbstractVoiceService {
   private clearInterval(): void {
     if (this.interval) {
       clearInterval(this.interval);
-      this.interval = null;
     }
   }
 
@@ -67,6 +63,7 @@ export class VisualStudioCodeBuiltInService extends AbstractVoiceService {
         this.tempFilePath,
       );
       await vscode.window.showTextDocument(document, { preview: false });
+
       await vscode.commands.executeCommand(
         'workbench.action.editorDictation.start',
       );
@@ -116,16 +113,17 @@ export class VisualStudioCodeBuiltInService extends AbstractVoiceService {
       vscode.window.showInformationMessage('Voice dictation stopped.');
       this.clearInterval();
 
+      if (
+        vscode.window.activeTextEditor?.document.uri.fsPath ===
+        this.tempFilePath
+      ) {
+        await vscode.commands.executeCommand(
+          'workbench.action.closeActiveEditor',
+        );
+      }
+
       // Switch back to the previous editor if it exists
       if (this.previousEditor) {
-        if (
-          vscode.window.activeTextEditor?.document.uri.fsPath ===
-          this.tempFilePath
-        ) {
-          await vscode.commands.executeCommand(
-            'workbench.action.closeActiveEditor',
-          );
-        }
         await vscode.window.showTextDocument(this.previousEditor.document, {
           preview: false,
         });
