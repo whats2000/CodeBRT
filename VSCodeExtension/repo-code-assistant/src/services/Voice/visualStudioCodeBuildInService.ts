@@ -106,9 +106,8 @@ export class VisualStudioCodeBuiltInService extends AbstractVoiceService {
         this.interval = setInterval(() => {
           this.checkInactivity();
           if (Date.now() > this.closingTime) {
+            subscription.dispose();
             this.stopVoiceToText().then(() => {
-              this.clearInterval();
-              subscription.dispose();
               resolve(this.latestText);
             });
           }
