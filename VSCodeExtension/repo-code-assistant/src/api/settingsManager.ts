@@ -58,7 +58,6 @@ export class SettingsManager {
       custom: '',
     },
     customModels: [],
-    selectedCustomModel: '',
     selectedVoiceToTextService: 'not set',
     selectedTextToVoiceService: 'not set',
     gptSoVitsClientHost: 'http://127.0.0.1:9880/',

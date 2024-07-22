@@ -148,11 +148,6 @@ export type ExtensionSettingsLocal = {
   customModels: CustomModelSettings[];
 
   /**
-   * The name of the currently selected custom model.
-   */
-  selectedCustomModel: string;
-
-  /**
    * The selected text-to-voice service.
    */
   selectedTextToVoiceService: TextToVoiceServiceType;
