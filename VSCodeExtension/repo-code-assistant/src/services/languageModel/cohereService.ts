@@ -15,9 +15,10 @@ export class CohereService extends AbstractLanguageModelService {
     settingsManager: SettingsManager,
   ) {
     const availableModelNames = settingsManager.get('cohereAvailableModels');
-    const defaultModelName = availableModelNames[0] || '';
+    const defaultModelName = settingsManager.get('lastSelectedModel').cohere;
 
     super(
+      'cohere',
       context,
       'cohereConversationHistory.json',
       settingsManager,

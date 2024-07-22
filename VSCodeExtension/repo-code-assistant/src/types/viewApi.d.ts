@@ -195,6 +195,12 @@ export type ViewApi = {
   getAvailableModels: (modelType: ModelServiceType) => string[];
 
   /**
+   * Get the current model for a language model.
+   * @param modelType - The type of the model to get the current model for.
+   */
+  getCurrentModel: (modelType: ModelServiceType) => string;
+
+  /**
    * Set the available models for a language model.
    * @param modelType - The type of the model to set the available models for.
    * @param newAvailableModels - The new available models.

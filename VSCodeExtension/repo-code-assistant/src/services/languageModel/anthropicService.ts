@@ -25,9 +25,10 @@ export class AnthropicService extends AbstractLanguageModelService {
     settingsManager: SettingsManager,
   ) {
     const availableModelNames = settingsManager.get('anthropicAvailableModels');
-    const defaultModelName = availableModelNames[0] || '';
+    const defaultModelName = settingsManager.get('lastSelectedModel').anthropic;
 
     super(
+      'anthropic',
       context,
       'anthropicConversationHistory.json',
       settingsManager,

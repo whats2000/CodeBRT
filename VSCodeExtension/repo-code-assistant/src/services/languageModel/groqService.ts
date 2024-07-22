@@ -26,9 +26,10 @@ export class GroqService extends AbstractLanguageModelService {
     settingsManager: SettingsManager,
   ) {
     const availableModelNames = settingsManager.get('groqAvailableModels');
-    const defaultModelName = availableModelNames[0] || '';
+    const defaultModelName = settingsManager.get('lastSelectedModel').groq;
 
     super(
+      'groq',
       context,
       'groqConversationHistory.json',
       settingsManager,

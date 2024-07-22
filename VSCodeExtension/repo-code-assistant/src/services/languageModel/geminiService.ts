@@ -68,9 +68,10 @@ export class GeminiService extends AbstractLanguageModelService {
     settingsManager: SettingsManager,
   ) {
     const availableModelNames = settingsManager.get('geminiAvailableModels');
-    const defaultModelName = availableModelNames[0] || '';
+    const defaultModelName = settingsManager.get('lastSelectedModel').gemini;
 
     super(
+      'gemini',
       context,
       'geminiConversationHistory.json',
       settingsManager,

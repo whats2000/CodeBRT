@@ -76,7 +76,6 @@ export const Toolbar: React.FC<ToolbarProps> = ({
     callApi('getAvailableModels', activeModelService)
       .then((models: string[]) => {
         setAvailableModels(models);
-        setSelectedModel(models[0]);
         setIsActiveModelLoading(false);
       })
       .catch((error) => {
@@ -87,6 +86,16 @@ export const Toolbar: React.FC<ToolbarProps> = ({
         ).catch(console.error);
         setIsActiveModelLoading(false);
       });
+
+    callApi('getCurrentModel', activeModelService)
+      .then((model: string) => setSelectedModel(model))
+      .catch((error) =>
+        callApi(
+          'alertMessage',
+          `Failed to load current model: ${error}`,
+          'error',
+        ).catch(console.error),
+      );
 
     const handleResize = () => {
       setIsOffCanvas(window.innerWidth < 560);

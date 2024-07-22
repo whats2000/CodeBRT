@@ -10,6 +10,7 @@ import {
   ConversationHistoryList,
   LanguageModelService,
   GetResponseOptions,
+  ModelServiceType,
 } from '../../types';
 import { SettingsManager } from '../../api';
 
@@ -19,6 +20,12 @@ import { SettingsManager } from '../../api';
 export abstract class AbstractLanguageModelService
   implements LanguageModelService
 {
+  /**
+   * The type of the service
+   * @protected
+   */
+  protected serviceType: ModelServiceType;
+
   /**
    * The extension context
    * @protected
@@ -62,6 +69,7 @@ export abstract class AbstractLanguageModelService
 
   /**
    * Constructor for the AbstractLanguageModelService
+   * @param serviceType - The type of the service
    * @param context - The extension context
    * @param historyFileName - The name of the history file
    * @param settingsManager - The settings manager
@@ -70,12 +78,14 @@ export abstract class AbstractLanguageModelService
    * @protected
    */
   protected constructor(
+    serviceType: ModelServiceType,
     context: vscode.ExtensionContext,
     historyFileName: string,
     settingsManager: SettingsManager,
     currentModel: string,
     availableModelNames: string[],
   ) {
+    this.serviceType = serviceType;
     this.context = context;
     this.settingsManager = settingsManager;
     this.currentModel = currentModel;
@@ -394,21 +404,32 @@ export abstract class AbstractLanguageModelService
    * @param newModel - The name of the model to switch to
    */
   public switchModel(newModel: string): void {
+    const lastSelectedModel = this.settingsManager.get('lastSelectedModel');
     if (this.availableModelNames.length === 0) {
       this.currentModel = '';
-      vscode.window
-        .showErrorMessage(
-          'No available models to switch to. Please configure the models first.',
-        )
-        .then();
+      lastSelectedModel[this.serviceType] = '';
+      this.settingsManager
+        .set('lastSelectedModel', lastSelectedModel)
+        .then(() => {
+          vscode.window
+            .showErrorMessage(
+              'No available models to switch to. Please configure the models first.',
+            )
+            .then();
+        });
       return;
     }
 
     if (this.availableModelNames.includes(newModel)) {
       this.currentModel = newModel;
-      vscode.window
-        .showInformationMessage(`Switched to model: ${newModel}`)
-        .then();
+      lastSelectedModel[this.serviceType] = newModel;
+      this.settingsManager
+        .set('lastSelectedModel', lastSelectedModel)
+        .then(() => {
+          vscode.window
+            .showInformationMessage(`Switched to model: ${newModel}`)
+            .then();
+        });
     } else {
       vscode.window
         .showErrorMessage(`Model ${newModel} is not available.`)

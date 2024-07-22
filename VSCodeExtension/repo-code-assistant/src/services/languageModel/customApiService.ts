@@ -34,12 +34,13 @@ export class CustomApiService extends AbstractLanguageModelService {
       .get('customModels')
       .map((customModel) => customModel.name);
 
-    const selectedModelName = settingsManager.get('selectedCustomModel');
+    const selectedModelName = settingsManager.get('lastSelectedModel').custom;
     const selectedModel = settingsManager
       .get('customModels')
       .find((model) => model.name === selectedModelName);
 
     super(
+      'custom',
       context,
       'customApiConversationHistory.json',
       settingsManager,
@@ -325,7 +326,6 @@ export class CustomApiService extends AbstractLanguageModelService {
       vscode.window.showErrorMessage(`Custom model ${modelName} not found.`);
       return;
     }
-    this.settingsManager.set('selectedCustomModel', modelName).then();
     this.updateSettings(selectedModel);
     super.switchModel(modelName);
   }

@@ -36,9 +36,10 @@ export class OllamaService extends AbstractLanguageModelService {
     settingsManager: SettingsManager,
   ) {
     const availableModelNames = settingsManager.get('ollamaAvailableModels');
-    const defaultModelName = availableModelNames[0] || '';
+    const defaultModelName = settingsManager.get('lastSelectedModel').ollama;
 
     super(
+      'ollama',
       context,
       'ollamaConversationHistory.json',
       settingsManager,

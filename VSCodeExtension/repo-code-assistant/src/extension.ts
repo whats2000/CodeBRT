@@ -188,6 +188,9 @@ export const activate = async (ctx: vscode.ExtensionContext) => {
 
       return settingsManager.get(`${modelType}AvailableModels`);
     },
+    getCurrentModel: (modelType) => {
+      return settingsManager.get(`lastSelectedModel`)[modelType];
+    },
     setAvailableModels: (modelType, newAvailableModels) => {
       settingsManager
         .set(`${modelType}AvailableModels`, newAvailableModels)

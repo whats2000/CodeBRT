@@ -24,9 +24,11 @@ export class HuggingFaceService extends AbstractLanguageModelService {
     const availableModelNames = settingsManager.get(
       'huggingFaceAvailableModels',
     );
-    const defaultModelName = availableModelNames[0] || '';
+    const defaultModelName =
+      settingsManager.get('lastSelectedModel').huggingFace;
 
     super(
+      'huggingFace',
       context,
       'huggingFaceConversationHistory.json',
       settingsManager,

@@ -136,6 +136,13 @@ export type ExtensionSettingsLocal = {
   lastUsedModel: ModelServiceType;
 
   /**
+   * The last selected model for each model service.
+   */
+  lastSelectedModel: {
+    [keyof in ModelServiceType]: string;
+  };
+
+  /**
    * A list of custom models.
    */
   customModels: CustomModelSettings[];

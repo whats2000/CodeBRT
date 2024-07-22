@@ -21,9 +21,10 @@ export class OpenAIService extends AbstractLanguageModelService {
     settingsManager: SettingsManager,
   ) {
     const availableModelNames = settingsManager.get('openaiAvailableModels');
-    const defaultModelName = availableModelNames[0] || '';
+    const defaultModelName = settingsManager.get('lastSelectedModel').openai;
 
     super(
+      'openai',
       context,
       'openAIConversationHistory.json',
       settingsManager,
