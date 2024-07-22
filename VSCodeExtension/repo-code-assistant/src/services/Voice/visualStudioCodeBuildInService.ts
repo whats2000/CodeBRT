@@ -118,14 +118,14 @@ export class VisualStudioCodeBuiltInService extends AbstractVoiceService {
 
       // Switch back to the previous editor if it exists
       if (this.previousEditor) {
-        await vscode.window.showTextDocument(this.previousEditor.document, {
-          preview: true,
-          preserveFocus: false,
-        });
-        await vscode.commands.executeCommand(
-          'workbench.action.closeActiveEditor',
-        );
-        fs.unlinkSync(this.tempFilePath);
+        if (
+          vscode.window.activeTextEditor?.document.uri.fsPath ===
+          this.tempFilePath
+        ) {
+          await vscode.commands.executeCommand(
+            'workbench.action.closeActiveEditor',
+          );
+        }
         await vscode.window.showTextDocument(this.previousEditor.document, {
           preview: false,
         });
