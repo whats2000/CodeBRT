@@ -60,7 +60,14 @@ export class OpenaiVoiceService extends AbstractVoiceService {
 
     vscode.window.showInformationMessage(`Recording started.`);
 
-    const filePath = await this.audioRecorder.record(mediaDir);
+    let filePath: string;
+
+    try {
+      filePath = await this.audioRecorder.record(mediaDir);
+    } catch (error) {
+      vscode.window.showErrorMessage('Failed to record audio. ' + error);
+      return '';
+    }
 
     vscode.window.showInformationMessage(`Recording finished.`);
 

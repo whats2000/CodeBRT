@@ -1,5 +1,6 @@
 import fs from 'fs';
 import path from 'path';
+
 import Mic from 'node-mic';
 
 export class AudioRecorder {
