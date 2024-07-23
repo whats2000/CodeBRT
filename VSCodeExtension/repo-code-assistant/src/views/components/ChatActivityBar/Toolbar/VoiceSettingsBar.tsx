@@ -38,6 +38,7 @@ export const VoiceSettingsBar: React.FC<VoiceSettingsBarProps> = ({
   ];
   const voiceToTextServices: VoiceToTextServiceType[] = [
     'not set',
+    'groq',
     'openai',
     'visualStudioCodeBuiltIn',
   ];

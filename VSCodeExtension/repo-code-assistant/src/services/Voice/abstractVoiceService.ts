@@ -7,7 +7,8 @@ import removeMarkdown from 'markdown-to-text';
 
 import type { VoiceService } from '../../types';
 import { SettingsManager } from '../../api';
-import { SoundPlay } from '../../utils';
+import { SoundPlay, AudioRecorder } from '../../utils';
+import fsPromises from 'node:fs/promises';
 
 export abstract class AbstractVoiceService implements VoiceService {
   protected readonly context: vscode.ExtensionContext;
@@ -19,6 +20,7 @@ export abstract class AbstractVoiceService implements VoiceService {
   protected textToVoiceQueue: string[] = [];
   protected voicePlaybackQueue: string[] = [];
   protected soundPlayer: SoundPlay = new SoundPlay();
+  protected audioRecorder: AudioRecorder = new AudioRecorder();
 
   protected constructor(
     context: vscode.ExtensionContext,
@@ -137,7 +139,7 @@ export abstract class AbstractVoiceService implements VoiceService {
 
     while (this.textToVoiceQueue.length > 0) {
       const textChunk = this.textToVoiceQueue.shift()!;
-      const response = await this.sendRequest(textChunk);
+      const response = await this.sendTextToVoiceRequest(textChunk);
 
       if (typeof response === 'string') {
         vscode.window.showErrorMessage(response);
@@ -205,7 +207,9 @@ export abstract class AbstractVoiceService implements VoiceService {
    * @param _text - The text to convert to voice.
    * @protected
    */
-  protected sendRequest(_text: string): Promise<Uint8Array | string> {
+  protected sendTextToVoiceRequest(
+    _text: string,
+  ): Promise<Uint8Array | string> {
     vscode.window
       .showErrorMessage(
         'The sendRequest method is not implemented, how did you get here?',
@@ -213,6 +217,21 @@ export abstract class AbstractVoiceService implements VoiceService {
       .then();
 
     return Promise.resolve(new Uint8Array());
+  }
+
+  /**
+   * Sends a request to the voice service to convert the given voice to text.
+   * @param _filePath - The path to the voice file to convert to text.
+   * @protected
+   */
+  protected sendVoiceToTextRequest(_filePath: string): Promise<string> {
+    vscode.window
+      .showErrorMessage(
+        'The sendRequest method is not implemented, how did you get here?',
+      )
+      .then();
+
+    return Promise.resolve('');
   }
 
   /**
@@ -245,11 +264,30 @@ export abstract class AbstractVoiceService implements VoiceService {
    * Records voice and converts it to text.
    */
   public async voiceToText(): Promise<string> {
-    vscode.window
-      .showErrorMessage('Voice to text is not supported in this service')
-      .then();
+    const mediaDir = path.join(this.context.extensionPath, 'media');
 
-    return Promise.resolve('');
+    try {
+      await fsPromises.mkdir(mediaDir, { recursive: true });
+    } catch (error) {
+      vscode.window.showErrorMessage(
+        `Failed to create media directory: ${error}`,
+      );
+    }
+
+    vscode.window.showInformationMessage(`Recording started.`);
+
+    let filePath: string;
+
+    try {
+      filePath = await this.audioRecorder.record(mediaDir);
+    } catch (error) {
+      vscode.window.showErrorMessage('Failed to record audio. ' + error);
+      return '';
+    }
+
+    vscode.window.showInformationMessage(`Recording finished.`);
+
+    return this.sendVoiceToTextRequest(filePath);
   }
 
   /**

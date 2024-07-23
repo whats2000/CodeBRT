@@ -24,8 +24,12 @@ import {
   OllamaService,
   OpenAIService,
 } from './services/languageModel';
-import { GptSoVitsApiService, OpenaiVoiceService } from './services/Voice';
-import { VisualStudioCodeBuiltInService } from './services/Voice/visualStudioCodeBuildInService';
+import {
+  GptSoVitsApiService,
+  GroqVoiceService,
+  OpenaiVoiceService,
+  VisualStudioCodeBuiltInService,
+} from './services/Voice';
 
 export const activate = async (ctx: vscode.ExtensionContext) => {
   const connectedViews: Partial<Record<ViewKey, vscode.WebviewView>> = {};
@@ -61,6 +65,9 @@ export const activate = async (ctx: vscode.ExtensionContext) => {
   const voiceServices: LoadedVoiceServices = {
     visualStudioCodeBuiltIn: {
       service: new VisualStudioCodeBuiltInService(ctx, settingsManager),
+    },
+    groq: {
+      service: new GroqVoiceService(ctx, settingsManager),
     },
     gptSoVits: {
       service: new GptSoVitsApiService(ctx, settingsManager),

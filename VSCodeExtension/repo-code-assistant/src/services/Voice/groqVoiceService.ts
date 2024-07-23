@@ -2,14 +2,14 @@ import fs from 'fs';
 import fsPromises from 'node:fs/promises';
 
 import vscode from 'vscode';
-import OpenAI from 'openai';
+import Groq from 'groq-sdk';
 
 import { SettingsManager } from '../../api';
 import { AbstractVoiceService } from './abstractVoiceService';
 
-export class OpenaiVoiceService extends AbstractVoiceService {
+export class GroqVoiceService extends AbstractVoiceService {
   private readonly settingsListener: vscode.Disposable;
-  private apiKey: string = this.settingsManager.get('openaiApiKey');
+  private apiKey: string = this.settingsManager.get('groqApiKey');
 
   constructor(
     context: vscode.ExtensionContext,
@@ -19,41 +19,23 @@ export class OpenaiVoiceService extends AbstractVoiceService {
 
     // Listen for settings changes
     this.settingsListener = vscode.workspace.onDidChangeConfiguration((e) => {
-      if (e.affectsConfiguration('repo-code-assistant.openaiApiKey')) {
-        this.apiKey = settingsManager.get('openaiApiKey');
+      if (e.affectsConfiguration('repo-code-assistant.groqApiKey')) {
+        this.apiKey = settingsManager.get('groqApiKey');
       }
     });
 
     context.subscriptions.push(this.settingsListener);
   }
 
-  protected async sendTextToVoiceRequest(
-    Text: string,
-  ): Promise<Uint8Array | string> {
-    const openai = new OpenAI({
-      apiKey: this.apiKey,
-    });
-    try {
-      const mp3 = await openai.audio.speech.create({
-        model: 'tts-1',
-        voice: this.settingsManager.get('openaiSelectedVoice'),
-        input: Text,
-      });
-      return Buffer.from(await mp3.arrayBuffer());
-    } catch (error) {
-      console.error('Error during API call:', (error as Error).message);
-      return `Error during API call: ${(error as Error).message}`;
-    }
-  }
-
   protected async sendVoiceToTextRequest(filePath: string): Promise<string> {
-    const openai = new OpenAI({
+    const groq = new Groq({
       apiKey: this.apiKey,
     });
+
     try {
-      const transcription = await openai.audio.transcriptions.create({
+      const transcription = await groq.audio.transcriptions.create({
         file: fs.createReadStream(filePath),
-        model: 'whisper-1',
+        model: 'whisper-large-v3',
       });
       await fsPromises.unlink(filePath);
       return transcription.text;

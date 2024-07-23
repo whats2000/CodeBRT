@@ -2,6 +2,7 @@ import { VoiceService } from './voiceService';
 
 export type TextToVoiceServiceType = 'gptSoVits' | 'openai' | 'not set';
 export type VoiceToTextServiceType =
+  | 'groq'
   | 'openai'
   | 'visualStudioCodeBuiltIn'
   | 'not set';
