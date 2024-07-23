@@ -22,7 +22,7 @@ const windowPlayCommand = (path: string, volume: number): string =>
 export class SoundPlay {
   private playProcess: ChildProcess | null = null;
 
-  async play(path: string, volume = 0.5): Promise<void> {
+  public async play(path: string, volume = 0.5): Promise<void> {
     const volumeAdjustedByOS =
       process.platform === 'darwin' ? Math.min(2, volume * 2) : volume;
 
@@ -48,7 +48,7 @@ export class SoundPlay {
     }
   }
 
-  stop(): void {
+  public stop(): void {
     if (this.playProcess?.pid) {
       terminate(this.playProcess.pid, (err) => {
         if (err) {
