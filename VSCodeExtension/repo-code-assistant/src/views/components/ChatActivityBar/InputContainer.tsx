@@ -10,6 +10,7 @@ import {
 } from '@ant-design/icons';
 
 import { WebviewContext } from '../../WebviewContext';
+import { useClipboardImage } from '../../hooks';
 
 const StyledInputContainer = styled.div`
   display: flex;
@@ -53,6 +54,8 @@ export const InputContainer = ({
   const [previewImage, setPreviewImage] = useState('');
   const [fileList, setFileList] = useState<UploadFile[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  useClipboardImage((files) => handleImageUpload(files));
 
   useEffect(() => {
     // Note: The link will break in vscode webview, so we need to remove the href attribute to prevent it.
