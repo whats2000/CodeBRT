@@ -133,9 +133,18 @@ export class VisualStudioCodeBuiltInService extends AbstractVoiceService {
         vscode.window.activeTextEditor?.document.uri.fsPath ===
         this.tempFilePath
       ) {
-        await vscode.commands.executeCommand(
-          'workbench.action.closeActiveEditor',
-        );
+        await vscode.commands
+          .executeCommand('workbench.action.files.save')
+          .then(() => {
+            if (
+              vscode.window.activeTextEditor?.document.uri.fsPath !==
+              this.tempFilePath
+            )
+              return;
+            vscode.commands.executeCommand(
+              'workbench.action.closeActiveEditor',
+            );
+          });
       }
 
       // Switch back to the previous editor if it exists
