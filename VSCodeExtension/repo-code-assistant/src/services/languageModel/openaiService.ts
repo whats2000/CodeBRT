@@ -175,7 +175,7 @@ export class OpenAIService extends AbstractLanguageModelService {
       return 'Missing model configuration. Check the model selection dropdown.';
     }
 
-    if (this.currentModel.includes('gpt-3.5')) {
+    if (this.currentModel.includes('gpt-3.5') && options.images) {
       vscode.window.showWarningMessage(
         'The images ChatGPT-3.5 is not supported currently. The images will be ignored.',
       );
