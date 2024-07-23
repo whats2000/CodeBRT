@@ -302,29 +302,34 @@ export const MessagesContainer: React.FC<MessagesContainerProps> = ({
                   <ImageComponent.PreviewGroup>
                     <Flex wrap={true}>
                       {entry.images &&
-                        entry.images.map((image, index) =>
-                          imageUrls[image] !== '' ? (
-                            <Card
-                              size={'small'}
-                              style={{
-                                width: '45%',
-                                margin: '2.5%',
-                                display: 'flex',
-                                alignItems: 'center',
-                              }}
-                              key={`${image}-${index}`}
-                            >
+                        entry.images.map((image, index) => (
+                          <Card
+                            size={'small'}
+                            style={{
+                              width: '45%',
+                              margin: '2.5%',
+                              display: 'flex',
+                              alignItems: 'center',
+                            }}
+                            key={`${image}-${index}`}
+                          >
+                            {imageUrls[image] !== '' ? (
                               <ImageComponent
                                 src={imageUrls[image] || image}
                                 alt='Referenced Image'
                               />
-                            </Card>
-                          ) : (
-                            <Typography.Text key={index} type={'warning'}>
-                              <WarningOutlined /> Referenced image not found
-                            </Typography.Text>
-                          ),
-                        )}
+                            ) : (
+                              <Card.Meta
+                                description={
+                                  <Typography.Text type={'warning'}>
+                                    <WarningOutlined /> Referenced image not
+                                    found, might have been deleted.
+                                  </Typography.Text>
+                                }
+                              />
+                            )}
+                          </Card>
+                        ))}
                     </Flex>
                   </ImageComponent.PreviewGroup>
                 </>
