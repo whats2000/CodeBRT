@@ -97,6 +97,8 @@ export const GptSoVitsSettingsBar: React.FC<GptSoVitsSettingsBarProps> = ({
       Promise.all(promises).finally(() => {
         setIsLoading(false);
       });
+    } else {
+      handleSave(partialSettings);
     }
   }, [isOpen]);
 
@@ -129,12 +131,6 @@ export const GptSoVitsSettingsBar: React.FC<GptSoVitsSettingsBarProps> = ({
       );
     });
   };
-
-  useEffect(() => {
-    if (!isOpen) {
-      handleSave(partialSettings);
-    }
-  }, [isOpen]);
 
   const handleVoiceChange = (
     id: string,

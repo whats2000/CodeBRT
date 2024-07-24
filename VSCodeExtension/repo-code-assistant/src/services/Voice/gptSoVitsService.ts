@@ -28,9 +28,7 @@ export class GptSoVitsApiService extends AbstractVoiceService {
     this.updateSettings(selectedVoice);
   }
 
-  private updateSettings(
-    selectedVoiceSettings: GptSoVitsVoiceSetting | undefined,
-  ): void {
+  private updateSettings(selectedVoiceSettings?: GptSoVitsVoiceSetting): void {
     if (selectedVoiceSettings) {
       this.referWavPath = selectedVoiceSettings.referWavPath;
       this.referText = selectedVoiceSettings.referText;
@@ -90,6 +88,12 @@ export class GptSoVitsApiService extends AbstractVoiceService {
     const voiceSettings = this.settingsManager.get(
       'gptSoVitsAvailableReferenceVoices',
     );
+
+    if (voiceName === '') {
+      this.updateSettings();
+      return;
+    }
+
     const selectedVoice = voiceSettings.find(
       (voice) => voice.name === voiceName,
     );
@@ -98,6 +102,7 @@ export class GptSoVitsApiService extends AbstractVoiceService {
       vscode.window.showErrorMessage(
         `Voice setting with name ${voiceName} not found`,
       );
+      this.updateSettings();
       return;
     }
 
