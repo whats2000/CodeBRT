@@ -14,8 +14,23 @@ device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 model = AutoModelForCausalLM.from_pretrained(model_name, torch_dtype=torch.float16).to(device)
 tokenizer = AutoTokenizer.from_pretrained(model_name)
 
+"""
+This script is an example of how to use the Llama model with the Local Language Model Server.
 
-def convert_to_llama_format(history: list):
+This is able to use any model that is compatible with the Hugging Face Transformers library.
+
+Mainly design this to use some non-standard model in ollama. Or testing for research purpose.
+
+Feel free to modify this script to fit your needs.
+"""
+
+
+def convert_to_llama_format(history: list) -> str:
+    """
+    This function converts the history of messages to the format expected by the Llama model.
+    :param history: List of messages as a list of dictionaries with "role" and "message" keys
+    :return: Formatted history as a string
+    """
     formatted_history = ""
 
     if len(history) == 0:
@@ -31,7 +46,14 @@ def convert_to_llama_format(history: list):
     return formatted_history
 
 
-def create_llama_prompt(history: list, query: str, model_type: str):
+def create_llama_prompt(history: list, query: str, model_type: str) -> str:
+    """
+    This function creates the prompt for the Llama model based on the history of messages and the query.
+    :param history: The history of messages as formatted by convert_to_llama_format
+    :param query: The user query
+    :param model_type: The type of the model to use (llama or llama3), In this case, we use llama2
+    :return: The formatted prompt for the Llama model
+    """
     system_prompt = """You are a helpful assistant."""
 
     formatted_history = convert_to_llama_format(history)
@@ -57,6 +79,11 @@ def create_llama_prompt(history: list, query: str, model_type: str):
 
 @app.route('/api/llama', methods=['POST'])
 def handle_request():
+    """
+    This function is the main handler for the API endpoint.
+    It will check the content type of the request and call the appropriate handler function.
+    :return: Response from the handler function or a 415 response if the content type is not supported
+    """
     content_type = request.headers.get('Content-Type')
 
     if content_type == 'application/json':
@@ -66,6 +93,30 @@ def handle_request():
 
 
 def handle_text_request():
+    """
+    In this handler function, we expect the request to be a JSON object with the following structure:
+
+    {
+      "message": "[{\"role\": \"user\", \"message\": \"Hello!\"}, {\"role\": \"AI\", \"message\": \"Hi!\"}]",
+      "query": "How are you?",
+    }
+
+    This means this API endpoint has these requirements:
+    - The request must be a POST request
+    - The request must have a history of messages in the "message" field
+    - The request must have a query in the "query" field
+    - The query is not included in the history
+
+    So the Application for this endpoint will set as follows:
+    - API URL: http://127.0.0.1:5000/api/llama
+    - API Method: POST
+    - Text Parameter: message
+    - Image Parameter: None
+    - Query Parameter: query
+    - Include Query in History: Not check > [ ]
+
+    :return: Response from the model as stream generator
+    """
     data = request.json
     history = json.loads(data.get('message', '[]'))
     query = data.get('query', '')
@@ -79,6 +130,9 @@ def handle_text_request():
     print(f"Formatted prompt:\n{prompt}")
 
     def generate():
+        """
+        This function generates the response from the model and yields the text as a stream.
+        """
         inputs = tokenizer(prompt, return_tensors='pt').to(device)
         streamer = TextIteratorStreamer(tokenizer, skip_special_tokens=True)
         generation_kwargs = dict(inputs=inputs['input_ids'], streamer=streamer, max_length=8096)

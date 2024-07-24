@@ -9,6 +9,13 @@ from flask_cors import CORS
 app = Flask(__name__)
 CORS(app)
 
+"""
+This file use to simulate the external plugin server that can be used to test the Local Language Model Server.
+
+You can run this file and test the Local Language Model Server with this server. 
+Or you can use this file as a beginning to build your own local language model server.
+"""
+
 random_sentences = [
     "The quick brown fox jumps over the lazy dog.",
     "The five boxing wizards jump quickly.",
@@ -24,30 +31,36 @@ random_sentences = [
     "Cwm fjord bank glyphs vext quiz."
 ]
 
+
 @app.route('/api', methods=['POST'])
 def api():
     print('API Request Received')
     return handle_request('message', 'image', '', include_query_in_history=True)
+
 
 @app.route('/api2', methods=['POST'])
 def api2():
     print('API2 Request Received')
     return handle_request('message', 'image', 'query', include_query_in_history=False)
 
+
 @app.route('/api3', methods=['GET'])
 def api3():
     print('API3 Request Received')
     return handle_get_request('message', 'image')
+
 
 @app.route('/api4', methods=['POST'])
 def api4():
     print('API4 Request Received')
     return handle_request('text', 'img', 'q', include_query_in_history=False)
 
+
 @app.route('/api5', methods=['GET'])
 def api5():
     print('API5 Request Received')
     return handle_get_request('data', 'file', 'search')
+
 
 @app.route('/api6', methods=['POST'])
 def api6():
@@ -138,6 +151,7 @@ def handle_image_request(text, api_image_param):
 
 def generate_response(text):
     print(f"Received text (POST): {text}")
+
     def generate():
         response_text = random.choice(random_sentences)
         for word in response_text.split():
