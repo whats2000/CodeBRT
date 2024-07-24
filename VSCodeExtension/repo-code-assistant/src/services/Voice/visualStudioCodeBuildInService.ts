@@ -21,19 +21,7 @@ export class VisualStudioCodeBuiltInService extends AbstractVoiceService {
   ) {
     super(context, settingsManager);
     this.inactivityLimit = inactivityLimit;
-
-    const workspaceFolders = vscode.workspace.workspaceFolders;
-    if (workspaceFolders) {
-      const vscodeDir = path.join(workspaceFolders[0].uri.fsPath, '.vscode');
-      if (!fs.existsSync(vscodeDir)) {
-        fs.mkdirSync(vscodeDir);
-      }
-
-      this.tempFilePath = path.join(vscodeDir, 'VoiceInput.txt');
-    } else {
-      // Store at extension root if no workspace is open
-      this.tempFilePath = path.join(context.extensionPath, 'VoiceInput.txt');
-    }
+    this.tempFilePath = path.join(context.extensionPath, 'VoiceInput.txt');
   }
 
   private setClosingTime(ms: number): void {
