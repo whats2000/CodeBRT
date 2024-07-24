@@ -49,7 +49,7 @@ export const ChatActivityBar = () => {
   const messageEndRef = useRef<HTMLDivElement>(null);
   const messagesContainerRef = useRef<HTMLDivElement>(null);
 
-  const theme = useThemeConfig();
+  const [theme, setTheme] = useThemeConfig();
 
   const scrollToBottom = (smooth: boolean = true) => {
     if (messagesContainerRef.current) {
@@ -435,6 +435,7 @@ export const ChatActivityBar = () => {
           setIsActiveModelLoading={setIsActiveModelLoading}
           setConversationHistory={setConversationHistory}
           setActiveModelService={setActiveModelService}
+          setTheme={setTheme}
         />
         <MessagesContainer
           conversationHistory={conversationHistory}

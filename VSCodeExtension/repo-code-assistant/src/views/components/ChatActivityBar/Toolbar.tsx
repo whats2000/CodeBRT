@@ -37,6 +37,15 @@ type ToolbarProps = {
   setConversationHistory: React.Dispatch<
     React.SetStateAction<ConversationHistory>
   >;
+  setTheme: (newTheme: {
+    primaryColor?: string | undefined;
+    algorithm?:
+      | 'defaultAlgorithm'
+      | 'darkAlgorithm'
+      | 'compactAlgorithm'
+      | undefined;
+    borderRadius?: number | undefined;
+  }) => Promise<void>;
 };
 
 export const Toolbar: React.FC<ToolbarProps> = ({
@@ -46,6 +55,7 @@ export const Toolbar: React.FC<ToolbarProps> = ({
   isActiveModelLoading,
   setIsActiveModelLoading,
   setConversationHistory,
+  setTheme,
 }) => {
   const { callApi } = useContext(WebviewContext);
   const modelServices: ModelServiceType[] = [
@@ -322,6 +332,7 @@ export const Toolbar: React.FC<ToolbarProps> = ({
       <SettingsBar
         isOpen={isSettingsOpen}
         onClose={() => setIsSettingsOpen(false)}
+        setTheme={setTheme}
       />
       <VoiceSettingsBar
         isOpen={isVoiceSettingsOpen}

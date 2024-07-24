@@ -29,11 +29,21 @@ const FormGroup = styled(Form.Item)`
 type SettingSidebarProps = {
   isOpen: boolean;
   onClose: () => void;
+  setTheme: (newTheme: {
+    primaryColor?: string | undefined;
+    algorithm?:
+      | 'defaultAlgorithm'
+      | 'darkAlgorithm'
+      | 'compactAlgorithm'
+      | undefined;
+    borderRadius?: number | undefined;
+  }) => Promise<void>;
 };
 
 export const SettingsBar: React.FC<SettingSidebarProps> = ({
   isOpen,
   onClose,
+  setTheme,
 }) => {
   const { callApi } = useContext(WebviewContext);
   const [partialSettings, setPartialSettings] = useState<
@@ -54,27 +64,24 @@ export const SettingsBar: React.FC<SettingSidebarProps> = ({
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    if (isOpen) {
-      setIsLoading(true);
-
-      // Create an array of promises for the API calls
-      const promises = Object.keys(partialSettings).map(async (key) => {
-        try {
-          const value = await callApi(
-            'getSetting',
-            key as keyof typeof partialSettings,
-          );
-          setPartialSettings((prev) => ({ ...prev, [key]: value }));
-        } catch (e) {
-          console.error(`Failed to fetch setting ${key}:`, e);
-        }
-      });
-
-      // Use Promise.all to wait for all API calls to complete
-      Promise.all(promises).finally(() => {
-        setIsLoading(false);
-      });
+    if (!isOpen) {
+      return;
     }
+    setIsLoading(true);
+    const promises = Object.keys(partialSettings).map(async (key) => {
+      try {
+        const value = await callApi(
+          'getSetting',
+          key as keyof typeof partialSettings,
+        );
+        setPartialSettings((prev) => ({ ...prev, [key]: value }));
+      } catch (e) {
+        console.error(`Failed to fetch setting ${key}:`, e);
+      }
+    });
+    Promise.all(promises).finally(() => {
+      setIsLoading(false);
+    });
   }, [isOpen]);
 
   const handleSettingChange =
@@ -91,9 +98,11 @@ export const SettingsBar: React.FC<SettingSidebarProps> = ({
       ...prev,
       themePrimaryColor: color.toHexString(),
     }));
-    saveSettings({
-      ...partialSettings,
-      themePrimaryColor: color.toHexString(),
+    setTheme({ primaryColor: color.toHexString() }).then(() => {
+      saveSettings({
+        ...partialSettings,
+        themePrimaryColor: color.toHexString(),
+      });
     });
   };
 
@@ -101,7 +110,9 @@ export const SettingsBar: React.FC<SettingSidebarProps> = ({
     value: 'darkAlgorithm' | 'defaultAlgorithm' | 'compactAlgorithm',
   ) => {
     setPartialSettings((prev) => ({ ...prev, themeAlgorithm: value }));
-    saveSettings({ ...partialSettings, themeAlgorithm: value });
+    setTheme({ algorithm: value }).then(() => {
+      saveSettings({ ...partialSettings, themeAlgorithm: value });
+    });
   };
 
   const handleBorderRadiusChange = (
@@ -109,7 +120,9 @@ export const SettingsBar: React.FC<SettingSidebarProps> = ({
   ) => {
     const value = parseInt(event.target.value);
     setPartialSettings((prev) => ({ ...prev, themeBorderRadius: value }));
-    saveSettings({ ...partialSettings, themeBorderRadius: value });
+    setTheme({ borderRadius: value }).then(() => {
+      saveSettings({ ...partialSettings, themeBorderRadius: value });
+    });
   };
 
   const resetTheme = () => {
