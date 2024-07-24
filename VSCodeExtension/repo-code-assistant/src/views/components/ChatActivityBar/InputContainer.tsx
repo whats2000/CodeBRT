@@ -1,7 +1,7 @@
 import React, { useState, useContext, useEffect, useRef } from 'react';
 import styled from 'styled-components';
 import type { UploadFile } from 'antd/lib/upload/interface';
-import { Button, Flex, Input, Image, Upload } from 'antd';
+import { Button, Flex, Input, Image, Upload, Tag } from 'antd';
 import {
   AudioOutlined,
   LoadingOutlined,
@@ -187,9 +187,19 @@ export const InputContainer = ({
           disabled={isProcessing}
           autoSize={{ minRows: 1, maxRows: 10 }}
         />
-        <Button onClick={sendMessage} disabled={isProcessing}>
-          {isProcessing ? <LoadingOutlined /> : <SendOutlined />}
-        </Button>
+        <Flex vertical={true}>
+          <Button onClick={sendMessage} disabled={isProcessing}>
+            {isProcessing ? <LoadingOutlined /> : <SendOutlined />}
+          </Button>
+          {inputMessage.length > 100 && (
+            <Tag
+              color='warning'
+              style={{ marginTop: 5, width: '100%', textAlign: 'center' }}
+            >
+              {inputMessage.length}
+            </Tag>
+          )}
+        </Flex>
       </Flex>
     </StyledInputContainer>
   );
