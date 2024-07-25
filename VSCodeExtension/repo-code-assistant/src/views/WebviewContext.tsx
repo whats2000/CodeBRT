@@ -66,7 +66,7 @@ export const webviewContextValue = (
   const onMessage = (e: MessageEvent<Record<string, unknown>>) => {
     if (e.data.type === 'response') {
       const data = e.data as ViewApiResponse;
-      pendingRequests[data.id].resolve(data.value);
+      pendingRequests[data.id]?.resolve(data.value);
     } else if (e.data.type === 'error') {
       const data = e.data as ViewApiError;
       pendingRequests[data.id].reject(new Error(data.value));
