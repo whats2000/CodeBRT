@@ -124,6 +124,11 @@ export const MessagesContainer: React.FC<MessagesContainerProps> = ({
     });
   }, []);
 
+  useEffect(() => {
+    setEditingEntryId(null);
+    setHoveredBubble({ current: null, entry: null });
+  }, [modelType]);
+
   const handleInput = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     const input = e.target;
     setEditedMessage(input.value);
