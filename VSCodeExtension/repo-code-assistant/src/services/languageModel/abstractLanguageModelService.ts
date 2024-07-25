@@ -13,7 +13,6 @@ import {
   ModelServiceType,
 } from '../../types';
 import { SettingsManager } from '../../api';
-import { traverseHistory } from '../../utils';
 
 /**
  * Abstract class for the Language Model Service
@@ -130,7 +129,19 @@ export abstract class AbstractLanguageModelService
       entries: {},
     };
 
-    traverseHistory(this.history.entries, currentEntryID).forEach((entry) => {
+    const entryStack = [];
+    let currentEntry = this.history.entries[currentEntryID];
+
+    while (currentEntry) {
+      entryStack.push(currentEntry);
+      if (currentEntry.parent) {
+        currentEntry = this.history.entries[currentEntry.parent];
+      } else {
+        break;
+      }
+    }
+
+    entryStack.reverse().forEach((entry) => {
       newHistory.entries[entry.id] = entry;
     });
 

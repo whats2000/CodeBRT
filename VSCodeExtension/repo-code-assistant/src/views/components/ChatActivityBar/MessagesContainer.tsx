@@ -10,7 +10,6 @@ import type {
 } from '../../../types';
 import { fadeIn, fadeOut } from '../../styles';
 import { WebviewContext } from '../../WebviewContext';
-import { traverseHistory } from '../../../utils';
 import { TopToolBar } from './MessagesContainer/TopToolBar';
 import { ImageContainer } from './MessagesContainer/ImageContainer';
 import { TextContainer } from './MessagesContainer/TextContainer';
@@ -39,6 +38,25 @@ const MessageBubble = styled.div<{ $user: string }>`
   color: ${({ theme }) => theme.colorText};
   position: relative;
 `;
+
+const traverseHistory = (
+  entries: { [key: string]: ConversationEntry },
+  current: string,
+): ConversationEntry[] => {
+  const entryStack = [];
+  let currentEntry = entries[current];
+
+  while (currentEntry) {
+    entryStack.push(currentEntry);
+    if (currentEntry.parent) {
+      currentEntry = entries[currentEntry.parent];
+    } else {
+      break;
+    }
+  }
+
+  return entryStack.reverse();
+};
 
 type MessagesContainerProps = {
   conversationHistory: ConversationHistory;
