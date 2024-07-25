@@ -69,7 +69,7 @@ export const webviewContextValue = (
       pendingRequests[data.id]?.resolve(data.value);
     } else if (e.data.type === 'error') {
       const data = e.data as ViewApiError;
-      pendingRequests[data.id].reject(new Error(data.value));
+      pendingRequests[data.id]?.reject(new Error(data.value));
     } else if (e.data.type === 'event') {
       const data = e.data as ViewApiEvent;
       listeners?.[data.key]?.forEach((cb) => cb(...data.value));
