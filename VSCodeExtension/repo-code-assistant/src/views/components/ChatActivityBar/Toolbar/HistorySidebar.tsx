@@ -65,7 +65,12 @@ export const HistorySidebar: React.FC<HistorySidebarProps> = ({
 
       callApi('getHistories', activeModelService)
         .then((histories) => {
-          setHistories(histories as ConversationHistoryList);
+          const sortedHistories = Object.fromEntries(
+            Object.entries(histories).sort(
+              ([, a], [, b]) => b.update_time - a.update_time,
+            ),
+          );
+          setHistories(sortedHistories);
           setIsLoading(false);
         })
         .catch((error) => {
