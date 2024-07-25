@@ -2,7 +2,7 @@ import * as vscode from 'vscode';
 import OpenAI from 'openai';
 import fs from 'fs';
 import path from 'path';
-import {
+import type {
   ChatCompletionContentPartImage,
   ChatCompletionCreateParamsStreaming,
   ChatCompletionMessageParam,
