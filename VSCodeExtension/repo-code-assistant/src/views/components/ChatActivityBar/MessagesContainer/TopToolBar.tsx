@@ -41,6 +41,7 @@ type MessagesTopToolBarProps = {
   handleConvertTextToVoice: (text: string) => void;
   copied: Record<string, boolean>;
   handleCopy: (text: string, entryId: string) => void;
+  isProcessing: boolean;
 };
 
 export const TopToolBar: React.FC<MessagesTopToolBarProps> = ({
@@ -57,6 +58,7 @@ export const TopToolBar: React.FC<MessagesTopToolBarProps> = ({
   handleConvertTextToVoice,
   copied,
   handleCopy,
+  isProcessing,
 }) => {
   const { token } = theme.useToken();
 
@@ -144,50 +146,46 @@ export const TopToolBar: React.FC<MessagesTopToolBarProps> = ({
       </RespondCharacter>
       <Flex gap={1}>
         {parent && siblingCount > 1 && (
-          <Button
-            onClick={() => handleGoForward(entry, 'prev')}
-            type={'text'}
-            disabled={currentIndex === 1}
-          >
-            <ArrowLeftOutlined />
-          </Button>
-        )}
-        {parent && siblingCount > 1 && (
-          <Button type={'text'}>
-            {currentIndex}/{siblingCount}
-          </Button>
-        )}
-        {parent && siblingCount > 1 && (
-          <Button
-            onClick={() => handleGoForward(entry, 'next')}
-            type={'text'}
-            disabled={currentIndex === siblingCount}
-          >
-            <ArrowRightOutlined />
-          </Button>
+          <>
+            <Button
+              onClick={() => handleGoForward(entry, 'prev')}
+              type={'text'}
+              disabled={currentIndex === 1 || isProcessing}
+            >
+              <ArrowLeftOutlined />
+            </Button>
+            <Button type={'text'}>
+              {currentIndex}/{siblingCount}
+            </Button>
+            <Button
+              onClick={() => handleGoForward(entry, 'next')}
+              type={'text'}
+              disabled={currentIndex === siblingCount || isProcessing}
+            >
+              <ArrowRightOutlined />
+            </Button>
+          </>
         )}
         {topCount > 1 && index === 0 && (
-          <Button
-            onClick={() => handleSwitchRoot(conversationHistory, 'prev')}
-            type={'text'}
-            disabled={topIndex === 0}
-          >
-            <ArrowLeftOutlined />
-          </Button>
-        )}
-        {topCount > 1 && index === 0 && (
-          <Button type={'text'}>
-            {topIndex + 1}/{topCount}
-          </Button>
-        )}
-        {topCount > 1 && index === 0 && (
-          <Button
-            onClick={() => handleSwitchRoot(conversationHistory, 'next')}
-            type={'text'}
-            disabled={topIndex === topCount - 1}
-          >
-            <ArrowRightOutlined />
-          </Button>
+          <>
+            <Button
+              onClick={() => handleSwitchRoot(conversationHistory, 'prev')}
+              type={'text'}
+              disabled={topIndex === 0 || isProcessing}
+            >
+              <ArrowLeftOutlined />
+            </Button>
+            <Button type={'text'}>
+              {topIndex + 1}/{topCount}
+            </Button>
+            <Button
+              onClick={() => handleSwitchRoot(conversationHistory, 'next')}
+              type={'text'}
+              disabled={topIndex === topCount - 1 || isProcessing}
+            >
+              <ArrowRightOutlined />
+            </Button>
+          </>
         )}
         <Tooltip
           title={

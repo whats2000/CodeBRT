@@ -291,6 +291,7 @@ export const MessagesContainer: React.FC<MessagesContainerProps> = ({
                 handleConvertTextToVoice={handleConvertTextToVoice}
                 copied={copied}
                 handleCopy={handleCopy}
+                isProcessing={isProcessing}
               />
 
               {entry.id === editingEntryId ? (
