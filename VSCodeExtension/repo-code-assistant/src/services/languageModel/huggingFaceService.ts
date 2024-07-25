@@ -114,11 +114,8 @@ export class HuggingFaceService extends AbstractLanguageModelService {
 
     const huggerFace = new HfInference(this.apiKey);
 
-    const history = currentEntryID
-      ? this.getHistoryBeforeEntry(currentEntryID)
-      : this.history;
     const conversationHistory = this.conversationHistoryToContent(
-      history.entries,
+      this.getHistoryBeforeEntry(currentEntryID).entries,
       query,
     );
 

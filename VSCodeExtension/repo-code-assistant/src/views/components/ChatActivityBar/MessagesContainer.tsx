@@ -10,6 +10,7 @@ import type {
 } from '../../../types';
 import { fadeIn, fadeOut } from '../../styles';
 import { WebviewContext } from '../../WebviewContext';
+import { traverseHistory } from '../../../utils';
 import { TopToolBar } from './MessagesContainer/TopToolBar';
 import { ImageContainer } from './MessagesContainer/ImageContainer';
 import { TextContainer } from './MessagesContainer/TextContainer';
@@ -54,25 +55,6 @@ type MessagesContainerProps = {
     entryId: string,
     editedMessage: string,
   ) => Promise<void>;
-};
-
-const traverseHistory = (
-  entries: { [key: string]: ConversationEntry },
-  current: string,
-) => {
-  const history = [];
-  let currentEntry = entries[current];
-
-  while (currentEntry) {
-    history.push(currentEntry);
-    if (currentEntry.parent) {
-      currentEntry = entries[currentEntry.parent];
-    } else {
-      break;
-    }
-  }
-
-  return history.reverse();
 };
 
 export const MessagesContainer: React.FC<MessagesContainerProps> = ({

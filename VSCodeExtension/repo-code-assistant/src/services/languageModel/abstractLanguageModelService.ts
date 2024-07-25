@@ -13,6 +13,7 @@ import {
   ModelServiceType,
 } from '../../types';
 import { SettingsManager } from '../../api';
+import { traverseHistory } from '../../utils';
 
 /**
  * Abstract class for the Language Model Service
@@ -114,7 +115,11 @@ export abstract class AbstractLanguageModelService
    * @param currentEntryID - The entry id to get the history before
    * @returns The conversation history before the given entry id
    */
-  protected getHistoryBeforeEntry(currentEntryID: string): ConversationHistory {
+  protected getHistoryBeforeEntry(
+    currentEntryID?: string,
+  ): ConversationHistory {
+    if (!currentEntryID) return this.history;
+
     const newHistory: ConversationHistory = {
       title: this.history.title,
       root: this.history.root,
@@ -125,19 +130,7 @@ export abstract class AbstractLanguageModelService
       entries: {},
     };
 
-    let currentEntry = this.history.entries[currentEntryID];
-    const entryStack: ConversationEntry[] = [];
-
-    while (currentEntry) {
-      entryStack.push(currentEntry);
-      if (currentEntry.parent) {
-        currentEntry = this.history.entries[currentEntry.parent];
-      } else {
-        break;
-      }
-    }
-
-    entryStack.reverse().forEach((entry) => {
+    traverseHistory(this.history.entries, currentEntryID).forEach((entry) => {
       newHistory.entries[entry.id] = entry;
     });
 

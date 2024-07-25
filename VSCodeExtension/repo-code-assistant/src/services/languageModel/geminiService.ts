@@ -288,11 +288,8 @@ export class GeminiService extends AbstractLanguageModelService {
       model: this.currentModel,
     });
 
-    const history = currentEntryID
-      ? this.getHistoryBeforeEntry(currentEntryID)
-      : this.history;
     const conversationHistory = this.conversationHistoryToContent(
-      history.entries,
+      this.getHistoryBeforeEntry(currentEntryID).entries,
     );
 
     if (images && images.length > 0) {

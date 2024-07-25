@@ -187,11 +187,8 @@ export class OpenAIService extends AbstractLanguageModelService {
 
     const openai = new OpenAI({ apiKey: this.apiKey });
 
-    const history = currentEntryID
-      ? this.getHistoryBeforeEntry(currentEntryID)
-      : this.history;
     const conversationHistory = await this.conversationHistoryToContent(
-      history.entries,
+      this.getHistoryBeforeEntry(currentEntryID).entries,
       query,
       images,
     );

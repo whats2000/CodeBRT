@@ -146,11 +146,8 @@ export class AnthropicService extends AbstractLanguageModelService {
       };
     }
 
-    const history = currentEntryID
-      ? this.getHistoryBeforeEntry(currentEntryID)
-      : this.history;
     const conversationHistory = this.conversationHistoryToContent(
-      history.entries,
+      this.getHistoryBeforeEntry(currentEntryID).entries,
       query,
     );
 
