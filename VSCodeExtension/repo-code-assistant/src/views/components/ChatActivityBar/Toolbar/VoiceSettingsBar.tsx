@@ -10,12 +10,14 @@ import {
   Space,
 } from 'antd';
 
-import type { ExtensionSettings, VoiceServiceType } from '../../../../types';
+import type {
+  ExtensionSettings,
+  TextToVoiceServiceType,
+  VoiceToTextServiceType,
+} from '../../../../types';
 import { MODEL_SERVICE_LINKS } from '../../../../constants';
 import { WebviewContext } from '../../../WebviewContext';
 import { GptSoVitsSettingsBar } from './VoiceSettingsBar/GptSoVitsSettingsBar';
-
-const { Option } = Select;
 
 interface VoiceSettingsBarProps {
   isOpen: boolean;
@@ -29,15 +31,26 @@ export const VoiceSettingsBar: React.FC<VoiceSettingsBarProps> = ({
   const { callApi } = useContext(WebviewContext);
   const [isGptSoVitsSettingsOpen, setIsGptSoVitsSettingsOpen] = useState(false);
 
-  const textToVoiceServices: VoiceServiceType[] = ['not set', 'gptSoVits'];
-  const voiceToTextServices: VoiceServiceType[] = ['not set'];
+  const textToVoiceServices: TextToVoiceServiceType[] = [
+    'not set',
+    'openai',
+    'gptSoVits',
+  ];
+  const voiceToTextServices: VoiceToTextServiceType[] = [
+    'not set',
+    'groq',
+    'openai',
+    'visualStudioCodeBuiltIn',
+  ];
   const [partialSettings, setPartialSettings] = useState<
     Partial<ExtensionSettings>
   >({
     selectedTextToVoiceService: 'not set',
     selectedVoiceToTextService: 'not set',
-    selectedGptSoVitsReferenceVoice: '',
+    gptSoVitsSelectedReferenceVoice: '',
     gptSoVitsAvailableReferenceVoices: [],
+    openaiAvailableVoices: [],
+    openaiSelectedVoice: '',
   });
   const [isLoading, setIsLoading] = useState(true);
 
@@ -69,7 +82,8 @@ export const VoiceSettingsBar: React.FC<VoiceSettingsBarProps> = ({
     field:
       | 'selectedTextToVoiceService'
       | 'selectedVoiceToTextService'
-      | 'selectedGptSoVitsReferenceVoice',
+      | 'gptSoVitsSelectedReferenceVoice'
+      | 'openaiSelectedVoice',
     value: (typeof partialSettings)[keyof typeof partialSettings],
   ) => {
     if (!value || isLoading) return;
@@ -93,7 +107,7 @@ export const VoiceSettingsBar: React.FC<VoiceSettingsBarProps> = ({
       });
     });
 
-    if (field !== 'selectedGptSoVitsReferenceVoice') return;
+    if (field !== 'gptSoVitsSelectedReferenceVoice') return;
 
     callApi('switchGptSoVitsReferenceVoice', value as string).catch((e) =>
       callApi(
@@ -141,13 +155,14 @@ export const VoiceSettingsBar: React.FC<VoiceSettingsBarProps> = ({
               onChange={(value) =>
                 handleServiceChange('selectedTextToVoiceService', value)
               }
-            >
-              {textToVoiceServices.map((service) => (
-                <Option key={service} value={service}>
-                  {service.charAt(0).toUpperCase() + service.slice(1)}
-                </Option>
-              ))}
-            </Select>
+              options={textToVoiceServices.map((service) => {
+                return {
+                  key: service,
+                  label: service.charAt(0).toUpperCase() + service.slice(1),
+                  value: service,
+                };
+              })}
+            />
           </Form.Item>
           <Form.Item label='Voice To Text Service'>
             <Select
@@ -155,20 +170,61 @@ export const VoiceSettingsBar: React.FC<VoiceSettingsBarProps> = ({
               onChange={(value) =>
                 handleServiceChange('selectedVoiceToTextService', value)
               }
-            >
-              {voiceToTextServices.map((service) => (
-                <Option key={service} value={service}>
-                  {service.charAt(0).toUpperCase() + service.slice(1)}
-                </Option>
-              ))}
-            </Select>
+              options={voiceToTextServices.map((service) => {
+                return {
+                  key: service,
+                  label: service.charAt(0).toUpperCase() + service.slice(1),
+                  value: service,
+                };
+              })}
+            />
           </Form.Item>
           <Divider />
           <Form.Item
             label={
               <Space>
                 <span>
-                  Reference Voice{' '}
+                  Voice{' '}
+                  <Typography.Text type={'secondary'}>(OpenAI)</Typography.Text>
+                </span>
+                <Tooltip title='Preview voices at OpenAI website'>
+                  <Typography.Link
+                    type={'secondary'}
+                    onClick={() =>
+                      openModelServiceLink(
+                        'openaiAvailableVoices' as keyof ExtensionSettings,
+                      )
+                    }
+                  >
+                    Learn more
+                  </Typography.Link>
+                </Tooltip>
+              </Space>
+            }
+          >
+            <Select
+              value={partialSettings.openaiSelectedVoice}
+              onChange={(value) =>
+                handleServiceChange('openaiSelectedVoice', value)
+              }
+              placeholder='Select a voice'
+              options={partialSettings.openaiAvailableVoices?.map(
+                (voice, index) => {
+                  return {
+                    key: `openaiVoice-${index}`,
+                    label: voice,
+                    value: voice,
+                  };
+                },
+              )}
+            />
+          </Form.Item>
+          <Divider />
+          <Form.Item
+            label={
+              <Space>
+                <span>
+                  Voice{' '}
                   <Typography.Text type={'secondary'}>
                     (GPT-SoVits)
                   </Typography.Text>
@@ -189,20 +245,21 @@ export const VoiceSettingsBar: React.FC<VoiceSettingsBarProps> = ({
             }
           >
             <Select
-              value={partialSettings.selectedGptSoVitsReferenceVoice}
+              value={partialSettings.gptSoVitsSelectedReferenceVoice}
               onChange={(value) =>
-                handleServiceChange('selectedGptSoVitsReferenceVoice', value)
+                handleServiceChange('gptSoVitsSelectedReferenceVoice', value)
               }
               placeholder='Select a reference voice'
-            >
-              {partialSettings.gptSoVitsAvailableReferenceVoices?.map(
-                (voice, index) => (
-                  <Option key={`gptSoVitsVoice-${index}`} value={voice.name}>
-                    {voice.name}
-                  </Option>
-                ),
+              options={partialSettings.gptSoVitsAvailableReferenceVoices?.map(
+                (voice, index) => {
+                  return {
+                    key: `gptSoVitsVoice-${index}`,
+                    label: voice.name,
+                    value: voice.name,
+                  };
+                },
               )}
-            </Select>
+            />
           </Form.Item>
           <Button
             type='primary'
@@ -210,7 +267,7 @@ export const VoiceSettingsBar: React.FC<VoiceSettingsBarProps> = ({
             ghost={true}
             block
           >
-            GptSoVits Settings
+            Advance Settings
           </Button>
         </Form>
       </Drawer>

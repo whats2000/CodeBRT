@@ -1,8 +1,8 @@
 import React from 'react';
-import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { Button, Collapse, Flex, Form, Input, Select } from 'antd';
 import { DeleteOutlined, HolderOutlined } from '@ant-design/icons';
+import { useSortable } from '@dnd-kit/sortable';
 
 import type { GptSoVitsVoiceSetting } from '../../../../../../types';
 

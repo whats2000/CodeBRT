@@ -17,5 +17,10 @@ export type VoiceService = {
   /**
    * Stops the voice playback and clears the queues.
    */
-  stopVoice: () => Promise<void>;
+  stopTextToVoice: () => Promise<void>;
+
+  /**
+   * Stops the voice recording and clears the queues.
+   */
+  stopVoiceToText: () => Promise<void>;
 };

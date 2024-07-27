@@ -1,7 +1,16 @@
 import React from 'react';
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
-import { Button, Checkbox, Collapse, Flex, Form, Input, Select } from 'antd';
+import {
+  Button,
+  Checkbox,
+  Collapse,
+  Flex,
+  Form,
+  Input,
+  Select,
+  Typography,
+} from 'antd';
 import { DeleteOutlined, HolderOutlined } from '@ant-design/icons';
 
 type CustomModelSettings = {
@@ -124,7 +133,11 @@ export const CustomModelSortableItem: React.FC<
                         e.target.checked,
                       )
                     }
-                  />
+                  >
+                    <Typography.Text type='secondary'>
+                      Check to append query to history
+                    </Typography.Text>
+                  </Checkbox>
                 </Form.Item>
               </>
             ),

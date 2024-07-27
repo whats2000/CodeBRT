@@ -1,13 +1,6 @@
 import React, { useContext, useEffect, useState } from 'react';
-import {
-  Select,
-  Button,
-  Space,
-  Dropdown,
-  Drawer,
-  MenuProps,
-  SelectProps,
-} from 'antd';
+import { Flex, MenuProps, SelectProps } from 'antd';
+import { Select, Button, Space, Dropdown, Drawer } from 'antd';
 import {
   PlusOutlined,
   HistoryOutlined,
@@ -44,6 +37,15 @@ type ToolbarProps = {
   setConversationHistory: React.Dispatch<
     React.SetStateAction<ConversationHistory>
   >;
+  setTheme: (newTheme: {
+    primaryColor?: string | undefined;
+    algorithm?:
+      | 'defaultAlgorithm'
+      | 'darkAlgorithm'
+      | 'compactAlgorithm'
+      | undefined;
+    borderRadius?: number | undefined;
+  }) => Promise<void>;
 };
 
 export const Toolbar: React.FC<ToolbarProps> = ({
@@ -53,9 +55,11 @@ export const Toolbar: React.FC<ToolbarProps> = ({
   isActiveModelLoading,
   setIsActiveModelLoading,
   setConversationHistory,
+  setTheme,
 }) => {
   const { callApi } = useContext(WebviewContext);
   const modelServices: ModelServiceType[] = [
+    'anthropic',
     'gemini',
     'cohere',
     'openai',
@@ -82,7 +86,6 @@ export const Toolbar: React.FC<ToolbarProps> = ({
     callApi('getAvailableModels', activeModelService)
       .then((models: string[]) => {
         setAvailableModels(models);
-        setSelectedModel(models[0]);
         setIsActiveModelLoading(false);
       })
       .catch((error) => {
@@ -94,8 +97,18 @@ export const Toolbar: React.FC<ToolbarProps> = ({
         setIsActiveModelLoading(false);
       });
 
+    callApi('getCurrentModel', activeModelService)
+      .then((model: string) => setSelectedModel(model))
+      .catch((error) =>
+        callApi(
+          'alertMessage',
+          `Failed to load current model: ${error}`,
+          'error',
+        ).catch(console.error),
+      );
+
     const handleResize = () => {
-      setIsOffCanvas(window.innerWidth < 600);
+      setIsOffCanvas(window.innerWidth < 560);
     };
 
     window.addEventListener('resize', handleResize);
@@ -244,11 +257,29 @@ export const Toolbar: React.FC<ToolbarProps> = ({
                 loading={isActiveModelLoading}
                 options={modelServiceOptions}
               />
-              <Button onClick={() => setIsSelectModelOpen(true)}>
-                {selectedModel}
+              <Button
+                onClick={() => setIsSelectModelOpen(true)}
+                loading={isActiveModelLoading}
+                style={{ whiteSpace: 'nowrap', overflow: 'hidden' }}
+              >
+                {isActiveModelLoading ? 'Loading...' : selectedModel}
               </Button>
               <Drawer
-                title='Select Model'
+                title={
+                  <Flex justify={'space-between'} align={'center'}>
+                    <span>Select Model</span>
+                    <Space>
+                      <Button
+                        icon={<HistoryOutlined />}
+                        onClick={toggleHistorySidebar}
+                      />
+                      <Button icon={<PlusOutlined />} onClick={createNewChat} />
+                      <Dropdown menu={{ items: settingMenuItems }}>
+                        <Button icon={<SettingOutlined />} />
+                      </Dropdown>
+                    </Space>
+                  </Flex>
+                }
                 placement='right'
                 open={isSelectModelOpen}
                 onClose={() => setIsSelectModelOpen(false)}
@@ -301,6 +332,7 @@ export const Toolbar: React.FC<ToolbarProps> = ({
       <SettingsBar
         isOpen={isSettingsOpen}
         onClose={() => setIsSettingsOpen(false)}
+        setTheme={setTheme}
       />
       <VoiceSettingsBar
         isOpen={isVoiceSettingsOpen}

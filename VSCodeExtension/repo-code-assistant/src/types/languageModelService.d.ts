@@ -3,6 +3,21 @@ import {
   ConversationHistoryList,
 } from './conversationHistory';
 
+/**
+ * The options to get a response for
+ * @property query - The query to get a response for
+ * @property images - The image paths to use for the query, if not provided, the query will be used without images
+ * @property currentEntryID - The current entry ID, if not provided, the history will be used from the latest entry
+ * @property sendStreamResponse - The callback to send chunks of the response to,
+ * if not provided, the response will be returned without streaming
+ */
+type GetResponseOptions = {
+  query: string;
+  images?: string[];
+  currentEntryID?: string;
+  sendStreamResponse?: (message: string) => void;
+};
+
 export type LanguageModelService = {
   /**
    * Update the available models
@@ -90,58 +105,16 @@ export type LanguageModelService = {
   switchModel: (newModel: string) => void;
 
   /**
-   * Get the response for a query, if the currentEntryID is provided, the history will be used from that point
-   * @param query - The query to get a response for
-   * @param currentEntryID - The current entry ID
-   * @returns The response for the query
-   */
-  getResponseForQuery: (
-    query: string,
-    currentEntryID?: string,
-  ) => Promise<string>;
-
-  /**
-   * Get the response for a query and also fire a view event to send the response in chunks.
-   * If the currentEntryID is provided, the history will be used from that point
-   * @param query - The query to get a response for
-   * @param sendStreamResponse - The callback to send chunks of the response to
-   * @param currentEntryID - The current entry ID
-   * @returns The response for the query
-   */
-  getResponseChunksForQuery: (
-    query: string,
-    sendStreamResponse: (msg: string) => void,
-    currentEntryID?: string,
-  ) => Promise<string>;
-
-  /**
-   * Get the response for a query with an image
-   * If the currentEntryID is provided, the history will be used from that point
-   * Notice: That not all models support history with images
-   * @param query - The query to get a response for
-   * @param images - The images paths to use
-   * @param currentEntryID - The current entry ID
-   */
-  getResponseForQueryWithImage: (
-    query: string,
-    images: string[],
-    currentEntryID?: string,
-  ) => Promise<string>;
-
-  /**
    * Get the response for a query with an image and also fire a view event to send the response in chunks.
-   * If the currentEntryID is provided, the history will be used from that point
-   * Notice: That not all models support history with images
-   * @param query - The query to get a response for
-   * @param images - The list of images paths to use
-   * @param sendStreamResponse - The callback to send chunks of the response to
-   * @param currentEntryID - The current entry ID
+   * If the currentEntryID is provided
+   * @param options - The options to get a response for
    * @returns The response for the query
+   * @see GetResponseOptions
    */
-  getResponseChunksForQueryWithImage: (
-    query: string,
-    images: string[],
-    sendStreamResponse: (msg: string) => void,
-    currentEntryID?: string,
-  ) => Promise<string>;
+  getResponse: (options: GetResponseOptions) => Promise<string>;
+
+  /**
+   *
+   */
+  stopResponse: () => void;
 };

@@ -43,7 +43,7 @@ type MessagesTopToolBarProps = {
   handleEdit: (entryId: string, message: string) => void;
 };
 
-export const MessagesTopToolBar: React.FC<MessagesTopToolBarProps> = ({
+export const TopToolBar: React.FC<MessagesTopToolBarProps> = ({
   modelType,
   conversationHistory,
   setConversationHistory,

@@ -2,9 +2,9 @@ import * as vscode from 'vscode';
 import type { ChatMessage } from 'cohere-ai/api';
 import { CohereClient } from 'cohere-ai';
 
-import type { ConversationEntry } from '../../types';
+import { ConversationEntry, GetResponseOptions } from '../../types';
 import { AbstractLanguageModelService } from './abstractLanguageModelService';
-import SettingsManager from '../../api/settingsManager';
+import { SettingsManager } from '../../api';
 
 export class CohereService extends AbstractLanguageModelService {
   private apiKey: string;
@@ -15,9 +15,10 @@ export class CohereService extends AbstractLanguageModelService {
     settingsManager: SettingsManager,
   ) {
     const availableModelNames = settingsManager.get('cohereAvailableModels');
-    const defaultModelName = availableModelNames[0] || '';
+    const defaultModelName = settingsManager.get('lastSelectedModel').cohere;
 
     super(
+      'cohere',
       context,
       'cohereConversationHistory.json',
       settingsManager,
@@ -112,15 +113,20 @@ export class CohereService extends AbstractLanguageModelService {
     return newAvailableModelNames;
   }
 
-  public async getResponseForQuery(
-    query: string,
-    currentEntryID?: string,
-  ): Promise<string> {
+  public async getResponse(options: GetResponseOptions): Promise<string> {
     if (this.currentModel === '') {
       vscode.window.showErrorMessage(
         'Make sure the model is selected before sending a message. Open the model selection dropdown and configure the model.',
       );
       return 'Missing model configuration. Check the model selection dropdown.';
+    }
+
+    const { query, images, sendStreamResponse, currentEntryID } = options;
+
+    if (images && images.length > 0) {
+      vscode.window.showWarningMessage(
+        'The images inference is not supported currently. The images will be ignored.',
+      );
     }
 
     const model = new CohereClient({ token: this.apiKey });
@@ -133,52 +139,18 @@ export class CohereService extends AbstractLanguageModelService {
       history.entries,
     );
 
-    try {
-      const response = await model.chat({
-        chatHistory: conversationHistory,
-        model: this.currentModel,
-        message: query,
-      });
-
-      return response.text;
-    } catch (error) {
-      vscode.window.showErrorMessage(
-        'Failed to get response from Cohere Service: ' + error,
-      );
-      return 'Failed to connect to the language model service.';
-    }
-  }
-
-  public async getResponseChunksForQuery(
-    query: string,
-    sendStreamResponse: (msg: string) => void,
-    currentEntryID?: string,
-  ): Promise<string> {
-    if (this.currentModel === '') {
-      vscode.window.showErrorMessage(
-        'Make sure the model is selected before sending a message. Open the model selection dropdown and configure the model.',
-      );
-      return 'Missing model configuration. Check the model selection dropdown.';
-    }
-
-    const model = new CohereClient({
-      token: this.apiKey,
-    });
-
-    const history = currentEntryID
-      ? this.getHistoryBeforeEntry(currentEntryID)
-      : this.history;
-
-    const conversationHistory = this.conversationHistoryToContent(
-      history.entries,
-    );
+    const requestData = {
+      chatHistory: conversationHistory,
+      model: this.currentModel,
+      message: query,
+    };
 
     try {
-      const result = await model.chatStream({
-        chatHistory: conversationHistory,
-        model: this.currentModel,
-        message: query,
-      });
+      if (!sendStreamResponse) {
+        return (await model.chat(requestData)).text;
+      }
+
+      const result = await model.chatStream(requestData);
       let responseText = '';
       for await (const item of result) {
         if (item.eventType !== 'text-generation') continue;

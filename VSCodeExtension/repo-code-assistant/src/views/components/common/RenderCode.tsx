@@ -1,11 +1,11 @@
 import React, { createContext, useContext, useState } from 'react';
 import SyntaxHighlighter from 'react-syntax-highlighter';
 import * as hljs from 'react-syntax-highlighter/dist/cjs/styles/hljs';
+import { Button, Flex, Select } from 'antd';
 import { BgColorsOutlined } from '@ant-design/icons';
 import styled from 'styled-components';
 
 import { CopyButton } from './CopyButton';
-import { Button, Flex, Select } from 'antd';
 
 const CodeContainer = styled.div<{ $dynamicStyle: React.CSSProperties }>`
   border-radius: 4px !important;

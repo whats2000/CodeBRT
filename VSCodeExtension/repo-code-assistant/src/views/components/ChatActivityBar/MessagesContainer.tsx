@@ -1,8 +1,6 @@
 import React, { useContext, useEffect, useState } from 'react';
-import ReactMarkdown from 'react-markdown';
-import { RendererCode, RendererCodeProvider } from '../common/RenderCode';
 import styled from 'styled-components';
-import { Button, Input, Space, Spin, theme } from 'antd';
+import { Spin, theme } from 'antd';
 import * as hljs from 'react-syntax-highlighter/dist/cjs/styles/hljs';
 
 import type {
@@ -10,12 +8,12 @@ import type {
   ConversationHistory,
   ModelServiceType,
 } from '../../../types';
+import { fadeIn, fadeOut } from '../../styles';
 import { WebviewContext } from '../../WebviewContext';
-import { TypingAnimation } from '../common/TypingAnimation';
-import { fadeIn, fadeOut } from '../../styles/animation';
-import { MessagesTopToolBar } from './MessagesContainer/TopToolBar';
-
-const { useToken } = theme;
+import { TopToolBar } from './MessagesContainer/TopToolBar';
+import { ImageContainer } from './MessagesContainer/ImageContainer';
+import { TextContainer } from './MessagesContainer/TextContainer';
+import { TextEditContainer } from './MessagesContainer/TextEditContainer';
 
 const StyledMessagesContainer = styled.div<{ $isActiveModelLoading: boolean }>`
   flex-grow: 1;
@@ -40,32 +38,6 @@ const MessageBubble = styled.div<{ $user: string }>`
   position: relative;
 `;
 
-const EditInputTextArea = styled(Input.TextArea)`
-  background-color: transparent;
-  color: ${({ theme }) => theme.colorText};
-  border: none;
-  border-radius: 4px;
-  resize: none;
-  overflow: hidden;
-  margin-top: 10px;
-
-  &:focus {
-    outline: none;
-    border-color: ${({ theme }) => theme.colorPrimary};
-  }
-`;
-
-const MessageText = styled.span`
-  word-wrap: break-word;
-  margin: 10px 0;
-`;
-
-const MessageImage = styled.img`
-  max-width: 100%;
-  border-radius: 10px;
-  margin-top: 10px;
-`;
-
 type MessagesContainerProps = {
   conversationHistory: ConversationHistory;
   setConversationHistory: React.Dispatch<
@@ -74,7 +46,7 @@ type MessagesContainerProps = {
   modelType: ModelServiceType | 'loading...';
   isActiveModelLoading: boolean;
   messagesContainerRef: React.RefObject<HTMLDivElement>;
-  isLoading: boolean;
+  isProcessing: boolean;
   scrollToBottom: (smooth?: boolean) => void;
   messageEndRef: React.RefObject<HTMLDivElement>;
   handleEditUserMessageSave: (
@@ -108,14 +80,13 @@ export const MessagesContainer: React.FC<MessagesContainerProps> = ({
   modelType,
   isActiveModelLoading,
   messagesContainerRef,
-  isLoading,
+  isProcessing,
   scrollToBottom,
   messageEndRef,
   handleEditUserMessageSave,
 }) => {
   const [editingEntryId, setEditingEntryId] = useState<string | null>(null);
   const [editedMessage, setEditedMessage] = useState('');
-  const [imageUrls, setImageUrls] = useState<Record<string, string>>({});
   const [isAudioPlaying, setIsAudioPlaying] = useState(false);
   const [isStopAudio, setIsStopAudio] = useState(false);
   const [partialSettings, setPartialSettings] = useState<{
@@ -123,23 +94,7 @@ export const MessagesContainer: React.FC<MessagesContainerProps> = ({
   }>({ hljsTheme: 'darcula' });
 
   const { callApi } = useContext(WebviewContext);
-  const { token } = useToken();
-
-  useEffect(() => {
-    const loadImageUrls = async () => {
-      const urls: Record<string, string> = {};
-      for (const entry of Object.values(conversationHistory.entries)) {
-        if (entry.images) {
-          for (const image of entry.images) {
-            urls[image] = await callApi('getWebviewUri', image);
-          }
-        }
-      }
-      setImageUrls(urls);
-    };
-
-    loadImageUrls().then();
-  }, [conversationHistory.entries, callApi]);
+  const { token } = theme.useToken();
 
   useEffect(() => {
     Object.keys(partialSettings).map(async (key) => {
@@ -234,7 +189,7 @@ export const MessagesContainer: React.FC<MessagesContainerProps> = ({
         {conversationHistoryEntries.map((entry, index) => {
           return (
             <MessageBubble key={entry.id} $user={entry.role} theme={token}>
-              <MessagesTopToolBar
+              <TopToolBar
                 modelType={modelType}
                 conversationHistory={conversationHistory}
                 setConversationHistory={setConversationHistory}
@@ -250,59 +205,25 @@ export const MessagesContainer: React.FC<MessagesContainerProps> = ({
               />
 
               {entry.id === editingEntryId ? (
-                <Space direction={'vertical'}>
-                  <EditInputTextArea
-                    id={`edit-input-${entry.id}`}
-                    value={editedMessage}
-                    onChange={handleInput}
-                    autoFocus
-                    theme={token}
-                  />
-                  <Button
-                    onClick={() => handleSaveEdit(entry.id)}
-                    style={{ width: '100%' }}
-                  >
-                    Save
-                  </Button>
-                  <Button onClick={handleCancelEdit} style={{ width: '100%' }}>
-                    Cancel
-                  </Button>
-                </Space>
+                <TextEditContainer
+                  entry={entry}
+                  isProcessing={isProcessing}
+                  editedMessage={editedMessage}
+                  handleInput={handleInput}
+                  handleSaveEdit={handleSaveEdit}
+                  handleCancelEdit={handleCancelEdit}
+                />
               ) : (
                 <>
-                  <MessageText>
-                    {entry.role === 'AI' &&
-                    entry.id === conversationHistory.current &&
-                    isLoading ? (
-                      <TypingAnimation
-                        message={entry.message}
-                        isLoading={isLoading}
-                        scrollToBottom={scrollToBottom}
-                        hljsTheme={partialSettings.hljsTheme}
-                        setHljsTheme={setHljsTheme}
-                      />
-                    ) : (
-                      <RendererCodeProvider
-                        value={{
-                          hljsTheme: partialSettings.hljsTheme,
-                          setHljsTheme: setHljsTheme,
-                        }}
-                      >
-                        <ReactMarkdown
-                          components={RendererCode}
-                          children={entry.message}
-                        />
-                      </RendererCodeProvider>
-                    )}
-                  </MessageText>
-                  {entry.images &&
-                    entry.images.map((image, index) => (
-                      <MessageImage
-                        key={index}
-                        src={imageUrls[image] || image}
-                        alt='Referenced Image'
-                      />
-                    ))}
+                  <TextContainer
+                    entry={entry}
+                    conversationHistoryCurrent={conversationHistory.current}
+                    isProcessing={isProcessing}
+                    scrollToBottom={scrollToBottom}
+                    hljsTheme={partialSettings.hljsTheme}
+                    setHljsTheme={setHljsTheme}
+                  />
+                  <ImageContainer entry={entry} />
                 </>
               )}
             </MessageBubble>

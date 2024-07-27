@@ -1,6 +1,11 @@
-import { ModelServiceType } from './modelServiceType';
-import { VoiceServiceType } from './voiceServiceType';
 import type * as hljs from 'react-syntax-highlighter/dist/cjs/styles/hljs';
+import { SpeechCreateParams } from 'openai/resources/audio';
+
+import { ModelServiceType } from './modelServiceType';
+import {
+  TextToVoiceServiceType,
+  VoiceToTextServiceType,
+} from './voiceServiceType';
 
 export type GptSoVitsVoiceSetting = {
   /**
@@ -74,14 +79,11 @@ export type CustomModelSettings = {
   includeQueryInHistory: boolean;
 };
 
-/**
- * Represents the settings for the extension.
- */
-export type ExtensionSettings = {
+export type ExtensionSettingsLocal = {
   /**
-   * The API key for the Gemini model.
+   * The available models for the Anthropic API.
    */
-  geminiApiKey: string;
+  anthropicAvailableModels: string[];
 
   /**
    * The available models for the Gemini API.
@@ -89,19 +91,19 @@ export type ExtensionSettings = {
   geminiAvailableModels: string[];
 
   /**
-   * The API key for the OpenAI model.
-   */
-  openaiApiKey: string;
-
-  /**
    * The available models for the OpenAI API.
    */
   openaiAvailableModels: string[];
 
   /**
-   * The API key for the Cohere model.
+   * The available voices for the OpenAI API.
    */
-  cohereApiKey: string;
+  openaiAvailableVoices: SpeechCreateParams.voice[];
+
+  /**
+   * The selected voice for the OpenAI API.
+   */
+  openaiSelectedVoice: SpeechCreateParams.voice;
 
   /**
    * The available models for the Cohere API.
@@ -109,19 +111,9 @@ export type ExtensionSettings = {
   cohereAvailableModels: string[];
 
   /**
-   * The API key for the Groq model.
-   */
-  groqApiKey: string;
-
-  /**
    * The available models for the Groq API.
    */
   groqAvailableModels: string[];
-
-  /**
-   * The API key for the Hugging Face model.
-   */
-  huggingFaceApiKey: string;
 
   /**
    * The available models for the Hugging Face API.
@@ -137,10 +129,6 @@ export type ExtensionSettings = {
    * The available models for the Ollama API.
    */
   ollamaAvailableModels: string[];
-  /**
-   * The selected reference voice for the GPT-SoVits API.
-   */
-  selectedGptSoVitsReferenceVoice: string;
 
   /**
    * The last used model.
@@ -148,24 +136,26 @@ export type ExtensionSettings = {
   lastUsedModel: ModelServiceType;
 
   /**
+   * The last selected model for each model service.
+   */
+  lastSelectedModel: {
+    [keyof in ModelServiceType]: string;
+  };
+
+  /**
    * A list of custom models.
    */
   customModels: CustomModelSettings[];
 
   /**
-   * The name of the currently selected custom model.
-   */
-  selectedCustomModel: string;
-
-  /**
    * The selected text-to-voice service.
    */
-  selectedTextToVoiceService: VoiceServiceType;
+  selectedTextToVoiceService: TextToVoiceServiceType;
 
   /**
    * The selected voice-to-text service.
    */
-  selectedVoiceToTextService: VoiceServiceType;
+  selectedVoiceToTextService: VoiceToTextServiceType;
 
   /**
    * The APIUrl for the GPT-SoVits model.
@@ -176,6 +166,43 @@ export type ExtensionSettings = {
    * The available reference voices for the GPT-SoVits API.
    */
   gptSoVitsAvailableReferenceVoices: GptSoVitsVoiceSetting[];
+
+  /**
+   * The selected reference voice for the GPT-SoVits API.
+   */
+  gptSoVitsSelectedReferenceVoice: string;
+};
+
+export type ExtensionSettingsCrossDevice = {
+  /**
+   * The API key for the Anthropic model.
+   */
+  anthropicApiKey: string;
+
+  /**
+   * The API key for the Cohere model.
+   */
+  cohereApiKey: string;
+
+  /**
+   * The API key for the Gemini model.
+   */
+  geminiApiKey: string;
+
+  /**
+   * The API key for the Groq model.
+   */
+  groqApiKey: string;
+
+  /**
+   * The API key for the Hugging Face model.
+   */
+  huggingFaceApiKey: string;
+
+  /**
+   * The API key for the OpenAI model.
+   */
+  openaiApiKey: string;
 
   /**
    * The primary color for the Ant Design theme.
@@ -192,5 +219,14 @@ export type ExtensionSettings = {
    */
   themeBorderRadius: number;
 
+  /**
+   * The theme for the code highlighter.
+   */
   hljsTheme: keyof typeof hljs;
 };
+
+/**
+ * Represents the settings for the extension.
+ */
+export type ExtensionSettings = ExtensionSettingsLocal &
+  ExtensionSettingsCrossDevice;

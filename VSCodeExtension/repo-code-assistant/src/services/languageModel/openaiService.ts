@@ -2,16 +2,15 @@ import * as vscode from 'vscode';
 import OpenAI from 'openai';
 import fs from 'fs';
 import path from 'path';
-import type {
-  ChatCompletionMessageParam,
+import {
   ChatCompletionContentPartImage,
   ChatCompletionCreateParamsStreaming,
-  ChatCompletionCreateParamsNonStreaming,
+  ChatCompletionMessageParam,
 } from 'openai/resources';
 
-import type { ConversationEntry } from '../../types';
+import type { ConversationEntry, GetResponseOptions } from '../../types';
 import { AbstractLanguageModelService } from './abstractLanguageModelService';
-import SettingsManager from '../../api/settingsManager';
+import { SettingsManager } from '../../api';
 
 export class OpenAIService extends AbstractLanguageModelService {
   private apiKey: string;
@@ -22,9 +21,10 @@ export class OpenAIService extends AbstractLanguageModelService {
     settingsManager: SettingsManager,
   ) {
     const availableModelNames = settingsManager.get('openaiAvailableModels');
-    const defaultModelName = availableModelNames[0] || '';
+    const defaultModelName = settingsManager.get('lastSelectedModel').openai;
 
     super(
+      'openai',
       context,
       'openAIConversationHistory.json',
       settingsManager,
@@ -60,18 +60,27 @@ export class OpenAIService extends AbstractLanguageModelService {
     }
   }
 
-  private conversationHistoryToContent(
+  private async conversationHistoryToContent(
     entries: { [key: string]: ConversationEntry },
     query: string,
-  ): ChatCompletionMessageParam[] {
+    images?: string[],
+  ): Promise<ChatCompletionMessageParam[]> {
     const result: ChatCompletionMessageParam[] = [];
     let currentEntry = entries[this.history.current];
 
     while (currentEntry) {
-      result.unshift({
-        role: currentEntry.role === 'user' ? 'user' : 'assistant',
-        content: currentEntry.message,
-      });
+      const messageParam: ChatCompletionMessageParam =
+        currentEntry.role === 'user'
+          ? {
+              role: 'user',
+              content: [{ type: 'text', text: currentEntry.message }],
+            }
+          : {
+              role: 'assistant',
+              content: currentEntry.message,
+            };
+
+      result.unshift(messageParam);
 
       if (currentEntry.parent) {
         currentEntry = entries[currentEntry.parent];
@@ -84,8 +93,24 @@ export class OpenAIService extends AbstractLanguageModelService {
     if (result.length > 0 && result[result.length - 1].role !== 'user') {
       result.push({
         role: 'user',
-        content: query,
+        content: [{ type: 'text', text: query }],
       });
+    }
+
+    if (images && images.length > 0) {
+      const imageParts = images
+        .map((image) => {
+          const mimeType = `image/${path.extname(image).slice(1)}`;
+          return this.fileToGenerativePart(image, mimeType);
+        })
+        .filter(
+          (part) => part !== undefined,
+        ) as ChatCompletionContentPartImage[];
+
+      result[result.length - 1] = {
+        role: 'user',
+        content: [{ type: 'text', text: query }, ...imageParts],
+      };
     }
 
     return result;
@@ -94,14 +119,18 @@ export class OpenAIService extends AbstractLanguageModelService {
   private fileToGenerativePart(
     filePath: string,
     mimeType: string,
-  ): ChatCompletionContentPartImage {
-    const base64Data = fs.readFileSync(filePath).toString('base64');
-    return {
-      type: 'image_url',
-      image_url: {
-        url: `data:${mimeType};base64,${base64Data}`,
-      },
-    };
+  ): ChatCompletionContentPartImage | undefined {
+    try {
+      const base64Data = fs.readFileSync(filePath).toString('base64');
+      return {
+        type: 'image_url',
+        image_url: {
+          url: `data:${mimeType};base64,${base64Data}`,
+        },
+      };
+    } catch (error) {
+      console.error('Failed to read image file:', error);
+    }
   }
 
   public async getLatestAvailableModelNames(): Promise<string[]> {
@@ -138,10 +167,7 @@ export class OpenAIService extends AbstractLanguageModelService {
     return newAvailableModelNames;
   }
 
-  public async getResponseForQuery(
-    query: string,
-    currentEntryID?: string,
-  ): Promise<string> {
+  public async getResponse(options: GetResponseOptions): Promise<string> {
     if (this.currentModel === '') {
       vscode.window.showErrorMessage(
         'Make sure the model is selected before sending a message. Open the model selection dropdown and configure the model.',
@@ -149,159 +175,45 @@ export class OpenAIService extends AbstractLanguageModelService {
       return 'Missing model configuration. Check the model selection dropdown.';
     }
 
-    const openai = new OpenAI({
-      apiKey: this.apiKey,
-    });
+    if (this.currentModel.includes('gpt-3.5') && options.images) {
+      vscode.window.showWarningMessage(
+        'The images ChatGPT-3.5 is not supported currently. The images will be ignored.',
+      );
+
+      options.images = undefined;
+    }
+
+    const { query, images, sendStreamResponse, currentEntryID } = options;
+
+    const openai = new OpenAI({ apiKey: this.apiKey });
 
     const history = currentEntryID
       ? this.getHistoryBeforeEntry(currentEntryID)
       : this.history;
-    const conversationHistory = this.conversationHistoryToContent(
+    const conversationHistory = await this.conversationHistoryToContent(
       history.entries,
       query,
+      images,
     );
 
     try {
-      const chatCompletion = await openai.chat.completions.create({
-        messages: conversationHistory,
-        model: this.currentModel,
-      } as ChatCompletionCreateParamsNonStreaming);
+      if (!sendStreamResponse) {
+        return (
+          await openai.chat.completions.create({
+            messages: conversationHistory,
+            model: this.currentModel,
+            stream: false,
+          })
+        ).choices[0]?.message?.content!;
+      }
 
-      return chatCompletion.choices[0]?.message?.content!;
-    } catch (error) {
-      vscode.window.showErrorMessage(
-        'Failed to get response from OpenAI Service: ' + error,
-      );
-      return 'Failed to connect to the language model service.';
-    }
-  }
-
-  public async getResponseChunksForQuery(
-    query: string,
-    sendStreamResponse: (msg: string) => void,
-    currentEntryID?: string,
-  ): Promise<string> {
-    if (this.currentModel === '') {
-      vscode.window.showErrorMessage(
-        'Make sure the model is selected before sending a message. Open the model selection dropdown and configure the model.',
-      );
-      return 'Missing model configuration. Check the model selection dropdown.';
-    }
-
-    const openai = new OpenAI({
-      apiKey: this.apiKey,
-    });
-
-    const history = currentEntryID
-      ? this.getHistoryBeforeEntry(currentEntryID)
-      : this.history;
-    const conversationHistory = this.conversationHistoryToContent(
-      history.entries,
-      query,
-    );
-
-    try {
       const stream = await openai.chat.completions.create({
-        messages: conversationHistory,
         model: this.currentModel,
+        messages: conversationHistory,
         stream: true,
       } as ChatCompletionCreateParamsStreaming);
 
-      let responseText: string = '';
-
-      // Update streaming response
-      for await (const chunk of stream) {
-        const partText = chunk.choices[0]?.delta?.content || '';
-        sendStreamResponse(partText);
-        responseText += partText;
-      }
-
-      return responseText;
-    } catch (error) {
-      vscode.window.showErrorMessage(
-        'Failed to get response from OpenAI Service: ' + error,
-      );
-      return 'Failed to connect to the language model service.';
-    }
-  }
-
-  public async getResponseForQueryWithImage(
-    query: string,
-    images: string[],
-    _currentEntryID?: string,
-  ): Promise<string> {
-    if (this.currentModel === '') {
-      vscode.window.showErrorMessage(
-        'Make sure the model is selected before sending a message. Open the model selection dropdown and configure the model.',
-      );
-      return 'Missing model configuration. Check the model selection dropdown.';
-    }
-
-    const openai = new OpenAI({ apiKey: this.apiKey });
-
-    try {
-      const imageParts = images.map((image) => {
-        const mimeType = `image/${path.extname(image).slice(1)}`;
-        return this.fileToGenerativePart(image, mimeType);
-      });
-
-      const messages: ChatCompletionMessageParam[] = [
-        {
-          role: 'user',
-          content: [{ type: 'text', text: query }, ...imageParts],
-        },
-      ];
-
-      const chatCompletion = await openai.chat.completions.create({
-        model: this.currentModel,
-        messages: messages,
-      } as ChatCompletionCreateParamsNonStreaming);
-
-      return chatCompletion.choices[0]?.message?.content!;
-    } catch (error) {
-      vscode.window.showErrorMessage(
-        'Failed to get response from OpenAI Service: ' + error,
-      );
-      return 'Failed to connect to the language model service';
-    }
-  }
-
-  public async getResponseChunksForQueryWithImage(
-    query: string,
-    images: string[],
-    sendStreamResponse: (msg: string) => void,
-    _currentEntryID?: string,
-  ): Promise<string> {
-    if (this.currentModel === '') {
-      vscode.window.showErrorMessage(
-        'Make sure the model is selected before sending a message. Open the model selection dropdown and configure the model.',
-      );
-      return 'Missing model configuration. Check the model selection dropdown.';
-    }
-
-    const openai = new OpenAI({ apiKey: this.apiKey });
-
-    try {
       let responseText = '';
-
-      const imageParts = images.map((image) => {
-        const mimeType = `image/${path.extname(image).slice(1)}`;
-        return this.fileToGenerativePart(image, mimeType);
-      });
-
-      const messages: ChatCompletionMessageParam[] = [
-        {
-          role: 'user',
-          content: [{ type: 'text', text: query }, ...imageParts],
-        },
-      ];
-
-      const stream = await openai.chat.completions.create({
-        model: this.currentModel,
-        messages: messages,
-        stream: true,
-      } as ChatCompletionCreateParamsStreaming);
-
       for await (const chunk of stream) {
         const partText = chunk.choices[0]?.delta?.content || '';
         sendStreamResponse(partText);
@@ -313,7 +225,7 @@ export class OpenAIService extends AbstractLanguageModelService {
       vscode.window.showErrorMessage(
         'Failed to get response from OpenAI Service: ' + error,
       );
-      return 'Failed to connect to the language model service';
+      return 'Failed to connect to the language model service.';
     }
   }
 }

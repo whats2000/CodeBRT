@@ -1,9 +1,17 @@
 import { VoiceService } from './voiceService';
 
-export type VoiceServiceType = 'gptSoVits' | 'not set';
+export type TextToVoiceServiceType = 'gptSoVits' | 'openai' | 'not set';
+export type VoiceToTextServiceType =
+  | 'groq'
+  | 'openai'
+  | 'visualStudioCodeBuiltIn'
+  | 'not set';
 
 export type LoadedVoiceServices = {
-  [key in Exclude<VoiceServiceType, 'not set'>]: {
+  [key in Exclude<
+    TextToVoiceServiceType | VoiceToTextServiceType,
+    'not set'
+  >]: {
     service: VoiceService;
   };
 };

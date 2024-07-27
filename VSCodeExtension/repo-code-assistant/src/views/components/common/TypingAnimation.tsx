@@ -6,7 +6,7 @@ import { RendererCode, RendererCodeProvider } from './RenderCode';
 
 type TypingAnimationProps = {
   message: string;
-  isLoading: boolean;
+  isProcessing: boolean;
   scrollToBottom: (smooth: boolean) => void;
   hljsTheme: keyof typeof hljs;
   setHljsTheme: (theme: keyof typeof hljs) => void;
@@ -14,7 +14,7 @@ type TypingAnimationProps = {
 
 export const TypingAnimation: React.FC<TypingAnimationProps> = ({
   message,
-  isLoading,
+  isProcessing,
   scrollToBottom,
   hljsTheme,
   setHljsTheme,
@@ -26,13 +26,13 @@ export const TypingAnimation: React.FC<TypingAnimationProps> = ({
 
     if (length < message.length) {
       // Accelerate the typing speed when not loading (i.e., all data is received)
-      const baseDelay = isLoading ? 100 : 30;
+      const baseDelay = isProcessing ? 100 : 30;
       const remainingLength = message.length - length;
       const delay = Math.max(20, baseDelay - remainingLength);
 
       const timer = setTimeout(() => {
         // Calculate chunk size based on loading state
-        const chunkSize = isLoading
+        const chunkSize = isProcessing
           ? Math.ceil(remainingLength / 10)
           : Math.ceil(remainingLength / 5);
         const nextLength = length + chunkSize;
@@ -41,7 +41,7 @@ export const TypingAnimation: React.FC<TypingAnimationProps> = ({
 
       return () => clearTimeout(timer);
     }
-  }, [displayedMessage, message, isLoading]);
+  }, [displayedMessage, message, isProcessing]);
 
   useEffect(() => {
     if (displayedMessage.length === message.length) {

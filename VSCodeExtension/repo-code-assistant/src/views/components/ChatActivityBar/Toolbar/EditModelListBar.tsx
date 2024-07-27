@@ -6,12 +6,12 @@ import { WebviewContext } from '../../../WebviewContext';
 import { ModelForm } from './EditModelListBar/ModelForm';
 import { CustomModelForm } from './EditModelListBar/CustomModelForm';
 
-interface EditModelListBarProps {
+type EditModelListBarProps = {
   isOpen: boolean;
   onClose: () => void;
   activeModelService: ModelServiceType | 'loading...';
   handleEditModelListSave: (models: string[]) => void;
-}
+};
 
 export const EditModelListBar: React.FC<EditModelListBarProps> = ({
   isOpen,
@@ -30,9 +30,9 @@ export const EditModelListBar: React.FC<EditModelListBarProps> = ({
 
     if (isOpen) {
       if (activeModelService === 'custom') {
-        callApi('getCustomModels')
-          .then((models: CustomModelSettings[]) => {
-            setCustomModels(models);
+        callApi('getSetting', 'customModels')
+          .then((models) => {
+            setCustomModels(models as CustomModelSettings[]);
             setIsLoading(false);
           })
           .catch((error: any) => {
@@ -74,7 +74,6 @@ export const EditModelListBar: React.FC<EditModelListBarProps> = ({
         <CustomModelForm
           isOpen={isOpen}
           isLoading={isLoading}
-          activeModel={activeModelService}
           customModels={customModels}
           setCustomModels={setCustomModels}
           handleEditModelListSave={handleEditModelListSave}

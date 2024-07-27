@@ -1,6 +1,6 @@
 import React, { createContext } from 'react';
 import DeferredPromise from 'promise-deferred';
-import { v4 as uuid } from 'uuid';
+import { v4 as uuidV4 } from 'uuid';
 
 import type {
   ViewApi,
@@ -89,7 +89,7 @@ export const webviewContextValue = (
     key: K,
     ...params: Parameters<ViewApi[K]>
   ) => {
-    const id = uuid();
+    const id = uuidV4();
     const deferred = new DeferredPromise<ReturnType<ViewApi[K]>>();
     const req: ViewApiRequest = { type: 'request', id, key, params };
     pendingRequests[id] = deferred;

@@ -1,7 +1,7 @@
 import React from 'react';
 import styled from 'styled-components';
-import { CopyFilled, CopyOutlined } from '@ant-design/icons';
 import { Button } from 'antd';
+import { CopyFilled, CopyOutlined } from '@ant-design/icons';
 
 const StyledCopyButton = styled(Button)`
   background-color: transparent;

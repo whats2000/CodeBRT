@@ -1,16 +1,16 @@
 import { useContext, useState, useEffect, useRef } from 'react';
 import styled from 'styled-components';
-import { v4 as uuidv4 } from 'uuid';
+import { v4 as uuidV4 } from 'uuid';
 import { Content } from 'antd/es/layout/layout';
 import { ConfigProvider } from 'antd';
 
 import type { ConversationHistory, ModelServiceType } from '../../types';
 import { INPUT_MESSAGE_KEY, UPLOADED_IMAGES_KEY } from '../../constants';
 import { WebviewContext } from '../WebviewContext';
+import { useThemeConfig } from '../hooks';
 import { Toolbar } from './ChatActivityBar/Toolbar';
 import { InputContainer } from './ChatActivityBar/InputContainer';
 import { MessagesContainer } from './ChatActivityBar/MessagesContainer';
-import { useThemeConfig } from '../hooks/useThemeConfig';
 
 const Container = styled(Content)`
   display: flex;
@@ -37,7 +37,7 @@ export const ChatActivityBar = () => {
       current: '',
       entries: {},
     });
-  const [isLoading, setIsLoading] = useState(false);
+  const [isProcessing, setIsProcessing] = useState(false);
   const [activeModelService, setActiveModelService] = useState<
     ModelServiceType | 'loading...'
   >('loading...');
@@ -49,7 +49,7 @@ export const ChatActivityBar = () => {
   const messageEndRef = useRef<HTMLDivElement>(null);
   const messagesContainerRef = useRef<HTMLDivElement>(null);
 
-  const theme = useThemeConfig();
+  const [theme, setTheme] = useThemeConfig();
 
   const scrollToBottom = (smooth: boolean = true) => {
     if (messagesContainerRef.current) {
@@ -83,7 +83,7 @@ export const ChatActivityBar = () => {
           message: newEntries[currentID].message + responseFromMessage,
         };
       } else {
-        const tempId = `temp-${uuidv4()}`;
+        const tempId = `temp-${uuidV4()}`;
         newEntries[tempId] = {
           id: tempId,
           role: 'AI',
@@ -163,10 +163,10 @@ export const ChatActivityBar = () => {
   }, [uploadedImages]);
 
   const sendMessage = async () => {
-    if (isLoading) return;
+    if (isProcessing) return;
     if (activeModelService === 'loading...') return;
     if (!inputMessage.trim()) return;
-    setIsLoading(true);
+    setIsProcessing(true);
 
     const userEntryId = await callApi(
       'addConversationEntry',
@@ -203,7 +203,7 @@ export const ChatActivityBar = () => {
       };
     });
 
-    const tempId = `temp-${uuidv4()}`;
+    const tempId = `temp-${uuidV4()}`;
     setConversationHistory((prevMessages) => ({
       ...prevMessages,
       entries: {
@@ -221,20 +221,14 @@ export const ChatActivityBar = () => {
     scrollToBottom(false);
 
     try {
-      const responseText =
-        uploadedImages.length > 0
-          ? ((await callApi(
-              'getLanguageModelResponseWithImage',
-              inputMessage,
-              activeModelService,
-              uploadedImages,
-            )) as string)
-          : ((await callApi(
-              'getLanguageModelResponse',
-              inputMessage,
-              activeModelService,
-              true,
-            )) as string);
+      const responseText = (await callApi(
+        'getLanguageModelResponse',
+        activeModelService,
+        inputMessage,
+        uploadedImages.length > 0 ? uploadedImages : undefined,
+        undefined,
+        true,
+      )) as string;
 
       const aiEntryId = await callApi(
         'addConversationEntry',
@@ -271,7 +265,7 @@ export const ChatActivityBar = () => {
       setInputMessage('');
       setUploadedImages([]);
       setTimeout(() => {
-        setIsLoading(false);
+        setIsProcessing(false);
         scrollToBottom(true);
       }, 1000);
     } catch (error) {
@@ -280,7 +274,7 @@ export const ChatActivityBar = () => {
         `Failed to get response: ${error}`,
         'error',
       ).catch(console.error);
-      setIsLoading(false);
+      setIsProcessing(false);
     }
   };
 
@@ -288,8 +282,10 @@ export const ChatActivityBar = () => {
     entryId: string,
     editedMessage: string,
   ) => {
-    if (isLoading) return;
+    if (isProcessing) return;
     if (activeModelService === 'loading...') return;
+    if (!editedMessage.trim()) return;
+    setIsProcessing(true);
 
     const entry = conversationHistory.entries[entryId];
     const newEntryId = await callApi(
@@ -329,7 +325,7 @@ export const ChatActivityBar = () => {
       };
     });
 
-    const tempId = `temp-${uuidv4()}`;
+    const tempId = `temp-${uuidV4()}`;
     setConversationHistory((prevMessages) => ({
       ...prevMessages,
       entries: {
@@ -347,22 +343,14 @@ export const ChatActivityBar = () => {
     scrollToBottom(false);
 
     try {
-      const responseText =
-        entry.images && entry.images.length > 0
-          ? ((await callApi(
-              'getLanguageModelResponseWithImage',
-              editedMessage,
-              activeModelService,
-              entry.images as string[],
-              newEntryId,
-            )) as string)
-          : ((await callApi(
-              'getLanguageModelResponse',
-              editedMessage,
-              activeModelService,
-              true,
-              newEntryId,
-            )) as string);
+      const responseText = (await callApi(
+        'getLanguageModelResponse',
+        activeModelService,
+        editedMessage,
+        entry.images && entry.images.length > 0 ? entry.images : undefined,
+        newEntryId,
+        true,
+      )) as string;
 
       const aiEntryId = await callApi(
         'addConversationEntry',
@@ -397,7 +385,7 @@ export const ChatActivityBar = () => {
       });
 
       setTimeout(() => {
-        setIsLoading(false);
+        setIsProcessing(false);
         scrollToBottom(true);
       }, 1000);
     } catch (error) {
@@ -406,7 +394,7 @@ export const ChatActivityBar = () => {
         `Failed to get response: ${error}`,
         'error',
       ).catch(console.error);
-      setIsLoading(false);
+      setIsProcessing(false);
     }
   };
 
@@ -447,6 +435,7 @@ export const ChatActivityBar = () => {
           setIsActiveModelLoading={setIsActiveModelLoading}
           setConversationHistory={setConversationHistory}
           setActiveModelService={setActiveModelService}
+          setTheme={setTheme}
         />
         <MessagesContainer
           conversationHistory={conversationHistory}
@@ -454,7 +443,7 @@ export const ChatActivityBar = () => {
           modelType={activeModelService}
           isActiveModelLoading={isActiveModelLoading}
           messagesContainerRef={messagesContainerRef}
-          isLoading={isLoading}
+          isProcessing={isProcessing}
           scrollToBottom={scrollToBottom}
           messageEndRef={messageEndRef}
           handleEditUserMessageSave={handleEditUserMessageSave}
@@ -465,7 +454,7 @@ export const ChatActivityBar = () => {
           inputMessage={inputMessage}
           setInputMessage={setInputMessage}
           sendMessage={sendMessage}
-          isLoading={isLoading}
+          isProcessing={isProcessing}
           handleImageRemove={handleImageRemove}
         />
       </Container>

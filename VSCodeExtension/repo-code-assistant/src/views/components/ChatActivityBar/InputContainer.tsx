@@ -1,14 +1,16 @@
 import React, { useState, useContext, useEffect, useRef } from 'react';
 import styled from 'styled-components';
-import { Button, Flex, Input } from 'antd';
+import type { UploadFile } from 'antd/lib/upload/interface';
+import { Button, Flex, Input, Image, Upload, Tag } from 'antd';
 import {
-  CloseCircleFilled,
+  AudioOutlined,
   LoadingOutlined,
   SendOutlined,
   UploadOutlined,
 } from '@ant-design/icons';
 
 import { WebviewContext } from '../../WebviewContext';
+import { useClipboardImage } from '../../hooks';
 
 const StyledInputContainer = styled.div`
   display: flex;
@@ -21,49 +23,17 @@ const UploadedImageContainer = styled.div`
   flex-wrap: wrap;
 `;
 
-const UploadedImageWrapper = styled.div`
-  position: relative;
-  margin: 5px 5px 15px;
-
-  &:hover button {
-    display: flex;
-  }
-`;
-
-const UploadedImage = styled.img`
-  max-width: 100px;
-  max-height: 100px;
-  border-radius: 4px;
-`;
-
-const DeleteButton = styled.button`
-  display: none;
-  position: absolute;
-  align-items: center;
-  justify-content: center;
-  top: 0;
-  right: 0;
-  background-color: rgba(0, 0, 0, 0.5);
-  color: white;
-  border: none;
-  border-radius: 50%;
-  cursor: pointer;
-  padding: 0;
-  opacity: 0.8;
-
-  &:hover {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    opacity: 1;
+const StyledUpload = styled(Upload)`
+  div.ant-upload-list-item-container {
+    margin-bottom: 10px;
   }
 `;
 
 type InputContainerProps = {
   inputMessage: string;
-  setInputMessage: (message: string) => void;
+  setInputMessage: React.Dispatch<React.SetStateAction<string>>;
   sendMessage: () => void;
-  isLoading: boolean;
+  isProcessing: boolean;
   uploadedImages: string[];
   handleImageUpload: (files: FileList | null) => void;
   handleImageRemove: (imagePath: string) => void;
@@ -73,15 +43,27 @@ export const InputContainer = ({
   inputMessage,
   setInputMessage,
   sendMessage,
-  isLoading,
+  isProcessing,
   uploadedImages,
   handleImageUpload,
   handleImageRemove,
 }: InputContainerProps) => {
   const { callApi } = useContext(WebviewContext);
   const [enterPressCount, setEnterPressCount] = useState(0);
-  const [imageUris, setImageUris] = useState<string[]>([]);
+  const [previewOpen, setPreviewOpen] = useState(false);
+  const [previewImage, setPreviewImage] = useState('');
+  const [fileList, setFileList] = useState<UploadFile[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  useClipboardImage((files) => handleImageUpload(files));
+
+  useEffect(() => {
+    // Note: The link will break in vscode webview, so we need to remove the href attribute to prevent it.
+    const links = document.querySelectorAll<HTMLLinkElement>('a');
+    links.forEach((link) => {
+      link.href = '';
+    });
+  }, [fileList]);
 
   const resetEnterPressCount = () => setEnterPressCount(0);
 
@@ -93,7 +75,7 @@ export const InputContainer = ({
       }
       setEnterPressCount((prev) => prev + 1);
 
-      if (enterPressCount + 1 >= 2 && !isLoading) {
+      if (enterPressCount + 1 >= 2 && !isProcessing) {
         sendMessage();
         resetEnterPressCount();
       }
@@ -113,38 +95,77 @@ export const InputContainer = ({
     }
   };
 
+  const handleVoiceInput = async () => {
+    try {
+      const voiceInput = await callApi('convertVoiceToText');
+      setInputMessage((prev) => prev + voiceInput);
+    } catch (error) {
+      console.error(error);
+    }
+  };
+
   useEffect(() => {
     const updateImageUris = async () => {
-      const uris = await Promise.all(
+      const urls = await Promise.all(
         uploadedImages.map(async (imagePath) => {
           const uri = await callApi('getWebviewUri', imagePath);
           return uri as string;
         }),
       );
-      setImageUris(uris);
+      setFileList(
+        urls.map((url, index) => ({
+          uid: index.toString(),
+          name: `image-${index + 1}`,
+          status: 'done',
+          url,
+        })),
+      );
     };
     updateImageUris().catch((error) => console.error(error));
   }, [uploadedImages, callApi]);
 
+  const handleRemove = (file: UploadFile) => {
+    const index = fileList.indexOf(file);
+    const newFileList = [...fileList];
+    newFileList.splice(index, 1);
+    handleImageRemove(uploadedImages[index]);
+    setFileList(newFileList);
+  };
+
+  const handlePreview = async (file: UploadFile) => {
+    setPreviewImage(file.url || (file.preview as string));
+    setPreviewOpen(true);
+  };
+
   return (
     <StyledInputContainer>
+      {previewImage && (
+        <Image
+          wrapperStyle={{ display: 'none' }}
+          preview={{
+            visible: previewOpen,
+            onVisibleChange: (visible) => setPreviewOpen(visible),
+            afterOpenChange: (visible) => !visible && setPreviewImage(''),
+          }}
+          src={previewImage}
+        />
+      )}
       <UploadedImageContainer>
-        {imageUris.map((imageUri, index) => (
-          <UploadedImageWrapper key={index}>
-            <UploadedImage src={imageUri} alt={`Uploaded ${index + 1}`} />
-            <DeleteButton
-              onClick={() => handleImageRemove(uploadedImages[index])}
-              disabled={isLoading}
-            >
-              <CloseCircleFilled />
-            </DeleteButton>
-          </UploadedImageWrapper>
-        ))}
+        <StyledUpload
+          fileList={fileList}
+          listType='picture-card'
+          onRemove={handleRemove}
+          onPreview={handlePreview}
+          supportServerRender={false}
+        />
       </UploadedImageContainer>
       <Flex gap={10}>
-        <Button onClick={handleUploadButtonClick} disabled={isLoading}>
-          <UploadOutlined />
-        </Button>
+        <Button
+          type={'text'}
+          icon={<UploadOutlined />}
+          onClick={handleUploadButtonClick}
+          disabled={isProcessing}
+        />
         <input
           type='file'
           accept='image/*'
@@ -152,17 +173,33 @@ export const InputContainer = ({
           onInput={handleFileChange}
           style={{ display: 'none' }}
         />
+        <Button
+          type={'text'}
+          icon={<AudioOutlined />}
+          onClick={handleVoiceInput}
+          disabled={isProcessing}
+        />
         <Input.TextArea
           value={inputMessage}
           onChange={(e) => setInputMessage(e.target.value)}
           onKeyDown={handleKeyDown}
           placeholder='Type your message...'
-          disabled={isLoading}
+          disabled={isProcessing}
           autoSize={{ minRows: 1, maxRows: 10 }}
         />
-        <Button onClick={sendMessage} disabled={isLoading}>
-          {isLoading ? <LoadingOutlined /> : <SendOutlined />}
-        </Button>
+        <Flex vertical={true}>
+          <Button onClick={sendMessage} disabled={isProcessing}>
+            {isProcessing ? <LoadingOutlined /> : <SendOutlined />}
+          </Button>
+          {inputMessage.length > 100 && (
+            <Tag
+              color='warning'
+              style={{ marginTop: 5, width: '100%', textAlign: 'center' }}
+            >
+              {inputMessage.length}
+            </Tag>
+          )}
+        </Flex>
       </Flex>
     </StyledInputContainer>
   );
