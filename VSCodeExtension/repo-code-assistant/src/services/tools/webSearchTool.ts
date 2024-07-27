@@ -11,9 +11,10 @@ const extractTextFromWebpage = (htmlContent: string): string => {
 const webSearchTool: ToolServicesApi['webSearch'] = async (
   query,
   updateStatus,
+  maxCharsPerPage = 6000,
+  numResults = 4,
 ) => {
   const term = query;
-  const maxCharsPerPage = 6000;
   const allResults: { title: string; url: string; snippet: string }[] = [];
   const session = axios.create({
     headers: {
@@ -25,7 +26,7 @@ const webSearchTool: ToolServicesApi['webSearch'] = async (
   try {
     updateStatus?.('Searching Web');
     const resp = await session.get('https://www.google.com/search', {
-      params: { q: term, num: 4, udm: 14 },
+      params: { q: term, num: numResults, udm: 14 },
       timeout: 5000,
     });
     const $ = cheerio.load(resp.data);

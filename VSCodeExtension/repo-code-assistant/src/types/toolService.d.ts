@@ -21,11 +21,18 @@ export type ToolServicesApi = {
    * Perform a web search and return the results.
    * @param query - The search query.
    * @param updateStatus - Optional callback to update the status.
-   * @returns An array of search results.
+   * @param maxCharsPerPage - Optional maximum number of characters per page.
+   * @param numResults - Optional number of search results to return.
+   * @returns An array of search results. The array contains objects with the following properties:
+   * - title: The title of the search result.
+   * - url: The URL of the search result.
+   * - snippet: A snippet of text from the search result.
    */
   webSearch: (
     query: string,
     updateStatus?: (status: string) => void,
+    maxCharsPerPage?: number,
+    numResults?: number,
   ) => Promise<
     {
       title: string;
