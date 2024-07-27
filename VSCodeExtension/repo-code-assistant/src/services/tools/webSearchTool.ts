@@ -1,6 +1,12 @@
+/**
+ * This file is referenced to https://github.com/KingNish24/OpenGPT-4o/blob/main/chatbot.py
+ * And I have made some changes to the original code to make it work with the TypeScript codebase.
+ * License: MIT
+ */
 import axios from 'axios';
 import * as cheerio from 'cheerio';
-import { ToolServicesApi } from '../../types';
+
+import type { ToolServicesApi } from '../../types';
 
 const extractTextFromWebpage = (htmlContent: string): string => {
   const $ = cheerio.load(htmlContent);
@@ -36,18 +42,19 @@ const webSearchTool: ToolServicesApi['webSearch'] = async (
       const linkElement = $(result).find('a[href]').first();
       const link = linkElement.attr('href');
       const title = $(result).find('h3').text();
-      if (link) {
-        try {
-          const webpage = await session.get(link, { timeout: 5000 });
-          const visibleText = extractTextFromWebpage(webpage.data);
-          const truncatedText =
-            visibleText.length > maxCharsPerPage
-              ? visibleText.substring(0, maxCharsPerPage)
-              : visibleText;
-          allResults.push({ title, url: link, snippet: truncatedText });
-        } catch (error) {
-          allResults.push({ title, url: link, snippet: '' });
-        }
+      if (!link) {
+        continue;
+      }
+      try {
+        const webpage = await session.get(link, { timeout: 5000 });
+        const visibleText = extractTextFromWebpage(webpage.data);
+        const truncatedText =
+          visibleText.length > maxCharsPerPage
+            ? visibleText.substring(0, maxCharsPerPage)
+            : visibleText;
+        allResults.push({ title, url: link, snippet: truncatedText });
+      } catch (error) {
+        allResults.push({ title, url: link, snippet: '' });
       }
     }
   } catch (error) {
