@@ -2,7 +2,7 @@
   "compilerOptions": {
     "jsx": "react-jsx",
     "outDir": "out",
-    "types": ["node"],
+    "types": ["jest", "node"],
     "module": "CommonJS",
     "target": "ES2021",
     "moduleResolution": "node",
