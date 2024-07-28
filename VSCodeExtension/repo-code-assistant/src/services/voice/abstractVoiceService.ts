@@ -1,6 +1,7 @@
 import path from 'node:path';
 import fs from 'node:fs/promises';
 import { Promise } from 'promise-deferred';
+
 import * as vscode from 'vscode';
 import { SentenceTokenizer } from 'natural';
 import removeMarkdown from 'markdown-to-text';
@@ -8,7 +9,6 @@ import removeMarkdown from 'markdown-to-text';
 import type { VoiceService } from '../../types';
 import { SettingsManager } from '../../api';
 import { SoundPlay, AudioRecorder } from '../../utils';
-import fsPromises from 'node:fs/promises';
 
 export abstract class AbstractVoiceService implements VoiceService {
   protected readonly context: vscode.ExtensionContext;
@@ -267,7 +267,7 @@ export abstract class AbstractVoiceService implements VoiceService {
     const mediaDir = path.join(this.context.extensionPath, 'media');
 
     try {
-      await fsPromises.mkdir(mediaDir, { recursive: true });
+      await fs.mkdir(mediaDir, { recursive: true });
     } catch (error) {
       vscode.window.showErrorMessage(
         `Failed to create media directory: ${error}`,
