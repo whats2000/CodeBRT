@@ -29,7 +29,7 @@ import {
   GroqVoiceService,
   OpenaiVoiceService,
   VisualStudioCodeBuiltInService,
-} from './services/Voice';
+} from './services/voice';
 
 export const activate = async (ctx: vscode.ExtensionContext) => {
   const connectedViews: Partial<Record<ViewKey, vscode.WebviewView>> = {};
