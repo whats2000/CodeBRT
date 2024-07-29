@@ -1,43 +1,28 @@
-import { ToolServiceType } from './toolServicesType';
-
-export type ToolFunction = ToolServicesApi[keyof ToolServicesApi];
-
-export type ToolService = {
-  /**
-   * The name of the tool.
-   */
-  name: ToolServiceType;
-
-  /**
-   * Execute the tool with the given parameters.
-   * @param params - The parameters for the tool.
-   * @returns The result of the tool execution.
-   */
-  execute: ToolServicesApi[keyof ToolServicesApi];
-};
+export type ToolFunction = (...args: any[]) => Promise<string>;
 
 export type ToolServicesApi = {
   /**
    * Perform a web search and return the results.
-   * @param query - The search query.
-   * @param updateStatus - Optional callback to update the status.
-   * @param maxCharsPerPage - Optional maximum number of characters per page.
-   * @param numResults - Optional number of search results to return.
-   * @returns An array of search results. The array contains objects with the following properties:
-   * - title: The title of the search result.
-   * - url: The URL of the search result.
-   * - snippet: A snippet of text from the search result.
+   * @param args.query The search query.
+   * @param args.updateStatus A function to update the status of the search.
+   * @param args.maxCharsPerPage The maximum number of characters to include in each search result.
+   * @param args.numResults The number of search results to return.
+   * @returns The search results as a string.
+   * @example Example response:
+   *
+   * Title: Example Title
+   * URL: https://example.com
+   * Snippet: This is an example snippet.
+   *
+   * Title: Another Example
+   * URL: https://example.com/another
+   * Snippet: This is another example snippet.
+   *
    */
-  webSearch: (
-    query: string,
-    updateStatus?: (status: string) => void,
-    maxCharsPerPage?: number,
-    numResults?: number,
-  ) => Promise<
-    {
-      title: string;
-      url: string;
-      snippet: string;
-    }[]
-  >;
+  webSearch: (args: {
+    query: string;
+    updateStatus?: (status: string) => void;
+    maxCharsPerPage?: number;
+    numResults?: number;
+  }) => Promise<string>;
 };

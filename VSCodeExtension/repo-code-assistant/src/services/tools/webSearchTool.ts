@@ -14,12 +14,26 @@ const extractTextFromWebpage = (htmlContent: string): string => {
   return $('body').text().replace(/\s+/g, ' ').trim();
 };
 
-const webSearchTool: ToolServicesApi['webSearch'] = async (
+const postProcessResults = (
+  results: { title: string; url: string; snippet: string }[],
+): string => {
+  return (
+    '#####\nWeb Search Results is at below, please answer and provide reference links:\n\n' +
+    results
+      .map(
+        (result) =>
+          `Title: ${result.title}\nURL: ${result.url}\nSnippet: ${result.snippet}\n`,
+      )
+      .join('\n')
+  );
+};
+
+export const webSearchTool: ToolServicesApi['webSearch'] = async ({
   query,
   updateStatus,
   maxCharsPerPage = 6000,
   numResults = 4,
-) => {
+}) => {
   const term = query;
   const allResults: { title: string; url: string; snippet: string }[] = [];
   const session = axios.create({
@@ -62,10 +76,7 @@ const webSearchTool: ToolServicesApi['webSearch'] = async (
   }
 
   updateStatus?.('Extracting Relevant Info');
-  return allResults;
-};
-
-export const webSearchToolService = {
-  name: 'webSearch' as const,
-  execute: webSearchTool,
+  const finalResult = postProcessResults(allResults);
+  updateStatus?.('Generating Response Based on Search Results');
+  return finalResult;
 };

@@ -2,8 +2,11 @@ import * as vscode from 'vscode';
 import fs from 'fs';
 import {
   Content,
+  FunctionCall,
+  FunctionDeclarationSchemaType,
   GenerativeModel,
   InlineDataPart,
+  Tool,
 } from '@google/generative-ai';
 import {
   GoogleGenerativeAI,
@@ -14,6 +17,7 @@ import {
 import type { ConversationEntry, GetResponseOptions } from '../../types';
 import { AbstractLanguageModelService } from './abstractLanguageModelService';
 import { SettingsManager } from '../../api';
+import { ToolService } from '../tools';
 
 type GeminiModel = {
   name: string;
@@ -60,6 +64,39 @@ export class GeminiService extends AbstractLanguageModelService {
     {
       category: HarmCategory.HARM_CATEGORY_DANGEROUS_CONTENT,
       threshold: HarmBlockThreshold.BLOCK_NONE,
+    },
+  ];
+
+  private readonly tools: Tool[] = [
+    {
+      functionDeclarations: [
+        {
+          name: 'webSearch',
+          description:
+            'Search from the web and get latest information from the search results.',
+          parameters: {
+            type: FunctionDeclarationSchemaType.OBJECT,
+            properties: {
+              query: {
+                type: FunctionDeclarationSchemaType.STRING,
+                description: 'The query to search for.',
+                example: 'React 19 new features',
+              },
+              maxCharsPerPage: {
+                type: FunctionDeclarationSchemaType.NUMBER,
+                description:
+                  'The maximum number of characters to extract from each webpage. Default is 6000.',
+                nullable: true,
+              },
+              numResults: {
+                type: FunctionDeclarationSchemaType.NUMBER,
+                description: 'The number of results to return. Default is 4.',
+                nullable: true,
+              },
+            },
+          },
+        },
+      ],
     },
   ];
 
@@ -185,6 +222,35 @@ export class GeminiService extends AbstractLanguageModelService {
     return newAvailableModelNames;
   }
 
+  private async handleFunctionCalls(
+    functionCalls: FunctionCall[],
+    updateStatus?: (status: string) => void,
+  ): Promise<string[]> {
+    const functionCallResults: string[] = [];
+
+    for (const functionCall of functionCalls) {
+      const tool = ToolService.getTool(functionCall.name);
+      if (!tool) {
+        functionCallResults.push(
+          `Failed to find tool with name: ${functionCall.name}`,
+        );
+        continue;
+      }
+
+      try {
+        const args = { ...functionCall.args, updateStatus };
+        const result = await tool(args as any);
+        functionCallResults.push(result);
+      } catch (error) {
+        functionCallResults.push(
+          `Error executing tool ${functionCall.name}: ${error}`,
+        );
+      }
+    }
+
+    return functionCallResults;
+  }
+
   private async getResponseChunksWithTextPayload(
     generativeModel: GenerativeModel,
     query: string,
@@ -193,6 +259,32 @@ export class GeminiService extends AbstractLanguageModelService {
   ): Promise<string> {
     try {
       if (!sendStreamResponse) {
+        const result = await generativeModel
+          .startChat({
+            generationConfig: this.generationConfig,
+            safetySettings: this.safetySettings,
+            history: conversationHistory,
+            tools: this.tools,
+          })
+          .sendMessage(query);
+
+        if (result.response.functionCalls()) {
+          const functionCallResults = await this.handleFunctionCalls(
+            result.response.functionCalls() as FunctionCall[],
+          );
+
+          // Regenerate the query with the tool results
+          return (
+            await generativeModel
+              .startChat({
+                generationConfig: this.generationConfig,
+                safetySettings: this.safetySettings,
+                history: conversationHistory,
+              })
+              .sendMessage(`${query}\n\n${functionCallResults.join('\n\n')}`)
+          ).response.text();
+        }
+
         return (
           await generativeModel
             .startChat({
@@ -208,14 +300,33 @@ export class GeminiService extends AbstractLanguageModelService {
         generationConfig: this.generationConfig,
         safetySettings: this.safetySettings,
         history: conversationHistory,
+        tools: this.tools,
       });
 
       let responseText = '';
       const result = await chat.sendMessageStream(query);
       for await (const item of result.stream) {
-        const partText = item.text();
-        sendStreamResponse(partText);
-        responseText += partText;
+        if (item.functionCalls()) {
+          const functionCallResults = await this.handleFunctionCalls(
+            item.functionCalls() as FunctionCall[],
+            (status) => vscode.window.showInformationMessage(status),
+          );
+
+          // Regenerate the query with the tool results
+          const newResult = await chat.sendMessageStream(
+            `${query}\n\n${functionCallResults.join('\n\n')}`,
+          );
+
+          for await (const newItem of newResult.stream) {
+            const partText = newItem.text();
+            sendStreamResponse(partText);
+            responseText += partText;
+          }
+        } else {
+          const partText = item.text();
+          sendStreamResponse(partText);
+          responseText += partText;
+        }
       }
 
       return responseText;
