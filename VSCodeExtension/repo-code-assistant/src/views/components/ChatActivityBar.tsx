@@ -228,6 +228,7 @@ export const ChatActivityBar = () => {
         uploadedImages.length > 0 ? uploadedImages : undefined,
         undefined,
         true,
+        true,
       )) as string;
 
       const aiEntryId = await callApi(
@@ -349,6 +350,7 @@ export const ChatActivityBar = () => {
         editedMessage,
         entry.images && entry.images.length > 0 ? entry.images : undefined,
         newEntryId,
+        true,
         true,
       )) as string;
 

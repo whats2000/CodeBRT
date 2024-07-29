@@ -256,6 +256,7 @@ export class GeminiService extends AbstractLanguageModelService {
     query: string,
     conversationHistory: Content[],
     sendStreamResponse?: (message: string) => void,
+    updateStatus?: (status: string) => void,
   ): Promise<string> {
     try {
       if (!sendStreamResponse) {
@@ -309,13 +310,17 @@ export class GeminiService extends AbstractLanguageModelService {
         if (item.functionCalls()) {
           const functionCallResults = await this.handleFunctionCalls(
             item.functionCalls() as FunctionCall[],
-            (status) => vscode.window.showInformationMessage(status),
+            updateStatus,
           );
 
           // Regenerate the query with the tool results
           const newResult = await chat.sendMessageStream(
             `${query}\n\n${functionCallResults.join('\n\n')}`,
           );
+
+          if (updateStatus) {
+            updateStatus('');
+          }
 
           for await (const newItem of newResult.stream) {
             const partText = newItem.text();
@@ -344,6 +349,7 @@ export class GeminiService extends AbstractLanguageModelService {
     images: string[],
     _conversationHistory: Content[],
     sendStreamResponse?: (message: string) => void,
+    updateStatus?: (status: string) => void,
   ): Promise<string> {
     try {
       const imageParts = images.map((image) => {
@@ -369,9 +375,40 @@ export class GeminiService extends AbstractLanguageModelService {
       });
 
       for await (const item of result.stream) {
-        const partText = item.text();
-        sendStreamResponse(partText);
-        responseText += partText;
+        if (item.functionCalls()) {
+          const functionCallResults = await this.handleFunctionCalls(
+            item.functionCalls() as FunctionCall[],
+            updateStatus,
+          );
+
+          // Regenerate the query with the tool results
+          const newResult = await generativeModel.generateContentStream({
+            generationConfig: this.generationConfig,
+            contents: [
+              {
+                role: 'user',
+                parts: [
+                  { text: `${query}\n\n${functionCallResults.join('\n\n')}` },
+                  ...imageParts,
+                ],
+              },
+            ],
+          });
+
+          if (updateStatus) {
+            updateStatus('');
+          }
+
+          for await (const newItem of newResult.stream) {
+            const partText = newItem.text();
+            sendStreamResponse(partText);
+            responseText += partText;
+          }
+        } else {
+          const partText = item.text();
+          sendStreamResponse(partText);
+          responseText += partText;
+        }
       }
 
       return responseText;
@@ -391,7 +428,8 @@ export class GeminiService extends AbstractLanguageModelService {
       return 'Missing model configuration. Check the model selection dropdown.';
     }
 
-    const { query, images, sendStreamResponse, currentEntryID } = options;
+    const { query, images, currentEntryID, sendStreamResponse, updateStatus } =
+      options;
 
     const generativeModel = new GoogleGenerativeAI(
       this.apiKey,
@@ -410,6 +448,7 @@ export class GeminiService extends AbstractLanguageModelService {
         images,
         conversationHistory,
         sendStreamResponse,
+        updateStatus,
       );
     }
 
@@ -418,6 +457,7 @@ export class GeminiService extends AbstractLanguageModelService {
       query,
       conversationHistory,
       sendStreamResponse,
+      updateStatus,
     );
   }
 }

@@ -44,7 +44,7 @@ export const webSearchTool: ToolServicesApi['webSearch'] = async ({
   });
 
   try {
-    updateStatus?.('Searching Web');
+    updateStatus?.('[Searching] Searching Web');
     const resp = await session.get('https://www.google.com/search', {
       params: { q: term, num: numResults, udm: 14 },
       timeout: 5000,
@@ -75,8 +75,6 @@ export const webSearchTool: ToolServicesApi['webSearch'] = async ({
     console.error('Failed to search the web:', error);
   }
 
-  updateStatus?.('Extracting Relevant Info');
-  const finalResult = postProcessResults(allResults);
-  updateStatus?.('Generating Response Based on Search Results');
-  return finalResult;
+  updateStatus?.('[Info] Generating Response Based on Search Results');
+  return postProcessResults(allResults);
 };

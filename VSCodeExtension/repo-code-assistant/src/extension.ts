@@ -136,21 +136,28 @@ export const activate = async (ctx: vscode.ExtensionContext) => {
           vscode.window.showInformationMessage(msg);
       }
     },
-    sendMessageToExampleB: (msg) => {
-      triggerEvent('exampleBMessage', msg);
-    },
     getLanguageModelResponse: async (
       modelType,
       query,
       images?,
       currentEntryID?,
       useStream?,
+      showStatus?,
     ) => {
       return await models[modelType].service.getResponse({
         query,
         images,
         currentEntryID,
-        sendStreamResponse: useStream ? api.sendStreamResponse : undefined,
+        sendStreamResponse: useStream
+          ? (msg) => {
+              triggerEvent('streamResponse', msg);
+            }
+          : undefined,
+        updateStatus: showStatus
+          ? (status) => {
+              triggerEvent('updateStatus', status);
+            }
+          : undefined,
       });
     },
     getLanguageModelConversationHistory: (modelType) => {
@@ -161,9 +168,6 @@ export const activate = async (ctx: vscode.ExtensionContext) => {
     },
     editLanguageModelConversationHistory: (modelType, entryID, newMessage) => {
       models[modelType].service.editConversationEntry(entryID, newMessage);
-    },
-    sendStreamResponse: (msg) => {
-      triggerEvent('streamResponse', msg);
     },
     addConversationEntry: async (
       modelType,
