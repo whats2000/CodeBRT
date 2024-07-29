@@ -18,6 +18,7 @@ import type { ConversationEntry, GetResponseOptions } from '../../types';
 import { AbstractLanguageModelService } from './abstractLanguageModelService';
 import { SettingsManager } from '../../api';
 import { ToolService } from '../tools';
+import { webSearchSchema } from '../../constants';
 
 type GeminiModel = {
   name: string;
@@ -71,36 +72,32 @@ export class GeminiService extends AbstractLanguageModelService {
     {
       functionDeclarations: [
         {
-          name: 'webSearch',
-          description: `Use this tool to fetch the latest information from the web, especially for time-sensitive or recent data.
-          
-          Guidelines:
-          1. Ensure queries are well-defined. Example: 'Google AI recent developments 2024'.
-          2. Utilize this tool for queries involving recent events or updates.
-          3. Refuse only if the query is unclear or beyond the tool's scope. Suggest refinements if needed.
-          4. Extract up to 6000 characters per webpage. Default to 4 results.
-          
-          Validate information before presenting and provide balanced views if there are discrepancies.`,
+          name: webSearchSchema.name,
+          description: webSearchSchema.description,
           parameters: {
             type: FunctionDeclarationSchemaType.OBJECT,
             properties: {
               query: {
                 type: FunctionDeclarationSchemaType.STRING,
                 description:
-                  'The query to search for. Ensure the query is specific and well-defined to get precise results.',
-                example: 'Google AI recent developments 2024',
+                  webSearchSchema.inputSchema.properties.query.description,
               },
               maxCharsPerPage: {
                 type: FunctionDeclarationSchemaType.NUMBER,
                 description:
-                  'The maximum number of characters to extract from each webpage. Default is 6000. Adjust if a different limit is required.',
-                nullable: true,
+                  webSearchSchema.inputSchema.properties.maxCharsPerPage
+                    .description,
+                nullable:
+                  webSearchSchema.inputSchema.required.includes(
+                    'maxCharsPerPage',
+                  ),
               },
               numResults: {
                 type: FunctionDeclarationSchemaType.NUMBER,
                 description:
-                  'The number of results to return. Default is 4. Modify if more or fewer results are needed.',
-                nullable: true,
+                  webSearchSchema.inputSchema.properties.numResults.description,
+                nullable:
+                  webSearchSchema.inputSchema.required.includes('numResults'),
               },
             },
           },
@@ -404,9 +401,7 @@ export class GeminiService extends AbstractLanguageModelService {
             ],
           });
 
-          if (updateStatus) {
-            updateStatus('');
-          }
+          updateStatus && updateStatus('');
 
           for await (const newItem of newResult.stream) {
             const partText = newItem.text();

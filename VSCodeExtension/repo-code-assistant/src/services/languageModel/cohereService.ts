@@ -6,6 +6,7 @@ import { ConversationEntry, GetResponseOptions } from '../../types';
 import { AbstractLanguageModelService } from './abstractLanguageModelService';
 import { SettingsManager } from '../../api';
 import { ToolService } from '../tools';
+import { webSearchSchema } from '../../constants';
 
 export class CohereService extends AbstractLanguageModelService {
   private apiKey: string;
@@ -13,34 +14,26 @@ export class CohereService extends AbstractLanguageModelService {
 
   private readonly tools: Tool[] = [
     {
-      name: 'webSearch',
-      description: `Use this tool to fetch the latest information from the web, especially for time-sensitive or recent data.
-
-          Guidelines:
-          1. Ensure queries are well-defined. Example: 'Google AI recent developments 2024'.
-          2. Utilize this tool for queries involving recent events or updates.
-          3. Refuse only if the query is unclear or beyond the tool's scope. Suggest refinements if needed.
-          4. Extract up to 6000 characters per webpage. Default to 4 results.
-
-          Validate information before presenting and provide balanced views if there are discrepancies.`,
+      name: webSearchSchema.name,
+      description: webSearchSchema.description,
       parameterDefinitions: {
         query: {
-          description:
-            'The query to search for. Ensure the query is specific and well-defined to get precise results.',
+          description: webSearchSchema.inputSchema.properties.query.description,
           type: 'str',
-          required: true,
+          required: webSearchSchema.inputSchema.required.includes('query'),
         },
         maxCharsPerPage: {
           description:
-            'The maximum number of characters to extract from each webpage. Default is 6000. Adjust if a different limit is required.',
+            webSearchSchema.inputSchema.properties.maxCharsPerPage.description,
           type: 'int',
-          required: false,
+          required:
+            webSearchSchema.inputSchema.required.includes('maxCharsPerPage'),
         },
         numResults: {
           description:
-            'The number of results to return. Default is 4. Modify if more or fewer results are needed.',
+            webSearchSchema.inputSchema.properties.numResults.description,
           type: 'int',
-          required: false,
+          required: webSearchSchema.inputSchema.required.includes('numResults'),
         },
       },
     },
@@ -253,9 +246,7 @@ export class CohereService extends AbstractLanguageModelService {
             },
           });
 
-          if (updateStatus) {
-            updateStatus('');
-          }
+          updateStatus && updateStatus('');
 
           for await (const newItem of newResult) {
             if (newItem.eventType === 'text-generation') {
