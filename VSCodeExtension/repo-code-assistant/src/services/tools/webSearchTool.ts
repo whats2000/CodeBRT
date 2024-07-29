@@ -44,7 +44,7 @@ export const webSearchTool: ToolServicesApi['webSearch'] = async ({
   });
 
   try {
-    updateStatus?.('[Searching] Searching Web');
+    updateStatus?.(`[Searching] Searching Web with keyword "${term}"`);
     const resp = await session.get('https://www.google.com/search', {
       params: { q: term, num: numResults, udm: 14 },
       timeout: 5000,

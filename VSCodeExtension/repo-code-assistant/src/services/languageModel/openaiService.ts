@@ -1,20 +1,49 @@
-import * as vscode from 'vscode';
-import OpenAI from 'openai';
 import fs from 'fs';
 import path from 'path';
+
+import * as vscode from 'vscode';
 import type {
+  ChatCompletionChunk,
   ChatCompletionContentPartImage,
   ChatCompletionCreateParamsStreaming,
   ChatCompletionMessageParam,
+  ChatCompletionMessageToolCall,
+  ChatCompletionTool,
+  ChatCompletionToolMessageParam,
 } from 'openai/resources';
+import type {
+  ChatCompletionCreateParamsBase,
+  ChatCompletionCreateParamsNonStreaming,
+} from 'openai/resources/chat/completions';
+import OpenAI from 'openai';
 
 import type { ConversationEntry, GetResponseOptions } from '../../types';
 import { AbstractLanguageModelService } from './abstractLanguageModelService';
 import { SettingsManager } from '../../api';
+import { webSearchSchema } from '../../constants';
+import { ToolService } from '../tools';
 
 export class OpenAIService extends AbstractLanguageModelService {
   private apiKey: string;
   private readonly settingsListener: vscode.Disposable;
+
+  private readonly generationConfig: Partial<ChatCompletionCreateParamsBase> = {
+    temperature: 0.5,
+    max_tokens: 1024,
+    top_p: 1,
+    stop: null,
+  };
+
+  private readonly tools: ChatCompletionTool[] = [
+    {
+      type: 'function',
+      function: {
+        name: webSearchSchema.name,
+        description: webSearchSchema.description,
+        parameters: webSearchSchema.inputSchema,
+      },
+    },
+  ];
 
   constructor(
     context: vscode.ExtensionContext,
@@ -133,6 +162,56 @@ export class OpenAIService extends AbstractLanguageModelService {
     }
   }
 
+  private handleFunctionCalls = async (
+    functionCalls:
+      | ChatCompletionMessageToolCall[]
+      | ChatCompletionChunk.Choice.Delta.ToolCall[],
+    updateStatus?: (status: string) => void,
+  ): Promise<ChatCompletionToolMessageParam[]> => {
+    const functionCallResults: ChatCompletionToolMessageParam[] = [];
+
+    for (const functionCall of functionCalls) {
+      if (
+        !functionCall.function?.name ||
+        !functionCall.id ||
+        !functionCall.function?.arguments
+      ) {
+        continue;
+      }
+
+      const tool = ToolService.getTool(functionCall.function.name);
+      if (!tool) {
+        functionCallResults.push({
+          role: 'tool',
+          tool_call_id: functionCall.id,
+          content:
+            'Failed to find tool with name: ' + functionCall.function.name,
+        });
+        continue;
+      }
+
+      try {
+        const result = await tool({
+          ...JSON.parse(functionCall.function.arguments),
+          updateStatus,
+        });
+        functionCallResults.push({
+          role: 'tool',
+          tool_call_id: functionCall.id,
+          content: result,
+        });
+      } catch (error) {
+        functionCallResults.push({
+          role: 'tool',
+          tool_call_id: functionCall.id,
+          content: `Error executing tool ${functionCall.function.name}: ${error}`,
+        });
+      }
+    }
+
+    return functionCallResults;
+  };
+
   public async getLatestAvailableModelNames(): Promise<string[]> {
     const openai = new OpenAI({
       apiKey: this.apiKey,
@@ -183,7 +262,8 @@ export class OpenAIService extends AbstractLanguageModelService {
       options.images = undefined;
     }
 
-    const { query, images, sendStreamResponse, currentEntryID } = options;
+    const { query, images, currentEntryID, sendStreamResponse, updateStatus } =
+      options;
 
     const openai = new OpenAI({ apiKey: this.apiKey });
 
@@ -195,12 +275,34 @@ export class OpenAIService extends AbstractLanguageModelService {
 
     try {
       if (!sendStreamResponse) {
+        const result = await openai.chat.completions.create({
+          messages: conversationHistory,
+          model: this.currentModel,
+          tools: this.tools,
+          stream: false,
+          ...this.generationConfig,
+        } as ChatCompletionCreateParamsNonStreaming);
+
+        if (result.choices[0]?.message.tool_calls) {
+          const functionCallResults = await this.handleFunctionCalls(
+            result.choices[0].message.tool_calls,
+          );
+
+          conversationHistory.push({
+            role: 'assistant',
+            content: null,
+          });
+
+          conversationHistory.push(...functionCallResults);
+        }
+
         return (
           await openai.chat.completions.create({
             messages: conversationHistory,
             model: this.currentModel,
             stream: false,
-          })
+            ...this.generationConfig,
+          } as ChatCompletionCreateParamsNonStreaming)
         ).choices[0]?.message?.content!;
       }
 
@@ -208,13 +310,43 @@ export class OpenAIService extends AbstractLanguageModelService {
         model: this.currentModel,
         messages: conversationHistory,
         stream: true,
+        ...this.generationConfig,
       } as ChatCompletionCreateParamsStreaming);
 
       let responseText = '';
       for await (const chunk of stream) {
-        const partText = chunk.choices[0]?.delta?.content || '';
-        sendStreamResponse(partText);
-        responseText += partText;
+        if (chunk.choices[0]?.delta.tool_calls) {
+          const functionCallResults = await this.handleFunctionCalls(
+            chunk.choices[0].delta.tool_calls,
+            updateStatus,
+          );
+
+          conversationHistory.push({
+            role: 'assistant',
+            content: null,
+          });
+
+          conversationHistory.push(...functionCallResults);
+
+          const newStream = await openai.chat.completions.create({
+            messages: conversationHistory,
+            model: this.currentModel,
+            stream: true,
+            ...this.generationConfig,
+          } as ChatCompletionCreateParamsStreaming);
+
+          updateStatus && updateStatus('');
+
+          for await (const newChunk of newStream) {
+            const partText = newChunk.choices[0]?.delta?.content || '';
+            sendStreamResponse(partText);
+            responseText += partText;
+          }
+        } else {
+          const partText = chunk.choices[0]?.delta?.content || '';
+          sendStreamResponse(partText);
+          responseText += partText;
+        }
       }
 
       return responseText;

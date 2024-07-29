@@ -246,13 +246,6 @@ export class GroqService extends AbstractLanguageModelService {
           });
 
           conversationHistory.push(...functionCallResults);
-
-          await groq.chat.completions.create({
-            messages: conversationHistory,
-            model: this.currentModel,
-            stream: false,
-            ...this.generationConfig,
-          } as ChatCompletionCreateParamsNonStreaming);
         }
         return (
           await groq.chat.completions.create({
