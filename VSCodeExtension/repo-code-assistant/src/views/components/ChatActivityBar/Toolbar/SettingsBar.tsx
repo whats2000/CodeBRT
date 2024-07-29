@@ -132,11 +132,17 @@ export const SettingsBar: React.FC<SettingSidebarProps> = ({
       themeAlgorithm: 'darkAlgorithm',
       themeBorderRadius: 4,
     }));
-    saveSettings({
-      ...partialSettings,
-      themePrimaryColor: '#f1f1f1',
-      themeAlgorithm: 'darkAlgorithm',
-      themeBorderRadius: 4,
+    setTheme({
+      primaryColor: '#f1f1f1',
+      algorithm: 'darkAlgorithm',
+      borderRadius: 4,
+    }).then(() => {
+      saveSettings({
+        ...partialSettings,
+        themePrimaryColor: '#f1f1f1',
+        themeAlgorithm: 'darkAlgorithm',
+        themeBorderRadius: 4,
+      });
     });
   };
 
