@@ -41,8 +41,8 @@ export class GroqVoiceService extends AbstractVoiceService {
       return transcription.text;
     } catch (error) {
       await fsPromises.unlink(filePath);
-      vscode.window.showErrorMessage('Failed on Text to Speech. ' + error);
-      return 'Failed on Speech to Text.';
+      vscode.window.showErrorMessage('Failed on Speech to Text. ' + error);
+      return '';
     }
   }
 }

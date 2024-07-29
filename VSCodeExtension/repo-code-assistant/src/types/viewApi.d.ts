@@ -261,6 +261,11 @@ export type ViewApi = {
   stopPlayVoice: () => void;
 
   /**
+   * Stop the voice which is being recorded.
+   */
+  stopRecordVoice: () => void;
+
+  /**
    * Switch the reference voice for GPT-SoVits.
    * @param voiceName - The name of the reference voice to switch to.
    */

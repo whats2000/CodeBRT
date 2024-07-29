@@ -42,7 +42,7 @@ export class VisualStudioCodeBuiltInService extends AbstractVoiceService {
   }
 
   public async voiceToText(): Promise<string> {
-    if (this.interval) return '';
+    this.clearInterval();
 
     try {
       if (!vscode.extensions.getExtension('ms-vscode.vscode-speech')) {

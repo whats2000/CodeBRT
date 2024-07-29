@@ -53,6 +53,7 @@ export const InputContainer = ({
   const [previewOpen, setPreviewOpen] = useState(false);
   const [previewImage, setPreviewImage] = useState('');
   const [fileList, setFileList] = useState<UploadFile[]>([]);
+  const [isRecording, setIsRecording] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   useClipboardImage((files) => handleImageUpload(files));
@@ -96,12 +97,20 @@ export const InputContainer = ({
   };
 
   const handleVoiceInput = async () => {
+    if (isRecording) {
+      callApi('stopRecordVoice').then(() =>
+        setTimeout(() => setIsRecording(false), 500),
+      );
+      return;
+    }
+    setIsRecording(true);
     try {
       const voiceInput = await callApi('convertVoiceToText');
       setInputMessage((prev) => prev + voiceInput);
     } catch (error) {
       console.error(error);
     }
+    setIsRecording(false);
   };
 
   useEffect(() => {
@@ -175,7 +184,7 @@ export const InputContainer = ({
         />
         <Button
           type={'text'}
-          icon={<AudioOutlined />}
+          icon={isRecording ? <LoadingOutlined /> : <AudioOutlined />}
           onClick={handleVoiceInput}
           disabled={isProcessing}
         />

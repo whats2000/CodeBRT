@@ -303,8 +303,6 @@ export abstract class AbstractVoiceService implements VoiceService {
    * Stops the voice recording and clears the queues.
    */
   public async stopVoiceToText(): Promise<void> {
-    vscode.window
-      .showErrorMessage('Voice to text is not supported in this service')
-      .then();
+    this.audioRecorder.stop().then();
   }
 }

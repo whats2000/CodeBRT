@@ -274,6 +274,20 @@ export const activate = async (ctx: vscode.ExtensionContext) => {
 
       await voiceServices[voiceServiceType].service.stopTextToVoice();
     },
+    stopRecordVoice: async () => {
+      const voiceServiceType = settingsManager.get(
+        'selectedVoiceToTextService',
+      );
+
+      if (voiceServiceType === 'not set') {
+        vscode.window.showErrorMessage(
+          'You have not selected a voice service for voice recording, How did you even get here? Please report this bug to the developers',
+        );
+        return;
+      }
+
+      await voiceServices[voiceServiceType].service.stopVoiceToText();
+    },
     switchGptSoVitsReferenceVoice: async (voiceName) => {
       await (
         voiceServices.gptSoVits.service as GptSoVitsApiService
