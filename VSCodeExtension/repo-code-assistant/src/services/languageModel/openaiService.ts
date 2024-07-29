@@ -309,6 +309,7 @@ export class OpenAIService extends AbstractLanguageModelService {
       const stream = await openai.chat.completions.create({
         model: this.currentModel,
         messages: conversationHistory,
+        tools: this.tools,
         stream: true,
         ...this.generationConfig,
       } as ChatCompletionCreateParamsStreaming);
