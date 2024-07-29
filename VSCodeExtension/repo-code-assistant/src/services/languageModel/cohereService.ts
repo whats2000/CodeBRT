@@ -229,7 +229,7 @@ export class CohereService extends AbstractLanguageModelService {
 
       const result = await model.chatStream({
         ...requestData,
-        tools: this.tools,
+        tools: this.currentModel !== 'command' ? this.tools : undefined,
       });
       let responseText = '';
       for await (const item of result) {
