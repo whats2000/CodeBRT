@@ -1,14 +1,50 @@
 import * as vscode from 'vscode';
-import type { ChatMessage } from 'cohere-ai/api';
+import type { ChatMessage, Tool, ToolCall } from 'cohere-ai/api';
 import { CohereClient } from 'cohere-ai';
 
 import { ConversationEntry, GetResponseOptions } from '../../types';
 import { AbstractLanguageModelService } from './abstractLanguageModelService';
 import { SettingsManager } from '../../api';
+import { ToolService } from '../tools';
 
 export class CohereService extends AbstractLanguageModelService {
   private apiKey: string;
   private readonly settingsListener: vscode.Disposable;
+
+  private readonly tools: Tool[] = [
+    {
+      name: 'webSearch',
+      description: `Use this tool to fetch the latest information from the web, especially for time-sensitive or recent data.
+
+          Guidelines:
+          1. Ensure queries are well-defined. Example: 'Google AI recent developments 2024'.
+          2. Utilize this tool for queries involving recent events or updates.
+          3. Refuse only if the query is unclear or beyond the tool's scope. Suggest refinements if needed.
+          4. Extract up to 6000 characters per webpage. Default to 4 results.
+
+          Validate information before presenting and provide balanced views if there are discrepancies.`,
+      parameterDefinitions: {
+        query: {
+          description:
+            'The query to search for. Ensure the query is specific and well-defined to get precise results.',
+          type: 'str',
+          required: true,
+        },
+        maxCharsPerPage: {
+          description:
+            'The maximum number of characters to extract from each webpage. Default is 6000. Adjust if a different limit is required.',
+          type: 'int',
+          required: false,
+        },
+        numResults: {
+          description:
+            'The number of results to return. Default is 4. Modify if more or fewer results are needed.',
+          type: 'int',
+          required: false,
+        },
+      },
+    },
+  ];
 
   constructor(
     context: vscode.ExtensionContext,
@@ -81,6 +117,37 @@ export class CohereService extends AbstractLanguageModelService {
     return result;
   }
 
+  private async handleFunctionCalls(
+    functionCalls: ToolCall[],
+    updateStatus?: (status: string) => void,
+  ): Promise<string[]> {
+    const functionCallResults: string[] = [];
+
+    for (const functionCall of functionCalls) {
+      const tool = ToolService.getTool(functionCall.name);
+      if (!tool) {
+        functionCallResults.push(
+          `Failed to find tool with name: ${functionCall.name}`,
+        );
+        continue;
+      }
+
+      try {
+        const result = await tool({
+          ...functionCall.parameters,
+          updateStatus,
+        } as any);
+        functionCallResults.push(result);
+      } catch (error) {
+        functionCallResults.push(
+          `Error executing tool ${functionCall.name}: ${error}`,
+        );
+      }
+    }
+
+    return functionCallResults;
+  }
+
   public async getLatestAvailableModelNames(): Promise<string[]> {
     const cohere = new CohereClient({
       token: this.apiKey,
@@ -121,7 +188,8 @@ export class CohereService extends AbstractLanguageModelService {
       return 'Missing model configuration. Check the model selection dropdown.';
     }
 
-    const { query, images, sendStreamResponse, currentEntryID } = options;
+    const { query, images, currentEntryID, sendStreamResponse, updateStatus } =
+      options;
 
     if (images && images.length > 0) {
       vscode.window.showWarningMessage(
@@ -143,17 +211,64 @@ export class CohereService extends AbstractLanguageModelService {
 
     try {
       if (!sendStreamResponse) {
+        const result = await model.chat({
+          ...requestData,
+          tools: this.currentModel !== 'command' ? this.tools : undefined,
+        });
+
+        if (result.toolCalls) {
+          const functionCallResults = await this.handleFunctionCalls(
+            result.toolCalls,
+          );
+
+          return (
+            await model.chat({
+              ...{
+                ...requestData,
+                message: `${query}\n\n${functionCallResults.join('\n\n')}`,
+              },
+            })
+          ).text;
+        }
+
         return (await model.chat(requestData)).text;
       }
 
-      const result = await model.chatStream(requestData);
+      const result = await model.chatStream({
+        ...requestData,
+        tools: this.tools,
+      });
       let responseText = '';
       for await (const item of result) {
-        if (item.eventType !== 'text-generation') continue;
+        if (item.eventType === 'tool-calls-generation') {
+          const functionCallResults = await this.handleFunctionCalls(
+            item.toolCalls,
+            updateStatus,
+          );
 
-        const partText = item.text;
-        sendStreamResponse(partText);
-        responseText += partText;
+          const newResult = await model.chatStream({
+            ...{
+              ...requestData,
+              message: `${query}\n\n${functionCallResults.join('\n\n')}`,
+            },
+          });
+
+          if (updateStatus) {
+            updateStatus('');
+          }
+
+          for await (const newItem of newResult) {
+            if (newItem.eventType === 'text-generation') {
+              const partText = newItem.text;
+              sendStreamResponse(partText);
+              responseText += partText;
+            }
+          }
+        } else if (item.eventType === 'text-generation') {
+          const partText = item.text;
+          sendStreamResponse(partText);
+          responseText += partText;
+        }
       }
 
       return responseText;

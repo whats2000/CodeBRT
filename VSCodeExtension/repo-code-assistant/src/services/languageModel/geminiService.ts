@@ -72,8 +72,7 @@ export class GeminiService extends AbstractLanguageModelService {
       functionDeclarations: [
         {
           name: 'webSearch',
-          description: `
-          Use this tool to fetch the latest information from the web, especially for time-sensitive or recent data.
+          description: `Use this tool to fetch the latest information from the web, especially for time-sensitive or recent data.
           
           Guidelines:
           1. Ensure queries are well-defined. Example: 'Google AI recent developments 2024'.
@@ -81,8 +80,7 @@ export class GeminiService extends AbstractLanguageModelService {
           3. Refuse only if the query is unclear or beyond the tool's scope. Suggest refinements if needed.
           4. Extract up to 6000 characters per webpage. Default to 4 results.
           
-          Validate information before presenting and provide balanced views if there are discrepancies.
-        `,
+          Validate information before presenting and provide balanced views if there are discrepancies.`,
           parameters: {
             type: FunctionDeclarationSchemaType.OBJECT,
             properties: {
