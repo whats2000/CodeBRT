@@ -286,10 +286,9 @@ export class CustomApiService extends AbstractLanguageModelService {
       );
     }
 
-    const history = currentEntryID
-      ? this.getHistoryBeforeEntry(currentEntryID)
-      : this.history;
-    const conversationHistory = this.conversationHistoryToJson(history.entries);
+    const conversationHistory = this.conversationHistoryToJson(
+      this.getHistoryBeforeEntry(currentEntryID).entries,
+    );
 
     try {
       if (canSendWithImages) {

@@ -114,7 +114,11 @@ export abstract class AbstractLanguageModelService
    * @param currentEntryID - The entry id to get the history before
    * @returns The conversation history before the given entry id
    */
-  protected getHistoryBeforeEntry(currentEntryID: string): ConversationHistory {
+  protected getHistoryBeforeEntry(
+    currentEntryID?: string,
+  ): ConversationHistory {
+    if (!currentEntryID) return this.history;
+
     const newHistory: ConversationHistory = {
       title: this.history.title,
       root: this.history.root,
@@ -125,8 +129,8 @@ export abstract class AbstractLanguageModelService
       entries: {},
     };
 
+    const entryStack = [];
     let currentEntry = this.history.entries[currentEntryID];
-    const entryStack: ConversationEntry[] = [];
 
     while (currentEntry) {
       entryStack.push(currentEntry);

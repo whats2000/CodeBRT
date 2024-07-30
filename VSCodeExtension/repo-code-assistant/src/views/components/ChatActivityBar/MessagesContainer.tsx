@@ -14,6 +14,7 @@ import { TopToolBar } from './MessagesContainer/TopToolBar';
 import { ImageContainer } from './MessagesContainer/ImageContainer';
 import { TextContainer } from './MessagesContainer/TextContainer';
 import { TextEditContainer } from './MessagesContainer/TextEditContainer';
+import { MessageFloatButton } from './MessagesContainer/MessageFloatButton';
 
 const StyledMessagesContainer = styled.div<{ $isActiveModelLoading: boolean }>`
   flex-grow: 1;
@@ -38,6 +39,25 @@ const MessageBubble = styled.div<{ $user: string }>`
   position: relative;
 `;
 
+const traverseHistory = (
+  entries: { [key: string]: ConversationEntry },
+  current: string,
+): ConversationEntry[] => {
+  const entryStack = [];
+  let currentEntry = entries[current];
+
+  while (currentEntry) {
+    entryStack.push(currentEntry);
+    if (currentEntry.parent) {
+      currentEntry = entries[currentEntry.parent];
+    } else {
+      break;
+    }
+  }
+
+  return entryStack.reverse();
+};
+
 type MessagesContainerProps = {
   conversationHistory: ConversationHistory;
   setConversationHistory: React.Dispatch<
@@ -55,25 +75,6 @@ type MessagesContainerProps = {
   ) => Promise<void>;
 };
 
-const traverseHistory = (
-  entries: { [key: string]: ConversationEntry },
-  current: string,
-) => {
-  const history = [];
-  let currentEntry = entries[current];
-
-  while (currentEntry) {
-    history.push(currentEntry);
-    if (currentEntry.parent) {
-      currentEntry = entries[currentEntry.parent];
-    } else {
-      break;
-    }
-  }
-
-  return history.reverse();
-};
-
 export const MessagesContainer: React.FC<MessagesContainerProps> = ({
   conversationHistory,
   setConversationHistory,
@@ -89,12 +90,25 @@ export const MessagesContainer: React.FC<MessagesContainerProps> = ({
   const [editedMessage, setEditedMessage] = useState('');
   const [isAudioPlaying, setIsAudioPlaying] = useState(false);
   const [isStopAudio, setIsStopAudio] = useState(false);
+  const [copied, setCopied] = useState<Record<string, boolean>>({});
   const [partialSettings, setPartialSettings] = useState<{
     hljsTheme: keyof typeof hljs;
   }>({ hljsTheme: 'darcula' });
 
   const { callApi } = useContext(WebviewContext);
   const { token } = theme.useToken();
+
+  const [hoveredBubble, setHoveredBubble] = useState<{
+    current: HTMLDivElement | null;
+    entry: ConversationEntry | null;
+  }>({
+    current: null,
+    entry: null,
+  });
+  const [bubblePosition, setBubblePosition] = useState<{
+    xRight: number;
+    yTop: number;
+  }>({ xRight: 0, yTop: 0 });
 
   useEffect(() => {
     Object.keys(partialSettings).map(async (key) => {
@@ -109,6 +123,13 @@ export const MessagesContainer: React.FC<MessagesContainerProps> = ({
       }
     });
   }, []);
+
+  useEffect(() => {
+    setHoveredBubble({
+      current: null,
+      entry: null,
+    });
+  }, [conversationHistory.current]);
 
   const handleInput = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
     const input = e.target;
@@ -159,6 +180,31 @@ export const MessagesContainer: React.FC<MessagesContainerProps> = ({
     setEditingEntryId(null);
   };
 
+  const handleMouseEnter = (
+    e: React.MouseEvent<HTMLDivElement>,
+    entry: ConversationEntry,
+  ) => {
+    const bubble = e.currentTarget as HTMLDivElement;
+    const rect = bubble.getBoundingClientRect();
+    setHoveredBubble({ current: bubble, entry });
+    setBubblePosition({ xRight: rect.right, yTop: rect.top });
+  };
+
+  useEffect(() => {
+    const handleScroll = () => {
+      if (hoveredBubble.current) {
+        const rect = hoveredBubble.current.getBoundingClientRect();
+        setBubblePosition({ xRight: rect.right, yTop: rect.top });
+      }
+    };
+
+    messagesContainerRef.current?.addEventListener('scroll', handleScroll);
+
+    return () => {
+      messagesContainerRef.current?.removeEventListener('scroll', handleScroll);
+    };
+  }, [hoveredBubble, messagesContainerRef]);
+
   const conversationHistoryEntries = traverseHistory(
     conversationHistory.entries,
     conversationHistory.current,
@@ -175,6 +221,43 @@ export const MessagesContainer: React.FC<MessagesContainerProps> = ({
     );
   };
 
+  const handleConvertTextToVoice = (text: string) => {
+    if (isAudioPlaying) {
+      setIsStopAudio(true);
+      callApi('stopPlayVoice').catch(console.error);
+      return;
+    }
+
+    setIsAudioPlaying(true);
+    callApi('convertTextToVoice', text)
+      .then(() => {
+        setIsAudioPlaying(false);
+        setIsStopAudio(false);
+      })
+      .catch((error: any) => {
+        callApi(
+          'alertMessage',
+          `Failed to convert text to voice: ${error}`,
+          'error',
+        ).catch(console.error);
+        setIsAudioPlaying(false);
+        setIsStopAudio(false);
+      });
+  };
+
+  const handleCopy = (text: string, entryId: string) => {
+    navigator.clipboard
+      .writeText(text)
+      .then(() => {
+        setCopied((prevState) => ({ ...prevState, [entryId]: true }));
+        setTimeout(
+          () => setCopied((prevState) => ({ ...prevState, [entryId]: false })),
+          2000,
+        );
+      })
+      .catch((err) => console.error('Failed to copy text: ', err));
+  };
+
   return (
     <>
       {isActiveModelLoading && (
@@ -188,7 +271,12 @@ export const MessagesContainer: React.FC<MessagesContainerProps> = ({
       >
         {conversationHistoryEntries.map((entry, index) => {
           return (
-            <MessageBubble key={entry.id} $user={entry.role} theme={token}>
+            <MessageBubble
+              key={entry.id}
+              $user={entry.role}
+              theme={token}
+              onMouseEnter={(e) => handleMouseEnter(e, entry)}
+            >
               <TopToolBar
                 modelType={modelType}
                 conversationHistory={conversationHistory}
@@ -196,12 +284,14 @@ export const MessagesContainer: React.FC<MessagesContainerProps> = ({
                 index={index}
                 conversationHistoryEntries={conversationHistoryEntries}
                 isAudioPlaying={isAudioPlaying}
-                setIsAudioPlaying={setIsAudioPlaying}
                 isStopAudio={isStopAudio}
-                setIsStopAudio={setIsStopAudio}
                 editingEntryId={editingEntryId}
                 handleCancelEdit={handleCancelEdit}
                 handleEdit={handleEdit}
+                handleConvertTextToVoice={handleConvertTextToVoice}
+                copied={copied}
+                handleCopy={handleCopy}
+                isProcessing={isProcessing}
               />
 
               {entry.id === editingEntryId ? (
@@ -214,7 +304,7 @@ export const MessagesContainer: React.FC<MessagesContainerProps> = ({
                   handleCancelEdit={handleCancelEdit}
                 />
               ) : (
-                <>
+                <div>
                   <TextContainer
                     entry={entry}
                     conversationHistoryCurrent={conversationHistory.current}
@@ -224,13 +314,28 @@ export const MessagesContainer: React.FC<MessagesContainerProps> = ({
                     setHljsTheme={setHljsTheme}
                   />
                   <ImageContainer entry={entry} />
-                </>
+                </div>
               )}
             </MessageBubble>
           );
         })}
         <div ref={messageEndRef} />
       </StyledMessagesContainer>
+      {hoveredBubble && (
+        <MessageFloatButton
+          hoveredBubble={hoveredBubble}
+          bubblePosition={bubblePosition}
+          isAudioPlaying={isAudioPlaying}
+          isStopAudio={isStopAudio}
+          editingEntryId={editingEntryId}
+          handleSaveEdit={handleSaveEdit}
+          handleCancelEdit={handleCancelEdit}
+          handleEdit={handleEdit}
+          handleConvertTextToVoice={handleConvertTextToVoice}
+          copied={copied}
+          handleCopy={handleCopy}
+        />
+      )}
     </>
   );
 };

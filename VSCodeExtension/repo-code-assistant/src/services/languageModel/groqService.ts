@@ -1,13 +1,13 @@
 import * as vscode from 'vscode';
-import Groq from 'groq-sdk';
-import {
+import type {
   ChatCompletionCreateParamsBase,
   ChatCompletionCreateParamsNonStreaming,
   ChatCompletionCreateParamsStreaming,
   ChatCompletionMessageParam,
 } from 'groq-sdk/src/resources/chat/completions';
+import Groq from 'groq-sdk';
 
-import { ConversationEntry, GetResponseOptions } from '../../types';
+import type { ConversationEntry, GetResponseOptions } from '../../types';
 import { AbstractLanguageModelService } from './abstractLanguageModelService';
 import { SettingsManager } from '../../api';
 
@@ -153,11 +153,8 @@ export class GroqService extends AbstractLanguageModelService {
       apiKey: this.apiKey,
     });
 
-    const history = currentEntryID
-      ? this.getHistoryBeforeEntry(currentEntryID)
-      : this.history;
     const conversationHistory = this.conversationHistoryToContent(
-      history.entries,
+      this.getHistoryBeforeEntry(currentEntryID).entries,
       query,
     );
 

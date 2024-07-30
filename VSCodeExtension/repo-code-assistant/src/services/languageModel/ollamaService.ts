@@ -148,11 +148,8 @@ export class OllamaService extends AbstractLanguageModelService {
       host: this.settingsManager.get('ollamaClientHost'),
     });
 
-    const history = currentEntryID
-      ? this.getHistoryBeforeEntry(currentEntryID)
-      : this.history;
     const conversationHistory = await this.conversationHistoryToContent(
-      history.entries,
+      this.getHistoryBeforeEntry(currentEntryID).entries,
       query,
       images,
     );
