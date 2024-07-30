@@ -1,5 +1,5 @@
 import * as vscode from 'vscode';
-import type { Message, Tool, ToolCall } from 'cohere-ai/api';
+import type { Message, Tool, ToolCall, ToolResult } from 'cohere-ai/api';
 import { CohereClient } from 'cohere-ai';
 
 import { ConversationEntry, GetResponseOptions } from '../../types';
@@ -20,20 +20,19 @@ export class CohereService extends AbstractLanguageModelService {
         query: {
           description: webSearchSchema.inputSchema.properties.query.description,
           type: 'str',
-          required: webSearchSchema.inputSchema.required.includes('query'),
+          required: true,
         },
         maxCharsPerPage: {
           description:
             webSearchSchema.inputSchema.properties.maxCharsPerPage.description,
           type: 'int',
-          required:
-            webSearchSchema.inputSchema.required.includes('maxCharsPerPage'),
+          required: false,
         },
         numResults: {
           description:
             webSearchSchema.inputSchema.properties.numResults.description,
           type: 'int',
-          required: webSearchSchema.inputSchema.required.includes('numResults'),
+          required: false,
         },
       },
     },
@@ -113,15 +112,21 @@ export class CohereService extends AbstractLanguageModelService {
   private async handleFunctionCalls(
     functionCalls: ToolCall[],
     updateStatus?: (status: string) => void,
-  ): Promise<string[]> {
-    const functionCallResults: string[] = [];
+  ): Promise<ToolResult[]> {
+    const functionCallResults: ToolResult[] = [];
 
     for (const functionCall of functionCalls) {
       const tool = ToolService.getTool(functionCall.name);
       if (!tool) {
-        functionCallResults.push(
-          `Failed to find tool with name: ${functionCall.name}`,
-        );
+        functionCallResults.push({
+          call: functionCall,
+          outputs: [
+            {
+              error: true,
+              message: `Failed to find tool with name: ${functionCall.name}`,
+            },
+          ],
+        });
         continue;
       }
 
@@ -130,11 +135,24 @@ export class CohereService extends AbstractLanguageModelService {
           ...functionCall.parameters,
           updateStatus,
         } as any);
-        functionCallResults.push(result);
+        functionCallResults.push({
+          call: functionCall,
+          outputs: [
+            {
+              searchResults: result,
+            },
+          ],
+        });
       } catch (error) {
-        functionCallResults.push(
-          `Error executing tool ${functionCall.name}: ${error}`,
-        );
+        functionCallResults.push({
+          call: functionCall,
+          outputs: [
+            {
+              error: true,
+              message: `Error executing tool ${functionCall.name}: ${error}`,
+            },
+          ],
+        });
       }
     }
 
@@ -151,12 +169,12 @@ export class CohereService extends AbstractLanguageModelService {
     try {
       const latestModels = (await cohere.models.list()).models;
 
-      // Filter the invalid models (Not existing in the latest models)
+      // Filter the invalid models out of the available models
       newAvailableModelNames = newAvailableModelNames.filter((name) =>
         latestModels.some((model) => model.name === name),
       );
 
-      // Append the models to the available models if they are not already there
+      // Append the models to the available models if they aren't already there
       latestModels.forEach((model) => {
         if (!model.name || !model.endpoints) return;
         if (newAvailableModelNames.includes(model.name)) return;
@@ -192,77 +210,81 @@ export class CohereService extends AbstractLanguageModelService {
 
     const model = new CohereClient({ token: this.apiKey });
 
-    const conversationHistory = this.conversationHistoryToContent(
+    let conversationHistory = this.conversationHistoryToContent(
       this.getHistoryBeforeEntry(currentEntryID).entries,
     );
 
-    const requestData = {
-      chatHistory: conversationHistory,
-      model: this.currentModel,
-      message: query,
-    };
-
+    let toolResults: ToolResult[] = [];
+    let functionCallCount = 0;
+    const MAX_FUNCTION_CALLS = 5;
     try {
       if (!sendStreamResponse) {
-        const result = await model.chat({
-          ...requestData,
-          tools: this.currentModel !== 'command' ? this.tools : undefined,
-        });
-
-        if (result.toolCalls) {
-          const functionCallResults = await this.handleFunctionCalls(
-            result.toolCalls,
-          );
-
-          return (
-            await model.chat({
-              ...{
-                ...requestData,
-                message: `${query}\n\n${functionCallResults.join('\n\n')}`,
-              },
-            })
-          ).text;
-        }
-
-        return (await model.chat(requestData)).text;
-      }
-
-      const result = await model.chatStream({
-        ...requestData,
-        tools: this.currentModel !== 'command' ? this.tools : undefined,
-      });
-      let responseText = '';
-      for await (const item of result) {
-        if (item.eventType === 'tool-calls-generation') {
-          const functionCallResults = await this.handleFunctionCalls(
-            item.toolCalls,
-            updateStatus,
-          );
-
-          const newResult = await model.chatStream({
-            ...{
-              ...requestData,
-              message: `${query}\n\n${functionCallResults.join('\n\n')}`,
-            },
+        while (functionCallCount < MAX_FUNCTION_CALLS) {
+          const response = await model.chat({
+            model: this.currentModel,
+            message: toolResults.length > 0 ? '' : query,
+            chatHistory: conversationHistory,
+            tools: this.currentModel !== 'command' ? this.tools : undefined,
+            toolResults: toolResults.length > 0 ? toolResults : undefined,
           });
 
-          updateStatus && updateStatus('');
+          if (response.chatHistory) {
+            conversationHistory = response.chatHistory;
+          }
 
-          for await (const newItem of newResult) {
-            if (newItem.eventType === 'text-generation') {
-              const partText = newItem.text;
+          const functionCalls = response.toolCalls;
+
+          if (!functionCalls) {
+            return response.text;
+          }
+
+          toolResults = await this.handleFunctionCalls(functionCalls);
+          functionCallCount++;
+        }
+        return 'Max function call limit reached.';
+      } else {
+        let responseText = '';
+
+        while (functionCallCount < MAX_FUNCTION_CALLS) {
+          const streamResponse = await model.chatStream({
+            model: this.currentModel,
+            message: toolResults.length > 0 ? '' : query,
+            chatHistory: conversationHistory,
+            tools: this.currentModel !== 'command' ? this.tools : undefined,
+            toolResults: toolResults.length > 0 ? toolResults : undefined,
+          });
+
+          let functionCalls = null;
+
+          for await (const item of streamResponse) {
+            if (item.eventType === 'stream-start') {
+              updateStatus && updateStatus('');
+            }
+            if (item.eventType === 'tool-calls-generation') {
+              functionCalls = item.toolCalls;
+              toolResults = await this.handleFunctionCalls(
+                functionCalls,
+                updateStatus,
+              );
+
+              functionCallCount++;
+            }
+            if (item.eventType === 'text-generation') {
+              const partText = item.text;
               sendStreamResponse(partText);
               responseText += partText;
             }
+            if (item.eventType === 'stream-end' && item.response.chatHistory) {
+              conversationHistory = item.response.chatHistory;
+            }
           }
-        } else if (item.eventType === 'text-generation') {
-          const partText = item.text;
-          sendStreamResponse(partText);
-          responseText += partText;
-        }
-      }
 
-      return responseText;
+          if (!functionCalls || functionCalls.length === 0) {
+            return responseText;
+          }
+        }
+        return responseText;
+      }
     } catch (error) {
       vscode.window.showErrorMessage(
         'Failed to get response from Cohere Service: ' + error,
