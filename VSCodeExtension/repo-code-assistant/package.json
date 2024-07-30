@@ -6,7 +6,7 @@
   "version": "0.1.0",
   "icon": "static/icon.ico",
   "engines": {
-    "vscode": "^1.83.1",
+    "vscode": "^1.91.0",
     "node": "~18.17.0",
     "npm": "^9.6.7"
   },
