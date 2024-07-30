@@ -4,6 +4,7 @@
   "displayName": "Repo Code Assistant",
   "description": "Repo Code Assistant, a AI framework for code assistant with scheduler",
   "version": "0.1.0",
+  "icon": "static/icon.ico",
   "engines": {
     "vscode": "^1.83.1",
     "node": "~18.17.0",
