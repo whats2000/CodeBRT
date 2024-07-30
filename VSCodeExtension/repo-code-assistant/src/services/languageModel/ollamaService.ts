@@ -1,28 +1,14 @@
-import * as vscode from 'vscode';
 import fs from 'fs';
-import type { Message, Options } from 'ollama';
+
+import * as vscode from 'vscode';
+import type { Message, Options, Tool, ToolCall } from 'ollama';
 import { Ollama } from 'ollama';
 
 import type { ConversationEntry, GetResponseOptions } from '../../types';
 import { AbstractLanguageModelService } from './abstractLanguageModelService';
 import { SettingsManager } from '../../api';
-
-type OllamaRunningModel = {
-  name: string;
-  model: string;
-  size: number;
-  digest: string;
-  details: {
-    parent_model: string;
-    format: string;
-    family: string;
-    families: string[];
-    parameter_size: string;
-    quantization_level: string;
-  };
-  expires_at: string;
-  size_vram: number;
-};
+import { webSearchSchema } from '../../constants';
+import { ToolService } from '../tools';
 
 export class OllamaService extends AbstractLanguageModelService {
   private readonly generationConfig: Partial<Options> = {
@@ -30,6 +16,17 @@ export class OllamaService extends AbstractLanguageModelService {
     top_p: 0.95,
     top_k: 0,
   };
+
+  private tools: Tool[] = [
+    {
+      type: 'function',
+      function: {
+        name: webSearchSchema.name,
+        description: webSearchSchema.description,
+        parameters: webSearchSchema.inputSchema,
+      },
+    },
+  ];
 
   constructor(
     context: vscode.ExtensionContext,
@@ -114,25 +111,28 @@ export class OllamaService extends AbstractLanguageModelService {
   }
 
   private async getRunningModel(): Promise<string> {
-    const requestUrl = `${this.settingsManager.get('ollamaClientHost')}/api/ps`;
+    new Ollama({
+      host: this.settingsManager.get('ollamaClientHost'),
+    })
+      .ps()
+      .then((response) => {
+        if (response.models.length === 0) {
+          vscode.window.showInformationMessage('No running models found.');
+          return '';
+        }
 
-    try {
-      const runningModels: OllamaRunningModel[] = (
-        await fetch(requestUrl).then((res) => res.json())
-      ).models;
-
-      if (runningModels.length === 0) {
-        vscode.window.showErrorMessage('No running models found.');
+        return response.models.sort((a, b) =>
+          a.modified_at > b.modified_at ? -1 : 1,
+        )[0].name;
+      })
+      .catch((error) => {
+        vscode.window.showErrorMessage(
+          'Failed to get running model from Ollama Service: ' + error,
+        );
         return '';
-      }
+      });
 
-      return runningModels[0].name;
-    } catch (error) {
-      vscode.window.showErrorMessage(
-        'Failed to get running model from Ollama Service: ' + error,
-      );
-      return '';
-    }
+    return '';
   }
 
   private async initModel(
@@ -161,6 +161,47 @@ export class OllamaService extends AbstractLanguageModelService {
 
     return { client, conversationHistory, model };
   }
+
+  private handleFunctionCalls = async (
+    functionCalls: ToolCall[],
+    updateStatus?: (status: string) => void,
+  ): Promise<Message[]> => {
+    const functionCallResults: Message[] = [];
+
+    for (const functionCall of functionCalls) {
+      if (!functionCall.function?.name || !functionCall.function?.arguments) {
+        continue;
+      }
+
+      const tool = ToolService.getTool(functionCall.function.name);
+      if (!tool) {
+        functionCallResults.push({
+          role: 'tool',
+          content:
+            'Failed to find tool with name: ' + functionCall.function.name,
+        });
+        continue;
+      }
+
+      try {
+        const result = await tool({
+          ...functionCall.function.arguments,
+          updateStatus,
+        } as any);
+        functionCallResults.push({
+          role: 'tool',
+          content: result,
+        });
+      } catch (error) {
+        functionCallResults.push({
+          role: 'tool',
+          content: `Error executing tool ${functionCall.function.name}: ${error}`,
+        });
+      }
+    }
+
+    return functionCallResults;
+  };
 
   public async getLatestAvailableModelNames(): Promise<string[]> {
     const client = new Ollama({
@@ -219,32 +260,85 @@ export class OllamaService extends AbstractLanguageModelService {
       return 'The ollama is seems to be down. Please start the ollama service.';
     }
 
+    let functionCallCount = 0;
+    const MAX_FUNCTION_CALLS = 5;
+
     try {
       if (!sendStreamResponse) {
-        return (
-          await client.chat({
+        while (functionCallCount < MAX_FUNCTION_CALLS) {
+          const response = await client.chat({
             model,
             messages: conversationHistory,
+            tools: this.tools,
             options: this.generationConfig,
-          })
-        ).message.content;
+          });
+
+          if (
+            !response.message.tool_calls ||
+            response.message.tool_calls.length === 0
+          ) {
+            return response.message.content;
+          }
+
+          const functionCallResults = await this.handleFunctionCalls(
+            response.message.tool_calls,
+          );
+
+          conversationHistory.push({
+            role: 'assistant',
+            content: response.message.content,
+            tool_calls: response.message.tool_calls,
+          });
+          conversationHistory.push(...functionCallResults);
+
+          functionCallCount++;
+        }
+        return 'Max function call limit reached.';
+      } else {
+        let responseText = '';
+
+        while (functionCallCount < MAX_FUNCTION_CALLS) {
+          const streamResponse = await client.chat({
+            model,
+            messages: conversationHistory,
+            stream: true,
+            tools: this.tools,
+            options: this.generationConfig,
+          });
+
+          let functionCallResults: Message[] = [];
+
+          for await (const chunk of streamResponse) {
+            if (
+              chunk.message.tool_calls &&
+              chunk.message.tool_calls.length > 0
+            ) {
+              functionCallResults = await this.handleFunctionCalls(
+                chunk.message.tool_calls,
+                sendStreamResponse,
+              );
+
+              conversationHistory.push({
+                role: 'assistant',
+                content: chunk.message.content,
+                tool_calls: chunk.message.tool_calls,
+              });
+              conversationHistory.push(...functionCallResults);
+
+              functionCallCount++;
+              break;
+            } else {
+              const partText = chunk.message.content;
+              sendStreamResponse(partText);
+              responseText += partText;
+            }
+          }
+          if (functionCallResults.length === 0) {
+            return responseText;
+          }
+        }
+        return responseText;
       }
-
-      const response = await client.chat({
-        model,
-        messages: conversationHistory,
-        stream: true,
-        options: this.generationConfig,
-      });
-
-      let responseText = '';
-      for await (const part of response) {
-        const partText = part.message.content;
-        sendStreamResponse(partText);
-        responseText += partText;
-      }
-
-      return responseText;
     } catch (error) {
       vscode.window.showErrorMessage(
         'Failed to get response from Ollama Service: ' + error,
