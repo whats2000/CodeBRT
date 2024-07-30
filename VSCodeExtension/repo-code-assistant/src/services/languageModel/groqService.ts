@@ -259,6 +259,7 @@ export class GroqService extends AbstractLanguageModelService {
 
           functionCallCount++;
         }
+        return 'Max function call limit reached.';
       } else {
         let responseText: string = '';
 
@@ -337,6 +338,5 @@ export class GroqService extends AbstractLanguageModelService {
       );
       return 'Failed to connect to the language model service.';
     }
-    return 'Max function call limit reached.';
   }
 }

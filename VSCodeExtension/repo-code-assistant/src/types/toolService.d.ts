@@ -22,7 +22,7 @@ export type ToolServicesApi = {
   webSearch: (args: {
     query: string;
     updateStatus?: (status: string) => void;
-    maxCharsPerPage?: number;
-    numResults?: number;
+    maxCharsPerPage?: number | string;
+    numResults?: number | string;
   }) => Promise<string>;
 };

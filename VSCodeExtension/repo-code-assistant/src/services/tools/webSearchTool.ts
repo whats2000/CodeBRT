@@ -35,6 +35,14 @@ export const webSearchTool: ToolServicesApi['webSearch'] = async ({
   numResults = 4,
 }) => {
   const term = query;
+  try {
+    maxCharsPerPage = Number(maxCharsPerPage);
+    numResults = Number(numResults);
+  } catch (error) {
+    maxCharsPerPage = 6000;
+    numResults = 4;
+  }
+
   const allResults: { title: string; url: string; snippet: string }[] = [];
   const session = axios.create({
     headers: {
