@@ -4,8 +4,10 @@ import {
   Content,
   FunctionCall,
   FunctionDeclarationSchemaType,
+  FunctionResponsePart,
   GenerativeModel,
   InlineDataPart,
+  Part,
   Tool,
 } from '@google/generative-ai';
 import {
@@ -231,26 +233,43 @@ export class GeminiService extends AbstractLanguageModelService {
   private async handleFunctionCalls(
     functionCalls: FunctionCall[],
     updateStatus?: (status: string) => void,
-  ): Promise<string[]> {
-    const functionCallResults: string[] = [];
+  ): Promise<FunctionResponsePart[]> {
+    const functionCallResults: FunctionResponsePart[] = [];
 
     for (const functionCall of functionCalls) {
       const tool = ToolService.getTool(functionCall.name);
       if (!tool) {
-        functionCallResults.push(
-          `Failed to find tool with name: ${functionCall.name}`,
-        );
+        functionCallResults.push({
+          functionResponse: {
+            name: functionCall.name,
+            response: {
+              error: `Failed to find tool with name: ${functionCall.name}`,
+            },
+          },
+        });
         continue;
       }
 
       try {
         const args = { ...functionCall.args, updateStatus };
         const result = await tool(args as any);
-        functionCallResults.push(result);
+        functionCallResults.push({
+          functionResponse: {
+            name: functionCall.name,
+            response: {
+              searchResults: result,
+            },
+          },
+        });
       } catch (error) {
-        functionCallResults.push(
-          `Error executing tool ${functionCall.name}: ${error}`,
-        );
+        functionCallResults.push({
+          functionResponse: {
+            name: functionCall.name,
+            response: {
+              error: `Error executing tool ${functionCall.name}: ${error}`,
+            },
+          },
+        });
       }
     }
 
@@ -264,83 +283,101 @@ export class GeminiService extends AbstractLanguageModelService {
     sendStreamResponse?: (message: string) => void,
     updateStatus?: (status: string) => void,
   ): Promise<string> {
+    let functionCallCount = 0;
+    const MAX_FUNCTION_CALLS = 5;
+
+    let queryParts: Part[] = [
+      {
+        text: query,
+      },
+    ];
+
     try {
       if (!sendStreamResponse) {
-        const result = await generativeModel
-          .startChat({
-            generationConfig: this.generationConfig,
-            safetySettings: this.safetySettings,
-            history: conversationHistory,
-            tools: this.tools,
-          })
-          .sendMessage(query);
-
-        if (result.response.functionCalls()) {
-          const functionCallResults = await this.handleFunctionCalls(
-            result.response.functionCalls() as FunctionCall[],
-          );
-
-          // Regenerate the query with the tool results
-          return (
-            await generativeModel
-              .startChat({
-                generationConfig: this.generationConfig,
-                safetySettings: this.safetySettings,
-                history: conversationHistory,
-              })
-              .sendMessage(`${query}\n\n${functionCallResults.join('\n\n')}`)
-          ).response.text();
-        }
-
-        return (
-          await generativeModel
+        while (functionCallCount < MAX_FUNCTION_CALLS) {
+          const response = await generativeModel
             .startChat({
               generationConfig: this.generationConfig,
               safetySettings: this.safetySettings,
               history: conversationHistory,
+              tools: this.tools,
             })
-            .sendMessage(query)
-        ).response.text();
-      }
+            .sendMessage(queryParts);
 
-      const chat = generativeModel.startChat({
-        generationConfig: this.generationConfig,
-        safetySettings: this.safetySettings,
-        history: conversationHistory,
-        tools: this.tools,
-      });
+          const functionCalls = response.response.functionCalls();
 
-      let responseText = '';
-      const result = await chat.sendMessageStream(query);
-      for await (const item of result.stream) {
-        if (item.functionCalls()) {
-          const functionCallResults = await this.handleFunctionCalls(
-            item.functionCalls() as FunctionCall[],
-            updateStatus,
-          );
-
-          // Regenerate the query with the tool results
-          const newResult = await chat.sendMessageStream(
-            `${query}\n\n${functionCallResults.join('\n\n')}`,
-          );
-
-          if (updateStatus) {
-            updateStatus('');
+          if (!functionCalls) {
+            return response.response.text();
           }
 
-          for await (const newItem of newResult.stream) {
-            const partText = newItem.text();
+          const functionCallResults =
+            await this.handleFunctionCalls(functionCalls);
+
+          conversationHistory.push({
+            role: 'user',
+            parts: queryParts,
+          });
+
+          conversationHistory.push({
+            role: 'model',
+            parts: functionCalls.map((part) => ({
+              functionCall: part,
+            })),
+          });
+
+          queryParts = functionCallResults;
+
+          functionCallCount++;
+        }
+        return 'Max function call limit reached.';
+      } else {
+        let responseText = '';
+
+        while (functionCallCount < MAX_FUNCTION_CALLS) {
+          const result = await generativeModel
+            .startChat({
+              generationConfig: this.generationConfig,
+              safetySettings: this.safetySettings,
+              history: conversationHistory,
+              tools: this.tools,
+            })
+            .sendMessageStream(queryParts);
+
+          let functionCalls = null;
+          updateStatus && updateStatus('');
+
+          for await (const item of result.stream) {
+            functionCalls = item.functionCalls();
+            if (functionCalls) {
+              const functionCallResults = await this.handleFunctionCalls(
+                functionCalls,
+                updateStatus,
+              );
+              conversationHistory.push({
+                role: 'user',
+                parts: queryParts,
+              });
+              conversationHistory.push({
+                role: 'model',
+                parts: functionCalls.map((part) => ({
+                  functionCall: part,
+                })),
+              });
+              queryParts = functionCallResults;
+              functionCallCount++;
+              break;
+            }
+            const partText = item.text();
             sendStreamResponse(partText);
             responseText += partText;
           }
-        } else {
-          const partText = item.text();
-          sendStreamResponse(partText);
-          responseText += partText;
-        }
-      }
 
-      return responseText;
+          if (!functionCalls) {
+            return responseText;
+          }
+        }
+        return responseText;
+      }
     } catch (error) {
       vscode.window.showErrorMessage(
         'Failed to get response from Gemini Service: ' + error,
@@ -414,7 +451,6 @@ export class GeminiService extends AbstractLanguageModelService {
           responseText += partText;
         }
       }
-
       return responseText;
     } catch (error) {
       vscode.window.showErrorMessage(

@@ -275,6 +275,8 @@ export class GroqService extends AbstractLanguageModelService {
             index: number;
           })[] = [];
 
+          updateStatus && updateStatus('');
+
           for await (const chunk of streamResponse) {
             if (chunk.choices[0]?.finish_reason === 'tool_calls') {
               const functionCallResults = await this.handleFunctionCalls(
@@ -324,9 +326,6 @@ export class GroqService extends AbstractLanguageModelService {
             });
           }
           if (completeToolCalls.length === 0) {
-            console.error(
-              'No tool calls found in the stream response but the delta was present. This might be an error from OpenAI.',
-            );
             return responseText;
           }
         }

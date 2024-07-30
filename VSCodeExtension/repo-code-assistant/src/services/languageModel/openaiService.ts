@@ -297,6 +297,7 @@ export class OpenAIService extends AbstractLanguageModelService {
 
           functionCallCount++;
         }
+        return 'Max function call limit reached.';
       } else {
         let responseText = '';
 
@@ -312,6 +313,8 @@ export class OpenAIService extends AbstractLanguageModelService {
           const completeToolCalls: (ChatCompletionMessageToolCall & {
             index: number;
           })[] = [];
+
+          updateStatus && updateStatus('');
 
           for await (const chunk of streamResponse) {
             if (chunk.choices[0]?.finish_reason === 'tool_calls') {
@@ -368,9 +371,6 @@ export class OpenAIService extends AbstractLanguageModelService {
             });
           }
           if (completeToolCalls.length === 0) {
-            console.error(
-              'No tool calls found in the stream response but the delta was present. This might be an error from OpenAI.',
-            );
             return responseText;
           }
         }
@@ -382,6 +382,5 @@ export class OpenAIService extends AbstractLanguageModelService {
       );
       return 'Failed to connect to the language model service.';
     }
-    return 'Max function call limit reached.';
   }
 }
