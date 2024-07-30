@@ -5,7 +5,6 @@ import {
   FunctionCall,
   FunctionDeclarationSchemaType,
   FunctionResponsePart,
-  GenerativeModel,
   InlineDataPart,
   Part,
   Tool,
@@ -178,13 +177,37 @@ export class GeminiService extends AbstractLanguageModelService {
     return result;
   }
 
-  private fileToGenerativePart(path: string, mimeType: string): InlineDataPart {
-    return {
-      inlineData: {
-        data: Buffer.from(fs.readFileSync(path)).toString('base64'),
-        mimeType,
-      },
-    };
+  private createQueryParts(query: string, images?: string[]): Part[] {
+    let parts: Part[] = [{ text: query }];
+
+    if (images) {
+      const imageParts = images
+        .map((image) =>
+          this.fileToGenerativePart(image, `image/${image.split('.').pop()}`),
+        )
+        .filter((part) => part !== undefined) as InlineDataPart[];
+
+      parts = [...parts, ...imageParts];
+    }
+
+    return parts;
+  }
+
+  private fileToGenerativePart(
+    path: string,
+    mimeType: string,
+  ): InlineDataPart | undefined {
+    try {
+      const buffer = Buffer.from(fs.readFileSync(path)).toString('base64');
+      return {
+        inlineData: {
+          data: buffer,
+          mimeType,
+        },
+      };
+    } catch (error) {
+      vscode.window.showErrorMessage('Failed to read file: ' + error).then();
+    }
   }
 
   public async getLatestAvailableModelNames(): Promise<string[]> {
@@ -276,22 +299,30 @@ export class GeminiService extends AbstractLanguageModelService {
     return functionCallResults;
   }
 
-  private async getResponseChunksWithTextPayload(
-    generativeModel: GenerativeModel,
-    query: string,
-    conversationHistory: Content[],
-    sendStreamResponse?: (message: string) => void,
-    updateStatus?: (status: string) => void,
-  ): Promise<string> {
+  public async getResponse(options: GetResponseOptions): Promise<string> {
+    if (this.currentModel === '') {
+      vscode.window.showErrorMessage(
+        'Make sure the model is selected before sending a message. Open the model selection dropdown and configure the model.',
+      );
+      return 'Missing model configuration. Check the model selection dropdown.';
+    }
+
+    const { query, images, currentEntryID, sendStreamResponse, updateStatus } =
+      options;
+
+    const generativeModel = new GoogleGenerativeAI(
+      this.apiKey,
+    ).getGenerativeModel({
+      model: this.currentModel,
+    });
+
+    const conversationHistory = this.conversationHistoryToContent(
+      this.getHistoryBeforeEntry(currentEntryID).entries,
+    );
+
+    let queryParts = this.createQueryParts(query, images);
     let functionCallCount = 0;
     const MAX_FUNCTION_CALLS = 5;
-
-    let queryParts: Part[] = [
-      {
-        text: query,
-      },
-    ];
-
     try {
       if (!sendStreamResponse) {
         while (functionCallCount < MAX_FUNCTION_CALLS) {
@@ -384,120 +415,5 @@ export class GeminiService extends AbstractLanguageModelService {
       );
       return 'Failed to connect to the language model service.';
     }
-  }
-
-  private async getResponseChunksWithImagePayload(
-    generativeModel: GenerativeModel,
-    query: string,
-    images: string[],
-    _conversationHistory: Content[],
-    sendStreamResponse?: (message: string) => void,
-    updateStatus?: (status: string) => void,
-  ): Promise<string> {
-    try {
-      const imageParts = images.map((image) => {
-        return this.fileToGenerativePart(
-          image,
-          `image/${image.split('.').pop()}`,
-        );
-      });
-
-      if (!sendStreamResponse) {
-        const result = await generativeModel.generateContent({
-          generationConfig: this.generationConfig,
-          contents: [{ role: 'user', parts: [{ text: query }, ...imageParts] }],
-        });
-
-        return result.response.text();
-      }
-
-      let responseText = '';
-      const result = await generativeModel.generateContentStream({
-        generationConfig: this.generationConfig,
-        contents: [{ role: 'user', parts: [{ text: query }, ...imageParts] }],
-      });
-
-      for await (const item of result.stream) {
-        if (item.functionCalls()) {
-          const functionCallResults = await this.handleFunctionCalls(
-            item.functionCalls() as FunctionCall[],
-            updateStatus,
-          );
-
-          // Regenerate the query with the tool results
-          const newResult = await generativeModel.generateContentStream({
-            generationConfig: this.generationConfig,
-            contents: [
-              {
-                role: 'user',
-                parts: [
-                  { text: `${query}\n\n${functionCallResults.join('\n\n')}` },
-                  ...imageParts,
-                ],
-              },
-            ],
-          });
-
-          updateStatus && updateStatus('');
-
-          for await (const newItem of newResult.stream) {
-            const partText = newItem.text();
-            sendStreamResponse(partText);
-            responseText += partText;
-          }
-        } else {
-          const partText = item.text();
-          sendStreamResponse(partText);
-          responseText += partText;
-        }
-      }
-      return responseText;
-    } catch (error) {
-      vscode.window.showErrorMessage(
-        'Failed to get response from Gemini Service: ' + error,
-      );
-      return 'Failed to connect to the language model service.';
-    }
-  }
-
-  public async getResponse(options: GetResponseOptions): Promise<string> {
-    if (this.currentModel === '') {
-      vscode.window.showErrorMessage(
-        'Make sure the model is selected before sending a message. Open the model selection dropdown and configure the model.',
-      );
-      return 'Missing model configuration. Check the model selection dropdown.';
-    }
-
-    const { query, images, currentEntryID, sendStreamResponse, updateStatus } =
-      options;
-
-    const generativeModel = new GoogleGenerativeAI(
-      this.apiKey,
-    ).getGenerativeModel({
-      model: this.currentModel,
-    });
-
-    const conversationHistory = this.conversationHistoryToContent(
-      this.getHistoryBeforeEntry(currentEntryID).entries,
-    );
-
-    if (images && images.length > 0) {
-      return this.getResponseChunksWithImagePayload(
-        generativeModel,
-        query,
-        images,
-        conversationHistory,
-        sendStreamResponse,
-        updateStatus,
-      );
-    }
-
-    return this.getResponseChunksWithTextPayload(
-      generativeModel,
-      query,
-      conversationHistory,
-      sendStreamResponse,
-      updateStatus,
-    );
   }
 }
