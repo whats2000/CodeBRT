@@ -9,10 +9,8 @@ import type {
   ChatCompletionMessageToolCall,
   ChatCompletionTool,
   ChatCompletionToolMessageParam,
-} from 'openai/resources';
-import type {
-  ChatCompletionCreateParamsBase,
   ChatCompletionCreateParamsNonStreaming,
+  ChatCompletionCreateParamsBase,
 } from 'openai/resources/chat/completions';
 import OpenAI from 'openai';
 
@@ -255,13 +253,11 @@ export class OpenAIService extends AbstractLanguageModelService {
       vscode.window.showWarningMessage(
         'The images ChatGPT-3.5 is not supported currently. The images will be ignored.',
       );
-
       options.images = undefined;
     }
 
     const { query, images, currentEntryID, sendStreamResponse, updateStatus } =
       options;
-
     const openai = new OpenAI({ apiKey: this.apiKey });
 
     const conversationHistory = await this.conversationHistoryToContent(
@@ -270,124 +266,122 @@ export class OpenAIService extends AbstractLanguageModelService {
       images,
     );
 
+    let functionCallCount = 0;
+    const MAX_FUNCTION_CALLS = 5;
+
     try {
       if (!sendStreamResponse) {
-        const result = await openai.chat.completions.create({
-          messages: conversationHistory,
-          model: this.currentModel,
-          tools: this.tools,
-          stream: false,
-          ...this.generationConfig,
-        } as ChatCompletionCreateParamsNonStreaming);
-
-        if (result.choices[0]?.message.tool_calls) {
-          const functionCallResults = await this.handleFunctionCalls(
-            result.choices[0].message.tool_calls,
-          );
-
-          conversationHistory.push({
-            role: 'assistant',
-            content: null,
-            tool_calls: result.choices[0].message.tool_calls,
-          });
-
-          conversationHistory.push(...functionCallResults);
-        }
-
-        return (
-          await openai.chat.completions.create({
+        while (functionCallCount < MAX_FUNCTION_CALLS) {
+          const response = await openai.chat.completions.create({
             messages: conversationHistory,
             model: this.currentModel,
             tools: this.tools,
             stream: false,
             ...this.generationConfig,
-          } as ChatCompletionCreateParamsNonStreaming)
-        ).choices[0]?.message?.content!;
-      }
+          } as ChatCompletionCreateParamsNonStreaming);
 
-      const stream = await openai.chat.completions.create({
-        model: this.currentModel,
-        messages: conversationHistory,
-        tools: this.tools,
-        stream: true,
-        ...this.generationConfig,
-      } as ChatCompletionCreateParamsStreaming);
+          if (!response.choices[0]?.message.tool_calls) {
+            return response.choices[0]?.message?.content!;
+          }
 
-      let responseText = '';
-      const completeToolCalls: (ChatCompletionMessageToolCall & {
-        index: number;
-      })[] = [];
-      for await (const chunk of stream) {
-        if (chunk.choices[0]?.finish_reason === 'tool_calls') {
           const functionCallResults = await this.handleFunctionCalls(
-            completeToolCalls,
-            updateStatus,
+            response.choices[0].message.tool_calls,
           );
 
           conversationHistory.push({
             role: 'assistant',
             content: null,
-            tool_calls: completeToolCalls,
+            tool_calls: response.choices[0].message.tool_calls,
           });
-
           conversationHistory.push(...functionCallResults);
 
-          const newStream = await openai.chat.completions.create({
-            messages: conversationHistory,
+          functionCallCount++;
+        }
+      } else {
+        let responseText = '';
+
+        while (functionCallCount < MAX_FUNCTION_CALLS) {
+          const streamResponse = await openai.chat.completions.create({
             model: this.currentModel,
+            messages: conversationHistory,
             tools: this.tools,
             stream: true,
             ...this.generationConfig,
           } as ChatCompletionCreateParamsStreaming);
 
-          updateStatus && updateStatus('');
+          const completeToolCalls: (ChatCompletionMessageToolCall & {
+            index: number;
+          })[] = [];
 
-          for await (const newChunk of newStream) {
-            const partText = newChunk.choices[0]?.delta?.content || '';
-            sendStreamResponse(partText);
-            responseText += partText;
-          }
+          for await (const chunk of streamResponse) {
+            if (chunk.choices[0]?.finish_reason === 'tool_calls') {
+              const toolCalls = completeToolCalls.map((call) => ({
+                id: call.id,
+                function: call.function,
+                type: call.type,
+              }));
+              const functionCallResults = await this.handleFunctionCalls(
+                toolCalls,
+                updateStatus,
+              );
 
-          return responseText;
-        }
-        if (chunk.choices[0]?.delta.tool_calls) {
-          const deltaToolCalls = chunk.choices[0].delta.tool_calls;
+              conversationHistory.push({
+                role: 'assistant',
+                content: null,
+                tool_calls: toolCalls,
+              });
+              conversationHistory.push(...functionCallResults);
 
-          deltaToolCalls.forEach((deltaToolCall) => {
-            const index = deltaToolCall.index;
-            let existingToolCall = completeToolCalls.find(
-              (call) => call.index === index,
-            );
-
-            if (!existingToolCall) {
-              existingToolCall = {
-                id: '',
-                function: { name: '', arguments: '' },
-                type: 'function',
-                index: index,
-              };
-              completeToolCalls.push(existingToolCall);
+              functionCallCount++;
+              break;
             }
 
-            existingToolCall.id += deltaToolCall.id || '';
-            existingToolCall.function.name =
-              deltaToolCall.function?.name || existingToolCall.function.name;
-            existingToolCall.function.arguments +=
-              deltaToolCall.function?.arguments || '';
-          });
-        } else {
-          const partText = chunk.choices[0]?.delta?.content || '';
-          sendStreamResponse(partText);
-          responseText += partText;
-        }
-      }
+            if (!chunk.choices[0]?.delta.tool_calls) {
+              const partText = chunk.choices[0]?.delta?.content || '';
+              sendStreamResponse(partText);
+              responseText += partText;
+              continue;
+            }
 
-      return responseText;
+            // Collect tool calls delta from the stream response delta
+            chunk.choices[0].delta.tool_calls.forEach((deltaToolCall) => {
+              const index = deltaToolCall.index;
+              let existingToolCall = completeToolCalls.find(
+                (call) => call.index === index,
+              );
+
+              if (!existingToolCall) {
+                existingToolCall = {
+                  id: '',
+                  function: { name: '', arguments: '' },
+                  type: 'function',
+                  index: index,
+                };
+                completeToolCalls.push(existingToolCall);
+              }
+
+              existingToolCall.id += deltaToolCall.id || '';
+              existingToolCall.function.name =
+                deltaToolCall.function?.name || existingToolCall.function.name;
+              existingToolCall.function.arguments +=
+                deltaToolCall.function?.arguments || '';
+            });
+          }
+          if (completeToolCalls.length === 0) {
+            console.error(
+              'No tool calls found in the stream response but the delta was present. This might be an error from OpenAI.',
+            );
+            return responseText;
+          }
+        }
+        return responseText;
+      }
     } catch (error) {
       vscode.window.showErrorMessage(
         'Failed to get response from OpenAI Service: ' + error,
       );
       return 'Failed to connect to the language model service.';
     }
+    return 'Max function call limit reached.';
   }
 }

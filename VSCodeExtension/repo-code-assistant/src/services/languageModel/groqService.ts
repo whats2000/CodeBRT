@@ -1,4 +1,5 @@
 import * as vscode from 'vscode';
+
 import type {
   ChatCompletionCreateParamsBase,
   ChatCompletionCreateParamsNonStreaming,
@@ -226,121 +227,117 @@ export class GroqService extends AbstractLanguageModelService {
       query,
     );
 
+    let functionCallCount = 0;
+    const MAX_FUNCTION_CALLS = 5;
+
     try {
       if (!sendStreamResponse) {
-        const result = await groq.chat.completions.create({
-          messages: conversationHistory,
-          model: this.currentModel,
-          tools: this.tools,
-          ...this.generationConfig,
-        } as ChatCompletionCreateParamsNonStreaming);
-
-        if (result.choices[0]?.message?.tool_calls) {
-          const functionCallResults = await this.handleFunctionCalls(
-            result.choices[0].message.tool_calls,
-          );
-
-          conversationHistory.push({
-            role: 'assistant',
-            content: null,
-            tool_calls: result.choices[0].message.tool_calls,
-          });
-
-          conversationHistory.push(...functionCallResults);
-        }
-        return (
-          await groq.chat.completions.create({
-            messages: conversationHistory,
-            model: this.currentModel,
-            stream: false,
-            ...this.generationConfig,
-          } as ChatCompletionCreateParamsNonStreaming)
-        ).choices[0]?.message?.content!;
-      }
-
-      const stream = await groq.chat.completions.create({
-        messages: conversationHistory,
-        model: this.currentModel,
-        stream: true,
-        tools: this.tools,
-        ...this.generationConfig,
-      } as ChatCompletionCreateParamsStreaming);
-
-      let responseText: string = '';
-      const completeToolCalls: (ChatCompletionMessageToolCall & {
-        index: number;
-      })[] = [];
-      for await (const chunk of stream) {
-        if (chunk.choices[0]?.finish_reason === 'tool_calls') {
-          const functionCallResults = await this.handleFunctionCalls(
-            completeToolCalls,
-            updateStatus,
-          );
-
-          conversationHistory.push({
-            role: 'assistant',
-            content: null,
-            tool_calls: completeToolCalls,
-          });
-
-          conversationHistory.push(...functionCallResults);
-
-          const newStream = await groq.chat.completions.create({
+        while (functionCallCount < MAX_FUNCTION_CALLS) {
+          const response = await groq.chat.completions.create({
             messages: conversationHistory,
             model: this.currentModel,
             tools: this.tools,
+            stream: false,
+            ...this.generationConfig,
+          } as ChatCompletionCreateParamsNonStreaming);
+
+          if (!response.choices[0]?.message.tool_calls) {
+            return response.choices[0]?.message?.content!;
+          }
+
+          const functionCallResults = await this.handleFunctionCalls(
+            response.choices[0].message.tool_calls,
+          );
+
+          conversationHistory.push({
+            role: 'assistant',
+            content: null,
+            tool_calls: response.choices[0].message.tool_calls,
+          });
+
+          conversationHistory.push(...functionCallResults);
+
+          functionCallCount++;
+        }
+      } else {
+        let responseText: string = '';
+
+        while (functionCallCount < MAX_FUNCTION_CALLS) {
+          const streamResponse = await groq.chat.completions.create({
+            messages: conversationHistory,
+            model: this.currentModel,
             stream: true,
+            tools: this.tools,
             ...this.generationConfig,
           } as ChatCompletionCreateParamsStreaming);
 
-          updateStatus && updateStatus('');
+          const completeToolCalls: (ChatCompletionMessageToolCall & {
+            index: number;
+          })[] = [];
 
-          for await (const newChunk of newStream) {
-            const partText = newChunk.choices[0]?.delta?.content || '';
-            sendStreamResponse(partText);
-            responseText += partText;
-          }
+          for await (const chunk of streamResponse) {
+            if (chunk.choices[0]?.finish_reason === 'tool_calls') {
+              const functionCallResults = await this.handleFunctionCalls(
+                completeToolCalls,
+                updateStatus,
+              );
 
-          return responseText;
-        }
-        if (chunk.choices[0]?.delta.tool_calls) {
-          const deltaToolCalls = chunk.choices[0].delta.tool_calls;
+              conversationHistory.push({
+                role: 'assistant',
+                content: null,
+                tool_calls: completeToolCalls,
+              });
+              conversationHistory.push(...functionCallResults);
 
-          deltaToolCalls.forEach((deltaToolCall) => {
-            const index = deltaToolCall.index;
-            let existingToolCall = completeToolCalls.find(
-              (call) => call.index === index,
-            );
-
-            if (!existingToolCall) {
-              existingToolCall = {
-                id: '',
-                function: { name: '', arguments: '' },
-                type: 'function',
-                index: index,
-              };
-              completeToolCalls.push(existingToolCall);
+              functionCallCount++;
+              break;
             }
 
-            existingToolCall.id += deltaToolCall.id || '';
-            existingToolCall.function.name =
-              deltaToolCall.function?.name || existingToolCall.function.name;
-            existingToolCall.function.arguments +=
-              deltaToolCall.function?.arguments || '';
-          });
-        } else {
-          const partText = chunk.choices[0]?.delta?.content || '';
-          sendStreamResponse(partText);
-          responseText += partText;
-        }
-      }
+            if (!chunk.choices[0]?.delta.tool_calls) {
+              const partText = chunk.choices[0]?.delta?.content || '';
+              sendStreamResponse(partText);
+              responseText += partText;
+              continue;
+            }
 
-      return responseText;
+            chunk.choices[0].delta.tool_calls.forEach((deltaToolCall) => {
+              const index = deltaToolCall.index;
+              let existingToolCall = completeToolCalls.find(
+                (call) => call.index === index,
+              );
+
+              if (!existingToolCall) {
+                existingToolCall = {
+                  id: '',
+                  function: { name: '', arguments: '' },
+                  type: 'function',
+                  index: index,
+                };
+                completeToolCalls.push(existingToolCall);
+              }
+
+              existingToolCall.id += deltaToolCall.id || '';
+              existingToolCall.function.name =
+                deltaToolCall.function?.name || existingToolCall.function.name;
+              existingToolCall.function.arguments +=
+                deltaToolCall.function?.arguments || '';
+            });
+          }
+          if (completeToolCalls.length === 0) {
+            console.error(
+              'No tool calls found in the stream response but the delta was present. This might be an error from OpenAI.',
+            );
+            return responseText;
+          }
+        }
+        return responseText;
+      }
     } catch (error) {
       vscode.window.showErrorMessage(
         'Failed to get response from Groq Service: ' + error,
       );
       return 'Failed to connect to the language model service.';
     }
+    return 'Max function call limit reached.';
   }
 }
