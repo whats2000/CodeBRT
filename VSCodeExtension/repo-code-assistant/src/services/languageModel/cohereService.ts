@@ -1,5 +1,5 @@
 import * as vscode from 'vscode';
-import type { ChatMessage, Tool, ToolCall } from 'cohere-ai/api';
+import type { Message, Tool, ToolCall } from 'cohere-ai/api';
 import { CohereClient } from 'cohere-ai';
 
 import { ConversationEntry, GetResponseOptions } from '../../types';
@@ -85,8 +85,8 @@ export class CohereService extends AbstractLanguageModelService {
 
   private conversationHistoryToContent(entries: {
     [key: string]: ConversationEntry;
-  }): ChatMessage[] {
-    let result: ChatMessage[] = [];
+  }): Message[] {
+    let result: Message[] = [];
     let currentEntry = entries[this.history.current];
 
     while (currentEntry) {

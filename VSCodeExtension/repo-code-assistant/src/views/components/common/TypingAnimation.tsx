@@ -25,7 +25,6 @@ export const TypingAnimation: React.FC<TypingAnimationProps> = ({
     const length = displayedMessage.length;
 
     if (length < message.length) {
-      // Accelerate the typing speed when not loading (i.e., all data is received)
       const baseDelay = isProcessing ? 100 : 30;
       const remainingLength = message.length - length;
       const delay = Math.max(20, baseDelay - remainingLength);

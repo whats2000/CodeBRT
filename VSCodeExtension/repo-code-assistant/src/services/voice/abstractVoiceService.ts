@@ -3,7 +3,7 @@ import fs from 'node:fs/promises';
 import { Promise } from 'promise-deferred';
 
 import * as vscode from 'vscode';
-import { SentenceTokenizer } from 'natural';
+import * as tokenizer from 'simple-text-tokenizer';
 import removeMarkdown from 'markdown-to-text';
 
 import type { VoiceService } from '../../types';
@@ -83,47 +83,11 @@ export abstract class AbstractVoiceService implements VoiceService {
    * @returns An array of text chunks.
    */
   private splitTextIntoChunks(text: string, chunkSize: number = 2): string[] {
-    const tokenizer = new SentenceTokenizer();
-    const sentences = tokenizer.tokenize(text);
-
-    const mergedSentences: string[] = [];
-    let tempSentence = '';
-
-    sentences.forEach((sentence) => {
-      if (tempSentence) {
-        tempSentence += ' ' + sentence;
-        if (
-          sentence.match(/[.!?。！？]$/) ||
-          sentence.match(/["'`][.!?。！？]$/) ||
-          sentence.endsWith('"""') ||
-          sentence.endsWith('``')
-        ) {
-          mergedSentences.push(tempSentence.trim());
-          tempSentence = '';
-        }
-      } else {
-        if (
-          sentence.match(/[.!?。！？]$/) ||
-          sentence.match(/["'`][.!?。！？]$/) ||
-          sentence.endsWith('"""') ||
-          sentence.endsWith('``')
-        ) {
-          mergedSentences.push(sentence.trim());
-        } else {
-          tempSentence = sentence;
-        }
-      }
-    });
-
-    if (tempSentence) {
-      mergedSentences.push(tempSentence.trim());
-    }
-
+    const sentences = tokenizer.getSentenceTokens(text);
     const chunks = [];
-    for (let i = 0; i < mergedSentences.length; i += chunkSize) {
-      chunks.push(mergedSentences.slice(i, i + chunkSize).join(' '));
+    for (let i = 0; i < sentences.length; i += chunkSize) {
+      chunks.push(sentences.slice(i, i + chunkSize).join(' '));
     }
-
     return chunks;
   }
 

@@ -1,5 +1,5 @@
 /**
- * This file is referenced to https://github.com/KingNish24/OpenGPT-4o/blob/main/chatbot.py
+ * This file is referenced to https://github.com/KingNish24/OpenGPT-4o/blob/main/chatbot.py,
  * And I have made some changes to the original code to make it work with the TypeScript codebase.
  * License: MIT
  */
