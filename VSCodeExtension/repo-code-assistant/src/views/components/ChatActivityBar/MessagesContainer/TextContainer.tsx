@@ -38,7 +38,6 @@ export const TextContainer: React.FC<MessageTextContainerProps> = ({
       entry.id === conversationHistoryCurrent &&
       isProcessing ? (
         <>
-          {toolStatus !== '' && <ToolStatusBlock status={toolStatus} />}
           <TypingAnimation
             message={entry.message}
             isProcessing={isProcessing}
@@ -46,6 +45,7 @@ export const TextContainer: React.FC<MessageTextContainerProps> = ({
             hljsTheme={hljsTheme}
             setHljsTheme={setHljsTheme}
           />
+          {toolStatus !== '' && <ToolStatusBlock status={toolStatus} />}
         </>
       ) : (
         <RendererCodeProvider

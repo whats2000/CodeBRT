@@ -25,6 +25,10 @@ export class AnthropicService extends AbstractLanguageModelService {
   private apiKey: string;
   private readonly settingsListener: vscode.Disposable;
 
+  private readonly generationConfig = {
+    max_tokens: 4096,
+  };
+
   private readonly tools: Tool[] = [
     {
       name: webSearchSchema.name,
@@ -283,12 +287,12 @@ export class AnthropicService extends AbstractLanguageModelService {
         }
       });
 
-      // Filter the invalid models (Not existing in the latest models)
+      // Filter the invalid models from the available models
       newAvailableModelNames = newAvailableModelNames.filter((name) =>
         latestModels.some((model) => model === name),
       );
 
-      // Append the models to the available models if they are not already there
+      // Append the models to the available models if they aren't already there
       latestModels.forEach((model) => {
         if (newAvailableModelNames.includes(model)) return;
 
@@ -317,88 +321,91 @@ export class AnthropicService extends AbstractLanguageModelService {
       return errorMessage;
     }
 
-    const requestData = {
-      max_tokens: 4096,
-      model: this.currentModel,
-      messages: conversationHistory,
-    };
-
+    let functionCallCount = 0;
+    const MAX_FUNCTION_CALLS = 5;
     try {
       if (!sendStreamResponse) {
-        const result = await anthropic.messages.create({
-          ...requestData,
-          tools: this.tools,
-        });
+        while (functionCallCount < MAX_FUNCTION_CALLS) {
+          const response = await anthropic.messages.create({
+            model: this.currentModel,
+            messages: conversationHistory,
+            tools: this.tools,
+            stream: false,
+            max_tokens: 4096,
+          });
 
-        if (result.content[0].type === 'tool_use') {
-          const toolUseBlock = result.content.filter(
+          if (response.content[0].type !== 'tool_use') {
+            return (response.content[0] as TextBlock).text;
+          }
+
+          const toolUseBlock = response.content.filter(
             (message) => message.type === 'tool_use',
           ) as ToolUseBlock[];
+          const functionCallResults =
+            await this.handleFunctionCalls(toolUseBlock);
+
+          conversationHistory.push({
+            role: 'assistant',
+            content: toolUseBlock,
+          });
+
+          conversationHistory.push({
+            role: 'user',
+            content: functionCallResults,
+          });
+
+          functionCallCount++;
+        }
+        return 'Max function call limit reached.';
+      } else {
+        let responseText = '';
+
+        while (functionCallCount < MAX_FUNCTION_CALLS) {
+          const streamResponse = anthropic.messages
+            .stream({
+              model: this.currentModel,
+              messages: conversationHistory,
+              tools: this.tools,
+              stream: true,
+              ...this.generationConfig,
+            })
+            .on('connect', () => {
+              updateStatus && updateStatus('');
+            })
+            .on('text', (partText) => {
+              sendStreamResponse(partText);
+              responseText += partText;
+            });
+
+          const finalMessage = await streamResponse.finalMessage();
+
+          if (finalMessage.stop_reason !== 'tool_use') {
+            return responseText;
+          }
+
+          const toolUseBlock = finalMessage.content.filter(
+            (message) => message.type === 'tool_use',
+          ) as ToolUseBlock[];
+
           const functionCallResults = await this.handleFunctionCalls(
             toolUseBlock,
             updateStatus,
           );
 
-          requestData.messages.push({
+          conversationHistory.push({
             role: 'assistant',
             content: toolUseBlock,
           });
 
-          requestData.messages.push({
+          conversationHistory.push({
             role: 'user',
             content: functionCallResults,
           });
 
-          const newResult = await anthropic.messages.create({
-            ...requestData,
-            tools: this.tools,
-          });
-
-          return (newResult.content[0] as TextBlock).text;
+          functionCallCount++;
         }
-
-        return (result.content[0] as TextBlock).text;
+        return 'Max function call limit reached.';
       }
-
-      const stream = anthropic.messages
-        .stream({ ...requestData, tools: this.tools, stream: true })
-        .on('text', (text) => {
-          sendStreamResponse(text);
-        });
-
-      const finalMessage = await stream.finalMessage();
-
-      if (finalMessage.stop_reason === 'tool_use') {
-        const toolUseBlock = finalMessage.content.filter(
-          (message) => message.type === 'tool_use',
-        ) as ToolUseBlock[];
-        const functionCallResults = await this.handleFunctionCalls(
-          toolUseBlock,
-          updateStatus,
-        );
-
-        requestData.messages.push({
-          role: 'assistant',
-          content: toolUseBlock,
-        });
-
-        requestData.messages.push({
-          role: 'user',
-          content: functionCallResults,
-        });
-
-        updateStatus && updateStatus('');
-
-        const stream = anthropic.messages
-          .stream({ ...requestData, tools: this.tools, stream: true })
-          .on('text', (text) => {
-            sendStreamResponse(text);
-          });
-
-        return await stream.finalText();
-      }
-
-      return await stream.finalText();
     } catch (error) {
       vscode.window.showErrorMessage(
         'Failed to get response from Anthropic Service: ' + error,
