@@ -3,7 +3,6 @@ import path from 'path';
 
 import * as vscode from 'vscode';
 import type {
-  ChatCompletionChunk,
   ChatCompletionContentPartImage,
   ChatCompletionCreateParamsStreaming,
   ChatCompletionMessageParam,
@@ -163,9 +162,7 @@ export class OpenAIService extends AbstractLanguageModelService {
   }
 
   private handleFunctionCalls = async (
-    functionCalls:
-      | ChatCompletionMessageToolCall[]
-      | ChatCompletionChunk.Choice.Delta.ToolCall[],
+    functionCalls: ChatCompletionMessageToolCall[],
     updateStatus?: (status: string) => void,
   ): Promise<ChatCompletionToolMessageParam[]> => {
     const functionCallResults: ChatCompletionToolMessageParam[] = [];
@@ -291,6 +288,7 @@ export class OpenAIService extends AbstractLanguageModelService {
           conversationHistory.push({
             role: 'assistant',
             content: null,
+            tool_calls: result.choices[0].message.tool_calls,
           });
 
           conversationHistory.push(...functionCallResults);
@@ -316,16 +314,20 @@ export class OpenAIService extends AbstractLanguageModelService {
       } as ChatCompletionCreateParamsStreaming);
 
       let responseText = '';
+      const completeToolCalls: (ChatCompletionMessageToolCall & {
+        index: number;
+      })[] = [];
       for await (const chunk of stream) {
-        if (chunk.choices[0]?.delta.tool_calls) {
+        if (chunk.choices[0]?.finish_reason === 'tool_calls') {
           const functionCallResults = await this.handleFunctionCalls(
-            chunk.choices[0].delta.tool_calls,
+            completeToolCalls,
             updateStatus,
           );
 
           conversationHistory.push({
             role: 'assistant',
             content: null,
+            tool_calls: completeToolCalls,
           });
 
           conversationHistory.push(...functionCallResults);
@@ -345,6 +347,34 @@ export class OpenAIService extends AbstractLanguageModelService {
             sendStreamResponse(partText);
             responseText += partText;
           }
+
+          return responseText;
+        }
+        if (chunk.choices[0]?.delta.tool_calls) {
+          const deltaToolCalls = chunk.choices[0].delta.tool_calls;
+
+          deltaToolCalls.forEach((deltaToolCall) => {
+            const index = deltaToolCall.index;
+            let existingToolCall = completeToolCalls.find(
+              (call) => call.index === index,
+            );
+
+            if (!existingToolCall) {
+              existingToolCall = {
+                id: '',
+                function: { name: '', arguments: '' },
+                type: 'function',
+                index: index,
+              };
+              completeToolCalls.push(existingToolCall);
+            }
+
+            existingToolCall.id += deltaToolCall.id || '';
+            existingToolCall.function.name =
+              deltaToolCall.function?.name || existingToolCall.function.name;
+            existingToolCall.function.arguments +=
+              deltaToolCall.function?.arguments || '';
+          });
         } else {
           const partText = chunk.choices[0]?.delta?.content || '';
           sendStreamResponse(partText);
