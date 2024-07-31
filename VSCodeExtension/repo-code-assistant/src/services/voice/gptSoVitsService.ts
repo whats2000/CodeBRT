@@ -2,6 +2,7 @@ import axios, { AxiosResponse } from 'axios';
 import vscode from 'vscode';
 
 import type { GptSoVitsVoiceSetting } from '../../types';
+import { MODEL_SERVICE_LINKS } from '../../constants';
 import { SettingsManager } from '../../api';
 import { AbstractVoiceService } from './abstractVoiceService';
 
@@ -37,13 +38,12 @@ export class GptSoVitsApiService extends AbstractVoiceService {
       this.referWavPath = '';
       this.referText = '';
       this.promptLanguage = '';
-      console.log('No GPT-SoVits voice settings found. Please configure one.');
     }
   }
 
   protected async sendTextToVoiceRequest(
     text: string,
-  ): Promise<Uint8Array | string> {
+  ): Promise<Uint8Array | undefined> {
     const requestData = {
       refer_wav_path: this.referWavPath,
       ref_audio_path: this.referWavPath,
@@ -67,16 +67,31 @@ export class GptSoVitsApiService extends AbstractVoiceService {
       if (response.status === 200) {
         return new Uint8Array(response.data);
       } else {
-        console.error(`API responded with status: ${response.status}`);
-        return `API responded with status: ${response.status}`;
+        vscode.window.showErrorMessage(
+          `API responded with status: ${response.status}`,
+        );
+        return;
       }
     } catch (error) {
-      console.error('Error during API call:', (error as Error).message);
-      return (
-        `Error during API call: ${(error as Error).message}, ` +
-        `Please check the GPt-SoVits script is running at this address: ${this.settingsManager.get('gptSoVitsClientHost')}, ` +
-        `and the voice settings are correctly configured at the voice settings page.`
-      );
+      vscode.window
+        .showErrorMessage(
+          `Error during API call: ${(error as Error).message}, ` +
+            `Please check the GPt-SoVits script is running at this address: ${this.settingsManager.get('gptSoVitsClientHost')}, ` +
+            `Check out the GPT-SoVits advanced settings in voice settings. ` +
+            `Additional: The voice must in 3s to 10s range. ` +
+            `And if your facing mp3 issue try converting it to wav (Mostly work!).`,
+          'Download GPT-SoVits script',
+        )
+        .then((selection) => {
+          if (selection === 'Download GPT-SoVits script') {
+            vscode.env.openExternal(
+              vscode.Uri.parse(
+                MODEL_SERVICE_LINKS.gptSoVitsClientHost as string,
+              ),
+            );
+          }
+        });
+      return;
     }
   }
 

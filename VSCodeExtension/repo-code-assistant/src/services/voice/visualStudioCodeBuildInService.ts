@@ -51,7 +51,7 @@ export class VisualStudioCodeBuiltInService extends AbstractVoiceService {
       try {
         if (!vscode.extensions.getExtension('ms-vscode.vscode-speech')) {
           vscode.window
-            .showInformationMessage(
+            .showErrorMessage(
               'Please install the "VS Code Speech" extension to use voice dictation.',
               'Install',
             )

@@ -9,6 +9,7 @@ import OpenAI from 'openai';
 import type { GetResponseOptions } from '../../types';
 import { SettingsManager } from '../../api';
 import { AbstractOpenaiLikeService } from './abstractOpenaiLikeService';
+import { MODEL_SERVICE_LINKS } from '../../constants';
 
 export class OpenAIService extends AbstractOpenaiLikeService {
   private apiKey: string;
@@ -228,9 +229,18 @@ export class OpenAIService extends AbstractOpenaiLikeService {
         return responseText;
       }
     } catch (error) {
-      vscode.window.showErrorMessage(
-        'Failed to get response from OpenAI Service: ' + error,
-      );
+      vscode.window
+        .showErrorMessage(
+          'Failed to get response from OpenAI Service: ' + error,
+          'Get API Key',
+        )
+        .then((selection) => {
+          if (selection === 'Get API Key') {
+            vscode.env.openExternal(
+              vscode.Uri.parse(MODEL_SERVICE_LINKS.openaiApiKey as string),
+            );
+          }
+        });
       return 'Failed to connect to the language model service.';
     }
   }

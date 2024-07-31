@@ -8,6 +8,7 @@ import { HfInference } from '@huggingface/inference';
 import type { ConversationEntry, GetResponseOptions } from '../../types';
 import { AbstractLanguageModelService } from './abstractLanguageModelService';
 import { SettingsManager } from '../../api';
+import { MODEL_SERVICE_LINKS } from '../../constants';
 
 export class HuggingFaceService extends AbstractLanguageModelService {
   private apiKey: string;
@@ -144,9 +145,18 @@ export class HuggingFaceService extends AbstractLanguageModelService {
 
       return responseText;
     } catch (error) {
-      vscode.window.showErrorMessage(
-        'Failed to get response from Hugging Face Service: ' + error,
-      );
+      vscode.window
+        .showErrorMessage(
+          'Failed to get response from Hugging Face Service: ' + error,
+          'Get Access Token',
+        )
+        .then((selection) => {
+          if (selection === 'Get Access Token') {
+            vscode.env.openExternal(
+              vscode.Uri.parse(MODEL_SERVICE_LINKS.huggingFaceApiKey as string),
+            );
+          }
+        });
       return 'Failed to connect to the language model service.';
     }
   }

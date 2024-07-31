@@ -130,9 +130,28 @@ export class OllamaService extends AbstractLanguageModelService {
         return this.runningModel;
       })
       .catch((error) => {
-        vscode.window.showErrorMessage(
-          'Failed to get running model from Ollama Service: ' + error,
-        );
+        vscode.window
+          .showErrorMessage(
+            'Failed to get running model from Ollama Service: ' +
+              error +
+              '. Start it and run it? Or download ollama?',
+            'Open Terminal',
+            'Download Ollama',
+          )
+          .then((selection) => {
+            if (selection === 'Open Terminal') {
+              vscode.commands
+                .executeCommand('workbench.action.terminal.new')
+                .then(() => {
+                  vscode.env.clipboard.writeText('ollama run ');
+                });
+            }
+            if (selection === 'Download Ollama') {
+              vscode.env.openExternal(
+                vscode.Uri.parse('https://ollama.com/download'),
+              );
+            }
+          });
       });
 
     this.runningModel = '';
@@ -344,9 +363,22 @@ export class OllamaService extends AbstractLanguageModelService {
         return responseText;
       }
     } catch (error) {
-      vscode.window.showErrorMessage(
-        'Failed to get response from Ollama Service: ' + error,
-      );
+      vscode.window
+        .showErrorMessage(
+          'Failed to get response from Ollama Service: ' + error,
+          'Copy Run Command',
+          'Upgrade Ollama',
+        )
+        .then((selection) => {
+          if (selection === 'Copy Run Command') {
+            vscode.env.clipboard.writeText(`ollama run ${model}`);
+          }
+          if (selection === 'Upgrade Ollama') {
+            vscode.env.openExternal(
+              vscode.Uri.parse('https://ollama.com/download'),
+            );
+          }
+        });
       return (
         'Failed to connect to the language model service. ' +
         'Make sure the ollama service is running. Also, check the model has been downloaded.'

@@ -18,7 +18,7 @@ import Anthropic from '@anthropic-ai/sdk';
 import type { ConversationEntry, GetResponseOptions } from '../../types';
 import { SettingsManager } from '../../api';
 import { AbstractLanguageModelService } from './abstractLanguageModelService';
-import { webSearchSchema } from '../../constants';
+import { MODEL_SERVICE_LINKS, webSearchSchema } from '../../constants';
 import { ToolService } from '../tools';
 
 export class AnthropicService extends AbstractLanguageModelService {
@@ -407,9 +407,19 @@ export class AnthropicService extends AbstractLanguageModelService {
         return 'Max function call limit reached.';
       }
     } catch (error) {
-      vscode.window.showErrorMessage(
-        'Failed to get response from Anthropic Service: ' + error,
-      );
+      vscode.window
+        .showErrorMessage(
+          'Failed to get response from Anthropic Service: ' + error,
+          'Get API Key',
+        )
+        .then((selection) => {
+          if (selection === 'Get API Key') {
+            vscode.env.openExternal(
+              vscode.Uri.parse(MODEL_SERVICE_LINKS.anthropicApiKey as string),
+            );
+          }
+        });
+
       return 'Failed to connect to the language model service';
     }
   }

@@ -105,8 +105,7 @@ export abstract class AbstractVoiceService implements VoiceService {
       const textChunk = this.textToVoiceQueue.shift()!;
       const response = await this.sendTextToVoiceRequest(textChunk);
 
-      if (typeof response === 'string') {
-        vscode.window.showErrorMessage(response);
+      if (!response) {
         this.isTextToVoiceProcessing = false;
         return;
       }
@@ -173,14 +172,14 @@ export abstract class AbstractVoiceService implements VoiceService {
    */
   protected sendTextToVoiceRequest(
     _text: string,
-  ): Promise<Uint8Array | string> {
+  ): Promise<Uint8Array | undefined> {
     vscode.window
       .showErrorMessage(
         'The sendRequest method is not implemented, how did you get here?',
       )
       .then();
 
-    return Promise.resolve(new Uint8Array());
+    return Promise.resolve(undefined);
   }
 
   /**
@@ -245,7 +244,23 @@ export abstract class AbstractVoiceService implements VoiceService {
     try {
       filePath = await this.audioRecorder.record(mediaDir);
     } catch (error) {
-      vscode.window.showErrorMessage('Failed to record audio. ' + error);
+      vscode.window
+        .showErrorMessage(
+          'Failed to record audio. Currently record audio with the microphone need SoX (Window/Mac) and ALSA (Linux). ' +
+            'Click here to install SoX or copy command below to install ALSA. ' +
+            'IMPORTANT: You need to add SoX to your PATH after installation for Windows.',
+          'Install SoX',
+          'Copy command',
+        )
+        .then(async (value) => {
+          if (value === 'Install SoX') {
+            await vscode.env.openExternal(
+              vscode.Uri.parse('https://sourceforge.net/projects/sox/'),
+            );
+          } else if (value === 'Copy command') {
+            vscode.env.clipboard.writeText('sudo apt-get install alsa-utils');
+          }
+        });
       return '';
     }
 

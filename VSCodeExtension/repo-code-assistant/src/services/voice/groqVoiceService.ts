@@ -4,6 +4,7 @@ import fsPromises from 'node:fs/promises';
 import vscode from 'vscode';
 import Groq from 'groq-sdk';
 
+import { MODEL_SERVICE_LINKS } from '../../constants';
 import { SettingsManager } from '../../api';
 import { AbstractVoiceService } from './abstractVoiceService';
 
@@ -41,7 +42,15 @@ export class GroqVoiceService extends AbstractVoiceService {
       return transcription.text;
     } catch (error) {
       await fsPromises.unlink(filePath);
-      vscode.window.showErrorMessage('Failed on Speech to Text. ' + error);
+      vscode.window
+        .showErrorMessage('Failed on Speech to Text. ' + error, 'Get API Key')
+        .then((selection) => {
+          if (selection === 'Get API Key') {
+            vscode.env.openExternal(
+              vscode.Uri.parse(MODEL_SERVICE_LINKS.groqApiKey as string),
+            );
+          }
+        });
       return '';
     }
   }

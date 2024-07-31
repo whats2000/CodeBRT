@@ -16,10 +16,10 @@ import {
 } from '@google/generative-ai';
 
 import type { ConversationEntry, GetResponseOptions } from '../../types';
+import { MODEL_SERVICE_LINKS, webSearchSchema } from '../../constants';
 import { AbstractLanguageModelService } from './abstractLanguageModelService';
 import { SettingsManager } from '../../api';
 import { ToolService } from '../tools';
-import { webSearchSchema } from '../../constants';
 
 type GeminiModel = {
   name: string;
@@ -410,9 +410,18 @@ export class GeminiService extends AbstractLanguageModelService {
         return responseText;
       }
     } catch (error) {
-      vscode.window.showErrorMessage(
-        'Failed to get response from Gemini Service: ' + error,
-      );
+      vscode.window
+        .showErrorMessage(
+          'Failed to get response from Gemini Service: ' + error,
+          'Get API Key',
+        )
+        .then((selection) => {
+          if (selection === 'Get API Key') {
+            vscode.env.openExternal(
+              vscode.Uri.parse(MODEL_SERVICE_LINKS.geminiApiKey as string),
+            );
+          }
+        });
       return 'Failed to connect to the language model service.';
     }
   }
