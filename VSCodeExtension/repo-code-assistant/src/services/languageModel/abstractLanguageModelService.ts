@@ -194,10 +194,15 @@ export abstract class AbstractLanguageModelService
       const data = await fs.promises.readFile(this.historyFilePath, 'utf8');
       const histories: ConversationHistoryList = JSON.parse(data);
       this.histories = histories;
+
+      // Fix as the old history files may not have the top field
       if (Object.keys(histories).length > 0) {
         for (const historyID in histories) {
-          if (!histories[historyID].top && histories[historyID].root !== '') {
-            histories[historyID].top = [histories[historyID].root];
+          if (!histories[historyID].top) {
+            this.histories[historyID].top =
+              histories[historyID].root === ''
+                ? []
+                : [histories[historyID].root];
           }
         }
 
