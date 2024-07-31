@@ -266,8 +266,6 @@ export class CohereService extends AbstractLanguageModelService {
                 functionCalls,
                 updateStatus,
               );
-
-              functionCallCount++;
             }
             if (item.eventType === 'text-generation') {
               const partText = item.text;
@@ -278,10 +276,10 @@ export class CohereService extends AbstractLanguageModelService {
               conversationHistory = item.response.chatHistory;
             }
           }
-
           if (!functionCalls || functionCalls.length === 0) {
             return responseText;
           }
+          functionCallCount++;
         }
         return responseText;
       }

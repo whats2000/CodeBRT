@@ -19,7 +19,7 @@ export class HuggingFaceService extends AbstractLanguageModelService {
   private readonly settingsListener: vscode.Disposable;
 
   private readonly generationConfig: Partial<ChatCompletionInput> = {
-    max_tokens: 8192,
+    max_tokens: 4096,
   };
 
   private readonly tools: ChatCompletionInputTool[] = [
@@ -266,8 +266,6 @@ export class HuggingFaceService extends AbstractLanguageModelService {
                 role: 'user',
                 tool_calls: functionCallResults,
               });
-
-              functionCallCount++;
               break;
             }
 
@@ -303,9 +301,11 @@ export class HuggingFaceService extends AbstractLanguageModelService {
                 deltaToolCall.function?.arguments || '';
             });
           }
+
           if (completeToolCalls.length === 0) {
             return responseText;
           }
+          functionCallCount++;
         }
         return 'Max function call limit reached.';
       }

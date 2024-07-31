@@ -187,8 +187,6 @@ export class GroqService extends AbstractOpenaiLikeService {
                 tool_calls: completeToolCalls,
               });
               conversationHistory.push(...functionCallResults);
-
-              functionCallCount++;
               break;
             }
 
@@ -222,9 +220,11 @@ export class GroqService extends AbstractOpenaiLikeService {
                 deltaToolCall.function?.arguments || '';
             });
           }
+
           if (completeToolCalls.length === 0) {
             return responseText;
           }
+          functionCallCount++;
         }
         return responseText;
       }

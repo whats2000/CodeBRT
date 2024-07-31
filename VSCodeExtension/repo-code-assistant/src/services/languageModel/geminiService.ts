@@ -395,7 +395,6 @@ export class GeminiService extends AbstractLanguageModelService {
                 })),
               });
               queryParts = functionCallResults;
-              functionCallCount++;
               break;
             }
             const partText = item.text();
@@ -406,6 +405,7 @@ export class GeminiService extends AbstractLanguageModelService {
           if (!functionCalls) {
             return responseText;
           }
+          functionCallCount++;
         }
         return responseText;
       }

@@ -347,8 +347,6 @@ export class OllamaService extends AbstractLanguageModelService {
                 tool_calls: chunk.message.tool_calls,
               });
               conversationHistory.push(...functionCallResults);
-
-              functionCallCount++;
               break;
             } else {
               const partText = chunk.message.content;
@@ -356,9 +354,11 @@ export class OllamaService extends AbstractLanguageModelService {
               responseText += partText;
             }
           }
+
           if (functionCallResults.length === 0) {
             return responseText;
           }
+          functionCallCount++;
         }
         return responseText;
       }
