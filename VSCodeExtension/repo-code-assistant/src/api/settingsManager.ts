@@ -1,6 +1,4 @@
 import * as vscode from 'vscode';
-import * as path from 'path';
-import * as fs from 'fs';
 
 import type {
   ExtensionSettings,
@@ -10,7 +8,7 @@ import type {
 
 export class SettingsManager {
   private static instance: SettingsManager;
-  private readonly localSettingsPath: string;
+  private readonly context: vscode.ExtensionContext;
   private readonly defaultLocalSettings: ExtensionSettingsLocal = {
     anthropicAvailableModels: [
       'claude-3-5-sonnet-20240620',
@@ -19,11 +17,11 @@ export class SettingsManager {
       'claude-3-sonnet-20240229',
     ],
     openaiAvailableModels: [
-      'gpt-3.5-turbo',
+      'gpt-4o-mini',
       'gpt-4o',
       'gpt-4-turbo',
       'gpt-4',
-      'gpt-3.5-turbo-instruct',
+      'gpt-3.5-turbo',
     ],
     openaiAvailableVoices: [
       'nova',
@@ -80,17 +78,17 @@ export class SettingsManager {
     ...this.defaultLocalSettings,
     ...this.defaultCrossDeviceSettings,
   };
-  private localSettings: ExtensionSettingsLocal = {
+  private readonly localSettings: ExtensionSettingsLocal = {
     ...this.defaultLocalSettings,
   };
 
   private constructor(context: vscode.ExtensionContext) {
-    this.localSettingsPath = path.join(
-      context.extensionPath,
-      'localSettings.json',
+    this.context = context;
+    const storedSettings = context.globalState.get<ExtensionSettingsLocal>(
+      'localSettings',
+      this.defaultLocalSettings,
     );
-
-    this.loadLocalSettings();
+    this.localSettings = { ...this.localSettings, ...storedSettings };
   }
 
   private get settings(): vscode.WorkspaceConfiguration {
@@ -98,24 +96,11 @@ export class SettingsManager {
   }
 
   /**
-   * Load local settings from file
-   * @private
-   */
-  private loadLocalSettings(): void {
-    if (fs.existsSync(this.localSettingsPath)) {
-      const data = fs.readFileSync(this.localSettingsPath, 'utf8');
-      const loadedLocalSettings = JSON.parse(data);
-      this.localSettings = { ...this.localSettings, ...loadedLocalSettings };
-    }
-  }
-
-  /**
    * Save local settings to file
    * @private
    */
   private saveLocalSettings(): void {
-    const data = JSON.stringify(this.localSettings, null, 2);
-    fs.writeFileSync(this.localSettingsPath, data, 'utf8');
+    this.context.globalState.update('localSettings', this.localSettings).then();
   }
 
   /**
