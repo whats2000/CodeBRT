@@ -1,14 +1,18 @@
 import * as vscode from 'vscode';
-import type {
+import {
   ChatCompletionInput,
   ChatCompletionInputMessage,
+  ChatCompletionInputTool,
+  ChatCompletionInputToolCall,
+  ChatCompletionOutputToolCall,
 } from '@huggingface/tasks/src/tasks/chat-completion/inference';
 import { HfInference } from '@huggingface/inference';
 
 import type { ConversationEntry, GetResponseOptions } from '../../types';
 import { AbstractLanguageModelService } from './abstractLanguageModelService';
 import { SettingsManager } from '../../api';
-import { MODEL_SERVICE_LINKS } from '../../constants';
+import { MODEL_SERVICE_LINKS, webSearchSchema } from '../../constants';
+import { ToolService } from '../tools';
 
 export class HuggingFaceService extends AbstractLanguageModelService {
   private apiKey: string;
@@ -17,6 +21,17 @@ export class HuggingFaceService extends AbstractLanguageModelService {
   private readonly generationConfig: Partial<ChatCompletionInput> = {
     max_tokens: 8192,
   };
+
+  private readonly tools: ChatCompletionInputTool[] = [
+    {
+      type: 'function',
+      function: {
+        name: webSearchSchema.name,
+        description: webSearchSchema.description,
+        arguments: webSearchSchema.inputSchema,
+      },
+    },
+  ];
 
   constructor(
     context: vscode.ExtensionContext,
@@ -97,6 +112,57 @@ export class HuggingFaceService extends AbstractLanguageModelService {
     return result;
   }
 
+  protected handleFunctionCalls = async (
+    functionCalls: ChatCompletionOutputToolCall[],
+    updateStatus?: (status: string) => void,
+  ): Promise<ChatCompletionInputToolCall[]> => {
+    const functionCallResults: ChatCompletionInputToolCall[] = [];
+
+    for (const functionCall of functionCalls) {
+      if (
+        !functionCall.function?.name ||
+        !functionCall.id ||
+        !functionCall.function?.arguments
+      ) {
+        continue;
+      }
+
+      const tool = ToolService.getTool(functionCall.function.name);
+      if (!tool) {
+        functionCallResults.push({
+          id: functionCall.id,
+          type: 'function',
+          function: functionCall.function,
+          content:
+            'Failed to find tool with name: ' + functionCall.function.name,
+        });
+        continue;
+      }
+
+      try {
+        const result = await tool({
+          ...functionCall.function.arguments,
+          updateStatus,
+        } as any);
+        functionCallResults.push({
+          id: functionCall.id,
+          type: 'function',
+          function: functionCall.function,
+          content: result,
+        });
+      } catch (error) {
+        functionCallResults.push({
+          id: functionCall.id,
+          type: 'function',
+          function: functionCall.function,
+          content: `Error executing tool ${functionCall.function.name}: ${error}`,
+        });
+      }
+    }
+
+    return functionCallResults;
+  };
+
   public async getResponse(options: GetResponseOptions): Promise<string> {
     if (this.currentModel === '') {
       vscode.window.showErrorMessage(
@@ -105,7 +171,8 @@ export class HuggingFaceService extends AbstractLanguageModelService {
       return 'Missing model configuration. Check the model selection dropdown.';
     }
 
-    const { query, images, sendStreamResponse, currentEntryID } = options;
+    const { query, images, currentEntryID, sendStreamResponse, updateStatus } =
+      options;
 
     if (images && images.length > 0) {
       vscode.window.showWarningMessage(
@@ -120,30 +187,128 @@ export class HuggingFaceService extends AbstractLanguageModelService {
       query,
     );
 
+    let functionCallCount = 0;
+    const MAX_FUNCTION_CALLS = 5;
+
     try {
       if (!sendStreamResponse) {
-        return (
-          await huggerFace.chatCompletion({
-            model: this.currentModel,
+        while (functionCallCount < MAX_FUNCTION_CALLS) {
+          const response = await huggerFace.chatCompletion({
             messages: conversationHistory,
+            model: this.currentModel,
+            tools: this.tools,
+            stream: false,
             ...this.generationConfig,
-          })
-        ).choices[0].message.content!;
+          });
+
+          if (!response.choices[0]?.message.tool_calls) {
+            return response.choices[0]?.message?.content!;
+          }
+
+          const functionCallResults = await this.handleFunctionCalls(
+            response.choices[0].message.tool_calls,
+          );
+
+          conversationHistory.push({
+            role: 'assistant',
+            tool_calls: response.choices[0].message.tool_calls,
+          });
+
+          conversationHistory.push({
+            role: 'user',
+            tool_calls: functionCallResults,
+          });
+
+          functionCallCount++;
+        }
+        return 'Max function call limit reached.';
+      } else {
+        let responseText = '';
+
+        while (functionCallCount < MAX_FUNCTION_CALLS) {
+          const streamResponse = huggerFace.chatCompletionStream({
+            messages: conversationHistory,
+            model: this.currentModel,
+            tools: this.tools,
+            stream: true,
+            ...this.generationConfig,
+          });
+
+          // TODO: Review this part after the Hugging Face API is updated as the id type is seems to be string instead of number
+          const completeToolCalls: {
+            id: string;
+            index: ChatCompletionInputToolCall['index'];
+            function: ChatCompletionInputToolCall['function'];
+            type: ChatCompletionInputToolCall['type'];
+            [p: string]: unknown;
+          }[] = [];
+
+          for await (const chunk of streamResponse) {
+            if (chunk.choices[0]?.finish_reason === 'tool_calls') {
+              const toolCalls = completeToolCalls.map((call) => ({
+                id: call.id,
+                function: call.function,
+                type: call.type,
+              }));
+              const functionCallResults = await this.handleFunctionCalls(
+                // TODO: Review this part after the Hugging Face API is updated
+                toolCalls as unknown as ChatCompletionOutputToolCall[],
+                updateStatus,
+              );
+
+              conversationHistory.push({
+                role: 'assistant',
+                tool_calls:
+                  // TODO: Review this part after the Hugging Face API is updated
+                  completeToolCalls as unknown as ChatCompletionInputToolCall[],
+              });
+              conversationHistory.push({
+                role: 'user',
+                tool_calls: functionCallResults,
+              });
+
+              functionCallCount++;
+              break;
+            }
+
+            if (!chunk.choices[0]?.delta.tool_calls) {
+              const partText = chunk.choices[0]?.delta?.content || '';
+              sendStreamResponse(partText);
+              responseText += partText;
+              continue;
+            }
+
+            // Collect tool calls delta from the stream response delta
+            // TODO: Review this part after the Hugging Face API is updated as `chunk.choices[0].delta.tool_calls` seems to be array instead of object
+            [chunk.choices[0].delta.tool_calls].forEach((deltaToolCall) => {
+              const index = deltaToolCall.index;
+              let existingToolCall = completeToolCalls.find(
+                (call) => call.index === index,
+              );
+
+              if (!existingToolCall) {
+                existingToolCall = {
+                  id: '',
+                  function: { name: '', arguments: '' },
+                  type: 'function',
+                  index: index,
+                };
+                completeToolCalls.push(existingToolCall);
+              }
+
+              existingToolCall.id += deltaToolCall.id || '';
+              existingToolCall.function.name =
+                deltaToolCall.function?.name || existingToolCall.function.name;
+              existingToolCall.function.arguments +=
+                deltaToolCall.function?.arguments || '';
+            });
+          }
+          if (completeToolCalls.length === 0) {
+            return responseText;
+          }
+        }
+        return 'Max function call limit reached.';
       }
-
-      let responseText = '';
-
-      for await (const chunk of huggerFace.chatCompletionStream({
-        model: this.currentModel,
-        messages: conversationHistory,
-        ...this.generationConfig,
-      })) {
-        const responseChunk = chunk.choices[0].delta.content ?? '';
-        sendStreamResponse(responseChunk);
-        responseText += responseChunk;
-      }
-
-      return responseText;
     } catch (error) {
       vscode.window
         .showErrorMessage(
