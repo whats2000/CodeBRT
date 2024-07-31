@@ -78,18 +78,13 @@ export type ViewApi = {
   alertMessage: (msg: string, type: 'info' | 'warning' | 'error') => void;
 
   /**
-   * Send a message to Example B.
-   * @param msg - The message to send.
-   */
-  sendMessageToExampleB: (msg: string) => void;
-
-  /**
    * Get the response for a query.
    * @param modelType - The type of the model to get the response for.
    * @param query - The query to get the response for.
    * @param images - The image paths to use for the query, if not provided, the query will be used without images.
    * @param currentEntryID - The current entry ID, if not provided, the history will be used from the latest entry.
    * @param useStream - Whether to use streaming for the response.
+   * @param useStatus - Whether to show the status if the model is using tools.
    */
   getLanguageModelResponse: (
     modelType: ModelServiceType,
@@ -97,6 +92,7 @@ export type ViewApi = {
     images?: string[],
     currentEntryID?: string,
     useStream?: boolean,
+    showStatus?: boolean,
   ) => Promise<string>;
 
   /**
@@ -128,12 +124,6 @@ export type ViewApi = {
     entryID: string,
     newMessage: string,
   ) => void;
-
-  /**
-   * Send a stream response chunk.
-   * @param msg - The message chunk to add.
-   */
-  sendStreamResponse: (msg: string) => void;
 
   /**
    * Add a conversation entry to the conversation history for a language model.
@@ -271,6 +261,11 @@ export type ViewApi = {
   stopPlayVoice: () => void;
 
   /**
+   * Stop the voice which is being recorded.
+   */
+  stopRecordVoice: () => void;
+
+  /**
    * Switch the reference voice for GPT-SoVits.
    * @param voiceName - The name of the reference voice to switch to.
    */
@@ -288,14 +283,14 @@ export type ViewApi = {
  */
 export type ViewEvents = {
   /**
-   * Example event A.
-   * @param a - Example parameter A.
+   * Stream response event.
+   * @param message - The message chunk to stream.
    */
-  exampleBMessage: (a: string) => void;
+  streamResponse: (message: string) => void;
 
   /**
-   * Stream response event.
-   * @param a - The message chunk to stream.
+   * Update status event.
+   * @param status - The status to update.
    */
-  streamResponse: (a: string) => void;
+  updateStatus: (status: string) => void;
 };

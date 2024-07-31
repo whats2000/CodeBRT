@@ -2,8 +2,12 @@ import * as vscode from 'vscode';
 import fs from 'fs';
 import {
   Content,
-  GenerativeModel,
+  FunctionCall,
+  FunctionDeclarationSchemaType,
+  FunctionResponsePart,
   InlineDataPart,
+  Part,
+  Tool,
 } from '@google/generative-ai';
 import {
   GoogleGenerativeAI,
@@ -12,8 +16,10 @@ import {
 } from '@google/generative-ai';
 
 import type { ConversationEntry, GetResponseOptions } from '../../types';
+import { MODEL_SERVICE_LINKS, webSearchSchema } from '../../constants';
 import { AbstractLanguageModelService } from './abstractLanguageModelService';
 import { SettingsManager } from '../../api';
+import { ToolService } from '../tools';
 
 type GeminiModel = {
   name: string;
@@ -60,6 +66,44 @@ export class GeminiService extends AbstractLanguageModelService {
     {
       category: HarmCategory.HARM_CATEGORY_DANGEROUS_CONTENT,
       threshold: HarmBlockThreshold.BLOCK_NONE,
+    },
+  ];
+
+  private readonly tools: Tool[] = [
+    {
+      functionDeclarations: [
+        {
+          name: webSearchSchema.name,
+          description: webSearchSchema.description,
+          parameters: {
+            type: FunctionDeclarationSchemaType.OBJECT,
+            properties: {
+              query: {
+                type: FunctionDeclarationSchemaType.STRING,
+                description:
+                  webSearchSchema.inputSchema.properties.query.description,
+              },
+              maxCharsPerPage: {
+                type: FunctionDeclarationSchemaType.NUMBER,
+                description:
+                  webSearchSchema.inputSchema.properties.maxCharsPerPage
+                    .description,
+                nullable:
+                  webSearchSchema.inputSchema.required.includes(
+                    'maxCharsPerPage',
+                  ),
+              },
+              numResults: {
+                type: FunctionDeclarationSchemaType.NUMBER,
+                description:
+                  webSearchSchema.inputSchema.properties.numResults.description,
+                nullable:
+                  webSearchSchema.inputSchema.required.includes('numResults'),
+              },
+            },
+          },
+        },
+      ],
     },
   ];
 
@@ -133,13 +177,37 @@ export class GeminiService extends AbstractLanguageModelService {
     return result;
   }
 
-  private fileToGenerativePart(path: string, mimeType: string): InlineDataPart {
-    return {
-      inlineData: {
-        data: Buffer.from(fs.readFileSync(path)).toString('base64'),
-        mimeType,
-      },
-    };
+  private createQueryParts(query: string, images?: string[]): Part[] {
+    let parts: Part[] = [{ text: query }];
+
+    if (images) {
+      const imageParts = images
+        .map((image) =>
+          this.fileToGenerativePart(image, `image/${image.split('.').pop()}`),
+        )
+        .filter((part) => part !== undefined) as InlineDataPart[];
+
+      parts = [...parts, ...imageParts];
+    }
+
+    return parts;
+  }
+
+  private fileToGenerativePart(
+    path: string,
+    mimeType: string,
+  ): InlineDataPart | undefined {
+    try {
+      const buffer = Buffer.from(fs.readFileSync(path)).toString('base64');
+      return {
+        inlineData: {
+          data: buffer,
+          mimeType,
+        },
+      };
+    } catch (error) {
+      vscode.window.showErrorMessage('Failed to read file: ' + error).then();
+    }
   }
 
   public async getLatestAvailableModelNames(): Promise<string[]> {
@@ -185,91 +253,50 @@ export class GeminiService extends AbstractLanguageModelService {
     return newAvailableModelNames;
   }
 
-  private async getResponseChunksWithTextPayload(
-    generativeModel: GenerativeModel,
-    query: string,
-    conversationHistory: Content[],
-    sendStreamResponse?: (message: string) => void,
-  ): Promise<string> {
-    try {
-      if (!sendStreamResponse) {
-        return (
-          await generativeModel
-            .startChat({
-              generationConfig: this.generationConfig,
-              safetySettings: this.safetySettings,
-              history: conversationHistory,
-            })
-            .sendMessage(query)
-        ).response.text();
-      }
+  private async handleFunctionCalls(
+    functionCalls: FunctionCall[],
+    updateStatus?: (status: string) => void,
+  ): Promise<FunctionResponsePart[]> {
+    const functionCallResults: FunctionResponsePart[] = [];
 
-      const chat = generativeModel.startChat({
-        generationConfig: this.generationConfig,
-        safetySettings: this.safetySettings,
-        history: conversationHistory,
-      });
-
-      let responseText = '';
-      const result = await chat.sendMessageStream(query);
-      for await (const item of result.stream) {
-        const partText = item.text();
-        sendStreamResponse(partText);
-        responseText += partText;
-      }
-
-      return responseText;
-    } catch (error) {
-      vscode.window.showErrorMessage(
-        'Failed to get response from Gemini Service: ' + error,
-      );
-      return 'Failed to connect to the language model service.';
-    }
-  }
-
-  private async getResponseChunksWithImagePayload(
-    generativeModel: GenerativeModel,
-    query: string,
-    images: string[],
-    _conversationHistory: Content[],
-    sendStreamResponse?: (message: string) => void,
-  ): Promise<string> {
-    try {
-      const imageParts = images.map((image) => {
-        return this.fileToGenerativePart(
-          image,
-          `image/${image.split('.').pop()}`,
-        );
-      });
-
-      if (!sendStreamResponse) {
-        const result = await generativeModel.generateContent({
-          generationConfig: this.generationConfig,
-          contents: [{ role: 'user', parts: [{ text: query }, ...imageParts] }],
+    for (const functionCall of functionCalls) {
+      const tool = ToolService.getTool(functionCall.name);
+      if (!tool) {
+        functionCallResults.push({
+          functionResponse: {
+            name: functionCall.name,
+            response: {
+              error: `Failed to find tool with name: ${functionCall.name}`,
+            },
+          },
         });
-
-        return result.response.text();
+        continue;
       }
 
-      let responseText = '';
-      const result = await generativeModel.generateContentStream({
-        generationConfig: this.generationConfig,
-        contents: [{ role: 'user', parts: [{ text: query }, ...imageParts] }],
-      });
-
-      for await (const item of result.stream) {
-        const partText = item.text();
-        sendStreamResponse(partText);
-        responseText += partText;
+      try {
+        const args = { ...functionCall.args, updateStatus };
+        const result = await tool(args as any);
+        functionCallResults.push({
+          functionResponse: {
+            name: functionCall.name,
+            response: {
+              searchResults: result,
+            },
+          },
+        });
+      } catch (error) {
+        functionCallResults.push({
+          functionResponse: {
+            name: functionCall.name,
+            response: {
+              error: `Error executing tool ${functionCall.name}: ${error}`,
+            },
+          },
+        });
       }
-
-      return responseText;
-    } catch (error) {
-      vscode.window.showErrorMessage(
-        'Failed to get response from Gemini Service: ' + error,
-      );
-      return 'Failed to connect to the language model service.';
     }
+
+    return functionCallResults;
   }
 
   public async getResponse(options: GetResponseOptions): Promise<string> {
@@ -280,7 +307,8 @@ export class GeminiService extends AbstractLanguageModelService {
       return 'Missing model configuration. Check the model selection dropdown.';
     }
 
-    const { query, images, sendStreamResponse, currentEntryID } = options;
+    const { query, images, currentEntryID, sendStreamResponse, updateStatus } =
+      options;
 
     const generativeModel = new GoogleGenerativeAI(
       this.apiKey,
@@ -292,21 +320,109 @@ export class GeminiService extends AbstractLanguageModelService {
       this.getHistoryBeforeEntry(currentEntryID).entries,
     );
 
-    if (images && images.length > 0) {
-      return this.getResponseChunksWithImagePayload(
-        generativeModel,
-        query,
-        images,
-        conversationHistory,
-        sendStreamResponse,
-      );
-    }
+    let queryParts = this.createQueryParts(query, images);
+    let functionCallCount = 0;
+    const MAX_FUNCTION_CALLS = 5;
+    try {
+      if (!sendStreamResponse) {
+        while (functionCallCount < MAX_FUNCTION_CALLS) {
+          const response = await generativeModel
+            .startChat({
+              generationConfig: this.generationConfig,
+              safetySettings: this.safetySettings,
+              history: conversationHistory,
+              tools: this.tools,
+            })
+            .sendMessage(queryParts);
 
-    return this.getResponseChunksWithTextPayload(
-      generativeModel,
-      query,
-      conversationHistory,
-      sendStreamResponse,
-    );
+          const functionCalls = response.response.functionCalls();
+
+          if (!functionCalls) {
+            return response.response.text();
+          }
+
+          const functionCallResults =
+            await this.handleFunctionCalls(functionCalls);
+
+          conversationHistory.push({
+            role: 'user',
+            parts: queryParts,
+          });
+
+          conversationHistory.push({
+            role: 'model',
+            parts: functionCalls.map((part) => ({
+              functionCall: part,
+            })),
+          });
+
+          queryParts = functionCallResults;
+
+          functionCallCount++;
+        }
+        return 'Max function call limit reached.';
+      } else {
+        let responseText = '';
+
+        while (functionCallCount < MAX_FUNCTION_CALLS) {
+          const result = await generativeModel
+            .startChat({
+              generationConfig: this.generationConfig,
+              safetySettings: this.safetySettings,
+              history: conversationHistory,
+              tools: this.tools,
+            })
+            .sendMessageStream(queryParts);
+
+          let functionCalls = null;
+          updateStatus && updateStatus('');
+
+          for await (const item of result.stream) {
+            functionCalls = item.functionCalls();
+            if (functionCalls) {
+              const functionCallResults = await this.handleFunctionCalls(
+                functionCalls,
+                updateStatus,
+              );
+              conversationHistory.push({
+                role: 'user',
+                parts: queryParts,
+              });
+              conversationHistory.push({
+                role: 'model',
+                parts: functionCalls.map((part) => ({
+                  functionCall: part,
+                })),
+              });
+              queryParts = functionCallResults;
+              break;
+            }
+            const partText = item.text();
+            sendStreamResponse(partText);
+            responseText += partText;
+          }
+
+          if (!functionCalls) {
+            return responseText;
+          }
+          functionCallCount++;
+        }
+        return responseText;
+      }
+    } catch (error) {
+      vscode.window
+        .showErrorMessage(
+          'Failed to get response from Gemini Service: ' + error,
+          'Get API Key',
+        )
+        .then((selection) => {
+          if (selection === 'Get API Key') {
+            vscode.env.openExternal(
+              vscode.Uri.parse(MODEL_SERVICE_LINKS.geminiApiKey as string),
+            );
+          }
+        });
+      return 'Failed to connect to the language model service.';
+    }
   }
 }

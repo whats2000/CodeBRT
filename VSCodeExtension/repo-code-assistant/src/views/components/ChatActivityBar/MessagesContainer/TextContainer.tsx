@@ -6,6 +6,7 @@ import hljs from 'react-syntax-highlighter/dist/cjs/styles/hljs';
 import type { ConversationEntry } from '../../../../types';
 import { TypingAnimation } from '../../common/TypingAnimation';
 import { RendererCode, RendererCodeProvider } from '../../common/RenderCode';
+import { ToolStatusBlock } from '../../common/ToolStatusBlock';
 
 const MessageText = styled.span`
   word-wrap: break-word;
@@ -19,6 +20,7 @@ type MessageTextContainerProps = {
   scrollToBottom: () => void;
   hljsTheme: keyof typeof hljs;
   setHljsTheme: (theme: keyof typeof hljs) => void;
+  toolStatus: string;
 };
 
 export const TextContainer: React.FC<MessageTextContainerProps> = ({
@@ -28,19 +30,23 @@ export const TextContainer: React.FC<MessageTextContainerProps> = ({
   scrollToBottom,
   hljsTheme,
   setHljsTheme,
+  toolStatus,
 }) => {
   return (
     <MessageText>
       {entry.role === 'AI' &&
       entry.id === conversationHistoryCurrent &&
       isProcessing ? (
-        <TypingAnimation
-          message={entry.message}
-          isProcessing={isProcessing}
-          scrollToBottom={scrollToBottom}
-          hljsTheme={hljsTheme}
-          setHljsTheme={setHljsTheme}
-        />
+        <>
+          <TypingAnimation
+            message={entry.message}
+            isProcessing={isProcessing}
+            scrollToBottom={scrollToBottom}
+            hljsTheme={hljsTheme}
+            setHljsTheme={setHljsTheme}
+          />
+          {toolStatus !== '' && <ToolStatusBlock status={toolStatus} />}
+        </>
       ) : (
         <RendererCodeProvider
           value={{

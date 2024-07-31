@@ -9,16 +9,33 @@ import type {
   MessageParam,
   TextBlock,
   TextBlockParam,
-} from '@anthropic-ai/sdk/src/resources/messages';
+  Tool,
+  ToolUseBlock,
+  ToolResultBlockParam,
+} from '@anthropic-ai/sdk/src/resources';
 import Anthropic from '@anthropic-ai/sdk';
 
-import { ConversationEntry, GetResponseOptions } from '../../types';
+import type { ConversationEntry, GetResponseOptions } from '../../types';
 import { SettingsManager } from '../../api';
 import { AbstractLanguageModelService } from './abstractLanguageModelService';
+import { MODEL_SERVICE_LINKS, webSearchSchema } from '../../constants';
+import { ToolService } from '../tools';
 
 export class AnthropicService extends AbstractLanguageModelService {
   private apiKey: string;
   private readonly settingsListener: vscode.Disposable;
+
+  private readonly generationConfig = {
+    max_tokens: 4096,
+  };
+
+  private readonly tools: Tool[] = [
+    {
+      name: webSearchSchema.name,
+      description: webSearchSchema.description,
+      input_schema: webSearchSchema.inputSchema as Tool.InputSchema,
+    },
+  ];
 
   constructor(
     context: vscode.ExtensionContext,
@@ -93,7 +110,12 @@ export class AnthropicService extends AbstractLanguageModelService {
     if (result.length > 0 && result[result.length - 1].role !== 'user') {
       result.push({
         role: 'user',
-        content: query,
+        content: [
+          {
+            type: 'text',
+            text: query,
+          },
+        ],
       });
     }
 
@@ -198,6 +220,46 @@ export class AnthropicService extends AbstractLanguageModelService {
     };
   }
 
+  private handleFunctionCalls = async (
+    functionCalls: ToolUseBlock[],
+    updateStatus?: (status: string) => void,
+  ): Promise<ToolResultBlockParam[]> => {
+    const functionCallResults: ToolResultBlockParam[] = [];
+
+    for (const functionCall of functionCalls) {
+      const tool = ToolService.getTool(functionCall.name);
+      if (!tool) {
+        functionCallResults.push({
+          type: 'tool_result',
+          tool_use_id: functionCall.id,
+          content: 'Failed to find tool with name: ' + functionCall.name,
+          is_error: true,
+        });
+        continue;
+      }
+
+      try {
+        const args = { ...(functionCall.input as object), updateStatus };
+        const result = await tool(args as any);
+        functionCallResults.push({
+          type: 'tool_result',
+          tool_use_id: functionCall.id,
+          content: result,
+          is_error: false,
+        });
+      } catch (error) {
+        functionCallResults.push({
+          type: 'tool_result',
+          tool_use_id: functionCall.id,
+          content: `Error executing tool ${functionCall.name}: ${error}`,
+          is_error: true,
+        });
+      }
+    }
+
+    return functionCallResults;
+  };
+
   public async getLatestAvailableModelNames(): Promise<string[]> {
     const requestUrl = `https://docs.anthropic.com/en/docs/about-claude/models`;
 
@@ -225,12 +287,12 @@ export class AnthropicService extends AbstractLanguageModelService {
         }
       });
 
-      // Filter the invalid models (Not existing in the latest models)
+      // Filter the invalid models from the available models
       newAvailableModelNames = newAvailableModelNames.filter((name) =>
         latestModels.some((model) => model === name),
       );
 
-      // Append the models to the available models if they are not already there
+      // Append the models to the available models if they aren't already there
       latestModels.forEach((model) => {
         if (newAvailableModelNames.includes(model)) return;
 
@@ -246,7 +308,8 @@ export class AnthropicService extends AbstractLanguageModelService {
   }
 
   public async getResponse(options: GetResponseOptions): Promise<string> {
-    const { query, images, sendStreamResponse, currentEntryID } = options;
+    const { query, images, currentEntryID, sendStreamResponse, updateStatus } =
+      options;
 
     const { anthropic, conversationHistory, errorMessage } = this.initModel(
       query,
@@ -258,30 +321,105 @@ export class AnthropicService extends AbstractLanguageModelService {
       return errorMessage;
     }
 
-    const requestData = {
-      max_tokens: 4096,
-      model: this.currentModel,
-      messages: conversationHistory,
-    };
-
+    let functionCallCount = 0;
+    const MAX_FUNCTION_CALLS = 5;
     try {
       if (!sendStreamResponse) {
-        const message = await anthropic.messages.create(requestData);
+        while (functionCallCount < MAX_FUNCTION_CALLS) {
+          const response = await anthropic.messages.create({
+            model: this.currentModel,
+            messages: conversationHistory,
+            tools: this.tools,
+            stream: false,
+            max_tokens: 4096,
+          });
 
-        return (message.content[0] as TextBlock).text;
+          if (response.content[0].type !== 'tool_use') {
+            return (response.content[0] as TextBlock).text;
+          }
+
+          const toolUseBlock = response.content.filter(
+            (message) => message.type === 'tool_use',
+          ) as ToolUseBlock[];
+          const functionCallResults =
+            await this.handleFunctionCalls(toolUseBlock);
+
+          conversationHistory.push({
+            role: 'assistant',
+            content: toolUseBlock,
+          });
+
+          conversationHistory.push({
+            role: 'user',
+            content: functionCallResults,
+          });
+
+          functionCallCount++;
+        }
+        return 'Max function call limit reached.';
+      } else {
+        let responseText = '';
+
+        while (functionCallCount < MAX_FUNCTION_CALLS) {
+          const streamResponse = anthropic.messages
+            .stream({
+              model: this.currentModel,
+              messages: conversationHistory,
+              tools: this.tools,
+              stream: true,
+              ...this.generationConfig,
+            })
+            .on('connect', () => {
+              updateStatus && updateStatus('');
+            })
+            .on('text', (partText) => {
+              sendStreamResponse(partText);
+              responseText += partText;
+            });
+
+          const finalMessage = await streamResponse.finalMessage();
+
+          if (finalMessage.stop_reason !== 'tool_use') {
+            return responseText;
+          }
+
+          const toolUseBlock = finalMessage.content.filter(
+            (message) => message.type === 'tool_use',
+          ) as ToolUseBlock[];
+
+          const functionCallResults = await this.handleFunctionCalls(
+            toolUseBlock,
+            updateStatus,
+          );
+
+          conversationHistory.push({
+            role: 'assistant',
+            content: toolUseBlock,
+          });
+
+          conversationHistory.push({
+            role: 'user',
+            content: functionCallResults,
+          });
+
+          functionCallCount++;
+        }
+        return 'Max function call limit reached.';
       }
-
-      const stream = anthropic.messages
-        .stream({ ...requestData, stream: true })
-        .on('text', (text) => {
-          sendStreamResponse(text);
+    } catch (error) {
+      vscode.window
+        .showErrorMessage(
+          'Failed to get response from Anthropic Service: ' + error,
+          'Get API Key',
+        )
+        .then((selection) => {
+          if (selection === 'Get API Key') {
+            vscode.env.openExternal(
+              vscode.Uri.parse(MODEL_SERVICE_LINKS.anthropicApiKey as string),
+            );
+          }
         });
 
-      return await stream.finalText();
-    } catch (error) {
-      vscode.window.showErrorMessage(
-        'Failed to get response from Anthropic Service: ' + error,
-      );
       return 'Failed to connect to the language model service';
     }
   }

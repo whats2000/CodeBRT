@@ -9,13 +9,16 @@ import {
  * @property images - The image paths to use for the query, if not provided, the query will be used without images
  * @property currentEntryID - The current entry ID, if not provided, the history will be used from the latest entry
  * @property sendStreamResponse - The callback to send chunks of the response to,
- * if not provided, the response will be returned without streaming
+ * if not provided, the response will be returned without streaming and ill not send partial responses text to frontend
+ * @property updateStatus - The callback to update the status if the model is using tools,
+ * if not provided, the status will not be updated at frontend
  */
 type GetResponseOptions = {
   query: string;
   images?: string[];
   currentEntryID?: string;
   sendStreamResponse?: (message: string) => void;
+  updateStatus?: (status: string) => void;
 };
 
 export type LanguageModelService = {

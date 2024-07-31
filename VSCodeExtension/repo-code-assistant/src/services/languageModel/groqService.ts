@@ -1,25 +1,20 @@
 import * as vscode from 'vscode';
+
 import type {
-  ChatCompletionCreateParamsBase,
   ChatCompletionCreateParamsNonStreaming,
   ChatCompletionCreateParamsStreaming,
-  ChatCompletionMessageParam,
+  ChatCompletionMessageToolCall,
 } from 'groq-sdk/src/resources/chat/completions';
 import Groq from 'groq-sdk';
 
-import type { ConversationEntry, GetResponseOptions } from '../../types';
-import { AbstractLanguageModelService } from './abstractLanguageModelService';
+import type { GetResponseOptions } from '../../types';
+import { AbstractOpenaiLikeService } from './abstractOpenaiLikeService';
 import { SettingsManager } from '../../api';
+import { MODEL_SERVICE_LINKS } from '../../constants';
 
-export class GroqService extends AbstractLanguageModelService {
+export class GroqService extends AbstractOpenaiLikeService {
   private apiKey: string;
   private readonly settingsListener: vscode.Disposable;
-  private readonly generationConfig: Partial<ChatCompletionCreateParamsBase> = {
-    temperature: 0.5,
-    max_tokens: 1024,
-    top_p: 1,
-    stop: null,
-  };
 
   constructor(
     context: vscode.ExtensionContext,
@@ -66,37 +61,6 @@ export class GroqService extends AbstractLanguageModelService {
     }
   }
 
-  private conversationHistoryToContent(
-    entries: { [key: string]: ConversationEntry },
-    query: string,
-  ): ChatCompletionMessageParam[] {
-    const result: ChatCompletionMessageParam[] = [];
-    let currentEntry = entries[this.history.current];
-
-    while (currentEntry) {
-      result.unshift({
-        role: currentEntry.role === 'user' ? 'user' : 'assistant',
-        content: currentEntry.message,
-      });
-
-      if (currentEntry.parent) {
-        currentEntry = entries[currentEntry.parent];
-      } else {
-        break;
-      }
-    }
-
-    // Groq's API requires the query message at the end of the history
-    if (result.length > 0 && result[result.length - 1].role !== 'user') {
-      result.push({
-        role: 'user',
-        content: query,
-      });
-    }
-
-    return result;
-  }
-
   public async getLatestAvailableModelNames(): Promise<string[]> {
     const groq = new Groq({
       apiKey: this.apiKey,
@@ -141,7 +105,8 @@ export class GroqService extends AbstractLanguageModelService {
       return 'Missing model configuration. Check the model selection dropdown.';
     }
 
-    const { query, images, sendStreamResponse, currentEntryID } = options;
+    const { query, images, currentEntryID, sendStreamResponse, updateStatus } =
+      options;
 
     if (images && images.length > 0) {
       vscode.window.showWarningMessage(
@@ -153,42 +118,129 @@ export class GroqService extends AbstractLanguageModelService {
       apiKey: this.apiKey,
     });
 
-    const conversationHistory = this.conversationHistoryToContent(
+    const conversationHistory = await this.conversationHistoryToContent(
       this.getHistoryBeforeEntry(currentEntryID).entries,
       query,
     );
 
+    let functionCallCount = 0;
+    const MAX_FUNCTION_CALLS = 5;
+
     try {
       if (!sendStreamResponse) {
-        return (
-          await groq.chat.completions.create({
+        while (functionCallCount < MAX_FUNCTION_CALLS) {
+          const response = await groq.chat.completions.create({
             messages: conversationHistory,
             model: this.currentModel,
+            tools: this.tools,
             stream: false,
             ...this.generationConfig,
-          } as ChatCompletionCreateParamsNonStreaming)
-        ).choices[0]?.message?.content!;
+          } as ChatCompletionCreateParamsNonStreaming);
+
+          if (!response.choices[0]?.message.tool_calls) {
+            return response.choices[0]?.message?.content!;
+          }
+
+          const functionCallResults = await this.handleFunctionCalls(
+            response.choices[0].message.tool_calls,
+          );
+
+          conversationHistory.push({
+            role: 'assistant',
+            content: null,
+            tool_calls: response.choices[0].message.tool_calls,
+          });
+
+          conversationHistory.push(...functionCallResults);
+
+          functionCallCount++;
+        }
+        return 'Max function call limit reached.';
+      } else {
+        let responseText: string = '';
+
+        while (functionCallCount < MAX_FUNCTION_CALLS) {
+          const streamResponse = await groq.chat.completions.create({
+            messages: conversationHistory,
+            model: this.currentModel,
+            stream: true,
+            tools: this.tools,
+            ...this.generationConfig,
+          } as ChatCompletionCreateParamsStreaming);
+
+          const completeToolCalls: (ChatCompletionMessageToolCall & {
+            index: number;
+          })[] = [];
+
+          updateStatus && updateStatus('');
+
+          for await (const chunk of streamResponse) {
+            if (chunk.choices[0]?.finish_reason === 'tool_calls') {
+              const functionCallResults = await this.handleFunctionCalls(
+                completeToolCalls,
+                updateStatus,
+              );
+
+              conversationHistory.push({
+                role: 'assistant',
+                content: null,
+                tool_calls: completeToolCalls,
+              });
+              conversationHistory.push(...functionCallResults);
+              break;
+            }
+
+            if (!chunk.choices[0]?.delta.tool_calls) {
+              const partText = chunk.choices[0]?.delta?.content || '';
+              sendStreamResponse(partText);
+              responseText += partText;
+              continue;
+            }
+
+            chunk.choices[0].delta.tool_calls.forEach((deltaToolCall) => {
+              const index = deltaToolCall.index;
+              let existingToolCall = completeToolCalls.find(
+                (call) => call.index === index,
+              );
+
+              if (!existingToolCall) {
+                existingToolCall = {
+                  id: '',
+                  function: { name: '', arguments: '' },
+                  type: 'function',
+                  index: index,
+                };
+                completeToolCalls.push(existingToolCall);
+              }
+
+              existingToolCall.id += deltaToolCall.id || '';
+              existingToolCall.function.name =
+                deltaToolCall.function?.name || existingToolCall.function.name;
+              existingToolCall.function.arguments +=
+                deltaToolCall.function?.arguments || '';
+            });
+          }
+
+          if (completeToolCalls.length === 0) {
+            return responseText;
+          }
+          functionCallCount++;
+        }
+        return responseText;
       }
-
-      const stream = await groq.chat.completions.create({
-        messages: conversationHistory,
-        model: this.currentModel,
-        stream: true,
-        ...this.generationConfig,
-      } as ChatCompletionCreateParamsStreaming);
-
-      let responseText: string = '';
-      for await (const chunk of stream) {
-        const partText = chunk.choices[0]?.delta?.content || '';
-        sendStreamResponse(partText);
-        responseText += partText;
-      }
-
-      return responseText;
     } catch (error) {
-      vscode.window.showErrorMessage(
-        'Failed to get response from Groq Service: ' + error,
-      );
+      vscode.window
+        .showErrorMessage(
+          'Failed to get response from Groq Service: ' + error,
+          'Get API Key',
+        )
+        .then((selection) => {
+          if (selection === 'Get API Key') {
+            vscode.env.openExternal(
+              vscode.Uri.parse(MODEL_SERVICE_LINKS.groqApiKey as string),
+            );
+          }
+        });
       return 'Failed to connect to the language model service.';
     }
   }

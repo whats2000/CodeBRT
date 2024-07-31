@@ -1,14 +1,42 @@
 import * as vscode from 'vscode';
-import type { ChatMessage } from 'cohere-ai/api';
+import type { Message, Tool, ToolCall, ToolResult } from 'cohere-ai/api';
 import { CohereClient } from 'cohere-ai';
 
 import { ConversationEntry, GetResponseOptions } from '../../types';
 import { AbstractLanguageModelService } from './abstractLanguageModelService';
 import { SettingsManager } from '../../api';
+import { ToolService } from '../tools';
+import { MODEL_SERVICE_LINKS, webSearchSchema } from '../../constants';
 
 export class CohereService extends AbstractLanguageModelService {
   private apiKey: string;
   private readonly settingsListener: vscode.Disposable;
+
+  private readonly tools: Tool[] = [
+    {
+      name: webSearchSchema.name,
+      description: webSearchSchema.description,
+      parameterDefinitions: {
+        query: {
+          description: webSearchSchema.inputSchema.properties.query.description,
+          type: 'str',
+          required: true,
+        },
+        maxCharsPerPage: {
+          description:
+            webSearchSchema.inputSchema.properties.maxCharsPerPage.description,
+          type: 'int',
+          required: false,
+        },
+        numResults: {
+          description:
+            webSearchSchema.inputSchema.properties.numResults.description,
+          type: 'int',
+          required: false,
+        },
+      },
+    },
+  ];
 
   constructor(
     context: vscode.ExtensionContext,
@@ -56,8 +84,8 @@ export class CohereService extends AbstractLanguageModelService {
 
   private conversationHistoryToContent(entries: {
     [key: string]: ConversationEntry;
-  }): ChatMessage[] {
-    let result: ChatMessage[] = [];
+  }): Message[] {
+    let result: Message[] = [];
     let currentEntry = entries[this.history.current];
 
     while (currentEntry) {
@@ -81,6 +109,56 @@ export class CohereService extends AbstractLanguageModelService {
     return result;
   }
 
+  private async handleFunctionCalls(
+    functionCalls: ToolCall[],
+    updateStatus?: (status: string) => void,
+  ): Promise<ToolResult[]> {
+    const functionCallResults: ToolResult[] = [];
+
+    for (const functionCall of functionCalls) {
+      const tool = ToolService.getTool(functionCall.name);
+      if (!tool) {
+        functionCallResults.push({
+          call: functionCall,
+          outputs: [
+            {
+              error: true,
+              message: `Failed to find tool with name: ${functionCall.name}`,
+            },
+          ],
+        });
+        continue;
+      }
+
+      try {
+        const result = await tool({
+          ...functionCall.parameters,
+          updateStatus,
+        } as any);
+        functionCallResults.push({
+          call: functionCall,
+          outputs: [
+            {
+              searchResults: result,
+            },
+          ],
+        });
+      } catch (error) {
+        functionCallResults.push({
+          call: functionCall,
+          outputs: [
+            {
+              error: true,
+              message: `Error executing tool ${functionCall.name}: ${error}`,
+            },
+          ],
+        });
+      }
+    }
+
+    return functionCallResults;
+  }
+
   public async getLatestAvailableModelNames(): Promise<string[]> {
     const cohere = new CohereClient({
       token: this.apiKey,
@@ -91,12 +169,12 @@ export class CohereService extends AbstractLanguageModelService {
     try {
       const latestModels = (await cohere.models.list()).models;
 
-      // Filter the invalid models (Not existing in the latest models)
+      // Filter the invalid models out of the available models
       newAvailableModelNames = newAvailableModelNames.filter((name) =>
         latestModels.some((model) => model.name === name),
       );
 
-      // Append the models to the available models if they are not already there
+      // Append the models to the available models if they aren't already there
       latestModels.forEach((model) => {
         if (!model.name || !model.endpoints) return;
         if (newAvailableModelNames.includes(model.name)) return;
@@ -121,7 +199,8 @@ export class CohereService extends AbstractLanguageModelService {
       return 'Missing model configuration. Check the model selection dropdown.';
     }
 
-    const { query, images, sendStreamResponse, currentEntryID } = options;
+    const { query, images, currentEntryID, sendStreamResponse, updateStatus } =
+      options;
 
     if (images && images.length > 0) {
       vscode.window.showWarningMessage(
@@ -131,36 +210,92 @@ export class CohereService extends AbstractLanguageModelService {
 
     const model = new CohereClient({ token: this.apiKey });
 
-    const conversationHistory = this.conversationHistoryToContent(
+    let conversationHistory = this.conversationHistoryToContent(
       this.getHistoryBeforeEntry(currentEntryID).entries,
     );
 
-    const requestData = {
-      chatHistory: conversationHistory,
-      model: this.currentModel,
-      message: query,
-    };
-
+    let toolResults: ToolResult[] = [];
+    let functionCallCount = 0;
+    const MAX_FUNCTION_CALLS = 5;
     try {
       if (!sendStreamResponse) {
-        return (await model.chat(requestData)).text;
+        while (functionCallCount < MAX_FUNCTION_CALLS) {
+          const response = await model.chat({
+            model: this.currentModel,
+            message: toolResults.length > 0 ? '' : query,
+            chatHistory: conversationHistory,
+            tools: this.currentModel !== 'command' ? this.tools : undefined,
+            toolResults: toolResults.length > 0 ? toolResults : undefined,
+          });
+
+          if (response.chatHistory) {
+            conversationHistory = response.chatHistory;
+          }
+
+          const functionCalls = response.toolCalls;
+
+          if (!functionCalls) {
+            return response.text;
+          }
+
+          toolResults = await this.handleFunctionCalls(functionCalls);
+          functionCallCount++;
+        }
+        return 'Max function call limit reached.';
+      } else {
+        let responseText = '';
+
+        while (functionCallCount < MAX_FUNCTION_CALLS) {
+          const streamResponse = await model.chatStream({
+            model: this.currentModel,
+            message: toolResults.length > 0 ? '' : query,
+            chatHistory: conversationHistory,
+            tools: this.currentModel !== 'command' ? this.tools : undefined,
+            toolResults: toolResults.length > 0 ? toolResults : undefined,
+          });
+
+          let functionCalls = null;
+
+          for await (const item of streamResponse) {
+            if (item.eventType === 'stream-start') {
+              updateStatus && updateStatus('');
+            }
+            if (item.eventType === 'tool-calls-generation') {
+              functionCalls = item.toolCalls;
+              toolResults = await this.handleFunctionCalls(
+                functionCalls,
+                updateStatus,
+              );
+            }
+            if (item.eventType === 'text-generation') {
+              const partText = item.text;
+              sendStreamResponse(partText);
+              responseText += partText;
+            }
+            if (item.eventType === 'stream-end' && item.response.chatHistory) {
+              conversationHistory = item.response.chatHistory;
+            }
+          }
+          if (!functionCalls || functionCalls.length === 0) {
+            return responseText;
+          }
+          functionCallCount++;
+        }
+        return responseText;
       }
-
-      const result = await model.chatStream(requestData);
-      let responseText = '';
-      for await (const item of result) {
-        if (item.eventType !== 'text-generation') continue;
-
-        const partText = item.text;
-        sendStreamResponse(partText);
-        responseText += partText;
-      }
-
-      return responseText;
     } catch (error) {
-      vscode.window.showErrorMessage(
-        'Failed to get response from Cohere Service: ' + error,
-      );
+      vscode.window
+        .showErrorMessage(
+          'Failed to get response from Cohere Service: ' + error,
+          'Get API Key',
+        )
+        .then((selection) => {
+          if (selection === 'Get API Key') {
+            vscode.env.openExternal(
+              vscode.Uri.parse(MODEL_SERVICE_LINKS.cohereApiKey as string),
+            );
+          }
+        });
       return 'Failed to connect to the language model service.';
     }
   }

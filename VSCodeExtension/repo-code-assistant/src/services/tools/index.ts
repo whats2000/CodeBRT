@@ -1,8 +1,24 @@
-import { ToolServiceRegistry } from './toolServiceRegistry';
-import { webSearchToolService } from './webSearchTool';
+import type {
+  ToolFunction,
+  ToolServicesApi,
+  ToolServiceType,
+} from '../../types';
+import { webSearchTool } from './webSearchTool';
 
-const toolServiceRegistry = new ToolServiceRegistry();
+export class ToolService {
+  private static readonly toolServices: {
+    [key in ToolServiceType]: ToolFunction;
+  } = {
+    webSearch: webSearchTool,
+  };
 
-toolServiceRegistry.register(webSearchToolService);
+  public static getTool(
+    name: string,
+  ): ToolServicesApi[keyof ToolServicesApi] | undefined {
+    if (name in this.toolServices) {
+      return this.toolServices[name as ToolServiceType];
+    }
 
-export { toolServiceRegistry };
+    return undefined;
+  }
+}

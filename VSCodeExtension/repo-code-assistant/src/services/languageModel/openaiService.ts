@@ -1,18 +1,17 @@
 import * as vscode from 'vscode';
-import OpenAI from 'openai';
-import fs from 'fs';
-import path from 'path';
 import type {
-  ChatCompletionContentPartImage,
   ChatCompletionCreateParamsStreaming,
-  ChatCompletionMessageParam,
-} from 'openai/resources';
+  ChatCompletionMessageToolCall,
+  ChatCompletionCreateParamsNonStreaming,
+} from 'openai/resources/chat/completions';
+import OpenAI from 'openai';
 
-import type { ConversationEntry, GetResponseOptions } from '../../types';
-import { AbstractLanguageModelService } from './abstractLanguageModelService';
+import type { GetResponseOptions } from '../../types';
 import { SettingsManager } from '../../api';
+import { AbstractOpenaiLikeService } from './abstractOpenaiLikeService';
+import { MODEL_SERVICE_LINKS } from '../../constants';
 
-export class OpenAIService extends AbstractLanguageModelService {
+export class OpenAIService extends AbstractOpenaiLikeService {
   private apiKey: string;
   private readonly settingsListener: vscode.Disposable;
 
@@ -57,79 +56,6 @@ export class OpenAIService extends AbstractLanguageModelService {
       vscode.window.showErrorMessage(
         'Failed to initialize OpenAI Service History: ' + error,
       );
-    }
-  }
-
-  private async conversationHistoryToContent(
-    entries: { [key: string]: ConversationEntry },
-    query: string,
-    images?: string[],
-  ): Promise<ChatCompletionMessageParam[]> {
-    const result: ChatCompletionMessageParam[] = [];
-    let currentEntry = entries[this.history.current];
-
-    while (currentEntry) {
-      const messageParam: ChatCompletionMessageParam =
-        currentEntry.role === 'user'
-          ? {
-              role: 'user',
-              content: [{ type: 'text', text: currentEntry.message }],
-            }
-          : {
-              role: 'assistant',
-              content: currentEntry.message,
-            };
-
-      result.unshift(messageParam);
-
-      if (currentEntry.parent) {
-        currentEntry = entries[currentEntry.parent];
-      } else {
-        break;
-      }
-    }
-
-    // OpenAI's API requires the query message at the end of the history
-    if (result.length > 0 && result[result.length - 1].role !== 'user') {
-      result.push({
-        role: 'user',
-        content: [{ type: 'text', text: query }],
-      });
-    }
-
-    if (images && images.length > 0) {
-      const imageParts = images
-        .map((image) => {
-          const mimeType = `image/${path.extname(image).slice(1)}`;
-          return this.fileToGenerativePart(image, mimeType);
-        })
-        .filter(
-          (part) => part !== undefined,
-        ) as ChatCompletionContentPartImage[];
-
-      result[result.length - 1] = {
-        role: 'user',
-        content: [{ type: 'text', text: query }, ...imageParts],
-      };
-    }
-
-    return result;
-  }
-
-  private fileToGenerativePart(
-    filePath: string,
-    mimeType: string,
-  ): ChatCompletionContentPartImage | undefined {
-    try {
-      const base64Data = fs.readFileSync(filePath).toString('base64');
-      return {
-        type: 'image_url',
-        image_url: {
-          url: `data:${mimeType};base64,${base64Data}`,
-        },
-      };
-    } catch (error) {
-      console.error('Failed to read image file:', error);
     }
   }
 
@@ -179,12 +105,11 @@ export class OpenAIService extends AbstractLanguageModelService {
       vscode.window.showWarningMessage(
         'The images ChatGPT-3.5 is not supported currently. The images will be ignored.',
       );
-
       options.images = undefined;
     }
 
-    const { query, images, sendStreamResponse, currentEntryID } = options;
-
+    const { query, images, currentEntryID, sendStreamResponse, updateStatus } =
+      options;
     const openai = new OpenAI({ apiKey: this.apiKey });
 
     const conversationHistory = await this.conversationHistoryToContent(
@@ -193,35 +118,129 @@ export class OpenAIService extends AbstractLanguageModelService {
       images,
     );
 
+    let functionCallCount = 0;
+    const MAX_FUNCTION_CALLS = 5;
+
     try {
       if (!sendStreamResponse) {
-        return (
-          await openai.chat.completions.create({
+        while (functionCallCount < MAX_FUNCTION_CALLS) {
+          const response = await openai.chat.completions.create({
             messages: conversationHistory,
             model: this.currentModel,
+            tools: this.tools,
             stream: false,
-          })
-        ).choices[0]?.message?.content!;
+            ...this.generationConfig,
+          } as ChatCompletionCreateParamsNonStreaming);
+
+          if (!response.choices[0]?.message.tool_calls) {
+            return response.choices[0]?.message?.content!;
+          }
+
+          const functionCallResults = await this.handleFunctionCalls(
+            response.choices[0].message.tool_calls,
+          );
+
+          conversationHistory.push({
+            role: 'assistant',
+            content: null,
+            tool_calls: response.choices[0].message.tool_calls,
+          });
+          conversationHistory.push(...functionCallResults);
+
+          functionCallCount++;
+        }
+        return 'Max function call limit reached.';
+      } else {
+        let responseText = '';
+
+        while (functionCallCount < MAX_FUNCTION_CALLS) {
+          const streamResponse = await openai.chat.completions.create({
+            model: this.currentModel,
+            messages: conversationHistory,
+            tools: this.tools,
+            stream: true,
+            ...this.generationConfig,
+          } as ChatCompletionCreateParamsStreaming);
+
+          const completeToolCalls: (ChatCompletionMessageToolCall & {
+            index: number;
+          })[] = [];
+
+          updateStatus && updateStatus('');
+
+          for await (const chunk of streamResponse) {
+            if (chunk.choices[0]?.finish_reason === 'tool_calls') {
+              const toolCalls = completeToolCalls.map((call) => ({
+                id: call.id,
+                function: call.function,
+                type: call.type,
+              }));
+              const functionCallResults = await this.handleFunctionCalls(
+                toolCalls,
+                updateStatus,
+              );
+
+              conversationHistory.push({
+                role: 'assistant',
+                content: null,
+                tool_calls: toolCalls,
+              });
+              conversationHistory.push(...functionCallResults);
+              break;
+            }
+
+            if (!chunk.choices[0]?.delta.tool_calls) {
+              const partText = chunk.choices[0]?.delta?.content || '';
+              sendStreamResponse(partText);
+              responseText += partText;
+              continue;
+            }
+
+            // Collect tool calls delta from the stream response delta
+            chunk.choices[0].delta.tool_calls.forEach((deltaToolCall) => {
+              const index = deltaToolCall.index;
+              let existingToolCall = completeToolCalls.find(
+                (call) => call.index === index,
+              );
+
+              if (!existingToolCall) {
+                existingToolCall = {
+                  id: '',
+                  function: { name: '', arguments: '' },
+                  type: 'function',
+                  index: index,
+                };
+                completeToolCalls.push(existingToolCall);
+              }
+
+              existingToolCall.id += deltaToolCall.id || '';
+              existingToolCall.function.name =
+                deltaToolCall.function?.name || existingToolCall.function.name;
+              existingToolCall.function.arguments +=
+                deltaToolCall.function?.arguments || '';
+            });
+          }
+
+          if (completeToolCalls.length === 0) {
+            return responseText;
+          }
+          functionCallCount++;
+        }
+        return responseText;
       }
-
-      const stream = await openai.chat.completions.create({
-        model: this.currentModel,
-        messages: conversationHistory,
-        stream: true,
-      } as ChatCompletionCreateParamsStreaming);
-
-      let responseText = '';
-      for await (const chunk of stream) {
-        const partText = chunk.choices[0]?.delta?.content || '';
-        sendStreamResponse(partText);
-        responseText += partText;
-      }
-
-      return responseText;
     } catch (error) {
-      vscode.window.showErrorMessage(
-        'Failed to get response from OpenAI Service: ' + error,
-      );
+      vscode.window
+        .showErrorMessage(
+          'Failed to get response from OpenAI Service: ' + error,
+          'Get API Key',
+        )
+        .then((selection) => {
+          if (selection === 'Get API Key') {
+            vscode.env.openExternal(
+              vscode.Uri.parse(MODEL_SERVICE_LINKS.openaiApiKey as string),
+            );
+          }
+        });
       return 'Failed to connect to the language model service.';
     }
   }

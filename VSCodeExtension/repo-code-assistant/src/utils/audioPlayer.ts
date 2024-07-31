@@ -59,5 +59,3 @@ export class SoundPlay {
     }
   }
 }
-
-export default SoundPlay;

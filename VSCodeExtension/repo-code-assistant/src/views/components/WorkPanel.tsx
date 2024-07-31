@@ -1,22 +1,11 @@
-import { useContext, useEffect, useState } from 'react';
+import { useContext, useState } from 'react';
 
 import { WebviewContext } from '../WebviewContext';
 
 export const WorkPanel = () => {
-  const { callApi, addListener, removeListener } = useContext(WebviewContext);
+  const { callApi } = useContext(WebviewContext);
   const [messages, setMessages] = useState<string[]>([]);
   const [fileContent, setFileContent] = useState<string>();
-
-  useEffect(() => {
-    const cb = (msg: string) => {
-      setMessages([...messages, msg]);
-    };
-    addListener('exampleBMessage', cb);
-
-    return () => {
-      removeListener('exampleBMessage', cb);
-    };
-  }, [messages]);
 
   const getFileContents = () => {
     callApi('getFileContents')

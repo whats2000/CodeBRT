@@ -4,6 +4,7 @@ import fsPromises from 'node:fs/promises';
 import vscode from 'vscode';
 import OpenAI from 'openai';
 
+import { MODEL_SERVICE_LINKS } from '../../constants';
 import { SettingsManager } from '../../api';
 import { AbstractVoiceService } from './abstractVoiceService';
 
@@ -29,7 +30,7 @@ export class OpenaiVoiceService extends AbstractVoiceService {
 
   protected async sendTextToVoiceRequest(
     Text: string,
-  ): Promise<Uint8Array | string> {
+  ): Promise<Uint8Array | undefined> {
     const openai = new OpenAI({
       apiKey: this.apiKey,
     });
@@ -41,8 +42,19 @@ export class OpenaiVoiceService extends AbstractVoiceService {
       });
       return Buffer.from(await mp3.arrayBuffer());
     } catch (error) {
-      console.error('Error during API call:', (error as Error).message);
-      return `Error during API call: ${(error as Error).message}`;
+      vscode.window
+        .showErrorMessage(
+          'Error during API call:' + (error as Error).message,
+          'Get API Key',
+        )
+        .then((selection) => {
+          if (selection === 'Get API Key') {
+            vscode.env.openExternal(
+              vscode.Uri.parse(MODEL_SERVICE_LINKS.openaiApiKey as string),
+            );
+          }
+        });
+      return;
     }
   }
 
@@ -59,8 +71,16 @@ export class OpenaiVoiceService extends AbstractVoiceService {
       return transcription.text;
     } catch (error) {
       await fsPromises.unlink(filePath);
-      vscode.window.showErrorMessage('Failed on Text to Speech. ' + error);
-      return 'Failed on Speech to Text.';
+      vscode.window
+        .showErrorMessage('Failed on Speech to Text. ' + error, 'Get API Key')
+        .then((selection) => {
+          if (selection === 'Get API Key') {
+            vscode.env.openExternal(
+              vscode.Uri.parse(MODEL_SERVICE_LINKS.openaiApiKey as string),
+            );
+          }
+        });
+      return '';
     }
   }
 }

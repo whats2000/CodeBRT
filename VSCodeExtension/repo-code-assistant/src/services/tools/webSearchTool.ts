@@ -1,5 +1,5 @@
 /**
- * This file is referenced to https://github.com/KingNish24/OpenGPT-4o/blob/main/chatbot.py
+ * This file is referenced to https://github.com/KingNish24/OpenGPT-4o/blob/main/chatbot.py,
  * And I have made some changes to the original code to make it work with the TypeScript codebase.
  * License: MIT
  */
@@ -14,13 +14,41 @@ const extractTextFromWebpage = (htmlContent: string): string => {
   return $('body').text().replace(/\s+/g, ' ').trim();
 };
 
-const webSearchTool: ToolServicesApi['webSearch'] = async (
+const postProcessResults = (
+  results: { title: string; url: string; snippet: string }[],
+  format: 'text' | 'json',
+): string => {
+  if (format === 'json') {
+    return JSON.stringify(results, null, 2);
+  }
+
+  return (
+    '#####\nWeb Search Results is at below, please answer and provide reference links:\n\n' +
+    results
+      .map(
+        (result) =>
+          `**Title**:\n${result.title}\n**URL**:\n${result.url}\n**Snippet**:\n${result.snippet}\n`,
+      )
+      .join('\n')
+  );
+};
+
+export const webSearchTool: ToolServicesApi['webSearch'] = async ({
   query,
-  updateStatus,
-  maxCharsPerPage = 6000,
   numResults = 4,
-) => {
+  maxCharsPerPage = 6000,
+  format = 'text',
+  updateStatus,
+}) => {
   const term = query;
+  try {
+    maxCharsPerPage = Number(maxCharsPerPage);
+    numResults = Number(numResults);
+  } catch (error) {
+    maxCharsPerPage = 6000;
+    numResults = 4;
+  }
+
   const allResults: { title: string; url: string; snippet: string }[] = [];
   const session = axios.create({
     headers: {
@@ -30,7 +58,7 @@ const webSearchTool: ToolServicesApi['webSearch'] = async (
   });
 
   try {
-    updateStatus?.('Searching Web');
+    updateStatus?.(`[Searching] Searching Web with keyword "${term}"`);
     const resp = await session.get('https://www.google.com/search', {
       params: { q: term, num: numResults, udm: 14 },
       timeout: 5000,
@@ -61,11 +89,6 @@ const webSearchTool: ToolServicesApi['webSearch'] = async (
     console.error('Failed to search the web:', error);
   }
 
-  updateStatus?.('Extracting Relevant Info');
-  return allResults;
-};
-
-export const webSearchToolService = {
-  name: 'webSearch' as const,
-  execute: webSearchTool,
+  updateStatus?.('[Info] Generating Response Based on Search Results');
+  return postProcessResults(allResults, format);
 };

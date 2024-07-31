@@ -267,8 +267,9 @@ export const VoiceSettingsBar: React.FC<VoiceSettingsBarProps> = ({
             ghost={true}
             block
           >
-            Advance Settings
+            GPT-SoVits Advance Settings
           </Button>
+          <Divider />
         </Form>
       </Drawer>
       <GptSoVitsSettingsBar

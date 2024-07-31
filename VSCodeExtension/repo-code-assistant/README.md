@@ -12,7 +12,7 @@ The purpose of this project is to create a AI assistant that can help users with
 - [ ] Provide feedback on the task
 - [ ] Provide suggestions on the task
 - [ ] Provide human-in-the-loop support
-- [ ] Provide support for multiple variants of the language model
+- [x] Provide support for multiple variants of the language model
 - [ ] Provide a chat interface for the user reference with the code
 
 ## Architecture
@@ -32,4 +32,4 @@ The architecture of the project is as follows:
 ## Contributing
 
 - [The Starter Framework For VSCode Extension](https://github.com/sfc-gh-tkojima/vscode-react-webviews) by [sfc-gh-tkojima](https://github.com/sfc-gh-tkojima)
-- [Free SVG Icons](https://www.svgrepo.com/svg/532181/indent) from [SVG Repo](https://www.svgrepo.com/) under CC Attribution License
+- Icon and logo from [SVG Repo](https://www.svgrepo.com/) under CC Attribution License

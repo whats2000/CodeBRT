@@ -136,21 +136,28 @@ export const activate = async (ctx: vscode.ExtensionContext) => {
           vscode.window.showInformationMessage(msg);
       }
     },
-    sendMessageToExampleB: (msg) => {
-      triggerEvent('exampleBMessage', msg);
-    },
     getLanguageModelResponse: async (
       modelType,
       query,
       images?,
       currentEntryID?,
       useStream?,
+      showStatus?,
     ) => {
       return await models[modelType].service.getResponse({
         query,
         images,
         currentEntryID,
-        sendStreamResponse: useStream ? api.sendStreamResponse : undefined,
+        sendStreamResponse: useStream
+          ? (msg) => {
+              triggerEvent('streamResponse', msg);
+            }
+          : undefined,
+        updateStatus: showStatus
+          ? (status) => {
+              triggerEvent('updateStatus', status);
+            }
+          : undefined,
       });
     },
     getLanguageModelConversationHistory: (modelType) => {
@@ -161,9 +168,6 @@ export const activate = async (ctx: vscode.ExtensionContext) => {
     },
     editLanguageModelConversationHistory: (modelType, entryID, newMessage) => {
       models[modelType].service.editConversationEntry(entryID, newMessage);
-    },
-    sendStreamResponse: (msg) => {
-      triggerEvent('streamResponse', msg);
     },
     addConversationEntry: async (
       modelType,
@@ -269,6 +273,20 @@ export const activate = async (ctx: vscode.ExtensionContext) => {
       }
 
       await voiceServices[voiceServiceType].service.stopTextToVoice();
+    },
+    stopRecordVoice: async () => {
+      const voiceServiceType = settingsManager.get(
+        'selectedVoiceToTextService',
+      );
+
+      if (voiceServiceType === 'not set') {
+        vscode.window.showErrorMessage(
+          'You have not selected a voice service for voice recording, How did you even get here? Please report this bug to the developers',
+        );
+        return;
+      }
+
+      await voiceServices[voiceServiceType].service.stopVoiceToText();
     },
     switchGptSoVitsReferenceVoice: async (voiceName) => {
       await (

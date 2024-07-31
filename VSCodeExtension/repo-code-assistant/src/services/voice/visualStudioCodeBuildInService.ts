@@ -2,6 +2,8 @@ import * as vscode from 'vscode';
 import * as fs from 'fs';
 import * as path from 'path';
 
+import AsyncLock from 'async-lock';
+
 import { SettingsManager } from '../../api';
 import { AbstractVoiceService } from './abstractVoiceService';
 
@@ -13,6 +15,7 @@ export class VisualStudioCodeBuiltInService extends AbstractVoiceService {
   private latestText: string = '';
   private closingTime: number = 0;
   private resolveTextPromise: ((value: string) => void) | null = null;
+  private lock: AsyncLock = new AsyncLock();
 
   constructor(
     context: vscode.ExtensionContext,
@@ -42,74 +45,76 @@ export class VisualStudioCodeBuiltInService extends AbstractVoiceService {
   }
 
   public async voiceToText(): Promise<string> {
-    if (this.interval) return '';
+    return this.lock.acquire<string>('voiceToText', async () => {
+      this.clearInterval();
 
-    try {
-      if (!vscode.extensions.getExtension('ms-vscode.vscode-speech')) {
-        vscode.window
-          .showInformationMessage(
-            'Please install the "VS Code Speech" extension to use voice dictation.',
-            'Install',
-          )
-          .then(async (value) => {
-            if (value === 'Install') {
-              await vscode.commands.executeCommand(
-                'workbench.extensions.search',
-                'ms-vscode.vscode-speech',
-              );
-            }
-          });
-        return '';
-      }
-
-      fs.writeFileSync(this.tempFilePath, '');
-
-      // Save the current active editor
-      this.previousEditor = vscode.window.activeTextEditor;
-
-      const document = await vscode.workspace.openTextDocument(
-        this.tempFilePath,
-      );
-      await vscode.window.showTextDocument(document, { preview: false });
-
-      await vscode.commands.executeCommand(
-        'workbench.action.editorDictation.start',
-      );
-      vscode.window.showInformationMessage('Voice dictation started.');
-
-      this.setClosingTime(10000);
-
-      return new Promise((resolve) => {
-        this.resolveTextPromise = resolve;
-
-        const subscription = vscode.workspace.onDidChangeTextDocument(
-          (event) => {
-            if (event.document.uri.fsPath === this.tempFilePath) {
-              this.latestText = event.document.getText();
-
-              if (this.latestText.trim().length > 0) {
-                this.setClosingTime(this.inactivityLimit);
+      try {
+        if (!vscode.extensions.getExtension('ms-vscode.vscode-speech')) {
+          vscode.window
+            .showErrorMessage(
+              'Please install the "VS Code Speech" extension to use voice dictation.',
+              'Install',
+            )
+            .then(async (value) => {
+              if (value === 'Install') {
+                await vscode.commands.executeCommand(
+                  'workbench.extensions.search',
+                  'ms-vscode.vscode-speech',
+                );
               }
-            }
-          },
-        );
-
-        this.interval = setInterval(() => {
-          this.checkInactivity();
-          if (Date.now() > this.closingTime) {
-            subscription.dispose();
-            this.stopVoiceToText().then(() => {
-              resolve(this.latestText);
             });
-          }
-        }, 500);
-      });
-    } catch (error) {
-      vscode.window.showErrorMessage(
-        'Failed to start voice dictation: ' + error,
-      );
-      throw error;
-    }
+          return '';
+        }
+
+        fs.writeFileSync(this.tempFilePath, '');
+
+        // Save the current active editor
+        this.previousEditor = vscode.window.activeTextEditor;
+
+        const document = await vscode.workspace.openTextDocument(
+          this.tempFilePath,
+        );
+        await vscode.window.showTextDocument(document, { preview: false });
+
+        await vscode.commands.executeCommand(
+          'workbench.action.editorDictation.start',
+        );
+        vscode.window.showInformationMessage('Voice dictation started.');
+
+        this.setClosingTime(10000);
+
+        return new Promise((resolve) => {
+          this.resolveTextPromise = resolve;
+
+          const subscription = vscode.workspace.onDidChangeTextDocument(
+            (event) => {
+              if (event.document.uri.fsPath === this.tempFilePath) {
+                this.latestText = event.document.getText();
+
+                if (this.latestText.trim().length > 0) {
+                  this.setClosingTime(this.inactivityLimit);
+                }
+              }
+            },
+          );
+
+          this.interval = setInterval(() => {
+            this.checkInactivity();
+            if (Date.now() > this.closingTime) {
+              subscription.dispose();
+              this.stopVoiceToText().then(() => {
+                resolve(this.latestText);
+              });
+            }
+          }, 500);
+        });
+      } catch (error) {
+        vscode.window.showErrorMessage(
+          'Failed to start voice dictation: ' + error,
+        );
+        throw error;
+      }
+    });
   }
 
   public async stopVoiceToText(): Promise<void> {
