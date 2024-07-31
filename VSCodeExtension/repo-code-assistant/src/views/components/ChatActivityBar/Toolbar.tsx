@@ -5,6 +5,7 @@ import {
   PlusOutlined,
   HistoryOutlined,
   SettingOutlined,
+  MenuOutlined,
 } from '@ant-design/icons';
 import styled from 'styled-components';
 
@@ -314,13 +315,21 @@ export const Toolbar: React.FC<ToolbarProps> = ({
             </>
           )}
         </Space>
-        <Space>
-          <Button icon={<HistoryOutlined />} onClick={toggleHistorySidebar} />
-          <Button icon={<PlusOutlined />} onClick={createNewChat} />
-          <Dropdown menu={{ items: settingMenuItems }}>
-            <Button icon={<SettingOutlined />} />
-          </Dropdown>
-        </Space>
+        {isOffCanvas ? (
+          <Button
+            icon={<MenuOutlined />}
+            onClick={() => setIsSelectModelOpen(true)}
+            loading={isActiveModelLoading}
+          />
+        ) : (
+          <Space>
+            <Button icon={<HistoryOutlined />} onClick={toggleHistorySidebar} />
+            <Button icon={<PlusOutlined />} onClick={createNewChat} />
+            <Dropdown menu={{ items: settingMenuItems }}>
+              <Button icon={<SettingOutlined />} />
+            </Dropdown>
+          </Space>
+        )}
       </StyledSpace>
       <HistorySidebar
         isOpen={isHistorySidebarOpen}
