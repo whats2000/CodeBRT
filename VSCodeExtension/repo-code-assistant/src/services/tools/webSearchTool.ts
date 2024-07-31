@@ -16,13 +16,18 @@ const extractTextFromWebpage = (htmlContent: string): string => {
 
 const postProcessResults = (
   results: { title: string; url: string; snippet: string }[],
+  format: 'text' | 'json',
 ): string => {
+  if (format === 'json') {
+    return JSON.stringify(results, null, 2);
+  }
+
   return (
     '#####\nWeb Search Results is at below, please answer and provide reference links:\n\n' +
     results
       .map(
         (result) =>
-          `Title: ${result.title}\nURL: ${result.url}\nSnippet: ${result.snippet}\n`,
+          `**Title**:\n${result.title}\n**URL**:\n${result.url}\n**Snippet**:\n${result.snippet}\n`,
       )
       .join('\n')
   );
@@ -30,9 +35,10 @@ const postProcessResults = (
 
 export const webSearchTool: ToolServicesApi['webSearch'] = async ({
   query,
-  updateStatus,
-  maxCharsPerPage = 6000,
   numResults = 4,
+  maxCharsPerPage = 6000,
+  format = 'text',
+  updateStatus,
 }) => {
   const term = query;
   try {
@@ -84,5 +90,5 @@ export const webSearchTool: ToolServicesApi['webSearch'] = async ({
   }
 
   updateStatus?.('[Info] Generating Response Based on Search Results');
-  return postProcessResults(allResults);
+  return postProcessResults(allResults, format);
 };

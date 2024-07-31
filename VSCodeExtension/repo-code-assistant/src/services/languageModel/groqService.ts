@@ -1,43 +1,19 @@
 import * as vscode from 'vscode';
 
 import type {
-  ChatCompletionCreateParamsBase,
   ChatCompletionCreateParamsNonStreaming,
   ChatCompletionCreateParamsStreaming,
-  ChatCompletionMessageParam,
-  ChatCompletionTool,
-  ChatCompletionToolMessageParam,
   ChatCompletionMessageToolCall,
-  ChatCompletionChunk,
 } from 'groq-sdk/src/resources/chat/completions';
 import Groq from 'groq-sdk';
 
-import type { ConversationEntry, GetResponseOptions } from '../../types';
-import { AbstractLanguageModelService } from './abstractLanguageModelService';
+import type { GetResponseOptions } from '../../types';
+import { AbstractOpenaiLikeService } from './abstractOpenaiLikeService';
 import { SettingsManager } from '../../api';
-import { webSearchSchema } from '../../constants';
-import { ToolService } from '../tools';
 
-export class GroqService extends AbstractLanguageModelService {
+export class GroqService extends AbstractOpenaiLikeService {
   private apiKey: string;
   private readonly settingsListener: vscode.Disposable;
-  private readonly generationConfig: Partial<ChatCompletionCreateParamsBase> = {
-    temperature: 0.5,
-    max_tokens: 1024,
-    top_p: 1,
-    stop: null,
-  };
-
-  private tools: ChatCompletionTool[] = [
-    {
-      type: 'function',
-      function: {
-        name: webSearchSchema.name,
-        description: webSearchSchema.description,
-        parameters: webSearchSchema.inputSchema,
-      },
-    },
-  ];
 
   constructor(
     context: vscode.ExtensionContext,
@@ -83,87 +59,6 @@ export class GroqService extends AbstractLanguageModelService {
       );
     }
   }
-
-  private conversationHistoryToContent(
-    entries: { [key: string]: ConversationEntry },
-    query: string,
-  ): ChatCompletionMessageParam[] {
-    const result: ChatCompletionMessageParam[] = [];
-    let currentEntry = entries[this.history.current];
-
-    while (currentEntry) {
-      result.unshift({
-        role: currentEntry.role === 'user' ? 'user' : 'assistant',
-        content: currentEntry.message,
-      });
-
-      if (currentEntry.parent) {
-        currentEntry = entries[currentEntry.parent];
-      } else {
-        break;
-      }
-    }
-
-    // Groq's API requires the query message at the end of the history
-    if (result.length > 0 && result[result.length - 1].role !== 'user') {
-      result.push({
-        role: 'user',
-        content: query,
-      });
-    }
-
-    return result;
-  }
-
-  private handleFunctionCalls = async (
-    functionCalls:
-      | ChatCompletionMessageToolCall[]
-      | ChatCompletionChunk.Choice.Delta.ToolCall[],
-    updateStatus?: (status: string) => void,
-  ): Promise<ChatCompletionToolMessageParam[]> => {
-    const functionCallResults: ChatCompletionToolMessageParam[] = [];
-
-    for (const functionCall of functionCalls) {
-      if (
-        !functionCall.function?.name ||
-        !functionCall.id ||
-        !functionCall.function?.arguments
-      ) {
-        continue;
-      }
-
-      const tool = ToolService.getTool(functionCall.function.name);
-      if (!tool) {
-        functionCallResults.push({
-          role: 'tool',
-          tool_call_id: functionCall.id,
-          content:
-            'Failed to find tool with name: ' + functionCall.function.name,
-        });
-        continue;
-      }
-
-      try {
-        const result = await tool({
-          ...JSON.parse(functionCall.function.arguments),
-          updateStatus,
-        });
-        functionCallResults.push({
-          role: 'tool',
-          tool_call_id: functionCall.id,
-          content: result,
-        });
-      } catch (error) {
-        functionCallResults.push({
-          role: 'tool',
-          tool_call_id: functionCall.id,
-          content: `Error executing tool ${functionCall.function.name}: ${error}`,
-        });
-      }
-    }
-
-    return functionCallResults;
-  };
 
   public async getLatestAvailableModelNames(): Promise<string[]> {
     const groq = new Groq({
@@ -222,7 +117,7 @@ export class GroqService extends AbstractLanguageModelService {
       apiKey: this.apiKey,
     });
 
-    const conversationHistory = this.conversationHistoryToContent(
+    const conversationHistory = await this.conversationHistoryToContent(
       this.getHistoryBeforeEntry(currentEntryID).entries,
       query,
     );

@@ -11,6 +11,8 @@ import { webSearchSchema } from '../../constants';
 import { ToolService } from '../tools';
 
 export class OllamaService extends AbstractLanguageModelService {
+  private runningModel = '';
+
   private readonly generationConfig: Partial<Options> = {
     temperature: 1,
     top_p: 0.95,
@@ -116,22 +118,24 @@ export class OllamaService extends AbstractLanguageModelService {
     })
       .ps()
       .then((response) => {
-        if (response.models.length === 0) {
-          vscode.window.showInformationMessage('No running models found.');
-          return '';
+        if (response.models.length !== 0) {
+          const recentlyModifiedModel = response.models.sort((a, b) =>
+            a.modified_at > b.modified_at ? -1 : 1,
+          )[0].name;
+          this.runningModel = recentlyModifiedModel;
+          return recentlyModifiedModel;
         }
 
-        return response.models.sort((a, b) =>
-          a.modified_at > b.modified_at ? -1 : 1,
-        )[0].name;
+        // As the ollama service will unload the model after 5 min, we use the last selected model as the running model
+        return this.runningModel;
       })
       .catch((error) => {
         vscode.window.showErrorMessage(
           'Failed to get running model from Ollama Service: ' + error,
         );
-        return '';
       });
 
+    this.runningModel = '';
     return '';
   }
 

@@ -1,46 +1,18 @@
-import fs from 'fs';
-import path from 'path';
-
 import * as vscode from 'vscode';
 import type {
-  ChatCompletionContentPartImage,
   ChatCompletionCreateParamsStreaming,
-  ChatCompletionMessageParam,
   ChatCompletionMessageToolCall,
-  ChatCompletionTool,
-  ChatCompletionToolMessageParam,
   ChatCompletionCreateParamsNonStreaming,
-  ChatCompletionCreateParamsBase,
 } from 'openai/resources/chat/completions';
 import OpenAI from 'openai';
 
-import type { ConversationEntry, GetResponseOptions } from '../../types';
-import { AbstractLanguageModelService } from './abstractLanguageModelService';
+import type { GetResponseOptions } from '../../types';
 import { SettingsManager } from '../../api';
-import { webSearchSchema } from '../../constants';
-import { ToolService } from '../tools';
+import { AbstractOpenaiLikeService } from './abstractOpenaiLikeService';
 
-export class OpenAIService extends AbstractLanguageModelService {
+export class OpenAIService extends AbstractOpenaiLikeService {
   private apiKey: string;
   private readonly settingsListener: vscode.Disposable;
-
-  private readonly generationConfig: Partial<ChatCompletionCreateParamsBase> = {
-    temperature: 0.5,
-    max_tokens: 1024,
-    top_p: 1,
-    stop: null,
-  };
-
-  private readonly tools: ChatCompletionTool[] = [
-    {
-      type: 'function',
-      function: {
-        name: webSearchSchema.name,
-        description: webSearchSchema.description,
-        parameters: webSearchSchema.inputSchema,
-      },
-    },
-  ];
 
   constructor(
     context: vscode.ExtensionContext,
@@ -85,127 +57,6 @@ export class OpenAIService extends AbstractLanguageModelService {
       );
     }
   }
-
-  private async conversationHistoryToContent(
-    entries: { [key: string]: ConversationEntry },
-    query: string,
-    images?: string[],
-  ): Promise<ChatCompletionMessageParam[]> {
-    const result: ChatCompletionMessageParam[] = [];
-    let currentEntry = entries[this.history.current];
-
-    while (currentEntry) {
-      const messageParam: ChatCompletionMessageParam =
-        currentEntry.role === 'user'
-          ? {
-              role: 'user',
-              content: [{ type: 'text', text: currentEntry.message }],
-            }
-          : {
-              role: 'assistant',
-              content: currentEntry.message,
-            };
-
-      result.unshift(messageParam);
-
-      if (currentEntry.parent) {
-        currentEntry = entries[currentEntry.parent];
-      } else {
-        break;
-      }
-    }
-
-    // OpenAI's API requires the query message at the end of the history
-    if (result.length > 0 && result[result.length - 1].role !== 'user') {
-      result.push({
-        role: 'user',
-        content: [{ type: 'text', text: query }],
-      });
-    }
-
-    if (images && images.length > 0) {
-      const imageParts = images
-        .map((image) => {
-          const mimeType = `image/${path.extname(image).slice(1)}`;
-          return this.fileToGenerativePart(image, mimeType);
-        })
-        .filter(
-          (part) => part !== undefined,
-        ) as ChatCompletionContentPartImage[];
-
-      result[result.length - 1] = {
-        role: 'user',
-        content: [{ type: 'text', text: query }, ...imageParts],
-      };
-    }
-
-    return result;
-  }
-
-  private fileToGenerativePart(
-    filePath: string,
-    mimeType: string,
-  ): ChatCompletionContentPartImage | undefined {
-    try {
-      const base64Data = fs.readFileSync(filePath).toString('base64');
-      return {
-        type: 'image_url',
-        image_url: {
-          url: `data:${mimeType};base64,${base64Data}`,
-        },
-      };
-    } catch (error) {
-      console.error('Failed to read image file:', error);
-    }
-  }
-
-  private handleFunctionCalls = async (
-    functionCalls: ChatCompletionMessageToolCall[],
-    updateStatus?: (status: string) => void,
-  ): Promise<ChatCompletionToolMessageParam[]> => {
-    const functionCallResults: ChatCompletionToolMessageParam[] = [];
-
-    for (const functionCall of functionCalls) {
-      if (
-        !functionCall.function?.name ||
-        !functionCall.id ||
-        !functionCall.function?.arguments
-      ) {
-        continue;
-      }
-
-      const tool = ToolService.getTool(functionCall.function.name);
-      if (!tool) {
-        functionCallResults.push({
-          role: 'tool',
-          tool_call_id: functionCall.id,
-          content:
-            'Failed to find tool with name: ' + functionCall.function.name,
-        });
-        continue;
-      }
-
-      try {
-        const result = await tool({
-          ...JSON.parse(functionCall.function.arguments),
-          updateStatus,
-        });
-        functionCallResults.push({
-          role: 'tool',
-          tool_call_id: functionCall.id,
-          content: result,
-        });
-      } catch (error) {
-        functionCallResults.push({
-          role: 'tool',
-          tool_call_id: functionCall.id,
-          content: `Error executing tool ${functionCall.function.name}: ${error}`,
-        });
-      }
-    }
-
-    return functionCallResults;
-  };
 
   public async getLatestAvailableModelNames(): Promise<string[]> {
     const openai = new OpenAI({
