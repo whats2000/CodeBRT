@@ -17,8 +17,8 @@ import { webSearchSchema } from '../../constants';
 export abstract class AbstractOpenaiLikeService extends AbstractLanguageModelService {
   protected readonly generationConfig: Partial<ChatCompletionCreateParamsBaseOpenaiLike> =
     {
-      temperature: 0.5,
-      max_tokens: 1024,
+      temperature: 0.7,
+      max_tokens: 8192,
       top_p: 1,
       stop: null,
     };
