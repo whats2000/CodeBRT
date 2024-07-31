@@ -311,7 +311,7 @@ export class HuggingFaceService extends AbstractLanguageModelService {
               arguments: any;
             };
           } => {
-            if (!toolCall.function.name) {
+            if (!toolCall.function?.name) {
               return {
                 id: id,
                 type: 'function',
