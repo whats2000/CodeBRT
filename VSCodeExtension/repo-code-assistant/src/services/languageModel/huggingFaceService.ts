@@ -311,6 +311,16 @@ export class HuggingFaceService extends AbstractLanguageModelService {
               arguments: any;
             };
           } => {
+            if (!toolCall.function.name) {
+              return {
+                id: id,
+                type: 'function',
+                function: {
+                  name: 'missing "name" key',
+                  arguments: {},
+                },
+              };
+            }
             const { name, ...args } = toolCall.function;
             return {
               id: id,
