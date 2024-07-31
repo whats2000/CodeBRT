@@ -31,3 +31,11 @@ MonitorProject/
 ExternalPlugIn/LocalLanguageModelServer/venv/*
 uploads/*
 coverage/
+
+ExternalPlugIn/LocalLanguageModelResultsBlender/llm_blender/model/llm-blender/*
+ExternalPlugIn/LocalLanguageModelResultsBlender/llm_blender/model/models--llm-blender--gen_fuser_770m/*
+ExternalPlugIn/LocalLanguageModelResultsBlender/llm_blender/model/models--microsoft--deberta-v3-large/*
+ExternalPlugIn/LocalLanguageModelResultsBlender/llm_blender/model/.locks/*
+**/__pycache__/*
+
+file/*.pdf

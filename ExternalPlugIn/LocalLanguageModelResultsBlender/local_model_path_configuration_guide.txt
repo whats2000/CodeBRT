@@ -1,0 +1,6 @@
+Put your local model on llm-blender/model/<project name or company name>/<model name>/<model ex: model.safetensors or pytorchmodel.bin>
+like:
+llm-blender/model/llm-blender/PairRM/<model content>
+
+You can find basic model at the following website:
+https://huggingface.co/llm-blender
