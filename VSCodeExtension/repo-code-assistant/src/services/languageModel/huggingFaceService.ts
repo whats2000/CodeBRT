@@ -244,10 +244,12 @@ export class HuggingFaceService extends AbstractLanguageModelService {
           });
 
           let completeToolCallsString: string = '';
-
-          updateStatus && updateStatus('');
+          let isClearStatus = false;
 
           for await (const chunk of streamResponse) {
+            updateStatus && isClearStatus && updateStatus('');
+            isClearStatus = true;
+
             if (!chunk.choices[0]?.delta.tool_calls) {
               const partText = chunk.choices[0]?.delta?.content || '';
               sendStreamResponse(partText);
@@ -278,6 +280,12 @@ export class HuggingFaceService extends AbstractLanguageModelService {
             '',
           );
 
+          // Replace the "_name" key with "name" key
+          completeToolCallsString = completeToolCallsString.replace(
+            /"_name"/g,
+            '"name"',
+          );
+
           // Parse the string into a JSON object
           let toolCallObject = JSON.parse(completeToolCallsString);
 
@@ -303,12 +311,12 @@ export class HuggingFaceService extends AbstractLanguageModelService {
               arguments: any;
             };
           } => {
-            const { _name, ...args } = toolCall.function;
+            const { name, ...args } = toolCall.function;
             return {
               id: id,
               type: 'function',
               function: {
-                name: _name,
+                name: name,
                 arguments: args,
               },
             };
