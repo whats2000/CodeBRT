@@ -198,6 +198,22 @@ export class HuggingFaceService extends AbstractLanguageModelService {
 
     try {
       if (!sendStreamResponse) {
+        vscode.window.showWarningMessage(
+          'The non-streaming response is not supported tool calls in this version. The tool calls will be ignored.
+        );
+
+        return (
+          await huggerFace.chatCompletion({
+            messages: conversationHistory,
+            model: this.currentModel,
+            stream: false,
+            ...this.generationConfig,
+          })
+        ).choices[0]?.message?.content!;
+
+        // TODO: The following code is not working correctly due to the Hugging Face API not returning the tool calls correctly
+        // Update it after the API is fixed
+        /**
         while (functionCallCount < MAX_FUNCTION_CALLS) {
           const response = await huggerFace.chatCompletion({
             messages: conversationHistory,
@@ -228,6 +244,7 @@ export class HuggingFaceService extends AbstractLanguageModelService {
           functionCallCount++;
         }
         return 'Max function call limit reached.';
+        **/
       } else {
         let responseText = '';
 
