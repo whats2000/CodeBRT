@@ -4,7 +4,7 @@ CodeBRT is an AI program generation plugin for VSCode. It helps you quickly gene
 
 ## Preview
 
-![](file/img/review.png)
+![](Files/img/review.png)
 
 ## Installation Instructions
 
@@ -33,11 +33,11 @@ Open VSCode, select File > Open Folder, and then choose the repo-code-assistant/
 ## Usage Instructions
 
 1. Start the extension: In VSCode, click the extension button to open the extension dialog.
-   ![](file/img/tutorial_extension_icon.png)
+   ![](Files/img/tutorial_extension_icon.png)
 2. Choose the appropriate language model: Select the authorized or locally deployed model.
-   ![](file/img/tutorial_model_choose.png)
+   ![](Files/img/tutorial_model_choose.png)
 3. Enter API: Open the setting bar and enter the API.
-   ![](file/img/tutorial_input_api.png)
+   ![](Files/img/tutorial_input_api.png)
 
 
 ## Features
