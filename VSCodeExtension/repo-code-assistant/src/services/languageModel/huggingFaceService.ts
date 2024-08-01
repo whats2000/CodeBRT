@@ -199,7 +199,7 @@ export class HuggingFaceService extends AbstractLanguageModelService {
     try {
       if (!sendStreamResponse) {
         vscode.window.showWarningMessage(
-          'The non-streaming response is not supported tool calls in this version. The tool calls will be ignored.
+          'The non-streaming response is not supported tool calls in this version. The tool calls will be ignored.',
         );
 
         return (
