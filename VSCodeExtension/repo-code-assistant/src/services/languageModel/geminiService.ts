@@ -15,8 +15,13 @@ import {
   HarmCategory,
 } from '@google/generative-ai';
 
-import type { ConversationEntry, GetResponseOptions } from '../../types';
-import { MODEL_SERVICE_LINKS, webSearchSchema } from '../../constants';
+import type {
+  ConversationEntry,
+  GetResponseOptions,
+  ToolServiceType,
+} from '../../types';
+import { MODEL_SERVICE_LINKS, toolsSchema } from '../../constants';
+import { mapFunctionDeclarationSchemaType } from '../../utils';
 import { AbstractLanguageModelService } from './abstractLanguageModelService';
 import { SettingsManager } from '../../api';
 import { ToolService } from '../tools';
@@ -69,43 +74,7 @@ export class GeminiService extends AbstractLanguageModelService {
     },
   ];
 
-  private readonly tools: Tool[] = [
-    {
-      functionDeclarations: [
-        {
-          name: webSearchSchema.name,
-          description: webSearchSchema.description,
-          parameters: {
-            type: FunctionDeclarationSchemaType.OBJECT,
-            properties: {
-              query: {
-                type: FunctionDeclarationSchemaType.STRING,
-                description:
-                  webSearchSchema.inputSchema.properties.query.description,
-              },
-              maxCharsPerPage: {
-                type: FunctionDeclarationSchemaType.NUMBER,
-                description:
-                  webSearchSchema.inputSchema.properties.maxCharsPerPage
-                    .description,
-                nullable:
-                  webSearchSchema.inputSchema.required.includes(
-                    'maxCharsPerPage',
-                  ),
-              },
-              numResults: {
-                type: FunctionDeclarationSchemaType.NUMBER,
-                description:
-                  webSearchSchema.inputSchema.properties.numResults.description,
-                nullable:
-                  webSearchSchema.inputSchema.required.includes('numResults'),
-              },
-            },
-          },
-        },
-      ],
-    },
-  ];
+  private readonly tools: Tool[] = [];
 
   constructor(
     context: vscode.ExtensionContext,
@@ -123,6 +92,7 @@ export class GeminiService extends AbstractLanguageModelService {
       availableModelNames,
     );
     this.apiKey = settingsManager.get('geminiApiKey');
+    this.tools = this.buildTools();
 
     this.initialize().catch((error) =>
       vscode.window.showErrorMessage(
@@ -148,6 +118,43 @@ export class GeminiService extends AbstractLanguageModelService {
         'Failed to initialize Gemini Service History: ' + error,
       );
     }
+  }
+
+  private buildTools(): Tool[] {
+    return Object.keys(toolsSchema).map((toolKey) => {
+      const tool = toolsSchema[toolKey as ToolServiceType];
+      const properties = Object.keys(tool.inputSchema.properties).reduce(
+        (acc, key) => {
+          const property = tool.inputSchema.properties[key];
+          acc[key] = {
+            type: mapFunctionDeclarationSchemaType(property.type),
+            description: property.description,
+            nullable: !tool.inputSchema.required.includes(key),
+          };
+          return acc;
+        },
+        {} as {
+          [key: string]: {
+            type: FunctionDeclarationSchemaType;
+            description: string;
+            nullable: boolean;
+          };
+        },
+      );
+
+      return {
+        functionDeclarations: [
+          {
+            name: tool.name,
+            description: tool.description,
+            parameters: {
+              type: FunctionDeclarationSchemaType.OBJECT,
+              properties,
+            },
+          },
+        ],
+      };
+    });
   }
 
   private conversationHistoryToContent(entries: {

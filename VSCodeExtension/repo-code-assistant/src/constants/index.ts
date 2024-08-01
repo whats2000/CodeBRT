@@ -1,3 +1,3 @@
 export * from './localStorageId';
 export * from './modelServiceILinks';
-export * from './webSearchSchema';
+export * from './toolSchema';

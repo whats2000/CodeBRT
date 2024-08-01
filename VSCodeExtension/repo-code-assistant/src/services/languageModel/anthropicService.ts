@@ -15,10 +15,14 @@ import type {
 } from '@anthropic-ai/sdk/src/resources';
 import Anthropic from '@anthropic-ai/sdk';
 
-import type { ConversationEntry, GetResponseOptions } from '../../types';
+import type {
+  ConversationEntry,
+  GetResponseOptions,
+  ToolServiceType,
+} from '../../types';
+import { MODEL_SERVICE_LINKS, toolsSchema } from '../../constants';
 import { SettingsManager } from '../../api';
 import { AbstractLanguageModelService } from './abstractLanguageModelService';
-import { MODEL_SERVICE_LINKS, webSearchSchema } from '../../constants';
 import { ToolService } from '../tools';
 
 export class AnthropicService extends AbstractLanguageModelService {
@@ -29,13 +33,14 @@ export class AnthropicService extends AbstractLanguageModelService {
     max_tokens: 4096,
   };
 
-  private readonly tools: Tool[] = [
-    {
-      name: webSearchSchema.name,
-      description: webSearchSchema.description,
-      input_schema: webSearchSchema.inputSchema as Tool.InputSchema,
-    },
-  ];
+  private readonly tools: Tool[] = Object.keys(toolsSchema).map((toolKey) => {
+    const tool = toolsSchema[toolKey as ToolServiceType];
+    return {
+      name: tool.name,
+      description: tool.description,
+      input_schema: tool.inputSchema as Tool.InputSchema,
+    };
+  });
 
   constructor(
     context: vscode.ExtensionContext,

@@ -33,4 +33,11 @@ export type ToolServicesApi = {
     format?: 'text' | 'json';
     updateStatus?: (status: string) => void;
   }) => Promise<string>;
+
+  urlFetcher: (args: {
+    url: string;
+    maxCharsPerPage?: number | string;
+    format?: 'text' | 'json';
+    updateStatus?: (status: string) => void;
+  }) => Promise<string>;
 };

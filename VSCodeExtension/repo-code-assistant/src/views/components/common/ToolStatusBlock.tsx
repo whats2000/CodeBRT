@@ -49,6 +49,16 @@ export const ToolStatusBlock: React.FC<ToolStatusBlockProps> = ({ status }) => {
           {statusMessage}
         </Typography.Paragraph>
       );
+    case 'fetching':
+      return (
+        <Typography.Paragraph style={{ display: 'flex', alignItems: 'center' }}>
+          <Spin
+            indicator={<LoadingOutlined style={{ fontSize: 24 }} spin />}
+            style={{ marginRight: 8 }}
+          />
+          {statusMessage}
+        </Typography.Paragraph>
+      );
     default:
       return <Typography.Paragraph>{status}</Typography.Paragraph>;
   }

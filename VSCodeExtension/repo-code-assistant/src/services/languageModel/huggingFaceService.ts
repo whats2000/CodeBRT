@@ -8,10 +8,14 @@ import {
 } from '@huggingface/tasks/src/tasks/chat-completion/inference';
 import { HfInference } from '@huggingface/inference';
 
-import type { ConversationEntry, GetResponseOptions } from '../../types';
+import type {
+  ConversationEntry,
+  GetResponseOptions,
+  ToolServiceType,
+} from '../../types';
 import { AbstractLanguageModelService } from './abstractLanguageModelService';
 import { SettingsManager } from '../../api';
-import { MODEL_SERVICE_LINKS, webSearchSchema } from '../../constants';
+import { MODEL_SERVICE_LINKS, toolsSchema } from '../../constants';
 import { ToolService } from '../tools';
 
 export class HuggingFaceService extends AbstractLanguageModelService {
@@ -20,16 +24,19 @@ export class HuggingFaceService extends AbstractLanguageModelService {
 
   private readonly generationConfig: Partial<ChatCompletionInput> = {};
 
-  private readonly tools: ChatCompletionInputTool[] = [
-    {
+  private readonly tools: ChatCompletionInputTool[] = Object.keys(
+    toolsSchema,
+  ).map((toolKey) => {
+    const tool = toolsSchema[toolKey as ToolServiceType];
+    return {
       type: 'function',
       function: {
-        name: webSearchSchema.name,
-        description: webSearchSchema.description,
-        arguments: webSearchSchema.inputSchema,
+        name: tool.name,
+        description: tool.description,
+        arguments: tool.inputSchema,
       },
-    },
-  ];
+    };
+  });
 
   constructor(
     context: vscode.ExtensionContext,

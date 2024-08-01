@@ -2,41 +2,22 @@ import * as vscode from 'vscode';
 import type { Message, Tool, ToolCall, ToolResult } from 'cohere-ai/api';
 import { CohereClient } from 'cohere-ai';
 
-import { ConversationEntry, GetResponseOptions } from '../../types';
+import type {
+  ConversationEntry,
+  GetResponseOptions,
+  ToolServiceType,
+} from '../../types';
+import { MODEL_SERVICE_LINKS, toolsSchema } from '../../constants';
+import { mapTypeToPythonFormat } from '../../utils';
 import { AbstractLanguageModelService } from './abstractLanguageModelService';
 import { SettingsManager } from '../../api';
 import { ToolService } from '../tools';
-import { MODEL_SERVICE_LINKS, webSearchSchema } from '../../constants';
 
 export class CohereService extends AbstractLanguageModelService {
   private apiKey: string;
   private readonly settingsListener: vscode.Disposable;
 
-  private readonly tools: Tool[] = [
-    {
-      name: webSearchSchema.name,
-      description: webSearchSchema.description,
-      parameterDefinitions: {
-        query: {
-          description: webSearchSchema.inputSchema.properties.query.description,
-          type: 'str',
-          required: true,
-        },
-        maxCharsPerPage: {
-          description:
-            webSearchSchema.inputSchema.properties.maxCharsPerPage.description,
-          type: 'int',
-          required: false,
-        },
-        numResults: {
-          description:
-            webSearchSchema.inputSchema.properties.numResults.description,
-          type: 'int',
-          required: false,
-        },
-      },
-    },
-  ];
+  private readonly tools: Tool[] = [];
 
   constructor(
     context: vscode.ExtensionContext,
@@ -55,6 +36,7 @@ export class CohereService extends AbstractLanguageModelService {
     );
 
     this.apiKey = settingsManager.get('cohereApiKey');
+    this.tools = this.buildTools();
 
     this.initialize().catch((error) =>
       vscode.window.showErrorMessage(
@@ -70,6 +52,38 @@ export class CohereService extends AbstractLanguageModelService {
     });
 
     context.subscriptions.push(this.settingsListener);
+  }
+
+  private buildTools(): Tool[] {
+    return Object.keys(toolsSchema).map((toolKey) => {
+      const tool = toolsSchema[toolKey as ToolServiceType];
+      const parameterDefinitions = Object.keys(
+        tool.inputSchema.properties,
+      ).reduce(
+        (acc, key) => {
+          const property = tool.inputSchema.properties[key];
+          acc[key] = {
+            description: property.description,
+            type: mapTypeToPythonFormat(property.type),
+            required: tool.inputSchema.required.includes(key),
+          };
+          return acc;
+        },
+        {} as {
+          [key: string]: {
+            description: string;
+            type: string;
+            required: boolean;
+          };
+        },
+      );
+
+      return {
+        name: tool.name,
+        description: tool.description,
+        parameterDefinitions,
+      };
+    });
   }
 
   private async initialize() {

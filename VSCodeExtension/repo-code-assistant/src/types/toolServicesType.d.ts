@@ -1,1 +1,1 @@
-export type ToolServiceType = 'webSearch';
+export type ToolServiceType = 'webSearch' | 'urlFetcher';

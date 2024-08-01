@@ -4,10 +4,14 @@ import * as vscode from 'vscode';
 import type { Message, Options, Tool, ToolCall } from 'ollama';
 import { Ollama } from 'ollama';
 
-import type { ConversationEntry, GetResponseOptions } from '../../types';
+import type {
+  ConversationEntry,
+  GetResponseOptions,
+  ToolServiceType,
+} from '../../types';
+import { toolsSchema } from '../../constants';
 import { AbstractLanguageModelService } from './abstractLanguageModelService';
 import { SettingsManager } from '../../api';
-import { webSearchSchema } from '../../constants';
 import { ToolService } from '../tools';
 
 export class OllamaService extends AbstractLanguageModelService {
@@ -19,16 +23,17 @@ export class OllamaService extends AbstractLanguageModelService {
     top_k: 0,
   };
 
-  private tools: Tool[] = [
-    {
+  private readonly tools: Tool[] = Object.keys(toolsSchema).map((toolKey) => {
+    const tool = toolsSchema[toolKey as ToolServiceType];
+    return {
       type: 'function',
       function: {
-        name: webSearchSchema.name,
-        description: webSearchSchema.description,
-        parameters: webSearchSchema.inputSchema,
+        name: tool.name,
+        description: tool.description,
+        parameters: tool.inputSchema,
       },
-    },
-  ];
+    };
+  });
 
   constructor(
     context: vscode.ExtensionContext,

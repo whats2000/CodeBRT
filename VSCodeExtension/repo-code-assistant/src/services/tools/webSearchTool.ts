@@ -7,12 +7,7 @@ import axios from 'axios';
 import * as cheerio from 'cheerio';
 
 import type { ToolServicesApi } from '../../types';
-
-const extractTextFromWebpage = (htmlContent: string): string => {
-  const $ = cheerio.load(htmlContent);
-  $('script, style, header, footer, nav, form, svg').remove();
-  return $('body').text().replace(/\s+/g, ' ').trim();
-};
+import { extractTextFromWebpage } from '../../utils';
 
 const postProcessResults = (
   results: { title: string; url: string; snippet: string }[],

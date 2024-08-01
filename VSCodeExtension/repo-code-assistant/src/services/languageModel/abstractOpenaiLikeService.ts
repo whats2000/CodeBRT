@@ -9,10 +9,11 @@ import type {
   ChatCompletionToolMessageParamOpenaiLike,
   ChatCompletionToolOpenaiLike,
   ConversationEntry,
+  ToolServiceType,
 } from '../../types';
+import { toolsSchema } from '../../constants';
 import { AbstractLanguageModelService } from './abstractLanguageModelService';
 import { ToolService } from '../tools';
-import { webSearchSchema } from '../../constants';
 
 export abstract class AbstractOpenaiLikeService extends AbstractLanguageModelService {
   protected readonly generationConfig: Partial<ChatCompletionCreateParamsBaseOpenaiLike> =
@@ -23,16 +24,19 @@ export abstract class AbstractOpenaiLikeService extends AbstractLanguageModelSer
       stop: null,
     };
 
-  protected tools: ChatCompletionToolOpenaiLike[] = [
-    {
+  protected tools: ChatCompletionToolOpenaiLike[] = Object.keys(
+    toolsSchema,
+  ).map((toolKey) => {
+    const tool = toolsSchema[toolKey as ToolServiceType];
+    return {
       type: 'function',
       function: {
-        name: webSearchSchema.name,
-        description: webSearchSchema.description,
-        parameters: webSearchSchema.inputSchema,
+        name: tool.name,
+        description: tool.description,
+        parameters: tool.inputSchema,
       },
-    },
-  ];
+    };
+  });
 
   private fileToGenerativePart(
     filePath: string,
