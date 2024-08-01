@@ -1,6 +1,6 @@
-# CodeLessVSCodeExtension
+# CodeBRT
 
-CodeLessVSCodeExtension is an AI program generation plugin for VSCode. It helps you quickly generate code through AI, thus improving development efficiency.
+CodeBRT is an AI program generation plugin for VSCode. It helps you quickly generate code through AI, thus improving development efficiency.
 
 ## Preview
 
