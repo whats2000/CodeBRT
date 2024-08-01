@@ -20,7 +20,7 @@ export class OpenaiVoiceService extends AbstractVoiceService {
 
     // Listen for settings changes
     this.settingsListener = vscode.workspace.onDidChangeConfiguration((e) => {
-      if (e.affectsConfiguration('repo-code-assistant.openaiApiKey')) {
+      if (e.affectsConfiguration('code-brt.openaiApiKey')) {
         this.apiKey = settingsManager.get('openaiApiKey');
       }
     });

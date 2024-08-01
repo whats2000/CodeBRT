@@ -1,17 +1,18 @@
 import * as vscode from 'vscode';
+
 import type {
+  ChatCompletionCreateParamsNonStreaming,
   ChatCompletionCreateParamsStreaming,
   ChatCompletionMessageToolCall,
-  ChatCompletionCreateParamsNonStreaming,
-} from 'openai/resources/chat/completions';
-import OpenAI from 'openai';
+} from 'groq-sdk/src/resources/chat/completions';
+import Groq from 'groq-sdk';
 
 import type { GetResponseOptions } from '../../types';
-import { SettingsManager } from '../../api';
 import { AbstractOpenaiLikeService } from './abstractOpenaiLikeService';
+import { SettingsManager } from '../../api';
 import { MODEL_SERVICE_LINKS } from '../../constants';
 
-export class OpenAIService extends AbstractOpenaiLikeService {
+export class GroqService extends AbstractOpenaiLikeService {
   private apiKey: string;
   private readonly settingsListener: vscode.Disposable;
 
@@ -19,30 +20,31 @@ export class OpenAIService extends AbstractOpenaiLikeService {
     context: vscode.ExtensionContext,
     settingsManager: SettingsManager,
   ) {
-    const availableModelNames = settingsManager.get('openaiAvailableModels');
-    const defaultModelName = settingsManager.get('lastSelectedModel').openai;
+    const availableModelNames = settingsManager.get('groqAvailableModels');
+    const defaultModelName = settingsManager.get('lastSelectedModel').groq;
 
     super(
-      'openai',
+      'groq',
       context,
-      'openAIConversationHistory.json',
+      'groqConversationHistory.json',
       settingsManager,
       defaultModelName,
       availableModelNames,
     );
-    this.apiKey = settingsManager.get('openaiApiKey');
+
+    this.apiKey = settingsManager.get('groqApiKey');
 
     // Initialize and load conversation history
     this.initialize().catch((error) =>
       vscode.window.showErrorMessage(
-        'Failed to initialize OpenAI Service: ' + error,
+        'Failed to initialize Groq Service History: ' + error,
       ),
     );
 
     // Listen for settings changes
     this.settingsListener = vscode.workspace.onDidChangeConfiguration((e) => {
-      if (e.affectsConfiguration('repo-code-assistant.openaiApiKey')) {
-        this.apiKey = settingsManager.get('openaiApiKey');
+      if (e.affectsConfiguration('code-brt.groqApiKey')) {
+        this.apiKey = settingsManager.get('groqApiKey');
       }
     });
 
@@ -54,20 +56,20 @@ export class OpenAIService extends AbstractOpenaiLikeService {
       await this.loadHistories();
     } catch (error) {
       vscode.window.showErrorMessage(
-        'Failed to initialize OpenAI Service History: ' + error,
+        'Failed to initialize Groq Service: ' + error,
       );
     }
   }
 
   public async getLatestAvailableModelNames(): Promise<string[]> {
-    const openai = new OpenAI({
+    const groq = new Groq({
       apiKey: this.apiKey,
     });
 
     let newAvailableModelNames: string[] = [...this.availableModelNames];
 
     try {
-      const latestModels = (await openai.models.list()).data.sort((a, b) =>
+      const latestModels = (await groq.models.list()).data.sort((a, b) =>
         a.created > b.created ? -1 : 1,
       );
 
@@ -80,7 +82,7 @@ export class OpenAIService extends AbstractOpenaiLikeService {
       latestModels.forEach((model) => {
         if (!model.id) return;
         if (newAvailableModelNames.includes(model.id)) return;
-        if (!model.id.includes('gpt')) return;
+        if (model.id.includes('whisper')) return;
 
         newAvailableModelNames.push(model.id);
       });
@@ -95,27 +97,30 @@ export class OpenAIService extends AbstractOpenaiLikeService {
 
   public async getResponse(options: GetResponseOptions): Promise<string> {
     if (this.currentModel === '') {
-      vscode.window.showErrorMessage(
-        'Make sure the model is selected before sending a message. Open the model selection dropdown and configure the model.',
-      );
+      vscode.window
+        .showErrorMessage(
+          'Make sure the model is selected before sending a message. Open the model selection dropdown and configure the model.',
+        )
+        .then();
       return 'Missing model configuration. Check the model selection dropdown.';
-    }
-
-    if (this.currentModel.includes('gpt-3.5') && options.images) {
-      vscode.window.showWarningMessage(
-        'The images ChatGPT-3.5 is not supported currently. The images will be ignored.',
-      );
-      options.images = undefined;
     }
 
     const { query, images, currentEntryID, sendStreamResponse, updateStatus } =
       options;
-    const openai = new OpenAI({ apiKey: this.apiKey });
+
+    if (images && images.length > 0) {
+      vscode.window.showWarningMessage(
+        'The images inference is not supported currently. The images will be ignored.',
+      );
+    }
+
+    const groq = new Groq({
+      apiKey: this.apiKey,
+    });
 
     const conversationHistory = await this.conversationHistoryToContent(
       this.getHistoryBeforeEntry(currentEntryID).entries,
       query,
-      images,
     );
 
     let functionCallCount = 0;
@@ -124,7 +129,7 @@ export class OpenAIService extends AbstractOpenaiLikeService {
     try {
       if (!sendStreamResponse) {
         while (functionCallCount < MAX_FUNCTION_CALLS) {
-          const response = await openai.chat.completions.create({
+          const response = await groq.chat.completions.create({
             messages: conversationHistory,
             model: this.currentModel,
             tools: this.tools,
@@ -145,20 +150,21 @@ export class OpenAIService extends AbstractOpenaiLikeService {
             content: null,
             tool_calls: response.choices[0].message.tool_calls,
           });
+
           conversationHistory.push(...functionCallResults);
 
           functionCallCount++;
         }
         return 'Max function call limit reached.';
       } else {
-        let responseText = '';
+        let responseText: string = '';
 
         while (functionCallCount < MAX_FUNCTION_CALLS) {
-          const streamResponse = await openai.chat.completions.create({
-            model: this.currentModel,
+          const streamResponse = await groq.chat.completions.create({
             messages: conversationHistory,
-            tools: this.tools,
+            model: this.currentModel,
             stream: true,
+            tools: this.tools,
             ...this.generationConfig,
           } as ChatCompletionCreateParamsStreaming);
 
@@ -170,20 +176,15 @@ export class OpenAIService extends AbstractOpenaiLikeService {
 
           for await (const chunk of streamResponse) {
             if (chunk.choices[0]?.finish_reason === 'tool_calls') {
-              const toolCalls = completeToolCalls.map((call) => ({
-                id: call.id,
-                function: call.function,
-                type: call.type,
-              }));
               const functionCallResults = await this.handleFunctionCalls(
-                toolCalls,
+                completeToolCalls,
                 updateStatus,
               );
 
               conversationHistory.push({
                 role: 'assistant',
                 content: null,
-                tool_calls: toolCalls,
+                tool_calls: completeToolCalls,
               });
               conversationHistory.push(...functionCallResults);
               break;
@@ -196,7 +197,6 @@ export class OpenAIService extends AbstractOpenaiLikeService {
               continue;
             }
 
-            // Collect tool calls delta from the stream response delta
             chunk.choices[0].delta.tool_calls.forEach((deltaToolCall) => {
               const index = deltaToolCall.index;
               let existingToolCall = completeToolCalls.find(
@@ -231,13 +231,13 @@ export class OpenAIService extends AbstractOpenaiLikeService {
     } catch (error) {
       vscode.window
         .showErrorMessage(
-          'Failed to get response from OpenAI Service: ' + error,
+          'Failed to get response from Groq Service: ' + error,
           'Get API Key',
         )
         .then((selection) => {
           if (selection === 'Get API Key') {
             vscode.env.openExternal(
-              vscode.Uri.parse(MODEL_SERVICE_LINKS.openaiApiKey as string),
+              vscode.Uri.parse(MODEL_SERVICE_LINKS.groqApiKey as string),
             );
           }
         });

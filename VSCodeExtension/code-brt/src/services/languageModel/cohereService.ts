@@ -46,7 +46,7 @@ export class CohereService extends AbstractLanguageModelService {
 
     // Listen for settings changes
     this.settingsListener = vscode.workspace.onDidChangeConfiguration((e) => {
-      if (e.affectsConfiguration('repo-code-assistant.cohereApiKey')) {
+      if (e.affectsConfiguration('code-brt.cohereApiKey')) {
         this.apiKey = settingsManager.get('cohereApiKey');
       }
     });

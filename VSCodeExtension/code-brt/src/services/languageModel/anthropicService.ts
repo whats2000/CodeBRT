@@ -68,7 +68,7 @@ export class AnthropicService extends AbstractLanguageModelService {
 
     // Listen for settings changes
     this.settingsListener = vscode.workspace.onDidChangeConfiguration((e) => {
-      if (e.affectsConfiguration('repo-code-assistant.anthropicApiKey')) {
+      if (e.affectsConfiguration('code-brt.anthropicApiKey')) {
         this.apiKey = settingsManager.get('anthropicApiKey');
       }
     });

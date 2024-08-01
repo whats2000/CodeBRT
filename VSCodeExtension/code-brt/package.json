@@ -1,8 +1,8 @@
 {
-  "name": "repo-code-assistant",
+  "name": "code-brt",
   "private": true,
-  "displayName": "Repo Code Assistant",
-  "description": "Repo Code Assistant, a AI framework for code assistant with scheduler",
+  "displayName": "CodeBRT",
+  "description": "CodeBRT, a LLM/VLM framework for code assistant with multiple models.",
   "version": "0.1.0",
   "icon": "static/icon.ico",
   "engines": {
@@ -11,7 +11,7 @@
     "npm": "^9.6.7"
   },
   "license": "LGPL-3.0-or-later",
-  "repository": "https://github.com/whats2000/repo-code-assistant",
+  "repository": "https://github.com/whats2000/code-brt",
   "tags": [],
   "categories": [],
   "publisher": "whats2000",
@@ -85,14 +85,14 @@
       "activitybar": [
         {
           "id": "chatActivityBarContainer",
-          "title": "Repo Assistant Chat",
+          "title": "CodeBRT Chat",
           "icon": "static/logo.svg"
         }
       ],
       "panel": [
         {
           "id": "workingPanelContainer",
-          "title": "Repo Assistant Working Panel",
+          "title": "CodeBRT Working Panel",
           "icon": "static/logo.svg"
         }
       ]
@@ -114,50 +114,50 @@
       ]
     },
     "configuration": {
-      "title": "Repo Code Assistant",
+      "title": "CodeBRT",
       "properties": {
-        "repo-code-assistant.geminiApiKey": {
+        "code-brt.geminiApiKey": {
           "type": "string",
           "default": "",
           "description": "Gemini API Key",
           "markdownDescription": "API key for Gemini model"
         },
-        "repo-code-assistant.anthropicApiKey": {
+        "code-brt.anthropicApiKey": {
           "type": "string",
           "default": "",
           "description": "Anthropic API Key",
           "markdownDescription": "API key for Anthropic model"
         },
-        "repo-code-assistant.openaiApiKey": {
+        "code-brt.openaiApiKey": {
           "type": "string",
           "default": "",
           "description": "OpenAI API Key",
           "markdownDescription": "API key for OpenAI model"
         },
-        "repo-code-assistant.cohereApiKey": {
+        "code-brt.cohereApiKey": {
           "type": "string",
           "default": "",
           "description": "Cohere API Key",
           "markdownDescription": "API key for Cohere model"
         },
-        "repo-code-assistant.groqApiKey": {
+        "code-brt.groqApiKey": {
           "type": "string",
           "default": "",
           "description": "Open Source LLM API Key",
           "markdownDescription": "API key for Open Source LLM model"
         },
-        "repo-code-assistant.huggingFaceApiKey": {
+        "code-brt.huggingFaceApiKey": {
           "type": "string",
           "default": "",
           "description": "HuggingFace API Key",
           "markdownDescription": "API key for HuggingFace model"
         },
-        "repo-code-assistant.themePrimaryColor": {
+        "code-brt.themePrimaryColor": {
           "type": "string",
           "default": "#f0f0f0",
           "description": "Primary color for the theme"
         },
-        "repo-code-assistant.themeAlgorithm": {
+        "code-brt.themeAlgorithm": {
           "type": "string",
           "default": "darkAlgorithm",
           "description": "Algorithm for the theme",
@@ -178,7 +178,7 @@
             "Compact algorithm"
           ]
         },
-        "repo-code-assistant.themeBorderRadius": {
+        "code-brt.themeBorderRadius": {
           "type": "number",
           "default": 4,
           "description": "Border radius for the theme",
@@ -190,7 +190,7 @@
             "100"
           ]
         },
-        "repo-code-assistant.hljsTheme": {
+        "code-brt.hljsTheme": {
           "type": "string",
           "default": "darcula",
           "description": "Highlight.js theme",

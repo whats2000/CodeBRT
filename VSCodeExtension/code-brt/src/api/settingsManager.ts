@@ -92,7 +92,7 @@ export class SettingsManager {
   }
 
   private get settings(): vscode.WorkspaceConfiguration {
-    return vscode.workspace.getConfiguration('repo-code-assistant');
+    return vscode.workspace.getConfiguration('code-brt');
   }
 
   /**

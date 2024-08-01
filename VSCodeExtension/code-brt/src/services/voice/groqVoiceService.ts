@@ -20,7 +20,7 @@ export class GroqVoiceService extends AbstractVoiceService {
 
     // Listen for settings changes
     this.settingsListener = vscode.workspace.onDidChangeConfiguration((e) => {
-      if (e.affectsConfiguration('repo-code-assistant.groqApiKey')) {
+      if (e.affectsConfiguration('code-brt.groqApiKey')) {
         this.apiKey = settingsManager.get('groqApiKey');
       }
     });

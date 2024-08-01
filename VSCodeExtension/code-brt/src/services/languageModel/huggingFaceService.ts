@@ -68,7 +68,7 @@ export class HuggingFaceService extends AbstractLanguageModelService {
 
     // Listen for settings changes
     this.settingsListener = vscode.workspace.onDidChangeConfiguration((e) => {
-      if (e.affectsConfiguration('repo-code-assistant.huggingFaceApiKey')) {
+      if (e.affectsConfiguration('code-brt.huggingFaceApiKey')) {
         this.apiKey = settingsManager.get('huggingFaceApiKey');
       }
     });

@@ -102,7 +102,7 @@ export class GeminiService extends AbstractLanguageModelService {
 
     // Listen for settings changes
     this.settingsListener = vscode.workspace.onDidChangeConfiguration((e) => {
-      if (e.affectsConfiguration('repo-code-assistant.geminiApiKey')) {
+      if (e.affectsConfiguration('code-brt.geminiApiKey')) {
         this.apiKey = settingsManager.get('geminiApiKey');
       }
     });

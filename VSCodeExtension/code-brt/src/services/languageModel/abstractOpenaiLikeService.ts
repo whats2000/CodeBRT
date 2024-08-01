@@ -19,7 +19,7 @@ export abstract class AbstractOpenaiLikeService extends AbstractLanguageModelSer
   protected readonly generationConfig: Partial<ChatCompletionCreateParamsBaseOpenaiLike> =
     {
       temperature: 0.7,
-      max_tokens: 8192,
+      max_tokens: 4096,
       top_p: 1,
       stop: null,
     };
