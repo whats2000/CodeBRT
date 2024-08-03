@@ -4,7 +4,7 @@ import fsPromises from 'node:fs/promises';
 import vscode from 'vscode';
 import OpenAI from 'openai';
 
-import { MODEL_SERVICE_LINKS } from '../../constants';
+import { MODEL_SERVICE_CONSTANTS } from '../../constants';
 import { SettingsManager } from '../../api';
 import { AbstractVoiceService } from './abstractVoiceService';
 
@@ -50,7 +50,7 @@ export class OpenaiVoiceService extends AbstractVoiceService {
         .then((selection) => {
           if (selection === 'Get API Key') {
             vscode.env.openExternal(
-              vscode.Uri.parse(MODEL_SERVICE_LINKS.openaiApiKey as string),
+              vscode.Uri.parse(MODEL_SERVICE_CONSTANTS.openai.apiLink),
             );
           }
         });
@@ -76,7 +76,7 @@ export class OpenaiVoiceService extends AbstractVoiceService {
         .then((selection) => {
           if (selection === 'Get API Key') {
             vscode.env.openExternal(
-              vscode.Uri.parse(MODEL_SERVICE_LINKS.openaiApiKey as string),
+              vscode.Uri.parse(MODEL_SERVICE_CONSTANTS.openai.apiLink),
             );
           }
         });

@@ -20,7 +20,7 @@ import type {
   GetResponseOptions,
   ToolServiceType,
 } from '../../types';
-import { MODEL_SERVICE_LINKS, toolsSchema } from '../../constants';
+import { MODEL_SERVICE_CONSTANTS, toolsSchema } from '../../constants';
 import { mapFunctionDeclarationSchemaType } from '../../utils';
 import { AbstractLanguageModelService } from './abstractLanguageModelService';
 import { SettingsManager } from '../../api';
@@ -414,7 +414,7 @@ export class GeminiService extends AbstractLanguageModelService {
         .then((selection) => {
           if (selection === 'Get API Key') {
             vscode.env.openExternal(
-              vscode.Uri.parse(MODEL_SERVICE_LINKS.geminiApiKey as string),
+              vscode.Uri.parse(MODEL_SERVICE_CONSTANTS.gemini.apiLink),
             );
           }
         });

@@ -13,9 +13,14 @@ import {
   Typography,
 } from 'antd';
 
-import type { ExtensionSettings } from '../../../../types';
+import {
+  ExtensionSettings,
+  ModelServiceType,
+  TextToVoiceServiceType,
+  VoiceToTextServiceType,
+} from '../../../../types';
+import { MODEL_SERVICE_CONSTANTS } from '../../../../constants';
 import { WebviewContext } from '../../../WebviewContext';
-import { MODEL_SERVICE_LINKS } from '../../../../constants';
 
 const StyledForm = styled(Form)`
   display: flex;
@@ -158,15 +163,10 @@ export const SettingsBar: React.FC<SettingSidebarProps> = ({
     );
   };
 
-  const openModelServiceLink = (
-    settingKey: keyof Partial<ExtensionSettings>,
-  ) => {
-    const link = MODEL_SERVICE_LINKS[settingKey];
-    if (link) {
-      callApi('openExternalLink', link)
-        .then(() => {})
-        .catch(console.error);
-    }
+  const openModelServiceLink = (link: string) => {
+    callApi('openExternalLink', link)
+      .then(() => {})
+      .catch(console.error);
   };
 
   return (
@@ -184,20 +184,28 @@ export const SettingsBar: React.FC<SettingSidebarProps> = ({
       >
         {Object.entries(partialSettings).map(([key, value]) => {
           if (key.includes('ApiKey') || key.includes('ClientHost')) {
+            const serviceKey = key
+              .replace('ApiKey', '')
+              .replace('ClientHost', '') as Exclude<
+              | ModelServiceType
+              | TextToVoiceServiceType
+              | VoiceToTextServiceType,
+              'not set'
+            >;
+
             return (
               <FormGroup
                 key={key}
                 label={
                   <Space>
-                    <span>
-                      {key.charAt(0).toUpperCase() +
-                        key.slice(1).replace(/([A-Z])/g, ' $1')}
-                    </span>
+                    <span>{MODEL_SERVICE_CONSTANTS[serviceKey].name}</span>
                     <Tooltip title='Find out more about API keys and client hosts'>
                       <Typography.Link
                         type={'secondary'}
                         onClick={() =>
-                          openModelServiceLink(key as keyof ExtensionSettings)
+                          openModelServiceLink(
+                            MODEL_SERVICE_CONSTANTS[serviceKey].apiLink,
+                          )
                         }
                       >
                         Learn more
@@ -217,13 +225,7 @@ export const SettingsBar: React.FC<SettingSidebarProps> = ({
             );
           } else if (key === 'themePrimaryColor') {
             return (
-              <FormGroup
-                key={key}
-                label={
-                  key.charAt(0).toUpperCase() +
-                  key.slice(1).replace(/([A-Z])/g, ' $1')
-                }
-              >
+              <FormGroup key={key} label={'Theme Primary Color'}>
                 <ColorPicker
                   format='hex'
                   value={value as string}
@@ -234,13 +236,7 @@ export const SettingsBar: React.FC<SettingSidebarProps> = ({
             );
           } else if (key === 'themeAlgorithm') {
             return (
-              <FormGroup
-                key={key}
-                label={
-                  key.charAt(0).toUpperCase() +
-                  key.slice(1).replace(/([A-Z])/g, ' $1')
-                }
-              >
+              <FormGroup key={key} label={'Theme Algorithm'}>
                 <Select
                   value={
                     value as
@@ -260,16 +256,10 @@ export const SettingsBar: React.FC<SettingSidebarProps> = ({
             );
           } else if (key === 'themeBorderRadius') {
             return (
-              <FormGroup
-                key={key}
-                label={
-                  key.charAt(0).toUpperCase() +
-                  key.slice(1).replace(/([A-Z])/g, ' $1')
-                }
-              >
+              <FormGroup key={key} label={'Theme Border Radius'}>
                 <Input
                   type='number'
-                  value={value as number}
+                  value={value}
                   onChange={handleBorderRadiusChange}
                   onBlur={handleBlurSave}
                 />

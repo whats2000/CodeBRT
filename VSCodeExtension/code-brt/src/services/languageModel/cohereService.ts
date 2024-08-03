@@ -7,7 +7,7 @@ import type {
   GetResponseOptions,
   ToolServiceType,
 } from '../../types';
-import { MODEL_SERVICE_LINKS, toolsSchema } from '../../constants';
+import { MODEL_SERVICE_CONSTANTS, toolsSchema } from '../../constants';
 import { mapTypeToPythonFormat } from '../../utils';
 import { AbstractLanguageModelService } from './abstractLanguageModelService';
 import { SettingsManager } from '../../api';
@@ -295,7 +295,7 @@ export class CohereService extends AbstractLanguageModelService {
         .then((selection) => {
           if (selection === 'Get API Key') {
             vscode.env.openExternal(
-              vscode.Uri.parse(MODEL_SERVICE_LINKS.cohereApiKey as string),
+              vscode.Uri.parse(MODEL_SERVICE_CONSTANTS.cohere.apiLink),
             );
           }
         });

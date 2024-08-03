@@ -28,7 +28,7 @@ import type {
   ExtensionSettings,
   GptSoVitsVoiceSetting,
 } from '../../../../../types';
-import { MODEL_SERVICE_LINKS } from '../../../../../constants';
+import { MODEL_SERVICE_CONSTANTS } from '../../../../../constants';
 import { WebviewContext } from '../../../../WebviewContext';
 import { GptSoVitsSettingsBarSortableItem } from './GptSoVitsSettingsBar/GptSoVitsSettingsBarSortableItem';
 
@@ -203,13 +203,8 @@ export const GptSoVitsSettingsBar: React.FC<GptSoVitsSettingsBarProps> = ({
     });
   };
 
-  const openModelServiceLink = (settingKey: keyof ExtensionSettings) => {
-    const link = MODEL_SERVICE_LINKS[settingKey];
-    if (link) {
-      callApi('openExternalLink', link)
-        .then(() => {})
-        .catch(console.error);
-    }
+  const openLink = (link: string) => {
+    callApi('openExternalLink', link).catch(console.error);
   };
 
   const handleDragEnd = (event: DragEndEvent) => {
@@ -262,7 +257,9 @@ export const GptSoVitsSettingsBar: React.FC<GptSoVitsSettingsBarProps> = ({
               <Tooltip title='Find out more about set up GPT-SoVits client host'>
                 <Typography.Link
                   type={'secondary'}
-                  onClick={() => openModelServiceLink('gptSoVitsClientHost')}
+                  onClick={() =>
+                    openLink(MODEL_SERVICE_CONSTANTS.gptSoVits.apiLink)
+                  }
                 >
                   Learn more
                 </Typography.Link>

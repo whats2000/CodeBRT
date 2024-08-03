@@ -4,7 +4,7 @@ import fsPromises from 'node:fs/promises';
 import vscode from 'vscode';
 import Groq from 'groq-sdk';
 
-import { MODEL_SERVICE_LINKS } from '../../constants';
+import { MODEL_SERVICE_CONSTANTS } from '../../constants';
 import { SettingsManager } from '../../api';
 import { AbstractVoiceService } from './abstractVoiceService';
 
@@ -47,7 +47,7 @@ export class GroqVoiceService extends AbstractVoiceService {
         .then((selection) => {
           if (selection === 'Get API Key') {
             vscode.env.openExternal(
-              vscode.Uri.parse(MODEL_SERVICE_LINKS.groqApiKey as string),
+              vscode.Uri.parse(MODEL_SERVICE_CONSTANTS.groq.apiLink),
             );
           }
         });

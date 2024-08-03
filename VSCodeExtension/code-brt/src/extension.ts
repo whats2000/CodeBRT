@@ -296,6 +296,12 @@ export const activate = async (ctx: vscode.ExtensionContext) => {
     openExternalLink: async (url) => {
       await vscode.env.openExternal(vscode.Uri.parse(url));
     },
+    openExtensionMarketplace: async (extensionId) => {
+      await vscode.commands.executeCommand(
+        'workbench.extensions.search',
+        extensionId,
+      );
+    },
   };
 
   const isViewApiRequest = <K extends keyof ViewApi>(

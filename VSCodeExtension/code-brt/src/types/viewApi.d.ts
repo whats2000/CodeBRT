@@ -276,6 +276,12 @@ export type ViewApi = {
    * @param url - The URL to open.
    */
   openExternalLink: (url: string) => Promise<void>;
+
+  /**
+   * Open marketplace page for target extension.
+   * @param extensionId - The extension ID to open the marketplace page for.
+   */
+  openExtensionMarketplace: (extensionId: string) => Promise<void>;
 };
 
 /**

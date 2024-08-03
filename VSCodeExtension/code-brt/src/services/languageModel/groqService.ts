@@ -8,9 +8,9 @@ import type {
 import Groq from 'groq-sdk';
 
 import type { GetResponseOptions } from '../../types';
+import { MODEL_SERVICE_CONSTANTS } from '../../constants';
 import { AbstractOpenaiLikeService } from './abstractOpenaiLikeService';
 import { SettingsManager } from '../../api';
-import { MODEL_SERVICE_LINKS } from '../../constants';
 
 export class GroqService extends AbstractOpenaiLikeService {
   constructor(
@@ -222,7 +222,7 @@ export class GroqService extends AbstractOpenaiLikeService {
         .then((selection) => {
           if (selection === 'Get API Key') {
             vscode.env.openExternal(
-              vscode.Uri.parse(MODEL_SERVICE_LINKS.groqApiKey as string),
+              vscode.Uri.parse(MODEL_SERVICE_CONSTANTS.groq.apiLink),
             );
           }
         });

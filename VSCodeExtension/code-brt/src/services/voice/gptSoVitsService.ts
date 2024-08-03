@@ -2,7 +2,7 @@ import axios, { AxiosResponse } from 'axios';
 import vscode from 'vscode';
 
 import type { GptSoVitsVoiceSetting } from '../../types';
-import { MODEL_SERVICE_LINKS } from '../../constants';
+import { MODEL_SERVICE_CONSTANTS } from '../../constants';
 import { SettingsManager } from '../../api';
 import { AbstractVoiceService } from './abstractVoiceService';
 
@@ -85,9 +85,7 @@ export class GptSoVitsApiService extends AbstractVoiceService {
         .then((selection) => {
           if (selection === 'Download GPT-SoVits script') {
             vscode.env.openExternal(
-              vscode.Uri.parse(
-                MODEL_SERVICE_LINKS.gptSoVitsClientHost as string,
-              ),
+              vscode.Uri.parse(MODEL_SERVICE_CONSTANTS.gptSoVits.apiLink),
             );
           }
         });

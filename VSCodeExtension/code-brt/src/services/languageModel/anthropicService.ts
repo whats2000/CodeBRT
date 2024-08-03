@@ -20,7 +20,7 @@ import type {
   GetResponseOptions,
   ToolServiceType,
 } from '../../types';
-import { MODEL_SERVICE_LINKS, toolsSchema } from '../../constants';
+import { MODEL_SERVICE_CONSTANTS, toolsSchema } from '../../constants';
 import { SettingsManager } from '../../api';
 import { AbstractLanguageModelService } from './abstractLanguageModelService';
 import { ToolService } from '../tools';
@@ -407,7 +407,7 @@ export class AnthropicService extends AbstractLanguageModelService {
         .then((selection) => {
           if (selection === 'Get API Key') {
             vscode.env.openExternal(
-              vscode.Uri.parse(MODEL_SERVICE_LINKS.anthropicApiKey as string),
+              vscode.Uri.parse(MODEL_SERVICE_CONSTANTS.anthropic.apiLink),
             );
           }
         });

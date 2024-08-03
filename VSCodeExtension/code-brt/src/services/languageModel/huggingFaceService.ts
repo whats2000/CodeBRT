@@ -15,7 +15,7 @@ import type {
 } from '../../types';
 import { AbstractLanguageModelService } from './abstractLanguageModelService';
 import { SettingsManager } from '../../api';
-import { MODEL_SERVICE_LINKS, toolsSchema } from '../../constants';
+import { MODEL_SERVICE_CONSTANTS, toolsSchema } from '../../constants';
 import { ToolService } from '../tools';
 
 export class HuggingFaceService extends AbstractLanguageModelService {
@@ -378,7 +378,7 @@ export class HuggingFaceService extends AbstractLanguageModelService {
         .then((selection) => {
           if (selection === 'Get Access Token') {
             vscode.env.openExternal(
-              vscode.Uri.parse(MODEL_SERVICE_LINKS.huggingFaceApiKey as string),
+              vscode.Uri.parse(MODEL_SERVICE_CONSTANTS.huggingFace.apiLink),
             );
           }
         });

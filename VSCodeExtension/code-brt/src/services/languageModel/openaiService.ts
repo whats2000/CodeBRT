@@ -9,7 +9,7 @@ import OpenAI from 'openai';
 import type { GetResponseOptions } from '../../types';
 import { SettingsManager } from '../../api';
 import { AbstractOpenaiLikeService } from './abstractOpenaiLikeService';
-import { MODEL_SERVICE_LINKS } from '../../constants';
+import { MODEL_SERVICE_CONSTANTS } from '../../constants';
 
 export class OpenAIService extends AbstractOpenaiLikeService {
   constructor(
@@ -226,7 +226,7 @@ export class OpenAIService extends AbstractOpenaiLikeService {
         .then((selection) => {
           if (selection === 'Get API Key') {
             vscode.env.openExternal(
-              vscode.Uri.parse(MODEL_SERVICE_LINKS.openaiApiKey as string),
+              vscode.Uri.parse(MODEL_SERVICE_CONSTANTS.openai.apiLink),
             );
           }
         });

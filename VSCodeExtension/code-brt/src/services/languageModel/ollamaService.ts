@@ -9,7 +9,7 @@ import type {
   GetResponseOptions,
   ToolServiceType,
 } from '../../types';
-import { toolsSchema } from '../../constants';
+import { MODEL_SERVICE_CONSTANTS, toolsSchema } from '../../constants';
 import { AbstractLanguageModelService } from './abstractLanguageModelService';
 import { SettingsManager } from '../../api';
 import { ToolService } from '../tools';
@@ -380,7 +380,7 @@ export class OllamaService extends AbstractLanguageModelService {
           }
           if (selection === 'Upgrade Ollama') {
             vscode.env.openExternal(
-              vscode.Uri.parse('https://ollama.com/download'),
+              vscode.Uri.parse(MODEL_SERVICE_CONSTANTS.ollama.apiLink),
             );
           }
         });

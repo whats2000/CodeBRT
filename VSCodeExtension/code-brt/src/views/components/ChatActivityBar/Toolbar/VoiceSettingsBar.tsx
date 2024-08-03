@@ -15,9 +15,10 @@ import type {
   TextToVoiceServiceType,
   VoiceToTextServiceType,
 } from '../../../../types';
-import { MODEL_SERVICE_LINKS } from '../../../../constants';
+import { MODEL_SERVICE_CONSTANTS, PROJECT_LINK } from '../../../../constants';
 import { WebviewContext } from '../../../WebviewContext';
 import { GptSoVitsSettingsBar } from './VoiceSettingsBar/GptSoVitsSettingsBar';
+import { QuestionCircleFilled } from '@ant-design/icons';
 
 interface VoiceSettingsBarProps {
   isOpen: boolean;
@@ -52,6 +53,7 @@ export const VoiceSettingsBar: React.FC<VoiceSettingsBarProps> = ({
     openaiAvailableVoices: [],
     openaiSelectedVoice: '',
   });
+  const [showMoreInfo, setShowMoreInfo] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
@@ -118,15 +120,8 @@ export const VoiceSettingsBar: React.FC<VoiceSettingsBarProps> = ({
     );
   };
 
-  const openModelServiceLink = (
-    settingKey: keyof Partial<ExtensionSettings>,
-  ) => {
-    const link = MODEL_SERVICE_LINKS[settingKey];
-    if (link) {
-      callApi('openExternalLink', link)
-        .then(() => {})
-        .catch(console.error);
-    }
+  const openLink = (link: string) => {
+    callApi('openExternalLink', link).catch(console.error);
   };
 
   const handleEditGptSoVitsSettingsSave = (
@@ -155,30 +150,104 @@ export const VoiceSettingsBar: React.FC<VoiceSettingsBarProps> = ({
               onChange={(value) =>
                 handleServiceChange('selectedTextToVoiceService', value)
               }
-              options={textToVoiceServices.map((service) => {
-                return {
-                  key: service,
-                  label: service.charAt(0).toUpperCase() + service.slice(1),
-                  value: service,
-                };
-              })}
+              options={textToVoiceServices.map((service) => ({
+                key: service,
+                label:
+                  service === 'not set'
+                    ? 'Not Set'
+                    : MODEL_SERVICE_CONSTANTS[service].name,
+                value: service,
+              }))}
             />
           </Form.Item>
-          <Form.Item label='Voice To Text Service'>
+          <Form.Item
+            label={
+              <Space>
+                Voice To Text Service
+                {partialSettings.selectedVoiceToTextService !== 'not set' && (
+                  <Tooltip title='Click to learn more'>
+                    <Typography.Link
+                      type={'secondary'}
+                      onClick={() => setShowMoreInfo(!showMoreInfo)}
+                    >
+                      <QuestionCircleFilled />
+                    </Typography.Link>
+                  </Tooltip>
+                )}
+              </Space>
+            }
+          >
             <Select
               value={partialSettings.selectedVoiceToTextService}
               onChange={(value) =>
                 handleServiceChange('selectedVoiceToTextService', value)
               }
-              options={voiceToTextServices.map((service) => {
-                return {
-                  key: service,
-                  label: service.charAt(0).toUpperCase() + service.slice(1),
-                  value: service,
-                };
-              })}
+              options={voiceToTextServices.map((service) => ({
+                key: service,
+                label:
+                  service === 'not set'
+                    ? 'Not Set'
+                    : MODEL_SERVICE_CONSTANTS[service].name,
+                value: service,
+              }))}
             />
           </Form.Item>
+          {/* Additional Information */}
+          {showMoreInfo &&
+            partialSettings.selectedVoiceToTextService ===
+              'visualStudioCodeBuiltIn' && (
+              <Typography.Text type={'secondary'}>
+                {MODEL_SERVICE_CONSTANTS.visualStudioCodeBuiltIn.description}{' '}
+                This relies on the built-in voice to text service in VSCode. If
+                you have not installed it, you can do so by{' '}
+                <Typography.Link
+                  type={'warning'}
+                  onClick={() =>
+                    callApi(
+                      'openExtensionMarketplace',
+                      'ms-vscode.vscode-speech',
+                    )
+                  }
+                >
+                  marketplace
+                </Typography.Link>
+                .
+              </Typography.Text>
+            )}
+          {showMoreInfo &&
+            ['groq', 'openai'].includes(
+              partialSettings.selectedVoiceToTextService ?? '',
+            ) && (
+              <Typography.Text type={'secondary'}>
+                Notice: This will require microphone access with{' '}
+                <Typography.Link
+                  type={'warning'}
+                  onClick={() =>
+                    openLink('https://sourceforge.net/projects/sox/')
+                  }
+                >
+                  SoX
+                </Typography.Link>{' '}
+                installed on Windows/Mac or{' '}
+                <Typography.Link
+                  type={'warning'}
+                  onClick={() =>
+                    openLink('https://www.alsa-project.org/wiki/Download')
+                  }
+                >
+                  ALSA
+                </Typography.Link>{' '}
+                on Linux. This is required as we use shell for recording audio.
+                (If you have a better way, please suggest on{' '}
+                <Typography.Link
+                  type={'warning'}
+                  onClick={() => openLink(PROJECT_LINK.issues)}
+                >
+                  GitHub
+                </Typography.Link>
+                .
+              </Typography.Text>
+            )}
           <Divider />
           <Form.Item
             label={
@@ -191,12 +260,10 @@ export const VoiceSettingsBar: React.FC<VoiceSettingsBarProps> = ({
                   <Typography.Link
                     type={'secondary'}
                     onClick={() =>
-                      openModelServiceLink(
-                        'openaiAvailableVoices' as keyof ExtensionSettings,
-                      )
+                      openLink(MODEL_SERVICE_CONSTANTS.openai.apiLink)
                     }
                   >
-                    Learn more
+                    Learn More
                   </Typography.Link>
                 </Tooltip>
               </Space>
@@ -212,7 +279,7 @@ export const VoiceSettingsBar: React.FC<VoiceSettingsBarProps> = ({
                 (voice, index) => {
                   return {
                     key: `openaiVoice-${index}`,
-                    label: voice,
+                    label: voice.charAt(0).toUpperCase() + voice.slice(1),
                     value: voice,
                   };
                 },
@@ -233,12 +300,10 @@ export const VoiceSettingsBar: React.FC<VoiceSettingsBarProps> = ({
                   <Typography.Link
                     type={'secondary'}
                     onClick={() =>
-                      openModelServiceLink(
-                        'gptSoVitsClientHost' as keyof ExtensionSettings,
-                      )
+                      openLink(MODEL_SERVICE_CONSTANTS.gptSoVits.apiLink)
                     }
                   >
-                    Learn more
+                    Learn More
                   </Typography.Link>
                 </Tooltip>
               </Space>
