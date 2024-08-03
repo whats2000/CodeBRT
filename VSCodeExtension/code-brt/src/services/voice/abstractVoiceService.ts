@@ -250,14 +250,14 @@ export abstract class AbstractVoiceService implements VoiceService {
             'Click here to install SoX or copy command below to install ALSA. ' +
             'IMPORTANT: You need to add SoX to your PATH after installation for Windows.',
           'Install SoX',
-          'Copy command',
+          'Copy command (Linux)',
         )
         .then(async (value) => {
           if (value === 'Install SoX') {
             await vscode.env.openExternal(
               vscode.Uri.parse('https://sourceforge.net/projects/sox/'),
             );
-          } else if (value === 'Copy command') {
+          } else if (value === 'Copy command (Linux)') {
             vscode.env.clipboard.writeText('sudo apt-get install alsa-utils');
           }
         });
