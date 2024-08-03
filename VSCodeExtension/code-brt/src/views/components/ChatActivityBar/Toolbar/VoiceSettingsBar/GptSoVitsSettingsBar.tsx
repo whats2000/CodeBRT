@@ -108,27 +108,25 @@ export const GptSoVitsSettingsBar: React.FC<GptSoVitsSettingsBarProps> = ({
     setIsLoading(true);
     handleEditGptSoVitsSettingsSave(settingsToSave);
 
-    const promises = Object.entries(settingsToSave).map(([key, value]) =>
-      callApi('setSetting', key as keyof typeof partialSettings, value)
-        .then(() => {
-          callApi(
-            'switchGptSoVitsReferenceVoice',
-            settingsToSave.gptSoVitsSelectedReferenceVoice,
-          ).catch(console.error);
-        })
-        .catch((e) =>
+    const promises = Object.entries(settingsToSave).map(([key, value]) => {
+      callApi('setSetting', key as keyof typeof partialSettings, value).catch(
+        (e) =>
           callApi(
             'alertMessage',
             `Failed to save settings: ${e.message}`,
             'error',
           ),
-        ),
-    );
+      );
+    });
 
     Promise.all(promises).then(() => {
       callApi('alertMessage', 'Settings saved successfully', 'info').catch(
         console.error,
       );
+      callApi(
+        'switchGptSoVitsReferenceVoice',
+        settingsToSave.gptSoVitsSelectedReferenceVoice,
+      ).catch(console.error);
     });
   };
 
@@ -162,8 +160,11 @@ export const GptSoVitsSettingsBar: React.FC<GptSoVitsSettingsBarProps> = ({
       referText: '',
       promptLanguage: 'en',
     };
+
     setPartialSettings((prev) => ({
       ...prev,
+      gptSoVitsSelectedReferenceVoice:
+        prev.gptSoVitsSelectedReferenceVoice || newVoice.name,
       gptSoVitsAvailableReferenceVoices: [
         ...prev.gptSoVitsAvailableReferenceVoices,
         newVoice,
