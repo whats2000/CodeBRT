@@ -55,6 +55,7 @@ export const MessageFloatButton: React.FC<MessageFloatButtonProps> = ({
         top: bubblePosition.yTop > 75 ? bubblePosition.yTop : 75,
         position: 'fixed',
         visibility: hoveredBubble ? 'visible' : 'hidden',
+        height: 225,
       }}
       icon={<EllipsisOutlined />}
       trigger='hover'

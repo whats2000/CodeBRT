@@ -4,7 +4,7 @@ import { v4 as uuidV4 } from 'uuid';
 
 import * as vscode from 'vscode';
 
-import {
+import type {
   ConversationHistory,
   ConversationEntry,
   ConversationHistoryList,
