@@ -79,9 +79,7 @@ export class SettingsManager {
     ...this.defaultLocalSettings,
     ...this.defaultCrossDeviceSettings,
   };
-  private readonly localSettings: ExtensionSettingsLocal = {
-    ...this.defaultLocalSettings,
-  };
+  private readonly localSettings: ExtensionSettingsLocal;
 
   private constructor(context: vscode.ExtensionContext) {
     this.context = context;
@@ -89,7 +87,7 @@ export class SettingsManager {
       'localSettings',
       this.defaultLocalSettings,
     );
-    this.localSettings = { ...this.localSettings, ...storedSettings };
+    this.localSettings = { ...this.defaultLocalSettings, ...storedSettings };
     this.workspaceConfig = vscode.workspace.getConfiguration('code-brt');
 
     vscode.workspace.onDidChangeConfiguration(
@@ -100,18 +98,17 @@ export class SettingsManager {
   }
 
   private onConfigurationChange(event: vscode.ConfigurationChangeEvent): void {
-    if (!event.affectsConfiguration('code-brt')) {
-      return;
+    if (event.affectsConfiguration('code-brt')) {
+      this.workspaceConfig = vscode.workspace.getConfiguration('code-brt');
     }
-    this.workspaceConfig = vscode.workspace.getConfiguration('code-brt');
   }
 
   /**
    * Save local settings to file
    * @private
    */
-  private saveLocalSettings(): void {
-    this.context.globalState.update('localSettings', this.localSettings).then();
+  private async saveLocalSettings(): Promise<void> {
+    await this.context.globalState.update('localSettings', this.localSettings);
   }
 
   /**
@@ -138,7 +135,7 @@ export class SettingsManager {
         setting as keyof ExtensionSettingsLocal
       ] as ExtensionSettings[T];
     }
-    return this.workspaceConfig.get(setting) || this.defaultSettings[setting];
+    return this.workspaceConfig.get(setting) ?? this.defaultSettings[setting];
   }
 
   /**
@@ -146,22 +143,21 @@ export class SettingsManager {
    * @param setting - The setting to set must be a key of ExtensionSettings
    * @param value - The value to set must be of the same type as the setting
    */
-  public set<T extends keyof ExtensionSettings>(
+  public async set<T extends keyof ExtensionSettings>(
     setting: T,
     value: ExtensionSettings[T],
-  ): Thenable<void> {
+  ): Promise<void> {
     // Check if the setting is local
     if (setting in this.defaultLocalSettings) {
       this.localSettings[setting as keyof ExtensionSettingsLocal] =
         value as any;
-
-      this.saveLocalSettings();
-      return Promise.resolve();
+      await this.saveLocalSettings();
+    } else {
+      await this.workspaceConfig.update(
+        setting,
+        value,
+        vscode.ConfigurationTarget.Global,
+      );
     }
-    return this.workspaceConfig.update(
-      setting,
-      value,
-      vscode.ConfigurationTarget.Global,
-    );
   }
 }
