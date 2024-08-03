@@ -12,9 +12,6 @@ import { AbstractOpenaiLikeService } from './abstractOpenaiLikeService';
 import { MODEL_SERVICE_LINKS } from '../../constants';
 
 export class OpenAIService extends AbstractOpenaiLikeService {
-  private apiKey: string;
-  private readonly settingsListener: vscode.Disposable;
-
   constructor(
     context: vscode.ExtensionContext,
     settingsManager: SettingsManager,
@@ -30,7 +27,6 @@ export class OpenAIService extends AbstractOpenaiLikeService {
       defaultModelName,
       availableModelNames,
     );
-    this.apiKey = settingsManager.get('openaiApiKey');
 
     // Initialize and load conversation history
     this.initialize().catch((error) =>
@@ -38,15 +34,6 @@ export class OpenAIService extends AbstractOpenaiLikeService {
         'Failed to initialize OpenAI Service: ' + error,
       ),
     );
-
-    // Listen for settings changes
-    this.settingsListener = vscode.workspace.onDidChangeConfiguration((e) => {
-      if (e.affectsConfiguration('code-brt.openaiApiKey')) {
-        this.apiKey = settingsManager.get('openaiApiKey');
-      }
-    });
-
-    context.subscriptions.push(this.settingsListener);
   }
 
   private async initialize() {
@@ -61,7 +48,7 @@ export class OpenAIService extends AbstractOpenaiLikeService {
 
   public async getLatestAvailableModelNames(): Promise<string[]> {
     const openai = new OpenAI({
-      apiKey: this.apiKey,
+      apiKey: this.settingsManager.get('openaiApiKey'),
     });
 
     let newAvailableModelNames: string[] = [...this.availableModelNames];
@@ -110,7 +97,9 @@ export class OpenAIService extends AbstractOpenaiLikeService {
 
     const { query, images, currentEntryID, sendStreamResponse, updateStatus } =
       options;
-    const openai = new OpenAI({ apiKey: this.apiKey });
+    const openai = new OpenAI({
+      apiKey: this.settingsManager.get('openaiApiKey'),
+    });
 
     const conversationHistory = await this.conversationHistoryToContent(
       this.getHistoryBeforeEntry(currentEntryID).entries,

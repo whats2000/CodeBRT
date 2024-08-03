@@ -26,9 +26,6 @@ import { AbstractLanguageModelService } from './abstractLanguageModelService';
 import { ToolService } from '../tools';
 
 export class AnthropicService extends AbstractLanguageModelService {
-  private apiKey: string;
-  private readonly settingsListener: vscode.Disposable;
-
   private readonly generationConfig = {
     max_tokens: 4096,
   };
@@ -57,7 +54,6 @@ export class AnthropicService extends AbstractLanguageModelService {
       defaultModelName,
       availableModelNames,
     );
-    this.apiKey = settingsManager.get('anthropicApiKey');
 
     // Initialize and load conversation history
     this.initialize().catch((error) =>
@@ -65,15 +61,6 @@ export class AnthropicService extends AbstractLanguageModelService {
         'Failed to initialize Anthropic Service: ' + error,
       ),
     );
-
-    // Listen for settings changes
-    this.settingsListener = vscode.workspace.onDidChangeConfiguration((e) => {
-      if (e.affectsConfiguration('code-brt.anthropicApiKey')) {
-        this.apiKey = settingsManager.get('anthropicApiKey');
-      }
-    });
-
-    context.subscriptions.push(this.settingsListener);
   }
 
   private async initialize() {
@@ -156,7 +143,7 @@ export class AnthropicService extends AbstractLanguageModelService {
     errorMessage?: string;
   } {
     const anthropic = new Anthropic({
-      apiKey: this.apiKey,
+      apiKey: this.settingsManager.get('anthropicApiKey'),
     });
 
     if (this.currentModel === '') {

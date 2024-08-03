@@ -45,9 +45,6 @@ type GeminiModelsList = {
 };
 
 export class GeminiService extends AbstractLanguageModelService {
-  private apiKey: string;
-  private readonly settingsListener: vscode.Disposable;
-
   private readonly generationConfig = {
     temperature: 1,
     topK: 0,
@@ -91,7 +88,6 @@ export class GeminiService extends AbstractLanguageModelService {
       defaultModelName,
       availableModelNames,
     );
-    this.apiKey = settingsManager.get('geminiApiKey');
     this.tools = this.buildTools();
 
     this.initialize().catch((error) =>
@@ -99,15 +95,6 @@ export class GeminiService extends AbstractLanguageModelService {
         'Failed to initialize Gemini Service: ' + error,
       ),
     );
-
-    // Listen for settings changes
-    this.settingsListener = vscode.workspace.onDidChangeConfiguration((e) => {
-      if (e.affectsConfiguration('code-brt.geminiApiKey')) {
-        this.apiKey = settingsManager.get('geminiApiKey');
-      }
-    });
-
-    context.subscriptions.push(this.settingsListener);
   }
 
   private async initialize() {
@@ -218,7 +205,9 @@ export class GeminiService extends AbstractLanguageModelService {
   }
 
   public async getLatestAvailableModelNames(): Promise<string[]> {
-    const requestUrl = `https://generativelanguage.googleapis.com/v1beta/models?key=${this.apiKey}`;
+    const requestUrl =
+      `https://generativelanguage.googleapis.com/v1beta/models?key=` +
+      this.settingsManager.get('geminiApiKey');
 
     let newAvailableModelNames: string[] = [...this.availableModelNames];
 
@@ -318,7 +307,7 @@ export class GeminiService extends AbstractLanguageModelService {
       options;
 
     const generativeModel = new GoogleGenerativeAI(
-      this.apiKey,
+      this.settingsManager.get('geminiApiKey'),
     ).getGenerativeModel({
       model: this.currentModel,
     });

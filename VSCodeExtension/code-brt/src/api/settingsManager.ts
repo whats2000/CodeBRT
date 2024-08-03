@@ -9,6 +9,7 @@ import type {
 export class SettingsManager {
   private static instance: SettingsManager;
   private readonly context: vscode.ExtensionContext;
+  private workspaceConfig: vscode.WorkspaceConfiguration;
   private readonly defaultLocalSettings: ExtensionSettingsLocal = {
     anthropicAvailableModels: [
       'claude-3-5-sonnet-20240620',
@@ -89,10 +90,20 @@ export class SettingsManager {
       this.defaultLocalSettings,
     );
     this.localSettings = { ...this.localSettings, ...storedSettings };
+    this.workspaceConfig = vscode.workspace.getConfiguration('code-brt');
+
+    vscode.workspace.onDidChangeConfiguration(
+      this.onConfigurationChange,
+      this,
+      context.subscriptions,
+    );
   }
 
-  private get settings(): vscode.WorkspaceConfiguration {
-    return vscode.workspace.getConfiguration('code-brt');
+  private onConfigurationChange(event: vscode.ConfigurationChangeEvent): void {
+    if (!event.affectsConfiguration('code-brt')) {
+      return;
+    }
+    this.workspaceConfig = vscode.workspace.getConfiguration('code-brt');
   }
 
   /**
@@ -127,10 +138,7 @@ export class SettingsManager {
         setting as keyof ExtensionSettingsLocal
       ] as ExtensionSettings[T];
     }
-    return this.settings.get<ExtensionSettings[T]>(
-      setting,
-      this.defaultSettings[setting],
-    );
+    return this.workspaceConfig.get(setting) || this.defaultSettings[setting];
   }
 
   /**
@@ -150,7 +158,7 @@ export class SettingsManager {
       this.saveLocalSettings();
       return Promise.resolve();
     }
-    return this.settings.update(
+    return this.workspaceConfig.update(
       setting,
       value,
       vscode.ConfigurationTarget.Global,

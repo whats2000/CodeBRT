@@ -14,9 +14,6 @@ import { SettingsManager } from '../../api';
 import { ToolService } from '../tools';
 
 export class CohereService extends AbstractLanguageModelService {
-  private apiKey: string;
-  private readonly settingsListener: vscode.Disposable;
-
   private readonly tools: Tool[] = [];
 
   constructor(
@@ -35,7 +32,6 @@ export class CohereService extends AbstractLanguageModelService {
       availableModelNames,
     );
 
-    this.apiKey = settingsManager.get('cohereApiKey');
     this.tools = this.buildTools();
 
     this.initialize().catch((error) =>
@@ -43,15 +39,6 @@ export class CohereService extends AbstractLanguageModelService {
         'Failed to initialize Cohere Service History: ' + error,
       ),
     );
-
-    // Listen for settings changes
-    this.settingsListener = vscode.workspace.onDidChangeConfiguration((e) => {
-      if (e.affectsConfiguration('code-brt.cohereApiKey')) {
-        this.apiKey = settingsManager.get('cohereApiKey');
-      }
-    });
-
-    context.subscriptions.push(this.settingsListener);
   }
 
   private buildTools(): Tool[] {
@@ -175,7 +162,7 @@ export class CohereService extends AbstractLanguageModelService {
 
   public async getLatestAvailableModelNames(): Promise<string[]> {
     const cohere = new CohereClient({
-      token: this.apiKey,
+      token: this.settingsManager.get('cohereApiKey'),
     });
 
     let newAvailableModelNames: string[] = [...this.availableModelNames];
@@ -222,7 +209,9 @@ export class CohereService extends AbstractLanguageModelService {
       );
     }
 
-    const model = new CohereClient({ token: this.apiKey });
+    const model = new CohereClient({
+      token: this.settingsManager.get('cohereApiKey'),
+    });
 
     let conversationHistory = this.conversationHistoryToContent(
       this.getHistoryBeforeEntry(currentEntryID).entries,

@@ -13,9 +13,6 @@ import { SettingsManager } from '../../api';
 import { MODEL_SERVICE_LINKS } from '../../constants';
 
 export class GroqService extends AbstractOpenaiLikeService {
-  private apiKey: string;
-  private readonly settingsListener: vscode.Disposable;
-
   constructor(
     context: vscode.ExtensionContext,
     settingsManager: SettingsManager,
@@ -31,24 +28,12 @@ export class GroqService extends AbstractOpenaiLikeService {
       defaultModelName,
       availableModelNames,
     );
-
-    this.apiKey = settingsManager.get('groqApiKey');
-
     // Initialize and load conversation history
     this.initialize().catch((error) =>
       vscode.window.showErrorMessage(
         'Failed to initialize Groq Service History: ' + error,
       ),
     );
-
-    // Listen for settings changes
-    this.settingsListener = vscode.workspace.onDidChangeConfiguration((e) => {
-      if (e.affectsConfiguration('code-brt.groqApiKey')) {
-        this.apiKey = settingsManager.get('groqApiKey');
-      }
-    });
-
-    context.subscriptions.push(this.settingsListener);
   }
 
   private async initialize() {
@@ -63,7 +48,7 @@ export class GroqService extends AbstractOpenaiLikeService {
 
   public async getLatestAvailableModelNames(): Promise<string[]> {
     const groq = new Groq({
-      apiKey: this.apiKey,
+      apiKey: this.settingsManager.get('groqApiKey'),
     });
 
     let newAvailableModelNames: string[] = [...this.availableModelNames];
@@ -115,7 +100,7 @@ export class GroqService extends AbstractOpenaiLikeService {
     }
 
     const groq = new Groq({
-      apiKey: this.apiKey,
+      apiKey: this.settingsManager.get('groqApiKey'),
     });
 
     const conversationHistory = await this.conversationHistoryToContent(

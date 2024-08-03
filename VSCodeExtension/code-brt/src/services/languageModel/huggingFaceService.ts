@@ -19,9 +19,6 @@ import { MODEL_SERVICE_LINKS, toolsSchema } from '../../constants';
 import { ToolService } from '../tools';
 
 export class HuggingFaceService extends AbstractLanguageModelService {
-  private apiKey: string;
-  private readonly settingsListener: vscode.Disposable;
-
   private readonly generationConfig: Partial<ChatCompletionInput> = {};
 
   private readonly tools: ChatCompletionInputTool[] = Object.keys(
@@ -57,23 +54,12 @@ export class HuggingFaceService extends AbstractLanguageModelService {
       availableModelNames,
     );
 
-    this.apiKey = settingsManager.get('huggingFaceApiKey');
-
     // Initialize and load conversation history
     this.initialize().catch((error) =>
       vscode.window.showErrorMessage(
         'Failed to initialize Hugging Face Service: ' + error,
       ),
     );
-
-    // Listen for settings changes
-    this.settingsListener = vscode.workspace.onDidChangeConfiguration((e) => {
-      if (e.affectsConfiguration('code-brt.huggingFaceApiKey')) {
-        this.apiKey = settingsManager.get('huggingFaceApiKey');
-      }
-    });
-
-    context.subscriptions.push(this.settingsListener);
   }
 
   private async initialize() {
@@ -193,7 +179,9 @@ export class HuggingFaceService extends AbstractLanguageModelService {
       );
     }
 
-    const huggerFace = new HfInference(this.apiKey);
+    const huggerFace = new HfInference(
+      this.settingsManager.get('huggingFaceApiKey'),
+    );
 
     const conversationHistory = this.conversationHistoryToContent(
       this.getHistoryBeforeEntry(currentEntryID).entries,
