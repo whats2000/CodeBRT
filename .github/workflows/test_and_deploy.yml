@@ -10,12 +10,7 @@ on:
 
 jobs:
   build:
-
     runs-on: ubuntu-latest
-
-    defaults:
-      run:
-        working-directory: VSCodeExtension/code-brt
 
     steps:
       - name: Checkout code
@@ -28,17 +23,20 @@ jobs:
 
       - name: Install dependencies
         run: npm install
+        working-directory: VSCodeExtension/code-brt
 
       - name: Run tests
         run: npm run test
+        working-directory: VSCodeExtension/code-brt
 
       - name: Build project
         run: npm run build:ci
+        working-directory: VSCodeExtension/code-brt
 
       - name: Locate VSIX file
         id: locate-vsix
         run: |
-          vsix_file=$(find ./build -name "*.vsix")
+          vsix_file=$(find VSCodeExtension/code-brt/build -name "*.vsix")
           echo "VSIX file located at: $vsix_file"
           echo "::set-output name=vsix_path::$vsix_file"
 
@@ -47,7 +45,7 @@ jobs:
           git fetch origin
           if git branch -r | grep -w "origin/vsix-artifacts"; then
             git checkout vsix-artifacts
-            git rm -rf .
+            git rm -rf build
           else
             git checkout --orphan vsix-artifacts
           fi
@@ -60,7 +58,7 @@ jobs:
       - name: Move VSIX file and commit
         run: |
           mkdir -p build
-          mv ${{ steps.locate-vsix.outputs.vsix_path }} ./build/
+          mv ${{ steps.locate-vsix.outputs.vsix_path }} build/
           git add build
           git commit -m "Add latest VSIX artifact"
           git push --force --set-upstream origin vsix-artifacts
