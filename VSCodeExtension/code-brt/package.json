@@ -1,0 +1,320 @@
+{
+  "name": "code-brt",
+  "private": true,
+  "displayName": "CodeBRT",
+  "description": "CodeBRT, a LLM/VLM framework for code assistant with multiple models.",
+  "version": "0.1.0",
+  "icon": "static/icon.ico",
+  "engines": {
+    "vscode": "^1.92.0",
+    "node": "~18.17.0",
+    "npm": "^9.6.7"
+  },
+  "license": "LGPL-3.0-or-later",
+  "repository": "https://github.com/whats2000/code-brt",
+  "tags": [],
+  "categories": [],
+  "publisher": "whats2000",
+  "main": "extension.js",
+  "scripts": {
+    "test": "jest",
+    "bundle": "webpack --mode production && webpack --mode production --config ./webpack.config.views.js",
+    "build": "move dist\\localSettings.json localSettings.json.bak 2>nul & rd /s /q dist 2>nul & mkdir dist & copy README.md dist\\ & copy LICENSE.md dist\\ & rd /s /q build 2>nul & mkdir build & npm run bundle & node scripts/build.js & move localSettings.json.bak dist\\localSettings.json",
+    "watch": "webpack --mode development --watch",
+    "devserver": "webpack serve --mode development --config ./webpack.config.views.js",
+    "format": "prettier 'src/**/*.js' 'src/**/*.jsx' 'src/**/*.ts' 'src/**/*.tsx' './package.json' '.swcrc' './*.js' --no-error-on-unmatched-pattern --write"
+  },
+  "devDependencies": {
+    "@ant-design/icons": "^5.4.0",
+    "@anthropic-ai/sdk": "^0.25.0",
+    "@dnd-kit/core": "^6.1.0",
+    "@dnd-kit/sortable": "^8.0.0",
+    "@google/generative-ai": "^0.16.0",
+    "@huggingface/inference": "^2.8.0",
+    "@pmmmwh/react-refresh-webpack-plugin": "^0.5.15",
+    "@swc/cli": "^0.4.0",
+    "@swc/core": "^1.7.5",
+    "@swc/jest": "^0.2.36",
+    "@types/async-lock": "^1.4.2",
+    "@types/cheerio": "^0.22.35",
+    "@types/jest": "^29.5.12",
+    "@types/node": "^22.0.3",
+    "@types/promise-deferred": "^2.0.5",
+    "@types/react": "^18.3.3",
+    "@types/react-dom": "^18.3.0",
+    "@types/react-syntax-highlighter": "^15.5.13",
+    "@types/uuid": "^10.0.0",
+    "@types/vscode": "^1.92.0",
+    "@vscode/vsce": "^2.31.1",
+    "antd": "^5.19.4",
+    "async-lock": "^1.4.1",
+    "axios": "^1.7.3",
+    "cheerio": "^1.0.0-rc.12",
+    "cohere-ai": "^7.11.2",
+    "copy-webpack-plugin": "^12.0.2",
+    "css-loader": "^7.1.2",
+    "groq-sdk": "^0.5.0",
+    "jest": "^29.7.0",
+    "markdown-to-text": "^0.1.1",
+    "node-mic": "^1.0.1",
+    "ollama": "^0.5.6",
+    "openai": "^4.53.2",
+    "prettier": "3.3.3",
+    "prettier-plugin-organize-imports": "^4.0.0",
+    "promise-deferred": "^2.0.4",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "react-markdown": "^9.0.1",
+    "react-refresh": "^0.14.2",
+    "react-syntax-highlighter": "^15.5.0",
+    "simple-text-tokenizer": "^1.0.1",
+    "styled-components": "^6.1.12",
+    "swc-loader": "^0.2.6",
+    "terminate": "^2.8.0",
+    "ts-jest": "^29.2.4",
+    "typescript": "^5.5.4",
+    "uuid": "^10.0.0",
+    "webpack": "^5.93.0",
+    "webpack-cli": "^5.1.4",
+    "webpack-dev-server": "^5.0.4"
+  },
+  "activationEvents": [],
+  "contributes": {
+    "commands": [],
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "chatActivityBarContainer",
+          "title": "CodeBRT Chat",
+          "icon": "static/logo.svg"
+        }
+      ],
+      "panel": [
+        {
+          "id": "workingPanelContainer",
+          "title": "CodeBRT Working Panel",
+          "icon": "static/logo.svg"
+        }
+      ]
+    },
+    "views": {
+      "chatActivityBarContainer": [
+        {
+          "id": "chatActivityBar",
+          "type": "webview",
+          "name": "Chat"
+        }
+      ],
+      "workingPanelContainer": [
+        {
+          "id": "workPanel",
+          "type": "webview",
+          "name": "Working Panel"
+        }
+      ]
+    },
+    "configuration": {
+      "title": "CodeBRT",
+      "properties": {
+        "code-brt.geminiApiKey": {
+          "type": "string",
+          "default": "",
+          "description": "Gemini API Key",
+          "markdownDescription": "API key for Gemini model"
+        },
+        "code-brt.anthropicApiKey": {
+          "type": "string",
+          "default": "",
+          "description": "Anthropic API Key",
+          "markdownDescription": "API key for Anthropic model"
+        },
+        "code-brt.openaiApiKey": {
+          "type": "string",
+          "default": "",
+          "description": "OpenAI API Key",
+          "markdownDescription": "API key for OpenAI model"
+        },
+        "code-brt.cohereApiKey": {
+          "type": "string",
+          "default": "",
+          "description": "Cohere API Key",
+          "markdownDescription": "API key for Cohere model"
+        },
+        "code-brt.groqApiKey": {
+          "type": "string",
+          "default": "",
+          "description": "Open Source LLM API Key",
+          "markdownDescription": "API key for Open Source LLM model"
+        },
+        "code-brt.huggingFaceApiKey": {
+          "type": "string",
+          "default": "",
+          "description": "HuggingFace API Key",
+          "markdownDescription": "API key for HuggingFace model"
+        },
+        "code-brt.themePrimaryColor": {
+          "type": "string",
+          "default": "#f0f0f0",
+          "description": "Primary color for the theme"
+        },
+        "code-brt.themeAlgorithm": {
+          "type": "string",
+          "default": "darkAlgorithm",
+          "description": "Algorithm for the theme",
+          "enum": [
+            "darkAlgorithm",
+            "defaultAlgorithm",
+            "compactAlgorithm"
+          ],
+          "enumDescriptions": [
+            "Dark algorithm",
+            "Light algorithm",
+            "Compact algorithm"
+          ],
+          "markdownDescription": "The algorithm to use for the theme. The `darkAlgorithm` is a dark theme with a dark background and light text. The `defaultAlgorithm` is a light theme with a light background and dark text. The `compactAlgorithm` is a compact theme with a dark background and light text.",
+          "markdownEnumDescriptions": [
+            "Dark algorithm",
+            "Light algorithm",
+            "Compact algorithm"
+          ]
+        },
+        "code-brt.themeBorderRadius": {
+          "type": "number",
+          "default": 4,
+          "description": "Border radius for the theme",
+          "markdownDescription": "The border radius for the theme. The default value is 4.",
+          "minimum": 0,
+          "maximum": 100,
+          "markdownEnumDescriptions": [
+            "0",
+            "100"
+          ]
+        },
+        "code-brt.hljsTheme": {
+          "type": "string",
+          "default": "darcula",
+          "description": "Highlight.js theme",
+          "markdownDescription": "The theme to use for syntax highlighting. The default value is `darcula`.",
+          "enum": [
+            "a11yDark",
+            "a11yLight",
+            "agate",
+            "androidstudio",
+            "anOldHope",
+            "arduinoLight",
+            "arta",
+            "ascetic",
+            "atelierCaveDark",
+            "atelierCaveLight",
+            "atelierDuneDark",
+            "atelierDuneLight",
+            "atelierEstuaryDark",
+            "atelierEstuaryLight",
+            "atelierForestDark",
+            "atelierForestLight",
+            "atelierHeathDark",
+            "atelierHeathLight",
+            "atelierLakesideDark",
+            "atelierLakesideLight",
+            "atelierPlateauDark",
+            "atelierPlateauLight",
+            "atelierSavannaDark",
+            "atelierSavannaLight",
+            "atelierSeasideDark",
+            "atelierSeasideLight",
+            "atelierSulphurpoolDark",
+            "atelierSulphurpoolLight",
+            "atomOneDark",
+            "atomOneDarkReasonable",
+            "atomOneLight",
+            "brownPaper",
+            "codepenEmbed",
+            "colorBrewer",
+            "darcula",
+            "dark",
+            "defaultStyle",
+            "docco",
+            "dracula",
+            "far",
+            "foundation",
+            "github",
+            "githubGist",
+            "gml",
+            "googlecode",
+            "gradientDark",
+            "gradientLight",
+            "grayscale",
+            "gruvboxDark",
+            "gruvboxLight",
+            "hopscotch",
+            "hybrid",
+            "idea",
+            "irBlack",
+            "isblEditorDark",
+            "isblEditorLight",
+            "kimbieDark",
+            "kimbieLight",
+            "lightfair",
+            "lioshi",
+            "magula",
+            "monoBlue",
+            "monokai",
+            "monokaiSublime",
+            "nightOwl",
+            "nnfx",
+            "nnfxDark",
+            "nord",
+            "obsidian",
+            "ocean",
+            "paraisoDark",
+            "paraisoLight",
+            "pojoaque",
+            "purebasic",
+            "qtcreatorDark",
+            "qtcreatorLight",
+            "railscasts",
+            "rainbow",
+            "routeros",
+            "schoolBook",
+            "shadesOfPurple",
+            "solarizedDark",
+            "solarizedLight",
+            "srcery",
+            "stackoverflowDark",
+            "stackoverflowLight",
+            "sunburst",
+            "tomorrow",
+            "tomorrowNight",
+            "tomorrowNightBlue",
+            "tomorrowNightBright",
+            "tomorrowNightEighties",
+            "vs",
+            "vs2015",
+            "xcode",
+            "xt256",
+            "zenburn"
+          ]
+        }
+      }
+    }
+  },
+  "dependencies": {
+    "@ant-design/icons": "^5.4.0",
+    "@google/generative-ai": "^0.16.0",
+    "@huggingface/inference": "^2.8.0",
+    "@types/react-syntax-highlighter": "^15.5.13",
+    "axios": "^1.7.3",
+    "cohere-ai": "^7.11.2",
+    "css-loader": "^7.1.2",
+    "groq-sdk": "^0.5.0",
+    "markdown-to-text": "^0.1.1",
+    "node-mic": "^1.0.1",
+    "ollama": "^0.5.6",
+    "openai": "^4.54.0",
+    "react-markdown": "^9.0.1",
+    "react-syntax-highlighter": "^15.5.0",
+    "simple-text-tokenizer": "^1.0.1",
+    "styled-components": "^6.1.12",
+    "terminate": "^2.8.0"
+  }
+}
