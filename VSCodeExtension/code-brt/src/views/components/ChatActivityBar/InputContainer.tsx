@@ -178,6 +178,7 @@ export const InputContainer = ({
         <input
           type='file'
           accept='image/*'
+          multiple={true}
           ref={fileInputRef}
           onInput={handleFileChange}
           style={{ display: 'none' }}
@@ -192,9 +193,10 @@ export const InputContainer = ({
           value={inputMessage}
           onChange={(e) => setInputMessage(e.target.value)}
           onKeyDown={handleKeyDown}
-          placeholder='Type your message...'
+          placeholder='Type your message or paste image here...'
           disabled={isProcessing}
           autoSize={{ minRows: 1, maxRows: 10 }}
+          allowClear
         />
         <Flex vertical={true}>
           <Button onClick={sendMessage} disabled={isProcessing}>
