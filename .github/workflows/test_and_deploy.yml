@@ -38,7 +38,7 @@ jobs:
       - name: Locate VSIX file
         id: locate-vsix
         run: |
-          vsix_file=$(find . -name "*.vsix")
+          vsix_file=$(find ./build -name "*.vsix")
           echo "VSIX file located at: $vsix_file"
           echo "::set-output name=vsix_path::$vsix_file"
 
@@ -60,7 +60,7 @@ jobs:
       - name: Move VSIX file and commit
         run: |
           mkdir -p build
-          mv ${{ steps.locate-vsix.outputs.vsix_path }} build/
+          mv ${{ steps.locate-vsix.outputs.vsix_path }} ./build/
           git add build
           git commit -m "Add latest VSIX artifact"
           git push --force --set-upstream origin vsix-artifacts
