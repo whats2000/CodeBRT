@@ -196,7 +196,7 @@ export const InputContainer = ({
           onChange={(e) => setInputMessage(e.target.value)}
           onKeyDown={handleKeyDown}
           placeholder={
-            innerWidth > 500
+            innerWidth > 520
               ? 'Ctrl+V images or hold SHIFT key drop them...'
               : 'Ask...'
           }

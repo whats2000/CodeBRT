@@ -45,10 +45,10 @@ jobs:
           git fetch origin
           if git branch -r | grep -w "origin/vsix-artifacts"; then
             git checkout vsix-artifacts
-            git rm -rf build
           else
             git checkout --orphan vsix-artifacts
           fi
+          rm -rf *
 
       - name: Configure Git
         run: |
