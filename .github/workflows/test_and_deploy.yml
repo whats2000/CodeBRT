@@ -1,0 +1,53 @@
+name: CI/CD Pipeline for VSCode Extension
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  build:
+
+    runs-on: ubuntu-latest
+
+    defaults:
+      run:
+        working-directory: VSCodeExtension/code-brt
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v2
+        with:
+          node-version: '20'
+
+      - name: Install dependencies
+        run: npm install
+
+      - name: Run tests
+        run: npm run test
+
+      - name: Build project
+        run: npm run build:ci
+
+      - name: Locate VSIX file
+        id: locate-vsix
+        run: |
+          vsix_file=$(find . -name "*.vsix")
+          echo "VSIX file located at: $vsix_file"
+          echo "::set-output name=vsix_path::$vsix_file"
+
+      - name: Create branch for VSIX
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          git checkout -b vsix-artifacts
+          mv ${{ steps.locate-vsix.outputs.vsix_path }} ../
+          git add ../*.vsix
+          git commit -m "Add VSIX artifact"
+          git push --force --set-upstream origin vsix-artifacts

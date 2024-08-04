@@ -1,11 +1,14 @@
-import { ToolService } from '../src/services/tools';
+import { ToolService } from '../../../src/services/tools';
+import { ToolServicesApi } from '../../../src/types';
 
 describe('ToolService', () => {
   it('should register and execute webSearch tool correctly', async () => {
     const query = 'OpenAI';
     const mockUpdateStatus = jest.fn();
 
-    const webSearch = ToolService.getTool('webSearch');
+    const webSearch = ToolService.getTool(
+      'webSearch',
+    ) as ToolServicesApi['webSearch'];
     expect(webSearch).toBeDefined();
 
     if (webSearch) {
@@ -14,18 +17,23 @@ describe('ToolService', () => {
         updateStatus: mockUpdateStatus,
         maxCharsPerPage: 6000,
         numResults: 4,
+        format: 'text',
       });
 
       // Print results to console
       console.log(results);
 
-      expect(results).toContain('Title:');
-      expect(results).toContain('URL:');
-      expect(results).toContain('Snippet:');
+      expect(results).toContain('**Title**:');
+      expect(results).toContain('**URL**:');
+      expect(results).toContain('**Snippet**:');
 
       // Verify updateStatus was called
-      expect(mockUpdateStatus).toHaveBeenCalledWith('Searching Web');
-      expect(mockUpdateStatus).toHaveBeenCalledWith('Extracting Relevant Info');
+      expect(mockUpdateStatus).toHaveBeenCalledWith(
+        '[Searching] Searching Web with keyword "OpenAI"',
+      );
+      expect(mockUpdateStatus).toHaveBeenCalledWith(
+        '[Info] Generating Response Based on Search Results',
+      );
     }
   }, 30000);
 
@@ -35,10 +43,12 @@ describe('ToolService', () => {
   });
 
   it('should return the correct number of results', async () => {
-    const query = 'OpenAI';
+    const query = 'Gemini';
     const mockUpdateStatus = jest.fn();
 
-    const webSearch = ToolService.getTool('webSearch');
+    const webSearch = ToolService.getTool(
+      'webSearch',
+    ) as ToolServicesApi['webSearch'];
     expect(webSearch).toBeDefined();
 
     if (webSearch) {
@@ -48,25 +58,32 @@ describe('ToolService', () => {
         updateStatus: mockUpdateStatus,
         maxCharsPerPage: 6000,
         numResults,
+        format: 'text',
       });
 
       // Print results to console
       console.log(results);
 
-      const resultCount = (results.match(/Title:/g) || []).length;
+      const resultCount = (results.match(/\*\*Title\*\*:/g) || []).length;
       expect(resultCount).toBe(numResults);
 
       // Verify updateStatus was called
-      expect(mockUpdateStatus).toHaveBeenCalledWith('Searching Web');
-      expect(mockUpdateStatus).toHaveBeenCalledWith('Extracting Relevant Info');
+      expect(mockUpdateStatus).toHaveBeenCalledWith(
+        '[Searching] Searching Web with keyword "Gemini"',
+      );
+      expect(mockUpdateStatus).toHaveBeenCalledWith(
+        '[Info] Generating Response Based on Search Results',
+      );
     }
   }, 30000);
 
   it('should handle varying maxCharsPerPage', async () => {
-    const query = 'OpenAI';
+    const query = 'Claude';
     const mockUpdateStatus = jest.fn();
 
-    const webSearch = ToolService.getTool('webSearch');
+    const webSearch = ToolService.getTool(
+      'webSearch',
+    ) as ToolServicesApi['webSearch'];
     expect(webSearch).toBeDefined();
 
     if (webSearch) {
@@ -76,13 +93,14 @@ describe('ToolService', () => {
         updateStatus: mockUpdateStatus,
         maxCharsPerPage,
         numResults: 4,
+        format: 'text',
       });
 
       // Print results to console
       console.log(results);
 
       const snippets = results
-        .split('Snippet: ')
+        .split('**Snippet**: ')
         .slice(1)
         .map((snippet) => snippet.split('\n')[0]);
       snippets.forEach((snippet) => {
@@ -94,8 +112,12 @@ describe('ToolService', () => {
       });
 
       // Verify updateStatus was called
-      expect(mockUpdateStatus).toHaveBeenCalledWith('Searching Web');
-      expect(mockUpdateStatus).toHaveBeenCalledWith('Extracting Relevant Info');
+      expect(mockUpdateStatus).toHaveBeenCalledWith(
+        '[Searching] Searching Web with keyword "Claude"',
+      );
+      expect(mockUpdateStatus).toHaveBeenCalledWith(
+        '[Info] Generating Response Based on Search Results',
+      );
     }
   }, 30000);
 });
