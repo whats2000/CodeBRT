@@ -20,6 +20,7 @@
     "test": "jest",
     "bundle": "webpack --mode production && webpack --mode production --config ./webpack.config.views.js",
     "build": "rd /s /q dist 2>nul & mkdir dist & copy README.md dist\\ & copy LICENSE.md dist\\ & rd /s /q build 2>nul & mkdir build & npm run bundle & node scripts/build.js",
+    "build:ci": "rm -rf dist 2>/dev/null || true && mkdir -p dist && cp README.md dist/ && cp LICENSE.md dist/ && rm -rf build 2>/dev/null || true && mkdir -p build && npm run bundle && node scripts/build.js",
     "watch": "webpack --mode development --watch",
     "devserver": "webpack serve --mode development --config ./webpack.config.views.js",
     "format": "prettier 'src/**/*.js' 'src/**/*.jsx' 'src/**/*.ts' 'src/**/*.tsx' './package.json' '.swcrc' './*.js' --no-error-on-unmatched-pattern --write"
