@@ -7,7 +7,7 @@ import { ConfigProvider } from 'antd';
 import type { ConversationHistory, ModelServiceType } from '../../types';
 import { INPUT_MESSAGE_KEY, UPLOADED_IMAGES_KEY } from '../../constants';
 import { WebviewContext } from '../WebviewContext';
-import { useThemeConfig } from '../hooks';
+import { useDragAndDrop, useThemeConfig } from '../hooks';
 import { Toolbar } from './ChatActivityBar/Toolbar';
 import { InputContainer } from './ChatActivityBar/InputContainer';
 import { MessagesContainer } from './ChatActivityBar/MessagesContainer';
@@ -50,6 +50,8 @@ export const ChatActivityBar = () => {
   const messagesContainerRef = useRef<HTMLDivElement>(null);
 
   const [theme, setTheme] = useThemeConfig();
+
+  const dropRef = useDragAndDrop((files) => handleImageUpload(files));
 
   const scrollToBottom = (smooth: boolean = true) => {
     if (messagesContainerRef.current) {
@@ -429,7 +431,7 @@ export const ChatActivityBar = () => {
 
   return (
     <ConfigProvider theme={theme}>
-      <Container>
+      <Container ref={dropRef}>
         <Toolbar
           conversationHistory={conversationHistory}
           activeModelService={activeModelService}

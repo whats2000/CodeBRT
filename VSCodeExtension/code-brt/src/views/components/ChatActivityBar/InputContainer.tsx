@@ -193,7 +193,7 @@ export const InputContainer = ({
           value={inputMessage}
           onChange={(e) => setInputMessage(e.target.value)}
           onKeyDown={handleKeyDown}
-          placeholder='Type your message or paste image here...'
+          placeholder='Type message / Paste image / Drop image by pressing SHIFT'
           disabled={isProcessing}
           autoSize={{ minRows: 1, maxRows: 10 }}
           allowClear

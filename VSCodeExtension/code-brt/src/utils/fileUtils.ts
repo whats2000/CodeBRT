@@ -1,6 +1,8 @@
 import fs from 'node:fs/promises';
 import vscode from 'vscode';
 import path from 'node:path';
+import { v4 as uuidV4 } from 'uuid';
+
 import { ViewKey } from '../views';
 
 export abstract class FileUtils {
@@ -33,7 +35,7 @@ export abstract class FileUtils {
     const buffer = Buffer.from(data, 'base64');
     const fileName = path.join(
       mediaDir,
-      `${Date.now()}.${mimeType.split('/')[1]}`,
+      `${uuidV4()}.${mimeType.split('/')[1]}`,
     );
 
     try {

@@ -7,8 +7,6 @@ export const useClipboardImage = (onPaste: (files: FileList) => void) => {
         const items = event.clipboardData.items;
         const files: File[] = [];
 
-        console.log('items', ...items);
-
         for (let i = 0; i < items.length; i++) {
           if (items[i].type.indexOf('image') !== -1) {
             const blob = items[i].getAsFile();
