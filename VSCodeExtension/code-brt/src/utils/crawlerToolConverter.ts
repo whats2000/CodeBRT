@@ -1,4 +1,4 @@
-import cheerio from 'cheerio';
+import * as cheerio from 'cheerio';
 
 export const extractTextFromWebpage = (htmlContent: string): string => {
   const $ = cheerio.load(htmlContent);
