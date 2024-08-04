@@ -59,7 +59,8 @@ jobs:
 
       - name: Move VSIX file and commit
         run: |
-          mv ${{ steps.locate-vsix.outputs.vsix_path }} .
-          git add *.vsix
+          mkdir -p build
+          mv ${{ steps.locate-vsix.outputs.vsix_path }} build/
+          git add build
           git commit -m "Add latest VSIX artifact"
           git push --force --set-upstream origin vsix-artifacts
