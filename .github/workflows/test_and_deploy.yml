@@ -40,25 +40,8 @@ jobs:
           echo "VSIX file located at: $vsix_file"
           echo "::set-output name=vsix_path::$vsix_file"
 
-      - name: Checkout vsix-artifacts branch
-        run: |
-          git fetch origin
-          if git branch -r | grep -w "origin/vsix-artifacts"; then
-            git checkout vsix-artifacts
-          else
-            git checkout --orphan vsix-artifacts
-          fi
-          rm -rf *
-
-      - name: Configure Git
-        run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-
-      - name: Move VSIX file and commit
-        run: |
-          mkdir -p build
-          mv ${{ steps.locate-vsix.outputs.vsix_path }} build/
-          git add build
-          git commit -m "Add latest VSIX artifact"
-          git push --force --set-upstream origin vsix-artifacts
+      - name: Upload Artifact
+        uses: actions/upload-artifact@v2
+        with:
+          name: vsix-artifact
+          path: ${{ steps.locate-vsix.outputs.vsix_path }}
