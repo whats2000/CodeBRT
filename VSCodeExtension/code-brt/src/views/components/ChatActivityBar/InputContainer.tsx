@@ -10,7 +10,7 @@ import {
 } from '@ant-design/icons';
 
 import { WebviewContext } from '../../WebviewContext';
-import { useClipboardImage } from '../../hooks';
+import { useClipboardImage, useWindowSize } from '../../hooks';
 
 const StyledInputContainer = styled.div`
   display: flex;
@@ -57,6 +57,8 @@ export const InputContainer = ({
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   useClipboardImage((files) => handleImageUpload(files));
+
+  const { innerWidth } = useWindowSize();
 
   useEffect(() => {
     // Note: The link will break in vscode webview, so we need to remove the href attribute to prevent it.
@@ -193,7 +195,11 @@ export const InputContainer = ({
           value={inputMessage}
           onChange={(e) => setInputMessage(e.target.value)}
           onKeyDown={handleKeyDown}
-          placeholder='Type message / Paste image / Drop image by pressing SHIFT'
+          placeholder={
+            innerWidth > 500
+              ? 'Ctrl+V images or hold SHIFT key drop them...'
+              : 'Ask...'
+          }
           disabled={isProcessing}
           autoSize={{ minRows: 1, maxRows: 10 }}
           allowClear

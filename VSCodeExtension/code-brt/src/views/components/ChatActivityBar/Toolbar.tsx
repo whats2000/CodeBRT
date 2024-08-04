@@ -6,6 +6,7 @@ import {
   HistoryOutlined,
   SettingOutlined,
   MenuOutlined,
+  AudioOutlined,
 } from '@ant-design/icons';
 import styled from 'styled-components';
 
@@ -15,6 +16,7 @@ import { EditModelListBar } from './Toolbar/EditModelListBar';
 import { HistorySidebar } from './Toolbar/HistorySidebar';
 import { SettingsBar } from './Toolbar/SettingsBar';
 import { VoiceSettingsBar } from './Toolbar/VoiceSettingsBar';
+import { useWindowSize } from '../../hooks';
 
 const StyledSpace = styled(Space)`
   display: flex;
@@ -74,9 +76,10 @@ export const Toolbar: React.FC<ToolbarProps> = ({
   const [isHistorySidebarOpen, setIsHistorySidebarOpen] = useState(false);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [isVoiceSettingsOpen, setIsVoiceSettingsOpen] = useState(false);
-  const [isOffCanvas, setIsOffCanvas] = useState(false);
   const [isSelectModelOpen, setIsSelectModelOpen] = useState(false);
   const [isEditModelListOpen, setIsEditModelListOpen] = useState(false);
+
+  const { innerWidth } = useWindowSize();
 
   useEffect(() => {
     setIsActiveModelLoading(true);
@@ -107,17 +110,6 @@ export const Toolbar: React.FC<ToolbarProps> = ({
           'error',
         ).catch(console.error),
       );
-
-    const handleResize = () => {
-      setIsOffCanvas(window.innerWidth < 560);
-    };
-
-    window.addEventListener('resize', handleResize);
-    handleResize();
-
-    return () => {
-      window.removeEventListener('resize', handleResize);
-    };
   }, [activeModelService]);
 
   const createNewChat = () => {
@@ -205,12 +197,30 @@ export const Toolbar: React.FC<ToolbarProps> = ({
       key: 'general',
       onClick: () => setIsSettingsOpen(true),
       label: 'General Settings',
+      icon: <SettingOutlined />,
     },
     {
       key: 'voice',
       onClick: () => setIsVoiceSettingsOpen(true),
       label: 'Voice Settings',
+      icon: <AudioOutlined />,
     },
+  ];
+
+  const settingMenuItemsSmallWidth: MenuProps['items'] = [
+    {
+      key: 'History',
+      onClick: toggleHistorySidebar,
+      label: 'History',
+      icon: <HistoryOutlined />,
+    },
+    {
+      key: 'New Chat',
+      onClick: createNewChat,
+      label: 'New Chat',
+      icon: <PlusOutlined />,
+    },
+    ...settingMenuItems,
   ];
 
   const modelServiceOptions: SelectProps['options'] = modelServices.map(
@@ -246,81 +256,63 @@ export const Toolbar: React.FC<ToolbarProps> = ({
 
   return (
     <>
-      <StyledSpace>
-        <Space>
-          {isOffCanvas ? (
-            <>
-              <Select
-                showSearch
-                value={activeModelService}
-                onChange={handleModelServiceChange}
-                style={{ width: 100 }}
-                loading={isActiveModelLoading}
-                options={modelServiceOptions}
-              />
+      <Drawer
+        title={
+          <Flex justify={'space-between'} align={'center'}>
+            <span>Select Model</span>
+            <Space>
               <Button
-                onClick={() => setIsSelectModelOpen(true)}
-                loading={isActiveModelLoading}
-                style={{ whiteSpace: 'nowrap', overflow: 'hidden' }}
-              >
-                {isActiveModelLoading ? 'Loading...' : selectedModel}
-              </Button>
-              <Drawer
-                title={
-                  <Flex justify={'space-between'} align={'center'}>
-                    <span>Select Model</span>
-                    <Space>
-                      <Button
-                        icon={<HistoryOutlined />}
-                        onClick={toggleHistorySidebar}
-                      />
-                      <Button icon={<PlusOutlined />} onClick={createNewChat} />
-                      <Dropdown menu={{ items: settingMenuItems }}>
-                        <Button icon={<SettingOutlined />} />
-                      </Dropdown>
-                    </Space>
-                  </Flex>
-                }
-                placement='right'
-                open={isSelectModelOpen}
-                onClose={() => setIsSelectModelOpen(false)}
-                loading={isActiveModelLoading}
-              >
-                <Select
-                  value={isActiveModelLoading ? 'Loading...' : selectedModel}
-                  onChange={handleModelChange}
-                  style={{ width: '100%' }}
-                  options={modelOptions}
-                />
-              </Drawer>
-            </>
-          ) : (
-            <>
-              <Select
-                showSearch
-                value={activeModelService}
-                onChange={handleModelServiceChange}
-                style={{ width: 150 }}
-                loading={isActiveModelLoading}
-                options={modelServiceOptions}
+                icon={<HistoryOutlined />}
+                onClick={toggleHistorySidebar}
               />
-              <Select
-                showSearch
-                value={isActiveModelLoading ? 'Loading...' : selectedModel}
-                onChange={handleModelChange}
-                style={{ width: 200 }}
-                loading={isActiveModelLoading}
-                options={modelOptions}
-              />
-            </>
-          )}
-        </Space>
-        {isOffCanvas ? (
-          <Button
-            icon={<MenuOutlined />}
-            onClick={() => setIsSelectModelOpen(true)}
+              <Button icon={<PlusOutlined />} onClick={createNewChat} />
+              <Dropdown menu={{ items: settingMenuItems }}>
+                <Button icon={<SettingOutlined />} />
+              </Dropdown>
+            </Space>
+          </Flex>
+        }
+        placement='right'
+        open={isSelectModelOpen}
+        onClose={() => setIsSelectModelOpen(false)}
+        loading={isActiveModelLoading}
+      >
+        <Select
+          value={isActiveModelLoading ? 'Loading...' : selectedModel}
+          onChange={handleModelChange}
+          style={{ width: '100%' }}
+          options={modelOptions}
+        />
+      </Drawer>
+      <StyledSpace>
+        <Space wrap>
+          <Flex justify={'space-between'} gap={10}>
+            <Select
+              showSearch
+              value={activeModelService}
+              onChange={handleModelServiceChange}
+              style={{
+                width: innerWidth < 550 ? 200 : 125,
+              }}
+              loading={isActiveModelLoading}
+              options={modelServiceOptions}
+            />
+          </Flex>
+          <Select
+            showSearch
+            value={isActiveModelLoading ? 'Loading...' : selectedModel}
+            onChange={handleModelChange}
+            style={{
+              width: innerWidth < 550 ? 200 : '100%',
+            }}
             loading={isActiveModelLoading}
+            options={modelOptions}
           />
+        </Space>
+        {innerWidth < 400 ? (
+          <Dropdown menu={{ items: settingMenuItemsSmallWidth }}>
+            <Button icon={<MenuOutlined />} />
+          </Dropdown>
         ) : (
           <Space>
             <Button icon={<HistoryOutlined />} onClick={toggleHistorySidebar} />
