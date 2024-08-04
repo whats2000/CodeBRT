@@ -1,5 +1,5 @@
-import { ToolService } from '../src/services/tools';
-import { ToolServicesApi } from '../src/types';
+import { ToolService } from '../../../src/services/tools';
+import { ToolServicesApi } from '../../../src/types';
 
 describe('ToolService', () => {
   it('should register and execute webSearch tool correctly', async () => {
@@ -43,7 +43,7 @@ describe('ToolService', () => {
   });
 
   it('should return the correct number of results', async () => {
-    const query = 'OpenAI';
+    const query = 'Gemini';
     const mockUpdateStatus = jest.fn();
 
     const webSearch = ToolService.getTool(
@@ -69,7 +69,7 @@ describe('ToolService', () => {
 
       // Verify updateStatus was called
       expect(mockUpdateStatus).toHaveBeenCalledWith(
-        '[Searching] Searching Web with keyword "OpenAI"',
+        '[Searching] Searching Web with keyword "Gemini"',
       );
       expect(mockUpdateStatus).toHaveBeenCalledWith(
         '[Info] Generating Response Based on Search Results',
@@ -78,7 +78,7 @@ describe('ToolService', () => {
   }, 30000);
 
   it('should handle varying maxCharsPerPage', async () => {
-    const query = 'OpenAI';
+    const query = 'Claude';
     const mockUpdateStatus = jest.fn();
 
     const webSearch = ToolService.getTool(
@@ -113,7 +113,7 @@ describe('ToolService', () => {
 
       // Verify updateStatus was called
       expect(mockUpdateStatus).toHaveBeenCalledWith(
-        '[Searching] Searching Web with keyword "OpenAI"',
+        '[Searching] Searching Web with keyword "Claude"',
       );
       expect(mockUpdateStatus).toHaveBeenCalledWith(
         '[Info] Generating Response Based on Search Results',
