@@ -195,15 +195,13 @@ export abstract class AbstractLanguageModelService
       const histories: ConversationHistoryList = JSON.parse(data);
       this.histories = histories;
 
-      // Fix as the old history files may not have the top field
+      // Make the history will not break after version update
       if (Object.keys(histories).length > 0) {
         for (const historyID in histories) {
-          if (!histories[historyID].top) {
-            this.histories[historyID].top =
-              histories[historyID].root === ''
-                ? []
-                : [histories[historyID].root];
-          }
+          this.histories[historyID] = {
+            ...this.getDefaultConversationHistory(),
+            ...histories[historyID],
+          };
         }
 
         this.history = histories[Object.keys(histories)[0]];
