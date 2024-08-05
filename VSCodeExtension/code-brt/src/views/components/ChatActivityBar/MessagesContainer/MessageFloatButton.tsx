@@ -17,7 +17,7 @@ type MessageFloatButtonProps = {
     current: HTMLDivElement | null;
     entry: ConversationEntry | null;
   };
-  bubblePosition: {
+  floatButtonsPosition: {
     xRight: number;
     yTop: number;
   };
@@ -34,7 +34,7 @@ type MessageFloatButtonProps = {
 
 export const MessageFloatButton: React.FC<MessageFloatButtonProps> = ({
   hoveredBubble,
-  bubblePosition,
+  floatButtonsPosition,
   isAudioPlaying,
   isStopAudio,
   editingEntryId,
@@ -51,8 +51,8 @@ export const MessageFloatButton: React.FC<MessageFloatButtonProps> = ({
     <FloatButton.Group
       shape='circle'
       style={{
-        left: bubblePosition.xRight + 10,
-        top: bubblePosition.yTop > 75 ? bubblePosition.yTop : 75,
+        left: floatButtonsPosition.xRight,
+        top: floatButtonsPosition.yTop,
         position: 'fixed',
         visibility: hoveredBubble ? 'visible' : 'hidden',
         height: 225,

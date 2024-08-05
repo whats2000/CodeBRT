@@ -101,7 +101,7 @@ export const MessagesContainer: React.FC<MessagesContainerProps> = ({
     current: null,
     entry: null,
   });
-  const [bubblePosition, setBubblePosition] = useState<{
+  const [floatButtonsPosition, setFloatButtonsPosition] = useState<{
     xRight: number;
     yTop: number;
   }>({ xRight: 0, yTop: 0 });
@@ -193,30 +193,38 @@ export const MessagesContainer: React.FC<MessagesContainerProps> = ({
     setEditingEntryId(null);
   };
 
+  const updateFloatButtonsPosition = () => {
+    if (hoveredBubble.current) {
+      const rect = hoveredBubble.current.getBoundingClientRect();
+      const newTop = rect.top > 75 ? rect.top : 75;
+
+      setFloatButtonsPosition({ xRight: rect.right + 10, yTop: newTop });
+    }
+  };
+
   const handleMouseEnter = (
     e: React.MouseEvent<HTMLDivElement>,
     entry: ConversationEntry,
   ) => {
-    const bubble = e.currentTarget as HTMLDivElement;
-    const rect = bubble.getBoundingClientRect();
-    setHoveredBubble({ current: bubble, entry });
-    setBubblePosition({ xRight: rect.right, yTop: rect.top });
+    setHoveredBubble({ current: e.currentTarget as HTMLDivElement, entry });
+    const rect = e.currentTarget.getBoundingClientRect();
+    const newTop = rect.top > 75 ? rect.top : 75;
+
+    setFloatButtonsPosition({ xRight: rect.right + 10, yTop: newTop });
   };
 
   useEffect(() => {
-    const handleScroll = () => {
-      if (hoveredBubble.current) {
-        const rect = hoveredBubble.current.getBoundingClientRect();
-        setBubblePosition({ xRight: rect.right, yTop: rect.top });
-      }
+    const handleScrollEnd = () => {
+      updateFloatButtonsPosition();
     };
 
-    messagesContainerRef.current?.addEventListener('scroll', handleScroll);
+    const messagesContainer = messagesContainerRef.current;
+    messagesContainer?.addEventListener('scrollend', handleScrollEnd);
 
     return () => {
-      messagesContainerRef.current?.removeEventListener('scroll', handleScroll);
+      messagesContainer?.removeEventListener('scrollend', handleScrollEnd);
     };
-  }, [hoveredBubble, messagesContainerRef]);
+  }, [hoveredBubble]);
 
   const conversationHistoryEntries = traverseHistory(
     conversationHistory.entries,
@@ -338,7 +346,7 @@ export const MessagesContainer: React.FC<MessagesContainerProps> = ({
       {hoveredBubble && (
         <MessageFloatButton
           hoveredBubble={hoveredBubble}
-          bubblePosition={bubblePosition}
+          floatButtonsPosition={floatButtonsPosition}
           isAudioPlaying={isAudioPlaying}
           isStopAudio={isStopAudio}
           editingEntryId={editingEntryId}
