@@ -72,7 +72,7 @@ export class CohereService extends AbstractLanguageModelService {
     [key: string]: ConversationEntry;
   }): Message[] {
     let result: Message[] = [];
-    let currentEntry = entries[this.history.current];
+    let currentEntry = entries[this.historyManager.getCurrentHistory().current];
 
     while (currentEntry) {
       result.unshift({
@@ -199,7 +199,7 @@ export class CohereService extends AbstractLanguageModelService {
     });
 
     let conversationHistory = this.conversationHistoryToContent(
-      this.getHistoryBeforeEntry(currentEntryID).entries,
+      this.historyManager.getHistoryBeforeEntry(currentEntryID).entries,
     );
 
     let toolResults: ToolResult[] = [];

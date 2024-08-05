@@ -61,7 +61,7 @@ export class OllamaService extends AbstractLanguageModelService {
     images?: string[],
   ): Promise<Message[]> {
     const result: Message[] = [];
-    let currentEntry = entries[this.history.current];
+    let currentEntry = entries[this.historyManager.getCurrentHistory().current];
 
     while (currentEntry) {
       result.unshift({
@@ -162,7 +162,7 @@ export class OllamaService extends AbstractLanguageModelService {
     });
 
     const conversationHistory = await this.conversationHistoryToContent(
-      this.getHistoryBeforeEntry(currentEntryID).entries,
+      this.historyManager.getHistoryBeforeEntry(currentEntryID).entries,
       query,
       images,
     );

@@ -62,7 +62,7 @@ export class AnthropicService extends AbstractLanguageModelService {
     query: string,
   ): MessageParam[] {
     const result: MessageParam[] = [];
-    let currentEntry = entries[this.history.current];
+    let currentEntry = entries[this.historyManager.getCurrentHistory().current];
 
     while (currentEntry) {
       result.unshift({
@@ -145,7 +145,7 @@ export class AnthropicService extends AbstractLanguageModelService {
     }
 
     const conversationHistory = this.conversationHistoryToContent(
-      this.getHistoryBeforeEntry(currentEntryID).entries,
+      this.historyManager.getHistoryBeforeEntry(currentEntryID).entries,
       query,
     );
 

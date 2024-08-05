@@ -1,7 +1,6 @@
 import * as vscode from 'vscode';
 
 import {
-  ConversationHistory,
   LanguageModelService,
   GetResponseOptions,
   ModelServiceType,
@@ -18,7 +17,6 @@ export abstract class AbstractLanguageModelService
   protected readonly historyManager: HistoryManager;
   protected readonly serviceType: ModelServiceType;
   protected readonly context: vscode.ExtensionContext;
-  protected history: ConversationHistory = this.getDefaultConversationHistory();
   protected currentModel: string = '';
   protected availableModelNames: string[] = [];
 
@@ -36,32 +34,6 @@ export abstract class AbstractLanguageModelService
     this.historyManager = historyManager;
     this.currentModel = currentModel;
     this.availableModelNames = availableModelNames;
-  }
-
-  /**
-   * Get the default empty conversation history
-   */
-  private getDefaultConversationHistory(): ConversationHistory {
-    return {
-      title: '',
-      root: '',
-      top: [],
-      current: '',
-      create_time: Date.now(),
-      update_time: Date.now(),
-      entries: {},
-    };
-  }
-
-  /**
-   * Get the history before a given entry id
-   * @param currentEntryID - The entry id to get the history before
-   * @returns The conversation history before the given entry id
-   */
-  protected getHistoryBeforeEntry(
-    currentEntryID?: string,
-  ): ConversationHistory {
-    return this.historyManager.getHistoryBeforeEntry(currentEntryID);
   }
 
   public updateAvailableModels(newAvailableModels: string[]): void {

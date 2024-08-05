@@ -133,7 +133,7 @@ export class GeminiService extends AbstractLanguageModelService {
     [key: string]: ConversationEntry;
   }): Content[] {
     let result: Content[] = [];
-    let currentEntry = entries[this.history.current];
+    let currentEntry = entries[this.historyManager.getCurrentHistory().current];
 
     while (currentEntry) {
       result.unshift({
@@ -298,7 +298,7 @@ export class GeminiService extends AbstractLanguageModelService {
     });
 
     const conversationHistory = this.conversationHistoryToContent(
-      this.getHistoryBeforeEntry(currentEntryID).entries,
+      this.historyManager.getHistoryBeforeEntry(currentEntryID).entries,
     );
 
     let queryParts = this.createQueryParts(query, images);

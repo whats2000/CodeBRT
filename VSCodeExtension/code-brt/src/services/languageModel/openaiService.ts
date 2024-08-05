@@ -86,7 +86,7 @@ export class OpenAIService extends AbstractOpenaiLikeService {
     });
 
     const conversationHistory = await this.conversationHistoryToContent(
-      this.getHistoryBeforeEntry(currentEntryID).entries,
+      this.historyManager.getHistoryBeforeEntry(currentEntryID).entries,
       query,
       images,
     );

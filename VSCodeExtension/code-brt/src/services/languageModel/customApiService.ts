@@ -61,7 +61,7 @@ export class CustomApiService extends AbstractLanguageModelService {
     [key: string]: ConversationEntry;
   }): string {
     const historyArray = [];
-    let currentEntry = entries[this.history.current];
+    let currentEntry = entries[this.historyManager.getCurrentHistory().current];
 
     while (currentEntry) {
       historyArray.unshift({
@@ -271,7 +271,7 @@ export class CustomApiService extends AbstractLanguageModelService {
     }
 
     const conversationHistory = this.conversationHistoryToJson(
-      this.getHistoryBeforeEntry(currentEntryID).entries,
+      this.historyManager.getHistoryBeforeEntry(currentEntryID).entries,
     );
 
     try {

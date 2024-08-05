@@ -109,7 +109,7 @@ export abstract class AbstractOpenaiLikeService extends AbstractLanguageModelSer
     images?: string[],
   ): Promise<ChatCompletionMessageParamOpenaiLike[]> {
     const result: ChatCompletionMessageParamOpenaiLike[] = [];
-    let currentEntry = entries[this.history.current];
+    let currentEntry = entries[this.historyManager.getCurrentHistory().current];
 
     while (currentEntry) {
       const messageParam: ChatCompletionMessageParamOpenaiLike =

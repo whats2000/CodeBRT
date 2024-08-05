@@ -61,7 +61,7 @@ export class HuggingFaceService extends AbstractLanguageModelService {
     query: string,
   ): ChatCompletionInputMessage[] {
     const result: ChatCompletionInputMessage[] = [];
-    let currentEntry = entries[this.history.current];
+    let currentEntry = entries[this.historyManager.getCurrentHistory().current];
 
     while (currentEntry) {
       result.unshift({
@@ -168,7 +168,7 @@ export class HuggingFaceService extends AbstractLanguageModelService {
     );
 
     const conversationHistory = this.conversationHistoryToContent(
-      this.getHistoryBeforeEntry(currentEntryID).entries,
+      this.historyManager.getHistoryBeforeEntry(currentEntryID).entries,
       query,
     );
 
