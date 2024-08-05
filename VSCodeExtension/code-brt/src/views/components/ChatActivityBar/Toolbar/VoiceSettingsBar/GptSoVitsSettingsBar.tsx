@@ -158,7 +158,7 @@ export const GptSoVitsSettingsBar: React.FC<GptSoVitsSettingsBarProps> = ({
       name: 'New Voice',
       referWavPath: '',
       referText: '',
-      promptLanguage: 'en',
+      promptLanguage: 'en' as GptSoVitsVoiceSetting['promptLanguage'],
     };
 
     setPartialSettings((prev) => ({

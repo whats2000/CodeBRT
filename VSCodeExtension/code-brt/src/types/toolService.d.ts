@@ -34,6 +34,15 @@ export type ToolServicesApi = {
     updateStatus?: (status: string) => void;
   }) => Promise<string>;
 
+  /**
+   * Fetch the content of a URL and return it.
+   * @param args.url The URL to fetch.
+   * @param args.maxCharsPerPage The maximum number of characters to include in each page.
+   * @param args.format The format of the content.
+   * Either 'text' as a document like or 'json' as JSON string.
+   * @param args.updateStatus A function to update the status of the fetch.
+   * @returns The content of the URL as a string.
+   */
   urlFetcher: (args: {
     url: string;
     maxCharsPerPage?: number | string;

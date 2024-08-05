@@ -7,221 +7,111 @@ import {
   VoiceToTextServiceType,
 } from './voiceServiceType';
 
+/**
+ * Represents the settings for a reference voice for the GPT-SoVits API.
+ * @property id - Identifier for the voice setting
+ * @property name - The name of the voice setting
+ * @property referWavPath - The path to the WAV file
+ * @property referText - The text reference of the WAV file
+ * @property promptLanguage - The language spoken in the WAV file in (zh, en, ja)
+ */
 export type GptSoVitsVoiceSetting = {
-  /**
-   * Identifier for the voice setting.
-   */
   id: string;
-
-  /**
-   * The name of the voice setting.
-   */
   name: string;
-
-  /**
-   * The path to the WAV file.
-   */
   referWavPath: string;
-
-  /**
-   * The text reference of the WAV file.
-   */
   referText: string;
-
-  /**
-   * The language spoken in the WAV file.
-   */
-  promptLanguage: string;
+  promptLanguage: 'zh' | 'en' | 'ja';
 };
 
 /**
  * Represents the settings for a custom API model.
+ * @property id - Identifier for the custom model
+ * @property name - The name of the custom model
+ * @property apiUrl - The URL of the API
+ * @property apiMethod - The HTTP method to use (GET or POST)
+ * @property apiTextParam - The name of the text parameter in the API payload
+ * @property apiImageParam - The name of the image parameter in the API payload
+ * @property apiQueryParam - The name of the query parameter in the API payload
+ * @property includeQueryInHistory - Indicates whether the query should be included in the history
  */
 export type CustomModelSettings = {
-  /**
-   * Identifier for the custom model.
-   */
   id: string;
-
-  /**
-   * The name of the custom model.
-   */
   name: string;
-
-  /**
-   * The URL of the API.
-   */
   apiUrl: string;
-
-  /**
-   * The HTTP method to use (GET or POST).
-   */
   apiMethod: 'GET' | 'POST';
-
-  /**
-   * The name of the text parameter in the API payload.
-   */
   apiTextParam: string;
-
-  /**
-   * The name of the image parameter in the API payload.
-   */
   apiImageParam: string;
-
-  /**
-   * The name of the query parameter in the API payload.
-   */
   apiQueryParam: string;
-
-  /**
-   * Indicates whether the query should be included in the history.
-   */
   includeQueryInHistory: boolean;
 };
 
+/**
+ * Represents the settings for the extension which are stored locally.
+ * @property anthropicAvailableModels - The available models for the Anthropic API
+ * @property geminiAvailableModels - The available models for the Gemini API
+ * @property openaiAvailableModels - The available models for the OpenAI API
+ * @property openaiAvailableVoices - The available voices for the OpenAI API
+ * @property openaiSelectedVoice - The selected voice for the OpenAI API
+ * @property cohereAvailableModels - The available models for the Cohere API
+ * @property groqAvailableModels - The available models for the Groq API
+ * @property huggingFaceAvailableModels - The available models for the Hugging Face API
+ * @property ollamaClientHost - The host URL for the Ollama client
+ * @property ollamaAvailableModels - The available models for the Ollama API
+ * @property lastUsedModel - The last used model
+ * @property lastSelectedModel - The last selected model for each model service
+ * @property customModels - A list of custom models
+ * @property selectedTextToVoiceService - The selected text-to-voice service
+ * @property selectedVoiceToTextService - The selected voice-to-text service
+ * @property gptSoVitsClientHost - The API URL for the GPT-SoVits model
+ * @property gptSoVitsAvailableReferenceVoices - The available reference voices for the GPT-SoVits API
+ * @property gptSoVitsSelectedReferenceVoice - The selected reference voice for the GPT-SoVits API
+ */
 export type ExtensionSettingsLocal = {
-  /**
-   * The available models for the Anthropic API.
-   */
   anthropicAvailableModels: string[];
-
-  /**
-   * The available models for the Gemini API.
-   */
   geminiAvailableModels: string[];
-
-  /**
-   * The available models for the OpenAI API.
-   */
   openaiAvailableModels: string[];
-
-  /**
-   * The available voices for the OpenAI API.
-   */
   openaiAvailableVoices: SpeechCreateParams.voice[];
-
-  /**
-   * The selected voice for the OpenAI API.
-   */
   openaiSelectedVoice: SpeechCreateParams.voice;
-
-  /**
-   * The available models for the Cohere API.
-   */
   cohereAvailableModels: string[];
-
-  /**
-   * The available models for the Groq API.
-   */
   groqAvailableModels: string[];
-
-  /**
-   * The available models for the Hugging Face API.
-   */
   huggingFaceAvailableModels: string[];
-
-  /**
-   * The host url for the Ollama client.
-   */
   ollamaClientHost: string;
-
-  /**
-   * The available models for the Ollama API.
-   */
   ollamaAvailableModels: string[];
-
-  /**
-   * The last used model.
-   */
   lastUsedModel: ModelServiceType;
-
-  /**
-   * The last selected model for each model service.
-   */
   lastSelectedModel: {
     [keyof in ModelServiceType]: string;
   };
-
-  /**
-   * A list of custom models.
-   */
   customModels: CustomModelSettings[];
-
-  /**
-   * The selected text-to-voice service.
-   */
   selectedTextToVoiceService: TextToVoiceServiceType;
-
-  /**
-   * The selected voice-to-text service.
-   */
   selectedVoiceToTextService: VoiceToTextServiceType;
-
-  /**
-   * The APIUrl for the GPT-SoVits model.
-   */
   gptSoVitsClientHost: string;
-
-  /**
-   * The available reference voices for the GPT-SoVits API.
-   */
   gptSoVitsAvailableReferenceVoices: GptSoVitsVoiceSetting[];
-
-  /**
-   * The selected reference voice for the GPT-SoVits API.
-   */
   gptSoVitsSelectedReferenceVoice: string;
 };
 
+/**
+ * Represents the settings for the extension which are stored cross-device.
+ * @property anthropicApiKey - The API key for the Anthropic model
+ * @property cohereApiKey - The API key for the Cohere model
+ * @property geminiApiKey - The API key for the Gemini model
+ * @property groqApiKey - The API key for the Groq model
+ * @property huggingFaceApiKey - The API key for the Hugging Face model
+ * @property openaiApiKey - The API key for the OpenAI model
+ * @property themePrimaryColor - The primary color for the Ant Design theme
+ * @property themeAlgorithm - The algorithm for the Ant Design theme in (defaultAlgorithm, darkAlgorithm, compactAlgorithm)
+ * @property themeBorderRadius - The border radius for the Ant Design theme
+ * @property hljsTheme - The theme for the code highlighter
+ */
 export type ExtensionSettingsCrossDevice = {
-  /**
-   * The API key for the Anthropic model.
-   */
   anthropicApiKey: string;
-
-  /**
-   * The API key for the Cohere model.
-   */
   cohereApiKey: string;
-
-  /**
-   * The API key for the Gemini model.
-   */
   geminiApiKey: string;
-
-  /**
-   * The API key for the Groq model.
-   */
   groqApiKey: string;
-
-  /**
-   * The API key for the Hugging Face model.
-   */
   huggingFaceApiKey: string;
-
-  /**
-   * The API key for the OpenAI model.
-   */
   openaiApiKey: string;
-
-  /**
-   * The primary color for the Ant Design theme.
-   */
   themePrimaryColor: string;
-
-  /**
-   * The algorithm for the Ant Design theme.
-   */
   themeAlgorithm: 'defaultAlgorithm' | 'darkAlgorithm' | 'compactAlgorithm';
-
-  /**
-   * The border radius for the Ant Design theme.
-   */
   themeBorderRadius: number;
-
-  /**
-   * The theme for the code highlighter.
-   */
   hljsTheme: keyof typeof hljs;
 };
 

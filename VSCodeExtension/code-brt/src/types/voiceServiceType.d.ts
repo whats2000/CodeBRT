@@ -7,6 +7,10 @@ export type VoiceToTextServiceType =
   | 'visualStudioCodeBuiltIn'
   | 'not set';
 
+/**
+ * Defines a structure for loaded voice services with detailed service.
+ * The key is the service type and the value is the service object.
+ */
 export type LoadedVoiceServices = {
   [key in Exclude<
     TextToVoiceServiceType | VoiceToTextServiceType,

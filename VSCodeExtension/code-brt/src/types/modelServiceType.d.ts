@@ -18,9 +18,6 @@ export type ModelServiceType =
  */
 export type LoadedModelServices = {
   [key in ModelServiceType]: {
-    /**
-     * The service for the model
-     */
     service: LanguageModelService;
   };
 };
