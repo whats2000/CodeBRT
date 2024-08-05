@@ -15,6 +15,7 @@ import { ImageContainer } from './MessagesContainer/ImageContainer';
 import { TextContainer } from './MessagesContainer/TextContainer';
 import { TextEditContainer } from './MessagesContainer/TextEditContainer';
 import { MessageFloatButton } from './MessagesContainer/MessageFloatButton';
+import { useWindowSize } from '../../hooks';
 
 const StyledMessagesContainer = styled.div<{ $isActiveModelLoading: boolean }>`
   flex-grow: 1;
@@ -101,10 +102,8 @@ export const MessagesContainer: React.FC<MessagesContainerProps> = ({
     current: null,
     entry: null,
   });
-  const [floatButtonsPosition, setFloatButtonsPosition] = useState<{
-    xRight: number;
-    yTop: number;
-  }>({ xRight: 0, yTop: 0 });
+  const [floatButtonsXPosition, setFloatButtonsXPosition] = useState(0);
+  const [showFloatButtons, setShowFloatButtons] = useState(false);
   const [toolStatus, setToolStatus] = useState<string>('');
 
   const { callApi, addListener, removeListener } = useContext(WebviewContext);
@@ -118,6 +117,12 @@ export const MessagesContainer: React.FC<MessagesContainerProps> = ({
       removeListener('updateStatus', handleUpdateStatus);
     };
   }, []);
+
+  const { innerWidth } = useWindowSize();
+
+  useEffect(() => {
+    setFloatButtonsXPosition(innerWidth - 85);
+  }, [innerWidth]);
 
   useEffect(() => {
     Object.keys(partialSettings).map(async (key) => {
@@ -193,29 +198,21 @@ export const MessagesContainer: React.FC<MessagesContainerProps> = ({
     setEditingEntryId(null);
   };
 
-  const updateFloatButtonsPosition = () => {
-    if (hoveredBubble.current) {
-      const rect = hoveredBubble.current.getBoundingClientRect();
-      const newTop = rect.top > 75 ? rect.top : 75;
-
-      setFloatButtonsPosition({ xRight: rect.right + 10, yTop: newTop });
-    }
-  };
-
   const handleMouseEnter = (
     e: React.MouseEvent<HTMLDivElement>,
     entry: ConversationEntry,
   ) => {
-    setHoveredBubble({ current: e.currentTarget as HTMLDivElement, entry });
     const rect = e.currentTarget.getBoundingClientRect();
-    const newTop = rect.top > 75 ? rect.top : 75;
-
-    setFloatButtonsPosition({ xRight: rect.right + 10, yTop: newTop });
+    setHoveredBubble({ current: e.currentTarget as HTMLDivElement, entry });
+    setShowFloatButtons(!(rect.height < 225 || rect.top > 75));
   };
 
   useEffect(() => {
     const handleScrollEnd = () => {
-      updateFloatButtonsPosition();
+      if (hoveredBubble.current) {
+        const rect = hoveredBubble.current.getBoundingClientRect();
+        setShowFloatButtons(!(rect.height < 225 || rect.top > 75));
+      }
     };
 
     const messagesContainer = messagesContainerRef.current;
@@ -343,10 +340,13 @@ export const MessagesContainer: React.FC<MessagesContainerProps> = ({
         })}
         <div ref={messageEndRef} />
       </StyledMessagesContainer>
-      {hoveredBubble && (
+      {hoveredBubble && showFloatButtons && (
         <MessageFloatButton
           hoveredBubble={hoveredBubble}
-          floatButtonsPosition={floatButtonsPosition}
+          floatButtonsPosition={{
+            xRight: floatButtonsXPosition,
+            yTop: innerWidth < 550 ? 120 : 75,
+          }}
           isAudioPlaying={isAudioPlaying}
           isStopAudio={isStopAudio}
           editingEntryId={editingEntryId}
