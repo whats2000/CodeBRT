@@ -116,9 +116,9 @@ export const Toolbar: React.FC<ToolbarProps> = ({
     if (activeModelService === 'loading...') {
       return;
     }
-    callApi('addNewConversationHistory', activeModelService)
-      .then((newConversationHistory) =>
-        setConversationHistory(newConversationHistory),
+    callApi('addNewConversationHistory')
+      .then(async (newConversationHistory) =>
+        setConversationHistory(await newConversationHistory),
       )
       .catch((error) =>
         console.error('Failed to clear conversation history:', error),

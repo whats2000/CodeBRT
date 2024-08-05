@@ -10,12 +10,13 @@ import Groq from 'groq-sdk';
 import type { GetResponseOptions } from '../../types';
 import { MODEL_SERVICE_CONSTANTS } from '../../constants';
 import { AbstractOpenaiLikeService } from './abstractOpenaiLikeService';
-import { SettingsManager } from '../../api';
+import { HistoryManager, SettingsManager } from '../../api';
 
 export class GroqService extends AbstractOpenaiLikeService {
   constructor(
     context: vscode.ExtensionContext,
     settingsManager: SettingsManager,
+    historyManager: HistoryManager,
   ) {
     const availableModelNames = settingsManager.get('groqAvailableModels');
     const defaultModelName = settingsManager.get('lastSelectedModel').groq;
@@ -23,27 +24,11 @@ export class GroqService extends AbstractOpenaiLikeService {
     super(
       'groq',
       context,
-      'groqConversationHistory.json',
       settingsManager,
+      historyManager,
       defaultModelName,
       availableModelNames,
     );
-    // Initialize and load conversation history
-    this.initialize().catch((error) =>
-      vscode.window.showErrorMessage(
-        'Failed to initialize Groq Service History: ' + error,
-      ),
-    );
-  }
-
-  private async initialize() {
-    try {
-      await this.loadHistories();
-    } catch (error) {
-      vscode.window.showErrorMessage(
-        'Failed to initialize Groq Service: ' + error,
-      );
-    }
   }
 
   public async getLatestAvailableModelNames(): Promise<string[]> {

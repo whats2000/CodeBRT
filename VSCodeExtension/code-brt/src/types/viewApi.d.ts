@@ -96,38 +96,29 @@ export type ViewApi = {
   ) => Promise<string>;
 
   /**
-   * Get the conversation history for a language model.
-   * @param modelType - The type of the model to get the conversation history for.
+   * Get the conversation history.
    * @returns The conversation history.
    */
-  getLanguageModelConversationHistory: (
-    modelType: ModelServiceType,
-  ) => ConversationHistory;
+  getLanguageModelConversationHistory: () => ConversationHistory;
 
   /**
-   * Add a new conversation history for a language model.
-   * @param modelType - The type of the model to add the conversation history for.
+   * Add a new conversation history.
    * @returns The new conversation history.
    */
-  addNewConversationHistory: (
-    modelType: ModelServiceType,
-  ) => ConversationHistory;
+  addNewConversationHistory: () => Promise<ConversationHistory>;
 
   /**
-   * Edit the conversation history for a language model.
-   * @param modelType - The type of the model to edit the conversation history for.
+   * Edit the conversation history.
    * @param entryID - The ID of the entry to edit.
    * @param newMessage - The new message to set.
    */
   editLanguageModelConversationHistory: (
-    modelType: ModelServiceType,
     entryID: string,
     newMessage: string,
   ) => void;
 
   /**
    * Add a conversation entry to the conversation history for a language model.
-   * @param modelType - The type of the model to add the conversation entry to.
    * @param parentID - The ID of the parent entry.
    * @param sender - The sender of the message.
    * @param message - The message to add.
@@ -135,7 +126,6 @@ export type ViewApi = {
    * @returns The ID of the new entry.
    */
   addConversationEntry: (
-    modelType: ModelServiceType,
     parentID: string,
     sender: 'user' | 'AI',
     message: string,
@@ -143,40 +133,29 @@ export type ViewApi = {
   ) => Promise<string>;
 
   /**
-   * Edit a conversation entry in the conversation history for a language model.
-   * @param modelType - The type of the model to edit the conversation entry in.
+   * Get the conversation history list.
    */
-  getHistories: (modelType: ModelServiceType) => ConversationHistoryList;
+  getHistories: () => ConversationHistoryList;
 
   /**
-   * Switch the conversation history for a language model.
-   * @param modelType - The type of the model to switch the conversation history for.
+   * Switch the conversation history.
    * @param historyID - The ID of the history to switch to.
    */
-  switchHistory: (modelType: ModelServiceType, historyID: string) => void;
+  switchHistory: (historyID: string) => void;
 
   /**
-   * Delete a conversation history for a language model.
-   * @param modelType - The type of the model to delete the conversation history for.
+   * Delete a conversation history.
    * @param historyID - The ID of the history to delete.
    * @returns The new conversation history.
    */
-  deleteHistory: (
-    modelType: ModelServiceType,
-    historyID: string,
-  ) => ConversationHistory;
+  deleteHistory: (historyID: string) => Promise<ConversationHistory>;
 
   /**
    * Edit the specified history title.
-   * @param modelType - The type of the model to edit the history title for.
    * @param historyID - The ID of the history to edit.
    * @param title - The new title.
    */
-  updateHistoryTitleById: (
-    modelType: ModelServiceType,
-    historyID: string,
-    title: string,
-  ) => void;
+  updateHistoryTitleById: (historyID: string, title: string) => void;
 
   /**
    * Get the available models for a language model.

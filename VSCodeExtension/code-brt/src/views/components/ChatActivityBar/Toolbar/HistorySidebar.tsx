@@ -63,7 +63,7 @@ export const HistorySidebar: React.FC<HistorySidebarProps> = ({
         return;
       }
 
-      callApi('getHistories', activeModelService)
+      callApi('getHistories')
         .then((histories) => {
           const sortedHistories = Object.fromEntries(
             Object.entries(histories).sort(
@@ -93,7 +93,7 @@ export const HistorySidebar: React.FC<HistorySidebarProps> = ({
       return;
     }
 
-    callApi('switchHistory', activeModelService, historyID)
+    callApi('switchHistory', historyID)
       .then(() =>
         callApi('getLanguageModelConversationHistory', activeModelService),
       )
@@ -117,15 +117,15 @@ export const HistorySidebar: React.FC<HistorySidebarProps> = ({
       return;
     }
 
-    callApi('deleteHistory', activeModelService, historyID)
-      .then((newConversationHistory) => {
+    callApi('deleteHistory', historyID)
+      .then(async (newConversationHistory) => {
         setHistories((prevHistories) => {
           const updatedHistories = { ...prevHistories };
           delete updatedHistories[historyID];
           return updatedHistories;
         });
 
-        setConversationHistory(newConversationHistory);
+        setConversationHistory(await newConversationHistory);
       })
       .catch((error) =>
         callApi(
@@ -150,7 +150,7 @@ export const HistorySidebar: React.FC<HistorySidebarProps> = ({
       return;
     }
 
-    callApi('updateHistoryTitleById', activeModelService, historyID, titleInput)
+    callApi('updateHistoryTitleById', historyID, titleInput)
       .then(() => {
         setHistories((prevHistories) => ({
           ...prevHistories,

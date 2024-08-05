@@ -1,6 +1,7 @@
 import type { ConversationHistory, ConversationHistoryIndex } from '../types';
 
 export type IHistoryManager = {
+  getCurrentHistory(): ConversationHistory;
   getHistoryBeforeEntry(currentEntryID?: string): ConversationHistory;
   addNewConversationHistory(): Promise<ConversationHistory>;
   addConversationEntry(

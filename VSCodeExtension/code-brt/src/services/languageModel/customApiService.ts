@@ -10,7 +10,7 @@ import {
   GetResponseOptions,
 } from '../../types';
 import { AbstractLanguageModelService } from './abstractLanguageModelService';
-import { SettingsManager } from '../../api';
+import { HistoryManager, SettingsManager } from '../../api';
 
 export class CustomApiService extends AbstractLanguageModelService {
   private readonly defaultCustomModelSettings: CustomModelSettings = {
@@ -29,6 +29,7 @@ export class CustomApiService extends AbstractLanguageModelService {
   constructor(
     context: vscode.ExtensionContext,
     settingsManager: SettingsManager,
+    historyManager: HistoryManager,
   ) {
     const availableModelNames = settingsManager
       .get('customModels')
@@ -42,30 +43,13 @@ export class CustomApiService extends AbstractLanguageModelService {
     super(
       'custom',
       context,
-      'customApiConversationHistory.json',
       settingsManager,
+      historyManager,
       selectedModel?.name || 'not set',
       availableModelNames,
     );
 
     this.updateSettings(selectedModel);
-
-    // Initialize and load conversation history
-    this.initialize().catch((error) =>
-      vscode.window.showErrorMessage(
-        'Failed to initialize Custom API Service: ' + error,
-      ),
-    );
-  }
-
-  private async initialize() {
-    try {
-      await this.loadHistories();
-    } catch (error) {
-      vscode.window.showErrorMessage(
-        'Failed to initialize Custom API Service: ' + error,
-      );
-    }
   }
 
   private updateSettings(selectedModel: CustomModelSettings | undefined) {

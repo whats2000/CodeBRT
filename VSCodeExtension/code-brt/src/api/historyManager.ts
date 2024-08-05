@@ -7,6 +7,7 @@ import type {
   ConversationEntry,
   ConversationHistory,
   ConversationHistoryIndex,
+  ConversationHistoryList,
   IHistoryManager,
 } from '../types';
 
@@ -43,6 +44,27 @@ export class HistoryManager implements IHistoryManager {
     this.loadHistories().catch((error) =>
       vscode.window.showErrorMessage('Failed to load histories: ' + error),
     );
+  }
+
+  /**
+   * Load the conversation history index from the index file
+   */
+  private async loadHistories(): Promise<void> {
+    if (!this.historyIndexFilePath) {
+      return;
+    }
+    if (!fs.existsSync(this.historyIndexFilePath)) {
+      return;
+    }
+    try {
+      const data = await fs.promises.readFile(
+        this.historyIndexFilePath,
+        'utf8',
+      );
+      this.historyIndex = JSON.parse(data);
+    } catch (error) {
+      vscode.window.showErrorMessage('Failed to load history index: ' + error);
+    }
   }
 
   /**
@@ -95,27 +117,6 @@ export class HistoryManager implements IHistoryManager {
   }
 
   /**
-   * Load the conversation history index from the index file
-   */
-  private async loadHistories(): Promise<void> {
-    if (!this.historyIndexFilePath) {
-      return;
-    }
-    if (!fs.existsSync(this.historyIndexFilePath)) {
-      return;
-    }
-    try {
-      const data = await fs.promises.readFile(
-        this.historyIndexFilePath,
-        'utf8',
-      );
-      this.historyIndex = JSON.parse(data);
-    } catch (error) {
-      vscode.window.showErrorMessage('Failed to load history index: ' + error);
-    }
-  }
-
-  /**
    * Load a single conversation history by its ID
    */
   private async loadHistoryById(historyId: string): Promise<void> {
@@ -135,11 +136,15 @@ export class HistoryManager implements IHistoryManager {
     }
   }
 
+  public getCurrentHistory(): ConversationHistory {
+    return this.history;
+  }
+
   public getHistoryBeforeEntry(currentEntryID?: string): ConversationHistory {
     if (!currentEntryID) return this.history;
 
     const newHistory: ConversationHistory = {
-      root: uuidV4(),
+      root: this.history.root,
       title: this.history.title,
       top: this.history.top,
       current: currentEntryID,
@@ -173,27 +178,7 @@ export class HistoryManager implements IHistoryManager {
   public async addNewConversationHistory(): Promise<ConversationHistory> {
     const newHistory: ConversationHistory =
       this.getDefaultConversationHistory();
-    const newHistoryId = newHistory.root;
-
-    this.historyIndex[newHistoryId] = {
-      id: newHistoryId,
-      title: newHistory.title,
-      create_time: newHistory.create_time,
-      update_time: newHistory.update_time,
-    };
     this.history = newHistory;
-
-    await this.saveHistoryIndex().catch((error) =>
-      vscode.window.showErrorMessage(
-        'Failed to add new conversation history: ' + error,
-      ),
-    );
-    await this.saveHistoryById(newHistory).catch((error) =>
-      vscode.window.showErrorMessage(
-        'Failed to save new conversation history: ' + error,
-      ),
-    );
-
     return newHistory;
   }
 
@@ -236,10 +221,24 @@ export class HistoryManager implements IHistoryManager {
     this.history.entries[newID] = newEntry;
     this.history.update_time = Date.now();
     this.history.current = newID;
+
+    // Check if this is a new conversation that needs to be saved
+    if (!this.historyIndex[this.history.root]) {
+      this.historyIndex[this.history.root] = {
+        id: this.history.root,
+        title: `${message.substring(0, 20)}...`,
+        create_time: this.history.create_time,
+        update_time: this.history.update_time,
+      };
+    }
+
     await this.saveHistoryById(this.history).catch((error) =>
       vscode.window.showErrorMessage(
         'Failed to add conversation entry: ' + error,
       ),
+    );
+    await this.saveHistoryIndex().catch((error) =>
+      vscode.window.showErrorMessage('Failed to save history index: ' + error),
     );
 
     return newID;
@@ -309,7 +308,7 @@ export class HistoryManager implements IHistoryManager {
   /**
    * Get the list of conversation histories
    */
-  public getHistories(): { [key: string]: ConversationHistoryIndex } {
+  public getHistories(): ConversationHistoryList {
     return this.historyIndex;
   }
 

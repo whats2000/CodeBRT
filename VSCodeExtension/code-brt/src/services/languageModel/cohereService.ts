@@ -10,7 +10,7 @@ import type {
 import { MODEL_SERVICE_CONSTANTS, toolsSchema } from '../../constants';
 import { mapTypeToPythonFormat } from '../../utils';
 import { AbstractLanguageModelService } from './abstractLanguageModelService';
-import { SettingsManager } from '../../api';
+import { HistoryManager, SettingsManager } from '../../api';
 import { ToolService } from '../tools';
 
 export class CohereService extends AbstractLanguageModelService {
@@ -19,6 +19,7 @@ export class CohereService extends AbstractLanguageModelService {
   constructor(
     context: vscode.ExtensionContext,
     settingsManager: SettingsManager,
+    historyManager: HistoryManager,
   ) {
     const availableModelNames = settingsManager.get('cohereAvailableModels');
     const defaultModelName = settingsManager.get('lastSelectedModel').cohere;
@@ -26,19 +27,13 @@ export class CohereService extends AbstractLanguageModelService {
     super(
       'cohere',
       context,
-      'cohereConversationHistory.json',
       settingsManager,
+      historyManager,
       defaultModelName,
       availableModelNames,
     );
 
     this.tools = this.buildTools();
-
-    this.initialize().catch((error) =>
-      vscode.window.showErrorMessage(
-        'Failed to initialize Cohere Service History: ' + error,
-      ),
-    );
   }
 
   private buildTools(): Tool[] {
@@ -71,16 +66,6 @@ export class CohereService extends AbstractLanguageModelService {
         parameterDefinitions,
       };
     });
-  }
-
-  private async initialize() {
-    try {
-      await this.loadHistories();
-    } catch (error) {
-      vscode.window.showErrorMessage(
-        'Failed to initialize Cohere Service: ' + error,
-      );
-    }
   }
 
   private conversationHistoryToContent(entries: {

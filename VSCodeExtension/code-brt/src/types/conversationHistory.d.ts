@@ -51,8 +51,8 @@ export type ConversationHistoryIndex = {
 };
 
 /**
- * A list of conversation histories
+ * A list of conversation histories index
  */
 export type ConversationHistoryList = {
-  [key: string]: ConversationHistory;
+  [key: string]: ConversationHistoryIndex;
 };

@@ -172,7 +172,6 @@ export const ChatActivityBar = () => {
 
     const userEntryId = await callApi(
       'addConversationEntry',
-      activeModelService,
       conversationHistory.current,
       'user',
       inputMessage,
@@ -235,7 +234,6 @@ export const ChatActivityBar = () => {
 
       const aiEntryId = await callApi(
         'addConversationEntry',
-        activeModelService,
         userEntryId,
         'AI',
         responseText,
@@ -293,7 +291,6 @@ export const ChatActivityBar = () => {
     const entry = conversationHistory.entries[entryId];
     const newEntryId = await callApi(
       'addConversationEntry',
-      activeModelService,
       entry.parent ?? '',
       'user',
       editedMessage,
@@ -358,7 +355,6 @@ export const ChatActivityBar = () => {
 
       const aiEntryId = await callApi(
         'addConversationEntry',
-        activeModelService,
         newEntryId,
         'AI',
         responseText,
