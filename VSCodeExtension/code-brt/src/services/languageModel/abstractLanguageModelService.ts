@@ -110,6 +110,36 @@ export abstract class AbstractLanguageModelService
   }
 
   /**
+   * Get the default empty conversation history
+   */
+  private getDefaultConversationHistory(): ConversationHistory {
+    return {
+      title: '',
+      root: '',
+      top: [],
+      current: '',
+      create_time: Date.now(),
+      update_time: Date.now(),
+      entries: {},
+    };
+  }
+
+  /**
+   * Save all conversation histories to the history file
+   */
+  private async saveHistories(): Promise<void> {
+    if (!this.historyFilePath) {
+      return;
+    }
+    try {
+      const data = JSON.stringify(this.histories, null, 2);
+      await fs.promises.writeFile(this.historyFilePath, data, 'utf8');
+    } catch (error) {
+      vscode.window.showErrorMessage('Failed to save histories: ' + error);
+    }
+  }
+
+  /**
    * Get the history before a given entry id
    * @param currentEntryID - The entry id to get the history before
    * @returns The conversation history before the given entry id
@@ -166,24 +196,9 @@ export abstract class AbstractLanguageModelService
   }
 
   /**
-   * Get the default empty conversation history
-   */
-  public getDefaultConversationHistory(): ConversationHistory {
-    return {
-      title: '',
-      root: '',
-      top: [],
-      current: '',
-      create_time: Date.now(),
-      update_time: Date.now(),
-      entries: {},
-    };
-  }
-
-  /**
    * Load all conversation histories from the history file
    */
-  public async loadHistories(): Promise<void> {
+  protected async loadHistories(): Promise<void> {
     if (!this.historyFilePath) {
       return;
     }
@@ -208,21 +223,6 @@ export abstract class AbstractLanguageModelService
       }
     } catch (error) {
       vscode.window.showErrorMessage('Failed to load histories: ' + error);
-    }
-  }
-
-  /**
-   * Save all conversation histories to the history file
-   */
-  public async saveHistories(): Promise<void> {
-    if (!this.historyFilePath) {
-      return;
-    }
-    try {
-      const data = JSON.stringify(this.histories, null, 2);
-      await fs.promises.writeFile(this.historyFilePath, data, 'utf8');
-    } catch (error) {
-      vscode.window.showErrorMessage('Failed to save histories: ' + error);
     }
   }
 

@@ -34,16 +34,6 @@ export type LanguageModelService = {
   getLatestAvailableModelNames: () => Promise<string[]>;
 
   /**
-   * Load the conversation histories from the file
-   */
-  loadHistories: () => Promise<void>;
-
-  /**
-   * Save the conversation histories to the file
-   */
-  saveHistories: () => Promise<void>;
-
-  /**
    * Get the current conversation history
    */
   getConversationHistory: () => ConversationHistory;
