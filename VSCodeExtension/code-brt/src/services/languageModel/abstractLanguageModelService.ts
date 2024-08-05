@@ -178,23 +178,6 @@ export abstract class AbstractLanguageModelService
     return newHistory;
   }
 
-  public updateAvailableModels(newAvailableModels: string[]): void {
-    this.availableModelNames = newAvailableModels;
-  }
-
-  /**
-   * Get the latest version of the language model service
-   */
-  public async getLatestAvailableModelNames(): Promise<string[]> {
-    vscode.window
-      .showErrorMessage(
-        'Current this model service does not support updating available models, Please update it manually.',
-      )
-      .then();
-
-    return this.availableModelNames;
-  }
-
   /**
    * Load all conversation histories from the history file
    */
@@ -224,6 +207,23 @@ export abstract class AbstractLanguageModelService
     } catch (error) {
       vscode.window.showErrorMessage('Failed to load histories: ' + error);
     }
+  }
+
+  public updateAvailableModels(newAvailableModels: string[]): void {
+    this.availableModelNames = newAvailableModels;
+  }
+
+  /**
+   * Get the latest version of the language model service
+   */
+  public async getLatestAvailableModelNames(): Promise<string[]> {
+    vscode.window
+      .showErrorMessage(
+        'Current this model service does not support updating available models, Please update it manually.',
+      )
+      .then();
+
+    return this.availableModelNames;
   }
 
   /**
