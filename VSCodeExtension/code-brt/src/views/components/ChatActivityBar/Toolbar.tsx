@@ -304,6 +304,7 @@ export const Toolbar: React.FC<ToolbarProps> = ({
             onChange={handleModelChange}
             style={{
               width: innerWidth < 550 ? 200 : '100%',
+              minWidth: 150,
             }}
             loading={isActiveModelLoading}
             options={modelOptions}
