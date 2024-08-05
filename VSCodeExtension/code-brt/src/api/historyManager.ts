@@ -7,9 +7,10 @@ import type {
   ConversationEntry,
   ConversationHistory,
   ConversationHistoryIndex,
+  IHistoryManager,
 } from '../types';
 
-export class HistoryManager {
+export class HistoryManager implements IHistoryManager {
   private readonly historiesFolderPath: string;
   private readonly historyIndexFilePath: string | null;
   private history: ConversationHistory = this.getDefaultConversationHistory();

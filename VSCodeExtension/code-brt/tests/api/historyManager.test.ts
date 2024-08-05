@@ -7,7 +7,13 @@ const CLEAN_AFTER_ALL = true;
 
 describe('HistoryManager', () => {
   const workspacePath = path.join(__dirname, '../../tests/testsWorkspace');
-  const historiesPath = path.join(workspacePath, '.vscode/histories');
+
+  if (!fs.existsSync(workspacePath)) {
+    fs.mkdirSync(workspacePath);
+  }
+
+  const vscodePath = path.join(workspacePath, '.vscode');
+  const historiesPath = path.join(vscodePath, 'histories');
 
   afterAll(() => {
     if (!CLEAN_AFTER_ALL) {
@@ -37,7 +43,7 @@ describe('HistoryManager', () => {
   });
 
   const historyManager = new HistoryManager({
-    extensionPath: '',
+    extensionPath: workspacePath,
   } as any);
 
   test('should add a new conversation history', async () => {
@@ -70,5 +76,57 @@ describe('HistoryManager', () => {
 
     const history = JSON.parse(fs.readFileSync(filePath, 'utf8'));
     expect(history.entries[entryId]).toBeDefined();
+  });
+
+  test('should edit a conversation entry', async () => {
+    const newHistory = await historyManager.addNewConversationHistory();
+    const entryId = await historyManager.addConversationEntry(
+      null,
+      'user',
+      'test message',
+    );
+
+    await historyManager.editConversationEntry(entryId, 'updated message');
+
+    const filePath = path.join(historiesPath, `${newHistory.root}.json`);
+    const history = JSON.parse(fs.readFileSync(filePath, 'utf8'));
+    expect(history.entries[entryId].message).toBe('updated message');
+  });
+
+  test('should update the title of a conversation history', async () => {
+    const newHistory = await historyManager.addNewConversationHistory();
+    const newTitle = 'Updated Title';
+    await historyManager.updateHistoryTitleById(newHistory.root, newTitle);
+
+    expect(historyManager.getHistories()[newHistory.root].title).toBe(newTitle);
+
+    const filePath = path.join(vscodePath, 'historyIndex.json');
+    const historyIndex = JSON.parse(fs.readFileSync(filePath, 'utf8'));
+    expect(historyIndex[newHistory.root].title).toBe(newTitle);
+  });
+
+  test('should switch to a different conversation history', async () => {
+    const newHistory1 = await historyManager.addNewConversationHistory();
+    const newHistory2 = await historyManager.addNewConversationHistory();
+
+    await historyManager.switchHistory(newHistory2.root);
+    expect(historyManager.getHistoryBeforeEntry().root).toBe(newHistory2.root);
+
+    await historyManager.switchHistory(newHistory1.root);
+    expect(historyManager.getHistoryBeforeEntry().root).toBe(newHistory1.root);
+  });
+
+  test('should delete a conversation history', async () => {
+    const newHistory = await historyManager.addNewConversationHistory();
+    const rootId = newHistory.root;
+
+    const deletedHistory = await historyManager.deleteHistory(rootId);
+
+    expect(deletedHistory).toBeDefined();
+
+    expect(historyManager.getHistories()[rootId]).toBeUndefined();
+
+    const filePath = path.join(historiesPath, `${rootId}.json`);
+    expect(fs.existsSync(filePath)).toBe(false);
   });
 });
