@@ -53,6 +53,6 @@ export type ConversationHistoryIndex = {
 /**
  * A list of conversation histories index
  */
-export type ConversationHistoryList = {
+export type ConversationHistoryIndexList = {
   [key: string]: ConversationHistoryIndex;
 };

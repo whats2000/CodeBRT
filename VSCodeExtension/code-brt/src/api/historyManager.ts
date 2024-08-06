@@ -7,7 +7,7 @@ import type {
   ConversationEntry,
   ConversationHistory,
   ConversationHistoryIndex,
-  ConversationHistoryList,
+  ConversationHistoryIndexList,
   IHistoryManager,
 } from '../types';
 
@@ -244,11 +244,6 @@ export class HistoryManager implements IHistoryManager {
     return newID;
   }
 
-  /**
-   * Edit the conversation history
-   * @param entryID - The ID of the entry to edit
-   * @param newMessage - The new message to replace the entry with
-   */
   public async editConversationEntry(
     entryID: string,
     newMessage: string,
@@ -268,11 +263,6 @@ export class HistoryManager implements IHistoryManager {
     }
   }
 
-  /**
-   * Update the title of a specified conversation history by its ID
-   * @param historyID - The ID of the history to update
-   * @param newTitle - The new title for the conversation history
-   */
   public async updateHistoryTitleById(
     historyID: string,
     newTitle: string,
@@ -290,10 +280,6 @@ export class HistoryManager implements IHistoryManager {
     }
   }
 
-  /**
-   * Switch to a different conversation history
-   * @param historyID - The ID of the history to switch to
-   */
   public async switchHistory(historyID: string): Promise<void> {
     if (this.historyIndex[historyID]) {
       await this.loadHistoryById(historyID);
@@ -305,17 +291,10 @@ export class HistoryManager implements IHistoryManager {
     }
   }
 
-  /**
-   * Get the list of conversation histories
-   */
-  public getHistories(): ConversationHistoryList {
+  public getHistories(): ConversationHistoryIndexList {
     return this.historyIndex;
   }
 
-  /**
-   * Delete a history
-   * @param historyID - The ID of the history to delete
-   */
   public async deleteHistory(historyID: string): Promise<ConversationHistory> {
     if (this.historyIndex[historyID]) {
       const filePath = path.join(this.historiesFolderPath, `${historyID}.json`);

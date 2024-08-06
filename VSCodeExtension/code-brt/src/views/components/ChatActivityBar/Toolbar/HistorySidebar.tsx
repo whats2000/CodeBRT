@@ -5,7 +5,7 @@ import { DeleteOutlined, EditOutlined } from '@ant-design/icons';
 
 import type {
   ConversationHistory,
-  ConversationHistoryList,
+  ConversationHistoryIndexList,
   ModelServiceType,
 } from '../../../../types';
 import { WebviewContext } from '../../../WebviewContext';
@@ -50,7 +50,7 @@ export const HistorySidebar: React.FC<HistorySidebarProps> = ({
   setConversationHistory,
 }) => {
   const { callApi } = useContext(WebviewContext);
-  const [histories, setHistories] = useState<ConversationHistoryList>({});
+  const [histories, setHistories] = useState<ConversationHistoryIndexList>({});
   const [isLoading, setIsLoading] = useState(true);
   const [editingHistoryID, setEditingHistoryID] = useState<string | null>(null);
   const [titleInput, setTitleInput] = useState('');
@@ -94,9 +94,7 @@ export const HistorySidebar: React.FC<HistorySidebarProps> = ({
     }
 
     callApi('switchHistory', historyID)
-      .then(() =>
-        callApi('getLanguageModelConversationHistory', activeModelService),
-      )
+      .then(() => callApi('getCurrentHistory'))
       .then((history) => {
         setConversationHistory(history);
         setIsLoading(false);

@@ -1,7 +1,7 @@
 import { CustomModelSettings, ExtensionSettings } from './extensionSettings';
 import {
   ConversationHistory,
-  ConversationHistoryList,
+  ConversationHistoryIndexList,
 } from './conversationHistory';
 import { ModelServiceType } from './modelServiceType';
 
@@ -99,7 +99,7 @@ export type ViewApi = {
    * Get the conversation history.
    * @returns The conversation history.
    */
-  getLanguageModelConversationHistory: () => ConversationHistory;
+  getCurrentHistory: () => ConversationHistory;
 
   /**
    * Add a new conversation history.
@@ -135,7 +135,7 @@ export type ViewApi = {
   /**
    * Get the conversation history list.
    */
-  getHistories: () => ConversationHistoryList;
+  getHistories: () => ConversationHistoryIndexList;
 
   /**
    * Switch the conversation history.

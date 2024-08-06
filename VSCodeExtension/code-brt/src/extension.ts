@@ -162,7 +162,7 @@ export const activate = async (ctx: vscode.ExtensionContext) => {
           : undefined,
       });
     },
-    getLanguageModelConversationHistory: () => {
+    getCurrentHistory: () => {
       return historyManager.getCurrentHistory();
     },
     addNewConversationHistory: async () => {

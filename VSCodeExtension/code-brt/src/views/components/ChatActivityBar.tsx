@@ -119,10 +119,10 @@ export const ChatActivityBar = () => {
         'error',
       ).catch(console.error),
     );
-    callApi('getLanguageModelConversationHistory', activeModelService)
+    callApi('getCurrentHistory')
       .then((history) => {
         if (history) {
-          setConversationHistory(history as ConversationHistory);
+          setConversationHistory(history);
         }
       })
       .then(() => {
