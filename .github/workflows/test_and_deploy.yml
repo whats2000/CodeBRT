@@ -1,0 +1,49 @@
+name: CI/CD Pipeline for VSCode Extension
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v3
+        with:
+          node-version: '20'
+
+      - name: Install dependencies
+        run: |
+          rm -f package-lock.json
+          npm install
+        working-directory: VSCodeExtension/code-brt
+
+      - name: Run tests
+        run: npm run test
+        working-directory: VSCodeExtension/code-brt
+
+      - name: Build project
+        run: npm run build:ci
+        working-directory: VSCodeExtension/code-brt
+
+      - name: Locate VSIX file
+        id: locate-vsix
+        run: |
+          vsix_file=$(find VSCodeExtension/code-brt/build -name "*.vsix")
+          echo "VSIX file located at: $vsix_file"
+          echo "vsix_path=$vsix_file" >> $GITHUB_ENV
+
+      - name: Upload Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: vsix-artifact
+          path: ${{ env.vsix_path }}
