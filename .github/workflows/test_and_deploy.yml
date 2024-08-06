@@ -14,15 +14,17 @@ jobs:
 
     steps:
       - name: Checkout code
-        uses: actions/checkout@v2
+        uses: actions/checkout@v3
 
       - name: Set up Node.js
-        uses: actions/setup-node@v2
+        uses: actions/setup-node@v3
         with:
           node-version: '20'
 
       - name: Install dependencies
-        run: npm install
+        run: |
+          rm -f package-lock.json
+          npm install
         working-directory: VSCodeExtension/code-brt
 
       - name: Run tests
@@ -38,10 +40,10 @@ jobs:
         run: |
           vsix_file=$(find VSCodeExtension/code-brt/build -name "*.vsix")
           echo "VSIX file located at: $vsix_file"
-          echo "::set-output name=vsix_path::$vsix_file"
+          echo "vsix_path=$vsix_file" >> $GITHUB_ENV
 
       - name: Upload Artifact
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v4
         with:
           name: vsix-artifact
-          path: ${{ steps.locate-vsix.outputs.vsix_path }}
+          path: ${{ env.vsix_path }}
