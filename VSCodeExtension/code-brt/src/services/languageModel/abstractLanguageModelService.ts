@@ -13,28 +13,14 @@ import { HistoryManager, SettingsManager } from '../../api';
 export abstract class AbstractLanguageModelService
   implements LanguageModelService
 {
-  protected readonly settingsManager: SettingsManager;
-  protected readonly historyManager: HistoryManager;
-  protected readonly serviceType: ModelServiceType;
-  protected readonly context: vscode.ExtensionContext;
-  protected currentModel: string = '';
-  protected availableModelNames: string[] = [];
-
   protected constructor(
-    serviceType: ModelServiceType,
-    context: vscode.ExtensionContext,
-    settingsManager: SettingsManager,
-    historyManager: HistoryManager,
-    currentModel: string,
-    availableModelNames: string[],
-  ) {
-    this.serviceType = serviceType;
-    this.context = context;
-    this.settingsManager = settingsManager;
-    this.historyManager = historyManager;
-    this.currentModel = currentModel;
-    this.availableModelNames = availableModelNames;
-  }
+    protected readonly serviceType: ModelServiceType,
+    protected readonly context: vscode.ExtensionContext,
+    protected readonly settingsManager: SettingsManager,
+    protected readonly historyManager: HistoryManager,
+    protected currentModel: string,
+    protected availableModelNames: string[],
+  ) {}
 
   public updateAvailableModels(newAvailableModels: string[]): void {
     this.availableModelNames = newAvailableModels;
