@@ -1,5 +1,6 @@
-import React, { useContext, useEffect, useState } from 'react';
+import React, { useContext, useEffect, useRef, useState } from 'react';
 import styled from 'styled-components';
+import { GlobalToken, InputRef, Space } from 'antd';
 import {
   Drawer,
   List,
@@ -7,10 +8,17 @@ import {
   Input,
   Spin,
   Button,
+  Tag,
   theme,
-  GlobalToken,
+  Flex,
 } from 'antd';
-import { DeleteOutlined, EditOutlined } from '@ant-design/icons';
+import {
+  DeleteOutlined,
+  EditOutlined,
+  TagOutlined,
+  PlusOutlined,
+} from '@ant-design/icons';
+import { TweenOneGroup } from 'rc-tween-one';
 
 import type {
   ConversationHistory,
@@ -85,6 +93,10 @@ export const HistorySidebar: React.FC<HistorySidebarProps> = ({
   const [isLoading, setIsLoading] = useState(true);
   const [editingHistoryID, setEditingHistoryID] = useState<string | null>(null);
   const [titleInput, setTitleInput] = useState('');
+  const [showTags, setShowTags] = useState(true);
+  const [inputVisible, setInputVisible] = useState('');
+  const [inputValue, setInputValue] = useState('');
+  const inputRef = useRef<InputRef>(null);
 
   const { token } = theme.useToken();
 
@@ -201,6 +213,113 @@ export const HistorySidebar: React.FC<HistorySidebarProps> = ({
     setEditingHistoryID(null);
   };
 
+  const handleTagClose = (historyID: string, tag: string) => {
+    callApi('removeHistoryTag', historyID, tag)
+      .then(() => {
+        setHistories((prevHistories) => {
+          const updatedHistories = { ...prevHistories };
+
+          if (!updatedHistories[historyID].tags) {
+            return updatedHistories;
+          }
+
+          updatedHistories[historyID].tags = updatedHistories[
+            historyID
+          ].tags.filter((t) => t !== tag);
+          return updatedHistories;
+        });
+      })
+      .catch((error) =>
+        callApi(
+          'alertMessage',
+          `Failed to remove tag: ${error}`,
+          'error',
+        ).catch(console.error),
+      );
+  };
+
+  const showInput = (historyID: string) => {
+    setInputVisible(historyID);
+    setTimeout(() => {
+      inputRef.current?.focus();
+    }, 0);
+  };
+
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setInputValue(e.target.value);
+  };
+
+  const handleInputConfirm = (historyID: string) => {
+    if (inputValue && !histories[historyID].tags?.includes(inputValue)) {
+      callApi('addHistoryTag', historyID, inputValue)
+        .then(() => {
+          setHistories((prevHistories) => {
+            const updatedHistories = { ...prevHistories };
+            updatedHistories[historyID].tags = [
+              ...(updatedHistories[historyID].tags ?? []),
+              inputValue,
+            ];
+            return updatedHistories;
+          });
+        })
+        .catch((error) =>
+          callApi('alertMessage', `Failed to add tag: ${error}`, 'error').catch(
+            console.error,
+          ),
+        );
+    }
+    setInputVisible('');
+    setInputValue('');
+  };
+
+  const renderTags = (historyID: string) => (
+    <Space size={'small'} wrap>
+      <TweenOneGroup
+        appear={false}
+        enter={{ scale: 0.8, opacity: 0, type: 'from', duration: 100 }}
+        leave={{ opacity: 0, width: 0, scale: 0, duration: 200 }}
+        onEnd={(e: any) => {
+          if (e.type === 'appear' || e.type === 'enter') {
+            (e.target as any).style = 'display: inline-block';
+          }
+        }}
+      >
+        {histories[historyID].tags?.map((tag) => (
+          <span key={tag} style={{ display: 'inline-block' }}>
+            <Tag
+              closable
+              onClose={(e) => {
+                e.preventDefault();
+                handleTagClose(historyID, tag);
+              }}
+            >
+              {tag}
+            </Tag>
+          </span>
+        ))}
+      </TweenOneGroup>
+      {inputVisible === historyID ? (
+        <Input
+          ref={inputRef}
+          type='text'
+          size='small'
+          style={{ width: 78 }}
+          value={inputValue}
+          onChange={handleInputChange}
+          onBlur={() => handleInputConfirm(historyID)}
+          onPressEnter={() => handleInputConfirm(historyID)}
+        />
+      ) : (
+        <Tag
+          onClick={() => showInput(historyID)}
+          style={{ background: token.colorBgContainer, borderStyle: 'dashed' }}
+        >
+          <PlusOutlined /> New Tag
+        </Tag>
+      )}
+    </Space>
+  );
+
   const renderListItem = (historyID: string) => (
     <StyledListItem
       $token={token}
@@ -219,51 +338,56 @@ export const HistorySidebar: React.FC<HistorySidebarProps> = ({
       ]}
       onClick={() => switchHistory(historyID)}
     >
-      <List.Item.Meta
-        style={{ paddingLeft: 16 }}
-        title={
-          editingHistoryID === historyID ? (
-            <EditableTitle
-              value={titleInput}
-              onChange={handleTitleChange}
-              onBlur={() => handleTitleBlur(historyID)}
-              onSubmit={() => handleTitleBlur(historyID)}
-              autoSize={{ minRows: 1, maxRows: 10 }}
-              autoFocus
-            />
-          ) : (
-            <Typography.Text
-              style={{ width: '100%' }}
-              ellipsis
-              onDoubleClick={() =>
-                handleTitleDoubleClick(historyID, histories[historyID].title)
-              }
-            >
-              {histories[historyID].title}{' '}
-              {historyID === conversationHistory.root && (
-                <Button
-                  type='text'
-                  size='small'
-                  icon={<EditOutlined />}
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    handleTitleDoubleClick(
-                      historyID,
-                      histories[historyID].title,
-                    );
-                  }}
-                />
-              )}
-            </Typography.Text>
-          )
-        }
-      />
+      <Space direction={'vertical'} style={{ padding: '0 16px 0 24px' }}>
+        {editingHistoryID === historyID ? (
+          <EditableTitle
+            value={titleInput}
+            onChange={handleTitleChange}
+            onBlur={() => handleTitleBlur(historyID)}
+            onSubmit={() => handleTitleBlur(historyID)}
+            autoSize={{ minRows: 1, maxRows: 10 }}
+            autoFocus
+          />
+        ) : (
+          <Typography.Text
+            style={{ width: '100%' }}
+            ellipsis
+            onDoubleClick={() =>
+              handleTitleDoubleClick(historyID, histories[historyID].title)
+            }
+          >
+            {histories[historyID].title}{' '}
+            {historyID === conversationHistory.root && (
+              <Button
+                type='text'
+                size='small'
+                icon={<EditOutlined />}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleTitleDoubleClick(historyID, histories[historyID].title);
+                }}
+              />
+            )}
+          </Typography.Text>
+        )}
+        {showTags && renderTags(historyID)}
+      </Space>
     </StyledListItem>
   );
 
   return (
     <StyledDrawer
-      title='Chat History'
+      title={
+        <Flex justify={'space-between'} align={'center'}>
+          <Typography.Text>Chat History</Typography.Text>
+          <Button
+            type='text'
+            danger={showTags}
+            icon={<TagOutlined />}
+            onClick={() => setShowTags((prev) => !prev)}
+          />
+        </Flex>
+      }
       open={isOpen}
       onClose={onClose}
       placement='left'
