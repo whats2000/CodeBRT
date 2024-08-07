@@ -29,7 +29,6 @@ export const ChatActivityBar = () => {
   );
   const [conversationHistory, setConversationHistory] =
     useState<ConversationHistory>({
-      title: '',
       create_time: 0,
       update_time: 0,
       root: '',

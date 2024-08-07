@@ -73,7 +73,6 @@ export class HistoryManager implements IHistoryManager {
   private getDefaultConversationHistory(): ConversationHistory {
     return {
       root: uuidV4(),
-      title: '',
       top: [],
       current: '',
       create_time: Date.now(),
@@ -145,7 +144,6 @@ export class HistoryManager implements IHistoryManager {
 
     const newHistory: ConversationHistory = {
       root: this.history.root,
-      title: this.history.title,
       top: this.history.top,
       current: currentEntryID,
       create_time: this.history.create_time,
@@ -172,9 +170,6 @@ export class HistoryManager implements IHistoryManager {
     return newHistory;
   }
 
-  /**
-   * Add a new conversation history
-   */
   public async addNewConversationHistory(): Promise<ConversationHistory> {
     const newHistory: ConversationHistory =
       this.getDefaultConversationHistory();
@@ -182,14 +177,6 @@ export class HistoryManager implements IHistoryManager {
     return newHistory;
   }
 
-  /**
-   * Add a new entry to the conversation history
-   * @param parentID - The parent ID of the new entry
-   * @param role - The role of the new entry ('user' or 'AI')
-   * @param message - The message of the new entry
-   * @param images - The images referenced by the entry
-   * @returns The ID of the newly created entry
-   */
   public async addConversationEntry(
     parentID: string | null,
     role: 'user' | 'AI',
@@ -230,6 +217,9 @@ export class HistoryManager implements IHistoryManager {
         create_time: this.history.create_time,
         update_time: this.history.update_time,
       };
+    } else {
+      this.historyIndex[this.history.root].update_time =
+        this.history.update_time;
     }
 
     await this.saveHistoryById(this.history).catch((error) =>
