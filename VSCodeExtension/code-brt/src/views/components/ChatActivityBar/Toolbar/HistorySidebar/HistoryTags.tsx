@@ -102,18 +102,17 @@ export const HistoryTags: React.FC<HistoryTagsProps> = ({
             }
           }}
         >
-          {tags?.map((tag) => (
-            <span key={tag} style={{ display: 'inline-block' }}>
-              <Tag
-                closable
-                onClose={(e) => {
-                  e.preventDefault();
-                  handleTagClose(historyID, tag);
-                }}
-              >
-                {tag}
-              </Tag>
-            </span>
+          {tags?.map((tag, index) => (
+            <Tag
+              key={`${historyID}-${index}`}
+              closable
+              onClose={(e) => {
+                e.preventDefault();
+                handleTagClose(historyID, tag);
+              }}
+            >
+              {tag}
+            </Tag>
           ))}
         </TweenOneGroup>
       )}

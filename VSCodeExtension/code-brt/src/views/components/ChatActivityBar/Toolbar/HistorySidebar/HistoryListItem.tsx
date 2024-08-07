@@ -23,6 +23,7 @@ const StyledListItem = styled(List.Item)<{
 }>`
   cursor: pointer;
   margin: 4px;
+  padding: 8px 0 !important;
   border-radius: 4px;
 
   background-color: ${({ $token, $active }) =>
@@ -90,7 +91,11 @@ export const HistoryListItem: React.FC<HistoryListItemProps> = ({
       ]}
       onClick={() => switchHistory(historyID)}
     >
-      <Space direction={'vertical'} style={{ padding: '0 16px 0 24px' }}>
+      <Space
+        size={'small'}
+        direction={'vertical'}
+        style={{ paddingLeft: 24, width: '100%', maxWidth: '85%' }}
+      >
         {editingHistoryID === historyID ? (
           <EditableTitle
             value={titleInput}
