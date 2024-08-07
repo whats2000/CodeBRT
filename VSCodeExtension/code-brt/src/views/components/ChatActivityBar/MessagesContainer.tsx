@@ -121,6 +121,7 @@ export const MessagesContainer: React.FC<MessagesContainerProps> = ({
   const { innerWidth } = useWindowSize();
 
   useEffect(() => {
+    setShowFloatButtons(false);
     setFloatButtonsXPosition(innerWidth - 85);
   }, [innerWidth]);
 
