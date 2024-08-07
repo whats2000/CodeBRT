@@ -29,7 +29,29 @@ The architecture of the project is as follows:
 
 ## Usage
 
-**Soon to be updated**
+To start the extension, click the extension button to open the extension dialog.
+
+**Service selection**  
+We offered several types of services for users to choose, such as Gemini, OpenAI, Ollama…etc. Users can check the list and click on to change service.
+
+**Model setting**  
+In every service, users can set the model as they want. For example, in Gemini service we can choose the default models or edit the model list and customize the model we want.
+
+**General setting**  
+In general setting, we’ll set the api key to ensure that our model can be used. And then, users can set the page style by the Theme Primary color, Theme Algorithm and Theme Border Radius.
+
+**Add & Remove chat**  
+Users can add new individual chat pages, and check them in the chat history. If you don’t need any page in the chat history, you can remove it by a click. 
+
+**Upload picture**    
+We offered the service for users to upload local picture files for language models to analyze.
+
+**Upload audio**  
+We also offered the way for Speech-to-Text, users can use the record button to record their voice, and then the message will show up below.   
+
+**Chatbox Message**  
+Users can edit the chatbox message by the edit button, also, messages can be copied by the copy button. If necessary, users can use the audio service by clicking the speaker button, which is transformed by language model. 
+
 
 ## Contributing
 
