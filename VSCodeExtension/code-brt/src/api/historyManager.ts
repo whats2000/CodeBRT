@@ -9,6 +9,7 @@ import type {
   ConversationHistoryIndex,
   ConversationHistoryIndexList,
   IHistoryManager,
+  ModelServiceType,
 } from '../types';
 
 export class HistoryManager implements IHistoryManager {
@@ -182,6 +183,7 @@ export class HistoryManager implements IHistoryManager {
     role: 'user' | 'AI',
     message: string,
     images?: string[],
+    modelServiceType?: ModelServiceType,
   ): Promise<string> {
     const newID = uuidV4();
     const newEntry: ConversationEntry = {
@@ -227,9 +229,23 @@ export class HistoryManager implements IHistoryManager {
         'Failed to add conversation entry: ' + error,
       ),
     );
-    await this.saveHistoryIndex().catch((error) =>
-      vscode.window.showErrorMessage('Failed to save history index: ' + error),
-    );
+
+    // Add tag to history if it's not already there
+    if (
+      !(
+        !this.historyIndex[this.history.root].tags?.includes(
+          modelServiceType || '',
+        ) && modelServiceType
+      )
+    ) {
+      await this.saveHistoryIndex().catch((error) =>
+        vscode.window.showErrorMessage(
+          'Failed to save history index: ' + error,
+        ),
+      );
+    } else {
+      await this.addTagToHistory(this.history.root, modelServiceType);
+    }
 
     return newID;
   }
@@ -308,5 +324,32 @@ export class HistoryManager implements IHistoryManager {
       vscode.window.showErrorMessage('History not found: ' + historyID).then();
       return this.history;
     }
+  }
+
+  public async addTagToHistory(historyID: string, tag: string): Promise<void> {
+    if (!this.historyIndex[historyID].tags) {
+      this.historyIndex[historyID].tags = [];
+    }
+    if (this.historyIndex[historyID].tags.includes(tag)) {
+      return;
+    }
+    this.historyIndex[historyID].tags.push(tag);
+    await this.saveHistoryIndex().catch((error) =>
+      vscode.window.showErrorMessage('Failed to save history index: ' + error),
+    );
+  }
+
+  public async removeTagFromHistory(
+    historyID: string,
+    tag: string,
+  ): Promise<void> {
+    if (this.historyIndex[historyID].tags) {
+      this.historyIndex[historyID].tags = this.historyIndex[
+        historyID
+      ].tags.filter((t) => t !== tag);
+    }
+    await this.saveHistoryIndex().catch((error) =>
+      vscode.window.showErrorMessage('Failed to save history index: ' + error),
+    );
   }
 }

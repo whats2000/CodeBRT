@@ -171,12 +171,19 @@ export const activate = async (ctx: vscode.ExtensionContext) => {
     editLanguageModelConversationHistory: (entryID, newMessage) => {
       historyManager.editConversationEntry(entryID, newMessage);
     },
-    addConversationEntry: async (parentID, sender, message, images?) => {
+    addConversationEntry: async (
+      parentID,
+      sender,
+      message,
+      images?,
+      modelServiceType?,
+    ) => {
       return await historyManager.addConversationEntry(
         parentID,
         sender,
         message,
         images,
+        modelServiceType,
       );
     },
     getHistories: () => {
@@ -217,6 +224,12 @@ export const activate = async (ctx: vscode.ExtensionContext) => {
     },
     updateHistoryTitleById: (historyID, title) => {
       historyManager.updateHistoryTitleById(historyID, title);
+    },
+    addHistoryTag: (historyID, tag) => {
+      historyManager.addTagToHistory(historyID, tag);
+    },
+    removeHistoryTag: (historyID, tag) => {
+      historyManager.removeTagFromHistory(historyID, tag);
     },
     getLatestAvailableModelNames: async (modelType) => {
       return await models[modelType].service.getLatestAvailableModelNames();

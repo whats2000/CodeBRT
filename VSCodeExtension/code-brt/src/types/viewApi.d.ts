@@ -123,6 +123,7 @@ export type ViewApi = {
    * @param sender - The sender of the message.
    * @param message - The message to add.
    * @param images - The images to add.
+   * @param modelServiceType - The type of the model service to add the entry to.
    * @returns The ID of the new entry.
    */
   addConversationEntry: (
@@ -130,6 +131,7 @@ export type ViewApi = {
     sender: 'user' | 'AI',
     message: string,
     images?: string[],
+    modelServiceType?: ModelServiceType,
   ) => Promise<string>;
 
   /**
@@ -156,6 +158,20 @@ export type ViewApi = {
    * @param title - The new title.
    */
   updateHistoryTitleById: (historyID: string, title: string) => void;
+
+  /**
+   * Add a tag to a history.
+   * @param historyID - The ID of the history to add the tag to.
+   * @param tag - The tag to add.
+   */
+  addHistoryTag: (historyID: string, tag: string) => void;
+
+  /**
+   * Remove a tag from a history.
+   * @param historyID - The ID of the history to remove the tag from.
+   * @param tag - The tag to remove.
+   */
+  removeHistoryTag: (historyID: string, tag: string) => void;
 
   /**
    * Get the available models for a language model.

@@ -175,6 +175,7 @@ export const ChatActivityBar = () => {
       'user',
       inputMessage,
       uploadedImages,
+      activeModelService,
     );
     setConversationHistory((prevMessages): ConversationHistory => {
       const updatedEntries = {
@@ -236,6 +237,8 @@ export const ChatActivityBar = () => {
         userEntryId,
         'AI',
         responseText,
+        undefined,
+        activeModelService,
       );
       setConversationHistory((prevMessages) => {
         const newEntries = { ...prevMessages.entries };
@@ -294,6 +297,7 @@ export const ChatActivityBar = () => {
       'user',
       editedMessage,
       entry.images,
+      activeModelService,
     );
 
     setConversationHistory((prevMessages): ConversationHistory => {
@@ -357,6 +361,8 @@ export const ChatActivityBar = () => {
         newEntryId,
         'AI',
         responseText,
+        undefined,
+        activeModelService,
       );
       setConversationHistory((prevMessages) => {
         const newEntries = { ...prevMessages.entries };

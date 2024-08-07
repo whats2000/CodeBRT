@@ -1,7 +1,7 @@
 import type {
   ConversationHistory,
-  ConversationHistoryIndex,
   ConversationHistoryIndexList,
+  ModelServiceType,
 } from '../types';
 
 export type IHistoryManager = {
@@ -30,6 +30,7 @@ export type IHistoryManager = {
    * @param role The role of the entry
    * @param message The message of the entry
    * @param images The images of the entry
+   * @param modelServiceType The model service type of the entry
    * @returns The new entry ID
    */
   addConversationEntry(
@@ -37,6 +38,7 @@ export type IHistoryManager = {
     role: 'user' | 'AI',
     message: string,
     images?: string[],
+    modelServiceType?: ModelServiceType,
   ): Promise<string>;
 
   /**
@@ -71,4 +73,18 @@ export type IHistoryManager = {
    * @returns The new conversation history
    */
   deleteHistory(historyID: string): Promise<ConversationHistory>;
+
+  /**
+   * Add a tag to a history
+   * @param historyID The history ID
+   * @param tag The tag to add
+   */
+  addTagToHistory(historyID: string, tag: string): Promise<void>;
+
+  /**
+   * Remove a tag from a history
+   * @param historyID The history ID
+   * @param tag The tag to remove
+   */
+  removeTagFromHistory(historyID: string, tag: string): Promise<void>;
 };
