@@ -1,6 +1,15 @@
 import React, { useContext, useEffect, useState } from 'react';
 import styled from 'styled-components';
-import { Drawer, Menu, Typography, Input, Spin, Flex, Button } from 'antd';
+import {
+  Drawer,
+  List,
+  Typography,
+  Input,
+  Spin,
+  Button,
+  theme,
+  GlobalToken,
+} from 'antd';
 import { DeleteOutlined, EditOutlined } from '@ant-design/icons';
 
 import type {
@@ -17,6 +26,28 @@ const StyledDrawer = styled(Drawer)`
 
   & .ant-drawer-body {
     padding: 0;
+  }
+`;
+
+const StyledList = styled(List)<{ $token: GlobalToken }>`
+  background-color: ${({ $token }) => $token.colorBgContainer};
+  padding: 1px 0;
+`;
+
+const StyledListItem = styled(List.Item)<{
+  $active: boolean;
+  $token: GlobalToken;
+}>`
+  cursor: pointer;
+  margin: 4px;
+  border-radius: 4px;
+
+  background-color: ${({ $token, $active }) =>
+    $active ? $token.colorPrimaryBg : 'transparent'};
+
+  &:hover {
+    background-color: ${({ $token, $active }) =>
+      $active ? $token.colorPrimaryBg : $token.colorBgTextHover};
   }
 `;
 
@@ -54,6 +85,8 @@ export const HistorySidebar: React.FC<HistorySidebarProps> = ({
   const [isLoading, setIsLoading] = useState(true);
   const [editingHistoryID, setEditingHistoryID] = useState<string | null>(null);
   const [titleInput, setTitleInput] = useState('');
+
+  const { token } = theme.useToken();
 
   useEffect(() => {
     if (isOpen) {
@@ -168,62 +201,65 @@ export const HistorySidebar: React.FC<HistorySidebarProps> = ({
     setEditingHistoryID(null);
   };
 
-  const items = Object.keys(histories)
-    .map((historyID) => {
-      if (historyID === '') return null;
-
-      return {
-        key: historyID,
-        label: (
-          <Flex
-            justify={'space-between'}
-            align={'center'}
-            onDoubleClick={(e) => {
-              e.stopPropagation();
-              handleTitleDoubleClick(historyID, histories[historyID].title);
-            }}
-          >
-            {editingHistoryID === historyID ? (
-              <EditableTitle
-                value={titleInput}
-                onChange={handleTitleChange}
-                onBlur={() => handleTitleBlur(historyID)}
-                onSubmit={() => handleTitleBlur(historyID)}
-                autoSize={{ minRows: 1, maxRows: 10 }}
-                autoFocus
-              />
-            ) : (
-              <Typography.Text ellipsis>
-                {histories[historyID].title}{' '}
-                {historyID === conversationHistory.root && (
-                  <Button
-                    type='text'
-                    size='small'
-                    icon={<EditOutlined />}
-                    onClick={() =>
-                      handleTitleDoubleClick(
-                        historyID,
-                        histories[historyID].title,
-                      )
-                    }
-                  />
-                )}
-              </Typography.Text>
-            )}
-            <Button danger={true} type='text' size='small'>
-              <DeleteOutlined
-                onClick={(e) => {
-                  e.stopPropagation();
-                  deleteHistory(historyID);
-                }}
-              />
-            </Button>
-          </Flex>
-        ),
-        onClick: () => switchHistory(historyID),
-      };
-    })
-    .filter((item) => item !== null);
+  const renderListItem = (historyID: string) => (
+    <StyledListItem
+      $token={token}
+      $active={historyID === conversationHistory.root}
+      actions={[
+        <Button
+          danger={true}
+          type='text'
+          size='small'
+          icon={<DeleteOutlined />}
+          onClick={(e) => {
+            e.stopPropagation();
+            deleteHistory(historyID);
+          }}
+        />,
+      ]}
+      onClick={() => switchHistory(historyID)}
+    >
+      <List.Item.Meta
+        style={{ paddingLeft: 16 }}
+        title={
+          editingHistoryID === historyID ? (
+            <EditableTitle
+              value={titleInput}
+              onChange={handleTitleChange}
+              onBlur={() => handleTitleBlur(historyID)}
+              onSubmit={() => handleTitleBlur(historyID)}
+              autoSize={{ minRows: 1, maxRows: 10 }}
+              autoFocus
+            />
+          ) : (
+            <Typography.Text
+              style={{ width: '100%' }}
+              ellipsis
+              onDoubleClick={() =>
+                handleTitleDoubleClick(historyID, histories[historyID].title)
+              }
+            >
+              {histories[historyID].title}{' '}
+              {historyID === conversationHistory.root && (
+                <Button
+                  type='text'
+                  size='small'
+                  icon={<EditOutlined />}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleTitleDoubleClick(
+                      historyID,
+                      histories[historyID].title,
+                    );
+                  }}
+                />
+              )}
+            </Typography.Text>
+          )
+        }
+      />
+    </StyledListItem>
+  );
 
   return (
     <StyledDrawer
@@ -236,15 +272,16 @@ export const HistorySidebar: React.FC<HistorySidebarProps> = ({
         <NoHistoryMessageContainer>
           <Spin size={'large'} />
         </NoHistoryMessageContainer>
-      ) : items.length === 0 ? (
+      ) : Object.keys(histories).length === 0 ? (
         <NoHistoryMessageContainer>
           <Typography.Text>Nothing Currently</Typography.Text>
         </NoHistoryMessageContainer>
       ) : (
-        <Menu
-          selectedKeys={[conversationHistory.root]}
-          mode='inline'
-          items={items}
+        <StyledList
+          $token={token}
+          split={false}
+          dataSource={Object.keys(histories)}
+          renderItem={(historyID) => renderListItem(historyID as string)}
         />
       )}
     </StyledDrawer>
