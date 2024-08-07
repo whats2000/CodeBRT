@@ -1,6 +1,6 @@
 import React, { useContext, useEffect, useState } from 'react';
 import styled from 'styled-components';
-import { GlobalToken } from 'antd';
+import { GlobalToken, Tooltip } from 'antd';
 import { Drawer, List, Typography, Spin, Button, theme, Flex } from 'antd';
 import { TagOutlined } from '@ant-design/icons';
 
@@ -178,12 +178,13 @@ export const HistorySidebar: React.FC<HistorySidebarProps> = ({
       title={
         <Flex justify={'space-between'} align={'center'}>
           <Typography.Text>Chat History</Typography.Text>
-          <Button
-            type='text'
-            danger={showTags}
-            icon={<TagOutlined />}
-            onClick={() => setShowTags((prev) => !prev)}
-          />
+          <Tooltip title='Show Tags' placement={'right'}>
+            <Button
+              type={showTags ? 'primary' : 'default'}
+              icon={<TagOutlined />}
+              onClick={() => setShowTags((prev) => !prev)}
+            />
+          </Tooltip>
         </Flex>
       }
       open={isOpen}
