@@ -1,6 +1,6 @@
 import React, { useContext, useEffect, useState } from 'react';
 import styled from 'styled-components';
-import { GlobalToken, Tooltip } from 'antd';
+import { GlobalToken, Select, Tooltip } from 'antd';
 import { Drawer, List, Typography, Spin, Button, theme, Flex } from 'antd';
 import { TagOutlined } from '@ant-design/icons';
 
@@ -57,6 +57,8 @@ export const HistorySidebar: React.FC<HistorySidebarProps> = ({
   const [editingHistoryID, setEditingHistoryID] = useState<string | null>(null);
   const [titleInput, setTitleInput] = useState('');
   const [showTags, setShowTags] = useState(true);
+  const [allTags, setAllTags] = useState<string[]>([]);
+  const [filterTags, setFilterTags] = useState<string[]>([]);
 
   const { token } = theme.useToken();
 
@@ -88,6 +90,21 @@ export const HistorySidebar: React.FC<HistorySidebarProps> = ({
         });
     }
   }, [isOpen, activeModelService]);
+
+  useEffect(() => {
+    const tagsAvailable = Object.values(histories).reduce(
+      (acc: string[], history) => {
+        if (!history.tags) {
+          return acc;
+        }
+
+        return [...acc, ...history.tags];
+      },
+      [],
+    );
+
+    setAllTags(tagsAvailable);
+  }, [histories]);
 
   const switchHistory = (historyID: string) => {
     if (historyID === conversationHistory.root) return;
@@ -200,27 +217,55 @@ export const HistorySidebar: React.FC<HistorySidebarProps> = ({
           <Typography.Text>Nothing Currently</Typography.Text>
         </NoHistoryMessageContainer>
       ) : (
-        <StyledList
-          $token={token}
-          split={false}
-          dataSource={Object.keys(histories)}
-          renderItem={(historyID) => (
-            <HistoryListItem
-              historyID={historyID as string}
-              conversationHistory={conversationHistory}
-              histories={histories}
-              setHistories={setHistories}
-              deleteHistory={deleteHistory}
-              switchHistory={switchHistory}
-              editingHistoryID={editingHistoryID}
-              titleInput={titleInput}
-              handleTitleChange={handleTitleChange}
-              handleTitleBlur={handleTitleBlur}
-              handleTitleDoubleClick={handleTitleDoubleClick}
-              showTags={showTags}
-            />
+        <>
+          {showTags && (
+            <div style={{ padding: 16 }}>
+              <Select
+                showSearch={true}
+                mode={'tags'}
+                style={{ width: '100%' }}
+                value={filterTags}
+                options={allTags
+                  .filter((tag) => !filterTags.includes(tag))
+                  .map((item) => ({
+                    value: item,
+                    label: item,
+                  }))}
+                placeholder={'Filter by tags'}
+                onChange={setFilterTags}
+              />
+            </div>
           )}
-        />
+          <StyledList
+            $token={token}
+            split={false}
+            dataSource={Object.keys(histories).filter((historyID) =>
+              filterTags.length > 0
+                ? histories[historyID].tags?.some
+                  ? histories[historyID].tags.some((tag) =>
+                      filterTags.includes(tag),
+                    )
+                  : false
+                : true,
+            )}
+            renderItem={(historyID) => (
+              <HistoryListItem
+                historyID={historyID as string}
+                conversationHistory={conversationHistory}
+                histories={histories}
+                setHistories={setHistories}
+                deleteHistory={deleteHistory}
+                switchHistory={switchHistory}
+                editingHistoryID={editingHistoryID}
+                titleInput={titleInput}
+                handleTitleChange={handleTitleChange}
+                handleTitleBlur={handleTitleBlur}
+                handleTitleDoubleClick={handleTitleDoubleClick}
+                showTags={showTags}
+              />
+            )}
+          />
+        </>
       )}
     </StyledDrawer>
   );
