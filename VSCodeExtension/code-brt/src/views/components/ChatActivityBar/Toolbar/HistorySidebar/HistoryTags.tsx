@@ -5,6 +5,7 @@ import { PlusOutlined } from '@ant-design/icons';
 
 import type { ConversationHistoryIndexList } from '../../../../../types';
 import { WebviewContext } from '../../../../WebviewContext';
+import { MODEL_SERVICE_CONSTANTS } from '../../../../../constants';
 
 type HistoryTagsProps = {
   tags?: string[];
@@ -102,18 +103,26 @@ export const HistoryTags: React.FC<HistoryTagsProps> = ({
             }
           }}
         >
-          {tags?.map((tag, index) => (
-            <Tag
-              key={`${historyID}-${index}`}
-              closable
-              onClose={(e) => {
-                e.preventDefault();
-                handleTagClose(historyID, tag);
-              }}
-            >
-              {tag}
-            </Tag>
-          ))}
+          {tags?.map((tag, index) => {
+            const color = Object.keys(MODEL_SERVICE_CONSTANTS).includes(tag)
+              ? MODEL_SERVICE_CONSTANTS[
+                  tag as keyof typeof MODEL_SERVICE_CONSTANTS
+                ].color
+              : undefined;
+            return (
+              <Tag
+                key={`${historyID}-${index}`}
+                color={color}
+                closable
+                onClose={(e) => {
+                  e.preventDefault();
+                  handleTagClose(historyID, tag);
+                }}
+              >
+                {tag}
+              </Tag>
+            );
+          })}
         </TweenOneGroup>
       )}
       {inputVisible ? (
