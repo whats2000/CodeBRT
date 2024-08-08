@@ -190,6 +190,16 @@ export const HistorySidebar: React.FC<HistorySidebarProps> = ({
     setEditingHistoryID(null);
   };
 
+  const getFilteredHistoriesIds = (histories: ConversationHistoryIndexList) => {
+    return Object.keys(histories).filter((historyID) =>
+      filterTags.length > 0
+        ? histories[historyID].tags?.some
+          ? histories[historyID].tags.some((tag) => filterTags.includes(tag))
+          : false
+        : true,
+    );
+  };
+
   return (
     <StyledDrawer
       title={
@@ -239,15 +249,7 @@ export const HistorySidebar: React.FC<HistorySidebarProps> = ({
           <StyledList
             $token={token}
             split={false}
-            dataSource={Object.keys(histories).filter((historyID) =>
-              filterTags.length > 0
-                ? histories[historyID].tags?.some
-                  ? histories[historyID].tags.some((tag) =>
-                      filterTags.includes(tag),
-                    )
-                  : false
-                : true,
-            )}
+            dataSource={getFilteredHistoriesIds(histories)}
             renderItem={(historyID) => (
               <HistoryListItem
                 historyID={historyID as string}
