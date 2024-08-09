@@ -94,7 +94,11 @@ export const ToolActivateFloatButtons: React.FC<
     >
       <FloatButton
         icon={<GlobalOutlined />}
-        tooltip={'Web Search'}
+        tooltip={
+          partialSettings.enableTools.webSearch.active
+            ? 'Disable Web Search'
+            : 'Enable Web Search'
+        }
         type={
           partialSettings.enableTools.webSearch.active ? 'primary' : 'default'
         }
@@ -102,7 +106,11 @@ export const ToolActivateFloatButtons: React.FC<
       />
       <FloatButton
         icon={<FileSearchOutlined />}
-        tooltip={'Url Fetcher'}
+        tooltip={
+          partialSettings.enableTools.urlFetcher.active
+            ? 'Disable URL Fetcher'
+            : 'Enable URL Fetcher'
+        }
         type={
           partialSettings.enableTools.urlFetcher.active ? 'primary' : 'default'
         }
