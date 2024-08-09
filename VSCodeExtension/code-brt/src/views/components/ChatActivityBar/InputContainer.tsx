@@ -199,7 +199,7 @@ export const InputContainer = ({
           onKeyDown={handleKeyDown}
           placeholder={
             innerWidth > 520
-              ? 'Ctrl+V images or hold SHIFT key drop them...'
+              ? 'Paste images or hold SHIFT key drop them...'
               : 'Ask...'
           }
           disabled={isProcessing}

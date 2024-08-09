@@ -100,7 +100,7 @@ export class OpenAIService extends AbstractOpenaiLikeService {
           const response = await openai.chat.completions.create({
             messages: conversationHistory,
             model: this.currentModel,
-            tools: this.tools,
+            tools: this.getEnabledTools(),
             stream: false,
             ...this.generationConfig,
           } as ChatCompletionCreateParamsNonStreaming);
@@ -130,7 +130,7 @@ export class OpenAIService extends AbstractOpenaiLikeService {
           const streamResponse = await openai.chat.completions.create({
             model: this.currentModel,
             messages: conversationHistory,
-            tools: this.tools,
+            tools: this.getEnabledTools(),
             stream: true,
             ...this.generationConfig,
           } as ChatCompletionCreateParamsStreaming);

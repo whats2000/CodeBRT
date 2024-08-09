@@ -102,7 +102,7 @@ export class GroqService extends AbstractOpenaiLikeService {
           const response = await groq.chat.completions.create({
             messages: conversationHistory,
             model: this.currentModel,
-            tools: this.tools,
+            tools: this.getEnabledTools(),
             stream: false,
             ...this.generationConfig,
           } as ChatCompletionCreateParamsNonStreaming);
@@ -134,7 +134,7 @@ export class GroqService extends AbstractOpenaiLikeService {
             messages: conversationHistory,
             model: this.currentModel,
             stream: true,
-            tools: this.tools,
+            tools: this.getEnabledTools(),
             ...this.generationConfig,
           } as ChatCompletionCreateParamsStreaming);
 

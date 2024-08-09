@@ -30,15 +30,6 @@ export class AnthropicService extends AbstractLanguageModelService {
     max_tokens: 4096,
   };
 
-  private readonly tools: Tool[] = Object.keys(toolsSchema).map((toolKey) => {
-    const tool = toolsSchema[toolKey as ToolServiceType];
-    return {
-      name: tool.name,
-      description: tool.description,
-      input_schema: tool.inputSchema as Tool.InputSchema,
-    };
-  });
-
   constructor(
     context: vscode.ExtensionContext,
     settingsManager: SettingsManager,
@@ -55,6 +46,24 @@ export class AnthropicService extends AbstractLanguageModelService {
       defaultModelName,
       availableModelNames,
     );
+  }
+
+  private getEnabledTools(): Tool[] | undefined {
+    const enabledTools = this.settingsManager.get('enableTools');
+    const tools: Tool[] = [];
+    for (const [key, tool] of Object.entries(toolsSchema)) {
+      if (!enabledTools[key as ToolServiceType].active) {
+        continue;
+      }
+
+      tools.push({
+        name: tool.name,
+        description: tool.description,
+        input_schema: tool.inputSchema as Tool.InputSchema,
+      });
+    }
+
+    return tools.length > 0 ? tools : undefined;
   }
 
   private conversationHistoryToContent(
@@ -305,7 +314,7 @@ export class AnthropicService extends AbstractLanguageModelService {
           const response = await anthropic.messages.create({
             model: this.currentModel,
             messages: conversationHistory,
-            tools: this.tools,
+            tools: this.getEnabledTools(),
             stream: false,
             max_tokens: 4096,
           });
@@ -336,12 +345,14 @@ export class AnthropicService extends AbstractLanguageModelService {
       } else {
         let responseText = '';
 
+        console.log(this.getEnabledTools());
+
         while (functionCallCount < MAX_FUNCTION_CALLS) {
           const streamResponse = anthropic.messages
             .stream({
               model: this.currentModel,
               messages: conversationHistory,
-              tools: this.tools,
+              tools: this.getEnabledTools(),
               stream: true,
               ...this.generationConfig,
             })

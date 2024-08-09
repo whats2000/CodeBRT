@@ -24,19 +24,27 @@ export abstract class AbstractOpenaiLikeService extends AbstractLanguageModelSer
       stop: null,
     };
 
-  protected tools: ChatCompletionToolOpenaiLike[] = Object.keys(
-    toolsSchema,
-  ).map((toolKey) => {
-    const tool = toolsSchema[toolKey as ToolServiceType];
-    return {
-      type: 'function',
-      function: {
-        name: tool.name,
-        description: tool.description,
-        parameters: tool.inputSchema,
-      },
-    };
-  });
+  protected getEnabledTools(): ChatCompletionToolOpenaiLike[] | undefined {
+    const enabledTools = this.settingsManager.get('enableTools');
+    const tools: ChatCompletionToolOpenaiLike[] = [];
+
+    for (const [key, tool] of Object.entries(toolsSchema)) {
+      if (!enabledTools[key as ToolServiceType].active) {
+        continue;
+      }
+
+      tools.push({
+        type: 'function',
+        function: {
+          name: tool.name,
+          description: tool.description,
+          parameters: tool.inputSchema,
+        },
+      });
+    }
+
+    return tools.length > 0 ? tools : undefined;
+  }
 
   private fileToGenerativePart(
     filePath: string,

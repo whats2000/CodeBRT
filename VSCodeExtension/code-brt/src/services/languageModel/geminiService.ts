@@ -75,8 +75,6 @@ export class GeminiService extends AbstractLanguageModelService {
     },
   ];
 
-  private readonly tools: Tool[] = [];
-
   constructor(
     context: vscode.ExtensionContext,
     settingsManager: SettingsManager,
@@ -93,12 +91,17 @@ export class GeminiService extends AbstractLanguageModelService {
       defaultModelName,
       availableModelNames,
     );
-    this.tools = this.buildTools();
   }
 
-  private buildTools(): Tool[] {
-    return Object.keys(toolsSchema).map((toolKey) => {
-      const tool = toolsSchema[toolKey as ToolServiceType];
+  private getEnabledTools(): Tool[] | undefined {
+    const enabledTools = this.settingsManager.get('enableTools');
+    const tools: Tool[] = [];
+
+    for (const [key, tool] of Object.entries(toolsSchema)) {
+      if (!enabledTools[key as ToolServiceType].active) {
+        continue;
+      }
+
       const properties = Object.keys(tool.inputSchema.properties).reduce(
         (acc, key) => {
           const property = tool.inputSchema.properties[key];
@@ -118,7 +121,7 @@ export class GeminiService extends AbstractLanguageModelService {
         },
       );
 
-      return {
+      tools.push({
         functionDeclarations: [
           {
             name: tool.name,
@@ -129,8 +132,10 @@ export class GeminiService extends AbstractLanguageModelService {
             },
           },
         ],
-      };
-    });
+      });
+    }
+
+    return tools.length > 0 ? tools : undefined;
   }
 
   private conversationHistoryToContent(entries: {
@@ -316,7 +321,7 @@ export class GeminiService extends AbstractLanguageModelService {
               generationConfig: this.generationConfig,
               safetySettings: this.safetySettings,
               history: conversationHistory,
-              tools: this.tools,
+              tools: this.getEnabledTools(),
             })
             .sendMessage(queryParts);
 
@@ -355,7 +360,7 @@ export class GeminiService extends AbstractLanguageModelService {
               generationConfig: this.generationConfig,
               safetySettings: this.safetySettings,
               history: conversationHistory,
-              tools: this.tools,
+              tools: this.getEnabledTools(),
             })
             .sendMessageStream(queryParts);
 

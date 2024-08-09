@@ -23,18 +23,6 @@ export class OllamaService extends AbstractLanguageModelService {
     top_k: 0,
   };
 
-  private readonly tools: Tool[] = Object.keys(toolsSchema).map((toolKey) => {
-    const tool = toolsSchema[toolKey as ToolServiceType];
-    return {
-      type: 'function',
-      function: {
-        name: tool.name,
-        description: tool.description,
-        parameters: tool.inputSchema,
-      },
-    };
-  });
-
   constructor(
     context: vscode.ExtensionContext,
     settingsManager: SettingsManager,
@@ -51,6 +39,28 @@ export class OllamaService extends AbstractLanguageModelService {
       defaultModelName,
       availableModelNames,
     );
+  }
+
+  private getEnabledTools(): Tool[] | undefined {
+    const enabledTools = this.settingsManager.get('enableTools');
+    const tools: Tool[] = [];
+
+    for (const [key, tool] of Object.entries(toolsSchema)) {
+      if (!enabledTools[key as ToolServiceType].active) {
+        continue;
+      }
+
+      tools.push({
+        type: 'function',
+        function: {
+          name: tool.name,
+          description: tool.description,
+          parameters: tool.inputSchema,
+        },
+      });
+    }
+
+    return tools.length > 0 ? tools : undefined;
   }
 
   private async conversationHistoryToContent(
@@ -282,7 +292,7 @@ export class OllamaService extends AbstractLanguageModelService {
           const response = await client.chat({
             model,
             messages: conversationHistory,
-            tools: this.tools,
+            tools: this.getEnabledTools(),
             options: this.generationConfig,
           });
 
@@ -315,7 +325,7 @@ export class OllamaService extends AbstractLanguageModelService {
             model,
             messages: conversationHistory,
             stream: true,
-            tools: this.tools,
+            tools: this.getEnabledTools(),
             options: this.generationConfig,
           });
 

@@ -21,20 +21,6 @@ import { ToolService } from '../tools';
 export class HuggingFaceService extends AbstractLanguageModelService {
   private readonly generationConfig: Partial<ChatCompletionInput> = {};
 
-  private readonly tools: ChatCompletionInputTool[] = Object.keys(
-    toolsSchema,
-  ).map((toolKey) => {
-    const tool = toolsSchema[toolKey as ToolServiceType];
-    return {
-      type: 'function',
-      function: {
-        name: tool.name,
-        description: tool.description,
-        arguments: tool.inputSchema,
-      },
-    };
-  });
-
   constructor(
     context: vscode.ExtensionContext,
     settingsManager: SettingsManager,
@@ -54,6 +40,28 @@ export class HuggingFaceService extends AbstractLanguageModelService {
       defaultModelName,
       availableModelNames,
     );
+  }
+
+  private getEnabledTools(): ChatCompletionInputTool[] | undefined {
+    const enabledTools = this.settingsManager.get('enableTools');
+    const tools: ChatCompletionInputTool[] = [];
+
+    for (const [key, tool] of Object.entries(toolsSchema)) {
+      if (!enabledTools[key as ToolServiceType].active) {
+        continue;
+      }
+
+      tools.push({
+        type: 'function',
+        function: {
+          name: tool.name,
+          description: tool.description,
+          arguments: tool.inputSchema,
+        },
+      });
+    }
+
+    return tools.length > 0 ? tools : undefined;
   }
 
   private conversationHistoryToContent(
@@ -112,7 +120,7 @@ export class HuggingFaceService extends AbstractLanguageModelService {
             'Failed to find tool with name: ' +
             functionCall.function.name +
             '. \n\n The tool available are: \n' +
-            JSON.stringify(this.tools),
+            JSON.stringify(this.getEnabledTools(), null, 2),
         });
         success = false;
         continue;
@@ -234,7 +242,7 @@ export class HuggingFaceService extends AbstractLanguageModelService {
           const streamResponse = huggerFace.chatCompletionStream({
             messages: conversationHistory,
             model: this.currentModel,
-            tools: functionCallSuccess ? undefined : this.tools,
+            tools: functionCallSuccess ? undefined : this.getEnabledTools(),
             stream: true,
             ...this.generationConfig,
           });

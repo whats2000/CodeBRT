@@ -14,8 +14,6 @@ import { HistoryManager, SettingsManager } from '../../api';
 import { ToolService } from '../tools';
 
 export class CohereService extends AbstractLanguageModelService {
-  private readonly tools: Tool[] = [];
-
   constructor(
     context: vscode.ExtensionContext,
     settingsManager: SettingsManager,
@@ -32,13 +30,17 @@ export class CohereService extends AbstractLanguageModelService {
       defaultModelName,
       availableModelNames,
     );
-
-    this.tools = this.buildTools();
   }
 
-  private buildTools(): Tool[] {
-    return Object.keys(toolsSchema).map((toolKey) => {
-      const tool = toolsSchema[toolKey as ToolServiceType];
+  private getEnabledTools(): Tool[] | undefined {
+    const enabledTools = this.settingsManager.get('enableTools');
+    const tools: Tool[] = [];
+
+    for (const [key, tool] of Object.entries(toolsSchema)) {
+      if (!enabledTools[key as ToolServiceType].active) {
+        continue;
+      }
+
       const parameterDefinitions = Object.keys(
         tool.inputSchema.properties,
       ).reduce(
@@ -60,12 +62,14 @@ export class CohereService extends AbstractLanguageModelService {
         },
       );
 
-      return {
+      tools.push({
         name: tool.name,
         description: tool.description,
         parameterDefinitions,
-      };
-    });
+      });
+    }
+
+    return tools.length > 0 ? tools : undefined;
   }
 
   private conversationHistoryToContent(entries: {
@@ -212,7 +216,10 @@ export class CohereService extends AbstractLanguageModelService {
             model: this.currentModel,
             message: toolResults.length > 0 ? '' : query,
             chatHistory: conversationHistory,
-            tools: this.currentModel !== 'command' ? this.tools : undefined,
+            tools:
+              this.currentModel !== 'command'
+                ? this.getEnabledTools()
+                : undefined,
             toolResults: toolResults.length > 0 ? toolResults : undefined,
           });
 
@@ -238,7 +245,10 @@ export class CohereService extends AbstractLanguageModelService {
             model: this.currentModel,
             message: toolResults.length > 0 ? '' : query,
             chatHistory: conversationHistory,
-            tools: this.currentModel !== 'command' ? this.tools : undefined,
+            tools:
+              this.currentModel !== 'command'
+                ? this.getEnabledTools()
+                : undefined,
             toolResults: toolResults.length > 0 ? toolResults : undefined,
           });
 
