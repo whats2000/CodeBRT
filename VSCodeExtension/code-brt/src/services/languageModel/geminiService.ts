@@ -54,6 +54,10 @@ export class GeminiService extends AbstractLanguageModelService {
 
   private readonly safetySettings = [
     {
+      category: HarmCategory.HARM_CATEGORY_UNSPECIFIED,
+      threshold: HarmBlockThreshold.BLOCK_NONE,
+    },
+    {
       category: HarmCategory.HARM_CATEGORY_HARASSMENT,
       threshold: HarmBlockThreshold.BLOCK_NONE,
     },
