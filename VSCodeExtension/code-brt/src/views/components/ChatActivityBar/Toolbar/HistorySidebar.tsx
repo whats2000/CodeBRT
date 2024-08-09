@@ -1,8 +1,9 @@
 import React, { useContext, useEffect, useState } from 'react';
 import styled from 'styled-components';
-import { GlobalToken, Select, Tooltip } from 'antd';
+import { Divider, GlobalToken, Select, Tooltip } from 'antd';
 import { Drawer, List, Typography, Spin, Button, theme, Flex } from 'antd';
 import { TagOutlined } from '@ant-design/icons';
+import { differenceInDays, isBefore, isToday, isYesterday } from 'date-fns';
 
 import type {
   ConversationHistory,
@@ -72,10 +73,12 @@ export const HistorySidebar: React.FC<HistorySidebarProps> = ({
 
       callApi('getHistories')
         .then((histories) => {
+          const sortedHistoriesArray = Object.keys(histories)
+            .map((key) => histories[key])
+            .sort((a, b) => b.update_time - a.update_time);
+
           const sortedHistories = Object.fromEntries(
-            Object.entries(histories).sort(
-              ([, a], [, b]) => b.update_time - a.update_time,
-            ),
+            sortedHistoriesArray.map((history) => [history.id, history]),
           );
           setHistories(sortedHistories);
           setIsLoading(false);
@@ -200,6 +203,77 @@ export const HistorySidebar: React.FC<HistorySidebarProps> = ({
     );
   };
 
+  const renderHistoryListItem = (historyID: string, dividerText?: string) => {
+    return (
+      <>
+        {dividerText && (
+          <Divider plain style={{ margin: '8px 0' }}>
+            {dividerText}
+          </Divider>
+        )}
+        <HistoryListItem
+          historyID={historyID}
+          conversationHistory={conversationHistory}
+          histories={histories}
+          setHistories={setHistories}
+          deleteHistory={deleteHistory}
+          switchHistory={switchHistory}
+          editingHistoryID={editingHistoryID}
+          titleInput={titleInput}
+          handleTitleChange={handleTitleChange}
+          handleTitleBlur={handleTitleBlur}
+          handleTitleDoubleClick={handleTitleDoubleClick}
+          showTags={showTags}
+        />
+      </>
+    );
+  };
+
+  const renderWithDividers = (historyID: string, index: number) => {
+    const historyIDs = getFilteredHistoriesIds(histories);
+    const historyUpdateTime = new Date(histories[historyID].update_time);
+    const prevHistoryUpdateTime =
+      index > 0
+        ? new Date(histories[historyIDs[index - 1]]?.update_time)
+        : null;
+    const now = new Date(); // Current date
+
+    let dividerText = '';
+
+    // Determine the divider text
+    if (
+      index === 0 ||
+      !prevHistoryUpdateTime ||
+      !isSameTimePeriod(historyUpdateTime, prevHistoryUpdateTime, now)
+    ) {
+      dividerText = getTimePeriod(historyUpdateTime, now);
+    }
+
+    return renderHistoryListItem(historyID, dividerText);
+  };
+
+  // Helper function to get the time period for a date
+  const getTimePeriod = (date: Date, now: Date): string => {
+    if (isToday(date) || isBefore(now, date)) {
+      return 'Today';
+    } else if (isYesterday(date)) {
+      return 'Yesterday';
+    } else {
+      const daysDifference = differenceInDays(now, date);
+      if (daysDifference <= 7) {
+        return 'Last 7 Days';
+      } else if (daysDifference <= 30) {
+        return 'Last 1 Month';
+      } else {
+        return 'Earlier';
+      }
+    }
+  };
+
+  const isSameTimePeriod = (date1: Date, date2: Date, now: Date): boolean => {
+    return getTimePeriod(date1, now) === getTimePeriod(date2, now);
+  };
+
   return (
     <StyledDrawer
       title={
@@ -250,22 +324,12 @@ export const HistorySidebar: React.FC<HistorySidebarProps> = ({
             $token={token}
             split={false}
             dataSource={getFilteredHistoriesIds(histories)}
-            renderItem={(historyID) => (
-              <HistoryListItem
-                historyID={historyID as string}
-                conversationHistory={conversationHistory}
-                histories={histories}
-                setHistories={setHistories}
-                deleteHistory={deleteHistory}
-                switchHistory={switchHistory}
-                editingHistoryID={editingHistoryID}
-                titleInput={titleInput}
-                handleTitleChange={handleTitleChange}
-                handleTitleBlur={handleTitleBlur}
-                handleTitleDoubleClick={handleTitleDoubleClick}
-                showTags={showTags}
-              />
-            )}
+            renderItem={
+              renderWithDividers as <T>(
+                item: T,
+                index: number,
+              ) => React.ReactNode
+            }
           />
         </>
       )}
