@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useContext } from 'react';
 import styled from 'styled-components';
-import type { Color } from 'antd/es/color-picker/color';
+import type { AggregationColor } from 'antd/es/color-picker/color';
 import {
   Drawer,
   Form,
@@ -98,7 +98,7 @@ export const SettingsBar: React.FC<SettingSidebarProps> = ({
     saveSettings(partialSettings);
   };
 
-  const handleColorChange = (color: Color) => {
+  const handleColorChange = (color: AggregationColor) => {
     setPartialSettings((prev) => ({
       ...prev,
       themePrimaryColor: color.toHexString(),

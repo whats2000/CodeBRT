@@ -11,6 +11,7 @@ import { useDragAndDrop, useThemeConfig } from '../hooks';
 import { Toolbar } from './ChatActivityBar/Toolbar';
 import { InputContainer } from './ChatActivityBar/InputContainer';
 import { MessagesContainer } from './ChatActivityBar/MessagesContainer';
+import { ToolActivateFloatButtons } from './ChatActivityBar/ToolActivateFloatButtons';
 
 const Container = styled(Content)`
   display: flex;
@@ -47,6 +48,8 @@ export const ChatActivityBar = () => {
 
   const messageEndRef = useRef<HTMLDivElement>(null);
   const messagesContainerRef = useRef<HTMLDivElement>(null);
+
+  const inputContainerRef = useRef<HTMLDivElement>(null);
 
   const [theme, setTheme] = useThemeConfig();
 
@@ -454,6 +457,7 @@ export const ChatActivityBar = () => {
           handleEditUserMessageSave={handleEditUserMessageSave}
         />
         <InputContainer
+          inputContainerRef={inputContainerRef}
           uploadedImages={uploadedImages}
           handleImageUpload={handleImageUpload}
           inputMessage={inputMessage}
@@ -463,6 +467,7 @@ export const ChatActivityBar = () => {
           handleImageRemove={handleImageRemove}
         />
       </Container>
+      <ToolActivateFloatButtons inputContainerRef={inputContainerRef} />
     </ConfigProvider>
   );
 };

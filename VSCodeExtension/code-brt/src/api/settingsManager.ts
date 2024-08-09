@@ -62,6 +62,10 @@ export class SettingsManager {
     gptSoVitsClientHost: 'http://127.0.0.1:9880/',
     gptSoVitsAvailableReferenceVoices: [],
     gptSoVitsSelectedReferenceVoice: '',
+    enableTools: {
+      webSearch: { active: false },
+      urlFetcher: { active: false },
+    },
   };
   private readonly defaultCrossDeviceSettings: ExtensionSettingsCrossDevice = {
     anthropicApiKey: '',

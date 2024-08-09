@@ -6,6 +6,7 @@ import {
   TextToVoiceServiceType,
   VoiceToTextServiceType,
 } from './voiceServiceType';
+import { ToolServiceType } from './toolServicesType';
 
 /**
  * Represents the settings for a reference voice for the GPT-SoVits API.
@@ -87,6 +88,11 @@ export type ExtensionSettingsLocal = {
   gptSoVitsClientHost: string;
   gptSoVitsAvailableReferenceVoices: GptSoVitsVoiceSetting[];
   gptSoVitsSelectedReferenceVoice: string;
+  enableTools: {
+    [key in ToolServiceType]: {
+      active: boolean;
+    };
+  };
 };
 
 /**

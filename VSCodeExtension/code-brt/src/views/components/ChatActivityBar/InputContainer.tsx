@@ -30,6 +30,7 @@ const StyledUpload = styled(Upload)`
 `;
 
 type InputContainerProps = {
+  inputContainerRef: React.RefObject<HTMLDivElement>;
   inputMessage: string;
   setInputMessage: React.Dispatch<React.SetStateAction<string>>;
   sendMessage: () => void;
@@ -40,6 +41,7 @@ type InputContainerProps = {
 };
 
 export const InputContainer = ({
+  inputContainerRef,
   inputMessage,
   setInputMessage,
   sendMessage,
@@ -149,7 +151,7 @@ export const InputContainer = ({
   };
 
   return (
-    <StyledInputContainer>
+    <StyledInputContainer ref={inputContainerRef}>
       {previewImage && (
         <Image
           wrapperStyle={{ display: 'none' }}
