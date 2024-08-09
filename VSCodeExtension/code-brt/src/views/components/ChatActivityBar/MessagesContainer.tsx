@@ -122,7 +122,7 @@ export const MessagesContainer: React.FC<MessagesContainerProps> = ({
 
   useEffect(() => {
     setShowFloatButtons(false);
-    setFloatButtonsXPosition(innerWidth - 85);
+    setFloatButtonsXPosition(innerWidth - 84);
   }, [innerWidth]);
 
   useEffect(() => {
@@ -201,7 +201,6 @@ export const MessagesContainer: React.FC<MessagesContainerProps> = ({
     const rect = e.currentTarget.getBoundingClientRect();
     setHoveredBubble({ current: e.currentTarget as HTMLDivElement, entry });
     setShowFloatButtons(!(rect.height < 225 || rect.top > 72));
-    console.log(rect.height, rect.top);
   };
 
   useEffect(() => {

@@ -9,6 +9,7 @@ import {
 import type { ToolServiceType } from '../../../types';
 import { WebviewContext } from '../../WebviewContext';
 import { MagicWand } from '../../icons';
+import { useWindowSize } from '../../hooks';
 
 export interface ToolActivateFloatButtonsProps {
   inputContainerRef: React.RefObject<HTMLDivElement>;
@@ -18,6 +19,8 @@ export const ToolActivateFloatButtons: React.FC<
   ToolActivateFloatButtonsProps
 > = ({ inputContainerRef }) => {
   const { callApi } = useContext(WebviewContext);
+  const { innerWidth } = useWindowSize();
+
   const [partialSettings, setPartialSettings] = useState<{
     enableTools: { [key in ToolServiceType]: { active: boolean } };
   }>({
@@ -28,6 +31,11 @@ export const ToolActivateFloatButtons: React.FC<
   });
   const [isLoading, setIsLoading] = useState(true);
   const [yPosition, setYPosition] = useState(60);
+  const [floatButtonsXPosition, setFloatButtonsXPosition] = useState(0);
+
+  useEffect(() => {
+    setFloatButtonsXPosition(innerWidth - 84);
+  }, [innerWidth]);
 
   useEffect(() => {
     setIsLoading(true);
@@ -41,7 +49,7 @@ export const ToolActivateFloatButtons: React.FC<
     const updateYPosition = () => {
       if (inputContainerRef.current) {
         const { height } = inputContainerRef.current.getBoundingClientRect();
-        setYPosition(height + 10);
+        setYPosition(height + 20);
       }
     };
 
@@ -82,7 +90,7 @@ export const ToolActivateFloatButtons: React.FC<
       icon={isLoading ? <LoadingOutlined /> : <MagicWand />}
       trigger='click'
       tooltip={'Activate Tools'}
-      style={{ bottom: yPosition, left: 25 }}
+      style={{ bottom: yPosition, left: floatButtonsXPosition }}
     >
       <FloatButton
         icon={<GlobalOutlined />}
