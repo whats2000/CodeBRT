@@ -228,7 +228,7 @@ export const SettingsBar: React.FC<SettingSidebarProps> = ({
               <FormGroup key={key} label={'Theme Primary Color'}>
                 <ColorPicker
                   format='hex'
-                  value={value as string}
+                  defaultValue={value}
                   onChangeComplete={handleColorChange}
                   showText={(color) => color.toHexString()}
                 />
