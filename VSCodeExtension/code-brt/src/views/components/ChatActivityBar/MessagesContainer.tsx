@@ -200,14 +200,15 @@ export const MessagesContainer: React.FC<MessagesContainerProps> = ({
   ) => {
     const rect = e.currentTarget.getBoundingClientRect();
     setHoveredBubble({ current: e.currentTarget as HTMLDivElement, entry });
-    setShowFloatButtons(!(rect.height < 225 || rect.top > 75));
+    setShowFloatButtons(!(rect.height < 225 || rect.top > 72));
+    console.log(rect.height, rect.top);
   };
 
   useEffect(() => {
     const handleScrollEnd = () => {
       if (hoveredBubble.current) {
         const rect = hoveredBubble.current.getBoundingClientRect();
-        setShowFloatButtons(!(rect.height < 225 || rect.top > 75));
+        setShowFloatButtons(!(rect.height < 225 || rect.top > 72));
       }
     };
 
@@ -341,7 +342,7 @@ export const MessagesContainer: React.FC<MessagesContainerProps> = ({
           hoveredBubble={hoveredBubble}
           floatButtonsPosition={{
             xRight: floatButtonsXPosition,
-            yTop: innerWidth < 550 ? 120 : 75,
+            yTop: innerWidth < 550 ? 115 : 75,
           }}
           isAudioPlaying={isAudioPlaying}
           isStopAudio={isStopAudio}

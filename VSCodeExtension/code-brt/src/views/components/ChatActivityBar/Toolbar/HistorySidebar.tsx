@@ -98,7 +98,7 @@ export const HistorySidebar: React.FC<HistorySidebarProps> = ({
           return acc;
         }
 
-        return [...acc, ...history.tags];
+        return [...acc, ...history.tags.filter((tag) => !acc.includes(tag))];
       },
       [],
     );

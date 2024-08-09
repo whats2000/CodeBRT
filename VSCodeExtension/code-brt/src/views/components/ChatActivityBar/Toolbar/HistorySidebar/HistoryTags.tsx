@@ -118,6 +118,7 @@ export const HistoryTags: React.FC<HistoryTagsProps> = ({
                   e.preventDefault();
                   handleTagClose(historyID, tag);
                 }}
+                style={{ marginBottom: 5 }}
               >
                 {tag}
               </Tag>
