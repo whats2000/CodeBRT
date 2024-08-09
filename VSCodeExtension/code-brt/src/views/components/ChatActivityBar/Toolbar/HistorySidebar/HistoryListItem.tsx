@@ -1,6 +1,7 @@
 import React from 'react';
 import {
   Button,
+  Flex,
   GlobalToken,
   Input,
   List,
@@ -8,7 +9,7 @@ import {
   theme,
   Typography,
 } from 'antd';
-import { DeleteOutlined, EditOutlined } from '@ant-design/icons';
+import { DeleteOutlined, EditOutlined, SaveOutlined } from '@ant-design/icons';
 import styled from 'styled-components';
 
 import type {
@@ -97,23 +98,28 @@ export const HistoryListItem: React.FC<HistoryListItemProps> = ({
         style={{ paddingLeft: 24, width: '100%', maxWidth: '85%' }}
       >
         {editingHistoryID === historyID ? (
-          <EditableTitle
-            value={titleInput}
-            onChange={handleTitleChange}
-            onBlur={() => handleTitleBlur(historyID)}
-            onSubmit={() => handleTitleBlur(historyID)}
-            autoSize={{ minRows: 1, maxRows: 10 }}
-            autoFocus
-          />
+          <Flex align={'center'}>
+            <EditableTitle
+              value={titleInput}
+              onChange={handleTitleChange}
+              onBlur={() => handleTitleBlur(historyID)}
+              onSubmit={() => handleTitleBlur(historyID)}
+              autoSize={{ minRows: 1, maxRows: 10 }}
+              autoFocus
+            />
+            <Button type='text' size='small' icon={<SaveOutlined />} />
+          </Flex>
         ) : (
-          <Typography.Text
-            style={{ width: '100%' }}
-            ellipsis
+          <Flex
             onDoubleClick={() =>
               handleTitleDoubleClick(historyID, histories[historyID].title)
             }
+            style={{ width: '100%' }}
+            align={'center'}
           >
-            {histories[historyID].title}{' '}
+            <Typography.Text ellipsis>
+              {histories[historyID].title}
+            </Typography.Text>
             {historyID === conversationHistory.root && (
               <Button
                 type='text'
@@ -125,7 +131,7 @@ export const HistoryListItem: React.FC<HistoryListItemProps> = ({
                 }}
               />
             )}
-          </Typography.Text>
+          </Flex>
         )}
         {showTags && (
           <HistoryTags

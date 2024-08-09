@@ -215,7 +215,7 @@ export class HistoryManager implements IHistoryManager {
     if (!this.historyIndex[this.history.root]) {
       this.historyIndex[this.history.root] = {
         id: this.history.root,
-        title: `${message.substring(0, 20)}...`,
+        title: `${message.substring(0, 50)}`,
         create_time: this.history.create_time,
         update_time: this.history.update_time,
       };
