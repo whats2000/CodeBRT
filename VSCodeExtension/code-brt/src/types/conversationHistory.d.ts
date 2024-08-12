@@ -17,6 +17,26 @@ export type ConversationEntry = {
 };
 
 /**
+ * The settings for the conversation model
+ * @property systemPrompt - The system prompt for the model
+ * @property maxTokens - The maximum number of tokens to generate
+ * @property temperature - The temperature of the model
+ * @property topP - The nucleus sampling parameter
+ * @property topK - The top k sampling parameter
+ * @property presencePenalty - The presence penalty
+ * @property frequencyPenalty - The frequency penalty
+ */
+export type ConversationModelAdvanceSettings = {
+  systemPrompt: string;
+  maxTokens: number | null;
+  temperature: number | null;
+  topP: number | null;
+  topK: number | null;
+  presencePenalty: number | null;
+  frequencyPenalty: number | null;
+};
+
+/**
  * A conversation history
  * @property title - The title of the conversation history
  * @property create_time - The creation time of the conversation history
@@ -32,6 +52,7 @@ export type ConversationHistory = {
   root: string;
   top: string[];
   current: string;
+  advancedSettings: ConversationModelAdvanceSettings;
   entries: { [key: string]: ConversationEntry };
 };
 

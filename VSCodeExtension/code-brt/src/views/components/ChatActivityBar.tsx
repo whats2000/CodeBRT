@@ -2,16 +2,18 @@ import { useContext, useState, useEffect, useRef } from 'react';
 import styled from 'styled-components';
 import { v4 as uuidV4 } from 'uuid';
 import { Content } from 'antd/es/layout/layout';
-import { ConfigProvider } from 'antd';
+import { ConfigProvider, FloatButton, Tooltip } from 'antd';
+import { ControlOutlined } from '@ant-design/icons';
 
 import type { ConversationHistory, ModelServiceType } from '../../types';
 import { INPUT_MESSAGE_KEY, UPLOADED_IMAGES_KEY } from '../../constants';
 import { WebviewContext } from '../WebviewContext';
-import { useDragAndDrop, useThemeConfig } from '../hooks';
+import { useDragAndDrop, useThemeConfig, useWindowSize } from '../hooks';
 import { Toolbar } from './ChatActivityBar/Toolbar';
 import { InputContainer } from './ChatActivityBar/InputContainer';
 import { MessagesContainer } from './ChatActivityBar/MessagesContainer';
 import { ToolActivateFloatButtons } from './ChatActivityBar/ToolActivateFloatButtons';
+import { ModelAdvanceSettingBar } from './ChatActivityBar/ModelAdvanceSettingBar';
 
 const Container = styled(Content)`
   display: flex;
@@ -24,6 +26,7 @@ const Container = styled(Content)`
 
 export const ChatActivityBar = () => {
   const { callApi, addListener, removeListener } = useContext(WebviewContext);
+  const { innerWidth } = useWindowSize();
 
   const [inputMessage, setInputMessage] = useState(
     localStorage.getItem(INPUT_MESSAGE_KEY) || '',
@@ -35,6 +38,15 @@ export const ChatActivityBar = () => {
       root: '',
       top: [],
       current: '',
+      advancedSettings: {
+        systemPrompt: '',
+        maxTokens: null,
+        temperature: null,
+        topP: null,
+        topK: null,
+        presencePenalty: null,
+        frequencyPenalty: null,
+      },
       entries: {},
     });
   const [isProcessing, setIsProcessing] = useState(false);
@@ -45,15 +57,46 @@ export const ChatActivityBar = () => {
     JSON.parse(localStorage.getItem(UPLOADED_IMAGES_KEY) || '[]'),
   );
   const [isActiveModelLoading, setIsActiveModelLoading] = useState(false);
+  const [floatButtonBaseYPosition, setFloatButtonBaseYPosition] = useState(60);
+  const [floatButtonsXPosition, setFloatButtonsXPosition] = useState(0);
+  const [isModelAdvanceSettingBarOpen, setIsModelAdvanceSettingBarOpen] =
+    useState(false);
 
   const messageEndRef = useRef<HTMLDivElement>(null);
   const messagesContainerRef = useRef<HTMLDivElement>(null);
-
   const inputContainerRef = useRef<HTMLDivElement>(null);
 
   const [theme, setTheme] = useThemeConfig();
 
   const dropRef = useDragAndDrop((files) => handleImageUpload(files));
+
+  useEffect(() => {
+    setFloatButtonsXPosition(innerWidth - 84);
+  }, [innerWidth]);
+
+  useEffect(() => {
+    const updateYPosition = () => {
+      if (inputContainerRef.current) {
+        const { height } = inputContainerRef.current.getBoundingClientRect();
+        setFloatButtonBaseYPosition(height + 20);
+      }
+    };
+
+    const resizeObserver = new ResizeObserver(() => {
+      updateYPosition();
+    });
+
+    if (inputContainerRef.current) {
+      resizeObserver.observe(inputContainerRef.current);
+    }
+
+    // Cleanup the observer on a component unmount
+    return () => {
+      if (inputContainerRef.current) {
+        resizeObserver.unobserve(inputContainerRef.current);
+      }
+    };
+  }, [inputContainerRef]);
 
   const scrollToBottom = (smooth: boolean = true) => {
     if (messagesContainerRef.current) {
@@ -451,7 +494,26 @@ export const ChatActivityBar = () => {
           handleImageRemove={handleImageRemove}
         />
       </Container>
-      <ToolActivateFloatButtons inputContainerRef={inputContainerRef} />
+      <Tooltip title={'Model Advance Settings'} placement={'left'}>
+        <FloatButton
+          icon={<ControlOutlined />}
+          onClick={() => setIsModelAdvanceSettingBarOpen(true)}
+          style={{
+            left: floatButtonsXPosition,
+            bottom: floatButtonBaseYPosition + 50,
+          }}
+        />
+      </Tooltip>
+      <ToolActivateFloatButtons
+        floatButtonsXPosition={floatButtonsXPosition}
+        floatButtonBaseYPosition={floatButtonBaseYPosition}
+      />
+      <ModelAdvanceSettingBar
+        isOpen={isModelAdvanceSettingBarOpen}
+        onClose={() => setIsModelAdvanceSettingBarOpen(false)}
+        conversationHistory={conversationHistory}
+        setConversationHistory={setConversationHistory}
+      />
     </ConfigProvider>
   );
 };

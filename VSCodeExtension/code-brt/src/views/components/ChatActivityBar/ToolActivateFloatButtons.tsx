@@ -9,17 +9,16 @@ import {
 import type { ToolServiceType } from '../../../types';
 import { WebviewContext } from '../../WebviewContext';
 import { MagicWand } from '../../icons';
-import { useWindowSize } from '../../hooks';
 
 export interface ToolActivateFloatButtonsProps {
-  inputContainerRef: React.RefObject<HTMLDivElement>;
+  floatButtonsXPosition: number;
+  floatButtonBaseYPosition: number;
 }
 
 export const ToolActivateFloatButtons: React.FC<
   ToolActivateFloatButtonsProps
-> = ({ inputContainerRef }) => {
+> = ({ floatButtonsXPosition, floatButtonBaseYPosition }) => {
   const { callApi } = useContext(WebviewContext);
-  const { innerWidth } = useWindowSize();
 
   const [partialSettings, setPartialSettings] = useState<{
     enableTools: { [key in ToolServiceType]: { active: boolean } };
@@ -30,12 +29,6 @@ export const ToolActivateFloatButtons: React.FC<
     },
   });
   const [isLoading, setIsLoading] = useState(true);
-  const [yPosition, setYPosition] = useState(60);
-  const [floatButtonsXPosition, setFloatButtonsXPosition] = useState(0);
-
-  useEffect(() => {
-    setFloatButtonsXPosition(innerWidth - 84);
-  }, [innerWidth]);
 
   useEffect(() => {
     setIsLoading(true);
@@ -44,30 +37,6 @@ export const ToolActivateFloatButtons: React.FC<
       setIsLoading(false);
     });
   }, []);
-
-  useEffect(() => {
-    const updateYPosition = () => {
-      if (inputContainerRef.current) {
-        const { height } = inputContainerRef.current.getBoundingClientRect();
-        setYPosition(height + 20);
-      }
-    };
-
-    const resizeObserver = new ResizeObserver(() => {
-      updateYPosition();
-    });
-
-    if (inputContainerRef.current) {
-      resizeObserver.observe(inputContainerRef.current);
-    }
-
-    // Cleanup the observer on component unmount
-    return () => {
-      if (inputContainerRef.current) {
-        resizeObserver.unobserve(inputContainerRef.current);
-      }
-    };
-  }, [inputContainerRef]);
 
   const handleSettingChange = (key: ToolServiceType) => {
     setIsLoading(true);
@@ -90,7 +59,7 @@ export const ToolActivateFloatButtons: React.FC<
       icon={isLoading ? <LoadingOutlined /> : <MagicWand />}
       trigger='click'
       tooltip={'Activate Tools'}
-      style={{ bottom: yPosition, left: floatButtonsXPosition }}
+      style={{ bottom: floatButtonBaseYPosition, left: floatButtonsXPosition }}
     >
       <FloatButton
         icon={<GlobalOutlined />}

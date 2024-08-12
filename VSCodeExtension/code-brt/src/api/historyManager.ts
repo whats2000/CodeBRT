@@ -8,6 +8,7 @@ import type {
   ConversationHistory,
   ConversationHistoryIndex,
   ConversationHistoryIndexList,
+  ConversationModelAdvanceSettings,
   IHistoryManager,
   ModelServiceType,
 } from '../types';
@@ -78,6 +79,15 @@ export class HistoryManager implements IHistoryManager {
       current: '',
       create_time: Date.now(),
       update_time: Date.now(),
+      advancedSettings: {
+        systemPrompt: 'You are a helpful assistant.',
+        maxTokens: null,
+        temperature: null,
+        topP: null,
+        topK: null,
+        presencePenalty: null,
+        frequencyPenalty: null,
+      },
       entries: {},
     };
   }
@@ -130,7 +140,10 @@ export class HistoryManager implements IHistoryManager {
     }
     try {
       const data = await fs.promises.readFile(filePath, 'utf8');
-      this.history = JSON.parse(data);
+      this.history = {
+        ...this.getDefaultConversationHistory(),
+        ...JSON.parse(data),
+      };
     } catch (error) {
       vscode.window.showErrorMessage('Failed to load history: ' + error);
     }
@@ -149,6 +162,7 @@ export class HistoryManager implements IHistoryManager {
       current: currentEntryID,
       create_time: this.history.create_time,
       update_time: Date.now(),
+      advancedSettings: this.history.advancedSettings,
       entries: {},
     };
 
@@ -350,6 +364,17 @@ export class HistoryManager implements IHistoryManager {
     }
     await this.saveHistoryIndex().catch((error) =>
       vscode.window.showErrorMessage('Failed to save history index: ' + error),
+    );
+  }
+
+  public async updateCurrentHistoryModelAdvanceSettings(
+    advanceSettings: ConversationModelAdvanceSettings,
+  ): Promise<void> {
+    this.history.advancedSettings = advanceSettings;
+    await this.saveHistoryById(this.history).catch((error) =>
+      vscode.window.showErrorMessage(
+        'Failed to update model advance settings: ' + error,
+      ),
     );
   }
 }

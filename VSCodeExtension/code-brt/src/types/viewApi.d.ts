@@ -2,6 +2,7 @@ import { CustomModelSettings, ExtensionSettings } from './extensionSettings';
 import {
   ConversationHistory,
   ConversationHistoryIndexList,
+  ConversationModelAdvanceSettings,
 } from './conversationHistory';
 import { ModelServiceType } from './modelServiceType';
 
@@ -118,23 +119,6 @@ export type ViewApi = {
   ) => void;
 
   /**
-   * Add a conversation entry to the conversation history for a language model.
-   * @param parentID - The ID of the parent entry.
-   * @param sender - The sender of the message.
-   * @param message - The message to add.
-   * @param images - The images to add.
-   * @param modelServiceType - The type of the model service to add the entry to.
-   * @returns The ID of the new entry.
-   */
-  addConversationEntry: (
-    parentID: string,
-    sender: 'user' | 'AI',
-    message: string,
-    images?: string[],
-    modelServiceType?: ModelServiceType,
-  ) => Promise<string>;
-
-  /**
    * Get the conversation history list.
    */
   getHistories: () => ConversationHistoryIndexList;
@@ -172,6 +156,31 @@ export type ViewApi = {
    * @param tag - The tag to remove.
    */
   removeHistoryTag: (historyID: string, tag: string) => void;
+
+  /**
+   * Update the current history's model advance settings.
+   * @param advanceSettings - The new advance settings.
+   */
+  updateCurrentHistoryModelAdvanceSettings: (
+    advanceSettings: ConversationModelAdvanceSettings,
+  ) => void;
+
+  /**
+   * Add a conversation entry to the conversation history for a language model.
+   * @param parentID - The ID of the parent entry.
+   * @param sender - The sender of the message.
+   * @param message - The message to add.
+   * @param images - The images to add.
+   * @param modelServiceType - The type of the model service to add the entry to.
+   * @returns The ID of the new entry.
+   */
+  addConversationEntry: (
+    parentID: string,
+    sender: 'user' | 'AI',
+    message: string,
+    images?: string[],
+    modelServiceType?: ModelServiceType,
+  ) => Promise<string>;
 
   /**
    * Get the available models for a language model.

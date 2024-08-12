@@ -1,9 +1,9 @@
-import vscode from 'vscode';
 import fs from 'fs';
 import path from 'path';
+
+import vscode from 'vscode';
 import axios from 'axios';
 import * as cheerio from 'cheerio';
-
 import type {
   ImageBlockParam,
   MessageParam,
@@ -316,7 +316,7 @@ export class AnthropicService extends AbstractLanguageModelService {
             messages: conversationHistory,
             tools: this.getEnabledTools(),
             stream: false,
-            max_tokens: 4096,
+            ...this.generationConfig,
           });
 
           if (response.content[0].type !== 'tool_use') {

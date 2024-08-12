@@ -1,6 +1,7 @@
 import type {
   ConversationHistory,
   ConversationHistoryIndexList,
+  ConversationModelAdvanceSettings,
   ModelServiceType,
 } from '../types';
 
@@ -87,4 +88,11 @@ export type IHistoryManager = {
    * @param tag The tag to remove
    */
   removeTagFromHistory(historyID: string, tag: string): Promise<void>;
+
+  /**
+   * Update the current history's model advance settings
+   */
+  updateCurrentHistoryModelAdvanceSettings(
+    advanceSettings: ConversationModelAdvanceSettings,
+  ): Promise<void>;
 };

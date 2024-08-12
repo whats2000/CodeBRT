@@ -171,6 +171,27 @@ export const activate = async (ctx: vscode.ExtensionContext) => {
     editLanguageModelConversationHistory: (entryID, newMessage) => {
       historyManager.editConversationEntry(entryID, newMessage);
     },
+    getHistories: () => {
+      return historyManager.getHistories();
+    },
+    switchHistory: (historyID) => {
+      historyManager.switchHistory(historyID);
+    },
+    deleteHistory: async (historyID) => {
+      return await historyManager.deleteHistory(historyID);
+    },
+    updateHistoryTitleById: (historyID, title) => {
+      historyManager.updateHistoryTitleById(historyID, title);
+    },
+    addHistoryTag: (historyID, tag) => {
+      historyManager.addTagToHistory(historyID, tag);
+    },
+    removeHistoryTag: (historyID, tag) => {
+      historyManager.removeTagFromHistory(historyID, tag);
+    },
+    updateCurrentHistoryModelAdvanceSettings: (advanceSettings) => {
+      historyManager.updateCurrentHistoryModelAdvanceSettings(advanceSettings);
+    },
     addConversationEntry: async (
       parentID,
       sender,
@@ -185,15 +206,6 @@ export const activate = async (ctx: vscode.ExtensionContext) => {
         images,
         modelServiceType,
       );
-    },
-    getHistories: () => {
-      return historyManager.getHistories();
-    },
-    switchHistory: (historyID) => {
-      historyManager.switchHistory(historyID);
-    },
-    deleteHistory: async (historyID) => {
-      return await historyManager.deleteHistory(historyID);
     },
     getAvailableModels: (modelType) => {
       if (modelType === 'custom') {
@@ -221,15 +233,6 @@ export const activate = async (ctx: vscode.ExtensionContext) => {
     },
     switchModel: (modelType, modelName) => {
       models[modelType].service.switchModel(modelName);
-    },
-    updateHistoryTitleById: (historyID, title) => {
-      historyManager.updateHistoryTitleById(historyID, title);
-    },
-    addHistoryTag: (historyID, tag) => {
-      historyManager.addTagToHistory(historyID, tag);
-    },
-    removeHistoryTag: (historyID, tag) => {
-      historyManager.removeTagFromHistory(historyID, tag);
     },
     getLatestAvailableModelNames: async (modelType) => {
       return await models[modelType].service.getLatestAvailableModelNames();
