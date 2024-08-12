@@ -105,6 +105,25 @@ export const ChatActivityBar = () => {
   };
 
   useEffect(() => {
+    setIsActiveModelLoading(true);
+    // Load the last used model
+    callApi('getSetting', 'lastUsedModel')
+      .then((lastUsedModel) => {
+        if (lastUsedModel) {
+          setActiveModelService(lastUsedModel as ModelServiceType);
+        }
+        setIsActiveModelLoading(false);
+      })
+      .catch((error) => {
+        callApi(
+          'alertMessage',
+          `Failed to get last used model: ${error}`,
+          'error',
+        ).catch(console.error);
+        setIsActiveModelLoading(false);
+      });
+
+    // Add listener for stream response
     addListener('streamResponse', handleStreamResponse);
     return () => {
       removeListener('streamResponse', handleStreamResponse);
@@ -121,42 +140,7 @@ export const ChatActivityBar = () => {
         'error',
       ).catch(console.error),
     );
-    callApi('getCurrentHistory')
-      .then((history) => {
-        if (history) {
-          setConversationHistory(history);
-        }
-      })
-      .then(() => {
-        setTimeout(() => scrollToBottom(), 100);
-      })
-      .catch((error) =>
-        callApi(
-          'alertMessage',
-          `Failed to get conversation history: ${error}`,
-          'error',
-        ).catch(console.error),
-      );
   }, [activeModelService]);
-
-  useEffect(() => {
-    setIsActiveModelLoading(true);
-    callApi('getSetting', 'lastUsedModel')
-      .then((lastUsedModel) => {
-        if (lastUsedModel) {
-          setActiveModelService(lastUsedModel as ModelServiceType);
-        }
-        setIsActiveModelLoading(false);
-      })
-      .catch((error) => {
-        callApi(
-          'alertMessage',
-          `Failed to get last used model: ${error}`,
-          'error',
-        ).catch(console.error);
-        setIsActiveModelLoading(false);
-      });
-  }, []);
 
   useEffect(() => {
     localStorage.setItem(INPUT_MESSAGE_KEY, inputMessage);

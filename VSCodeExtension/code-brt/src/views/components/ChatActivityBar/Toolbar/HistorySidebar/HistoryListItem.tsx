@@ -78,18 +78,19 @@ export const HistoryListItem: React.FC<HistoryListItemProps> = ({
     <StyledListItem
       $token={token}
       $active={historyID === conversationHistory.root}
-      actions={[
+      extra={
         <Button
           danger={true}
           type='text'
           size='small'
           icon={<DeleteOutlined />}
+          style={{ marginRight: 12 }}
           onClick={(e) => {
             e.stopPropagation();
             deleteHistory(historyID);
           }}
-        />,
-      ]}
+        />
+      }
       onClick={() => switchHistory(historyID)}
     >
       <Space
