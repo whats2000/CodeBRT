@@ -21,7 +21,7 @@ import { useWindowSize } from '../../hooks';
 const StyledSpace = styled(Space)`
   display: flex;
   justify-content: space-between;
-  padding: 10px 15px;
+  padding: 10px 15px 10px 10px;
 `;
 
 const EditModelListButton = styled(Button)`
