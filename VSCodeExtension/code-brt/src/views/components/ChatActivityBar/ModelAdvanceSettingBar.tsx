@@ -1,5 +1,6 @@
-import React, { useContext, useState } from 'react';
-import { Drawer, Form, InputNumber, Input, Button } from 'antd';
+import React, { useContext, useState, useEffect } from 'react';
+import { Drawer, InputNumber, Input, Button, Row, Col, Form } from 'antd';
+import { ClearOutlined } from '@ant-design/icons';
 
 import type {
   ConversationHistory,
@@ -23,27 +24,53 @@ export const ModelAdvanceSettingBar: React.FC<ModelAdvanceSettingsProps> = ({
   setConversationHistory,
 }) => {
   const { callApi } = useContext(WebviewContext);
-  const { advancedSettings } = conversationHistory;
+  const { advanceSettings } = conversationHistory;
 
-  const [form] = Form.useForm();
-  const [loading, setLoading] = useState(false);
+  const [newAdvanceSettings, setNewAdvanceSettings] =
+    useState<ConversationModelAdvanceSettings>(advanceSettings);
 
-  const updateAdvancedSettings = async (
-    newSettings: ConversationModelAdvanceSettings,
-  ) => {
-    setLoading(true);
-    callApi('updateCurrentHistoryModelAdvanceSettings', newSettings)
+  useEffect(() => {
+    if (isOpen) {
+      setNewAdvanceSettings(advanceSettings);
+    } else {
+      handleSave();
+    }
+  }, [isOpen]);
+
+  const handleSave = () => {
+    callApi('updateCurrentHistoryModelAdvanceSettings', newAdvanceSettings)
       .then(() => {
         setConversationHistory((prev) => ({
           ...prev,
-          advancedSettings: newSettings,
+          advanceSettings: newAdvanceSettings,
         }));
-        setLoading(false);
-        onClose();
       })
-      .catch(() => {
-        setLoading(false);
-      });
+      .catch((err) => console.error('Failed to save settings:', err));
+  };
+
+  const handleInputChange = (
+    field: keyof ConversationModelAdvanceSettings,
+    value: number | string | null,
+  ) => {
+    setNewAdvanceSettings((prev) => ({
+      ...prev,
+      [field]: value,
+    }));
+  };
+
+  const clearField = (field: keyof ConversationModelAdvanceSettings) => {
+    if (field === 'systemPrompt') {
+      setNewAdvanceSettings((prev) => ({
+        ...prev,
+        systemPrompt: 'You are a helpful assistant.',
+      }));
+      return;
+    }
+
+    setNewAdvanceSettings((prev) => ({
+      ...prev,
+      [field]: null,
+    }));
   };
 
   return (
@@ -54,52 +81,75 @@ export const ModelAdvanceSettingBar: React.FC<ModelAdvanceSettingsProps> = ({
       onClose={onClose}
       open={isOpen}
     >
-      <Form
-        form={form}
-        layout='vertical'
-        initialValues={advancedSettings}
-        onFinish={updateAdvancedSettings}
+      <Form.Item label={'System Prompt'} layout={'vertical'}>
+        <Row gutter={8} align={'middle'}>
+          <Col flex='auto'>
+            <Input.TextArea
+              value={newAdvanceSettings.systemPrompt || ''}
+              onChange={(e) =>
+                handleInputChange('systemPrompt', e.target.value)
+              }
+              placeholder='Enter system prompt'
+            />
+          </Col>
+          <Col>
+            <Button
+              type='text'
+              danger={true}
+              icon={<ClearOutlined />}
+              onClick={() => clearField('systemPrompt')}
+            />
+          </Col>
+        </Row>
+      </Form.Item>
+
+      {Object.entries(newAdvanceSettings).map(
+        ([key, value]) =>
+          key !== 'systemPrompt' && (
+            <Form.Item
+              label={
+                key.charAt(0).toUpperCase() +
+                key.slice(1).replace(/([A-Z])/g, ' $1')
+              }
+              layout={'vertical'}
+              key={key}
+            >
+              <Row gutter={8} align={'middle'}>
+                <Col flex={'auto'}>
+                  <InputNumber
+                    style={{ width: '100%' }}
+                    value={value as number | null}
+                    onChange={(val) =>
+                      handleInputChange(
+                        key as keyof ConversationModelAdvanceSettings,
+                        val,
+                      )
+                    }
+                    placeholder={`Enter ${key}`}
+                  />
+                </Col>
+                <Col>
+                  <Button
+                    type='text'
+                    danger={true}
+                    icon={<ClearOutlined />}
+                    onClick={() =>
+                      clearField(key as keyof ConversationModelAdvanceSettings)
+                    }
+                  />
+                </Col>
+              </Row>
+            </Form.Item>
+          ),
+      )}
+      <Button
+        type='primary'
+        ghost={true}
+        onClick={onClose}
+        style={{ marginTop: 20, width: '100%' }}
       >
-        <Form.Item
-          label='System Prompt'
-          name='systemPrompt'
-          rules={[
-            { required: true, message: 'Please input the system prompt!' },
-          ]}
-        >
-          <Input />
-        </Form.Item>
-
-        <Form.Item label='Max Tokens' name='maxTokens'>
-          <InputNumber min={1} />
-        </Form.Item>
-
-        <Form.Item label='Temperature' name='temperature'>
-          <InputNumber min={0} max={1} step={0.01} />
-        </Form.Item>
-
-        <Form.Item label='Top P' name='topP'>
-          <InputNumber min={0} max={1} step={0.01} />
-        </Form.Item>
-
-        <Form.Item label='Top K' name='topK'>
-          <InputNumber min={0} />
-        </Form.Item>
-
-        <Form.Item label='Presence Penalty' name='presencePenalty'>
-          <InputNumber min={0} max={2} step={0.01} />
-        </Form.Item>
-
-        <Form.Item label='Frequency Penalty' name='frequencyPenalty'>
-          <InputNumber min={0} max={2} step={0.01} />
-        </Form.Item>
-
-        <Form.Item>
-          <Button type='primary' htmlType='submit' loading={loading}>
-            Save
-          </Button>
-        </Form.Item>
-      </Form>
+        Close and Save
+      </Button>
     </Drawer>
   );
 };

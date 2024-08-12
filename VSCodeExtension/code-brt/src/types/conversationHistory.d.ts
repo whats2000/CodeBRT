@@ -52,7 +52,7 @@ export type ConversationHistory = {
   root: string;
   top: string[];
   current: string;
-  advancedSettings: ConversationModelAdvanceSettings;
+  advanceSettings: ConversationModelAdvanceSettings;
   entries: { [key: string]: ConversationEntry };
 };
 

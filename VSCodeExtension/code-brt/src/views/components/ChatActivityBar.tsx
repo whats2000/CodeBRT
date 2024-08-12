@@ -38,7 +38,7 @@ export const ChatActivityBar = () => {
       root: '',
       top: [],
       current: '',
-      advancedSettings: {
+      advanceSettings: {
         systemPrompt: '',
         maxTokens: null,
         temperature: null,
