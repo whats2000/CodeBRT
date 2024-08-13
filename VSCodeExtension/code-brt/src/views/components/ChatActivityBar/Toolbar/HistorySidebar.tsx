@@ -1,7 +1,7 @@
 import React, { useContext, useEffect, useState } from 'react';
 import styled from 'styled-components';
 import { Divider, GlobalToken, Select, Tooltip } from 'antd';
-import { Drawer, List, Typography, Spin, Button, theme, Flex } from 'antd';
+import { Drawer, List, Typography, Button, theme, Flex } from 'antd';
 import { TagOutlined } from '@ant-design/icons';
 import { differenceInDays, isBefore, isToday, isYesterday } from 'date-fns';
 
@@ -291,12 +291,9 @@ export const HistorySidebar: React.FC<HistorySidebarProps> = ({
       open={isOpen}
       onClose={onClose}
       placement='left'
+      loading={isLoading || !isOpen}
     >
-      {isLoading ? (
-        <NoHistoryMessageContainer>
-          <Spin size={'large'} />
-        </NoHistoryMessageContainer>
-      ) : Object.keys(histories).length === 0 ? (
+      {Object.keys(histories).length === 0 ? (
         <NoHistoryMessageContainer>
           <Typography.Text>Nothing Currently</Typography.Text>
         </NoHistoryMessageContainer>
