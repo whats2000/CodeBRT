@@ -10,8 +10,14 @@ import {
   Typography,
   Tooltip,
   Space,
+  Flex,
 } from 'antd';
-import { ClearOutlined, QuestionCircleFilled } from '@ant-design/icons';
+import {
+  ClearOutlined,
+  ImportOutlined,
+  QuestionCircleFilled,
+  SaveOutlined,
+} from '@ant-design/icons';
 
 import type {
   ConversationHistory,
@@ -122,18 +128,19 @@ export const ModelAdvanceSettingBar: React.FC<ModelAdvanceSettingsProps> = ({
             layout={'vertical'}
             key={key}
           >
-            <Row gutter={8} align={'middle'}>
-              <Col flex={'auto'}>
-                {key === 'systemPrompt' ? (
-                  <Input.TextArea
-                    value={newAdvanceSettings.systemPrompt || ''}
-                    onChange={(e) =>
-                      handleInputChange('systemPrompt', e.target.value)
-                    }
-                    placeholder='Enter system prompt'
-                    autoSize={{ minRows: 3, maxRows: 10 }}
-                  />
-                ) : (
+            {key === 'systemPrompt' ? (
+              <Input.TextArea
+                value={newAdvanceSettings.systemPrompt || ''}
+                onChange={(e) =>
+                  handleInputChange('systemPrompt', e.target.value)
+                }
+                placeholder='Enter system prompt'
+                autoSize={{ minRows: 2, maxRows: 10 }}
+                allowClear
+              />
+            ) : (
+              <Row gutter={8} align={'middle'}>
+                <Col flex={'auto'}>
                   <InputNumber
                     max={
                       MODEL_ADVANCE_SETTINGS[
@@ -156,20 +163,42 @@ export const ModelAdvanceSettingBar: React.FC<ModelAdvanceSettingsProps> = ({
                     placeholder={`Enter ${key}`}
                     changeOnWheel={true}
                   />
-                )}
-              </Col>
-              <Col>
-                <Button
-                  type='text'
-                  danger={true}
-                  icon={<ClearOutlined />}
-                  onClick={() =>
-                    clearField(key as keyof ConversationModelAdvanceSettings)
-                  }
-                />
-              </Col>
-            </Row>
+                </Col>
+                <Col>
+                  {key !== 'systemPrompt' && (
+                    <Tooltip title='Clear field' placement={'right'}>
+                      <Button
+                        type='text'
+                        danger={true}
+                        icon={<ClearOutlined />}
+                        onClick={() =>
+                          clearField(
+                            key as keyof ConversationModelAdvanceSettings,
+                          )
+                        }
+                      />
+                    </Tooltip>
+                  )}
+                </Col>
+              </Row>
+            )}
           </Form.Item>
+          {key === 'systemPrompt' && (
+            <Flex
+              justify={'space-between'}
+              style={{ width: '100%', marginBottom: 20 }}
+            >
+              <Button>
+                <ImportOutlined /> Load
+              </Button>
+              <Button>
+                <SaveOutlined /> Save
+              </Button>
+              <Button danger={true} onClick={() => clearField('systemPrompt')}>
+                <ClearOutlined /> Set Default
+              </Button>
+            </Flex>
+          )}
           {showMoreInfoSettingName === key && (
             <Typography.Paragraph type={'secondary'}>
               {
