@@ -165,7 +165,7 @@ export const VoiceSettingsBar: React.FC<VoiceSettingsBarProps> = ({
               <Space>
                 Voice To Text Service
                 {partialSettings.selectedVoiceToTextService !== 'not set' && (
-                  <Tooltip title='Click to learn more'>
+                  <Tooltip title='Click to show more information'>
                     <Typography.Link
                       type={'secondary'}
                       onClick={() => setShowMoreInfo(!showMoreInfo)}

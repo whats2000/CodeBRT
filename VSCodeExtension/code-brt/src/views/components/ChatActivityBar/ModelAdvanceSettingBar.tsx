@@ -1,12 +1,24 @@
 import React, { useContext, useState, useEffect } from 'react';
-import { Drawer, InputNumber, Input, Button, Row, Col, Form } from 'antd';
-import { ClearOutlined } from '@ant-design/icons';
+import {
+  Drawer,
+  InputNumber,
+  Input,
+  Button,
+  Row,
+  Col,
+  Form,
+  Typography,
+  Tooltip,
+  Space,
+} from 'antd';
+import { ClearOutlined, QuestionCircleFilled } from '@ant-design/icons';
 
 import type {
   ConversationHistory,
   ConversationModelAdvanceSettings,
 } from '../../../types';
 import { WebviewContext } from '../../WebviewContext';
+import { MODEL_ADVANCE_SETTINGS } from '../../../constants';
 
 export interface ModelAdvanceSettingsProps {
   isOpen: boolean;
@@ -28,6 +40,9 @@ export const ModelAdvanceSettingBar: React.FC<ModelAdvanceSettingsProps> = ({
 
   const [newAdvanceSettings, setNewAdvanceSettings] =
     useState<ConversationModelAdvanceSettings>(advanceSettings);
+  const [showMoreInfoSettingName, setShowMoreInfoSettingName] = useState<
+    string | null
+  >(null);
 
   useEffect(() => {
     if (isOpen) {
@@ -81,42 +96,55 @@ export const ModelAdvanceSettingBar: React.FC<ModelAdvanceSettingsProps> = ({
       onClose={onClose}
       open={isOpen}
     >
-      <Form.Item label={'System Prompt'} layout={'vertical'}>
-        <Row gutter={8} align={'middle'}>
-          <Col flex='auto'>
-            <Input.TextArea
-              value={newAdvanceSettings.systemPrompt || ''}
-              onChange={(e) =>
-                handleInputChange('systemPrompt', e.target.value)
-              }
-              placeholder='Enter system prompt'
-            />
-          </Col>
-          <Col>
-            <Button
-              type='text'
-              danger={true}
-              icon={<ClearOutlined />}
-              onClick={() => clearField('systemPrompt')}
-            />
-          </Col>
-        </Row>
-      </Form.Item>
-
-      {Object.entries(newAdvanceSettings).map(
-        ([key, value]) =>
-          key !== 'systemPrompt' && (
-            <Form.Item
-              label={
-                key.charAt(0).toUpperCase() +
-                key.slice(1).replace(/([A-Z])/g, ' $1')
-              }
-              layout={'vertical'}
-              key={key}
-            >
-              <Row gutter={8} align={'middle'}>
-                <Col flex={'auto'}>
+      {Object.entries(newAdvanceSettings).map(([key, value]) => (
+        <>
+          <Form.Item
+            label={
+              <Space>
+                <span>
+                  {key.charAt(0).toUpperCase() +
+                    key.slice(1).replace(/([A-Z])/g, ' $1')}
+                </span>
+                <Tooltip title='Click to show more information'>
+                  <Typography.Link
+                    type={'secondary'}
+                    onClick={() =>
+                      setShowMoreInfoSettingName(
+                        showMoreInfoSettingName === key ? null : key,
+                      )
+                    }
+                  >
+                    <QuestionCircleFilled />
+                  </Typography.Link>
+                </Tooltip>
+              </Space>
+            }
+            layout={'vertical'}
+            key={key}
+          >
+            <Row gutter={8} align={'middle'}>
+              <Col flex={'auto'}>
+                {key === 'systemPrompt' ? (
+                  <Input.TextArea
+                    value={newAdvanceSettings.systemPrompt || ''}
+                    onChange={(e) =>
+                      handleInputChange('systemPrompt', e.target.value)
+                    }
+                    placeholder='Enter system prompt'
+                    autoSize={{ minRows: 3 }}
+                  />
+                ) : (
                   <InputNumber
+                    max={
+                      MODEL_ADVANCE_SETTINGS[
+                        key as keyof ConversationModelAdvanceSettings
+                      ].range.max
+                    }
+                    min={
+                      MODEL_ADVANCE_SETTINGS[
+                        key as keyof ConversationModelAdvanceSettings
+                      ].range.min
+                    }
                     style={{ width: '100%' }}
                     value={value as number | null}
                     onChange={(val) =>
@@ -126,22 +154,49 @@ export const ModelAdvanceSettingBar: React.FC<ModelAdvanceSettingsProps> = ({
                       )
                     }
                     placeholder={`Enter ${key}`}
+                    changeOnWheel={true}
                   />
-                </Col>
-                <Col>
-                  <Button
-                    type='text'
-                    danger={true}
-                    icon={<ClearOutlined />}
-                    onClick={() =>
-                      clearField(key as keyof ConversationModelAdvanceSettings)
-                    }
-                  />
-                </Col>
-              </Row>
-            </Form.Item>
-          ),
-      )}
+                )}
+              </Col>
+              <Col>
+                <Button
+                  type='text'
+                  danger={true}
+                  icon={<ClearOutlined />}
+                  onClick={() =>
+                    clearField(key as keyof ConversationModelAdvanceSettings)
+                  }
+                />
+              </Col>
+            </Row>
+          </Form.Item>
+          {showMoreInfoSettingName === key && (
+            <Typography.Paragraph type={'secondary'}>
+              {
+                MODEL_ADVANCE_SETTINGS[
+                  key as keyof ConversationModelAdvanceSettings
+                ].description
+              }{' '}
+              {MODEL_ADVANCE_SETTINGS[
+                key as keyof ConversationModelAdvanceSettings
+              ].link && (
+                <Typography.Link
+                  type={'warning'}
+                  href={
+                    MODEL_ADVANCE_SETTINGS[
+                      key as keyof ConversationModelAdvanceSettings
+                    ].link
+                  }
+                  target='_blank'
+                  rel='noreferrer'
+                >
+                  Learn more
+                </Typography.Link>
+              )}
+            </Typography.Paragraph>
+          )}
+        </>
+      ))}
       <Button
         type='primary'
         ghost={true}
