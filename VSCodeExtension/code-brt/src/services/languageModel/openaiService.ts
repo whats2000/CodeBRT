@@ -94,6 +94,15 @@ export class OpenAIService extends AbstractOpenaiLikeService {
     let functionCallCount = 0;
     const MAX_FUNCTION_CALLS = 5;
 
+    const { systemPrompt, generationConfig } = this.getAdvanceSettings();
+
+    if (systemPrompt) {
+      conversationHistory.unshift({
+        role: 'system',
+        content: systemPrompt,
+      });
+    }
+
     try {
       if (!sendStreamResponse) {
         while (functionCallCount < MAX_FUNCTION_CALLS) {
@@ -102,7 +111,7 @@ export class OpenAIService extends AbstractOpenaiLikeService {
             model: this.currentModel,
             tools: this.getEnabledTools(),
             stream: false,
-            ...this.generationConfig,
+            ...generationConfig,
           } as ChatCompletionCreateParamsNonStreaming);
 
           if (!response.choices[0]?.message.tool_calls) {
@@ -132,7 +141,7 @@ export class OpenAIService extends AbstractOpenaiLikeService {
             messages: conversationHistory,
             tools: this.getEnabledTools(),
             stream: true,
-            ...this.generationConfig,
+            ...generationConfig,
           } as ChatCompletionCreateParamsStreaming);
 
           const completeToolCalls: (ChatCompletionMessageToolCall & {

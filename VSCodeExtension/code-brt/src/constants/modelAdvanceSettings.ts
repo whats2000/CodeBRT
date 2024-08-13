@@ -65,7 +65,7 @@ export const MODEL_ADVANCE_SETTINGS: {
     notice: `Some models may not support top-k sampling.`,
     range: {
       min: 1,
-      max: undefined,
+      max: 500,
     },
     link: 'https://huggingface.co/blog/how-to-generate',
   },

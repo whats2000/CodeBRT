@@ -28,12 +28,12 @@ export type ConversationEntry = {
  */
 export type ConversationModelAdvanceSettings = {
   systemPrompt: string;
-  maxTokens: number | null;
-  temperature: number | null;
-  topP: number | null;
-  topK: number | null;
-  presencePenalty: number | null;
-  frequencyPenalty: number | null;
+  maxTokens: number | undefined;
+  temperature: number | undefined;
+  topP: number | undefined;
+  topK: number | undefined;
+  presencePenalty: number | undefined;
+  frequencyPenalty: number | undefined;
 };
 
 /**

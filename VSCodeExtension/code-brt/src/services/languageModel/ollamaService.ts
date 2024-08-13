@@ -17,12 +17,6 @@ import { ToolService } from '../tools';
 export class OllamaService extends AbstractLanguageModelService {
   private runningModel = '';
 
-  private readonly generationConfig: Partial<Options> = {
-    temperature: 1,
-    top_p: 0.95,
-    top_k: 0,
-  };
-
   constructor(
     context: vscode.ExtensionContext,
     settingsManager: SettingsManager,
@@ -39,6 +33,36 @@ export class OllamaService extends AbstractLanguageModelService {
       defaultModelName,
       availableModelNames,
     );
+  }
+
+  private getAdvanceSettings(): {
+    systemPrompt: string | undefined;
+    generationConfig: Partial<Options>;
+  } {
+    const advanceSettings =
+      this.historyManager.getCurrentHistory().advanceSettings;
+
+    if (!advanceSettings) {
+      return {
+        systemPrompt: undefined,
+        generationConfig: {},
+      };
+    }
+
+    return {
+      systemPrompt:
+        advanceSettings.systemPrompt.length > 0
+          ? advanceSettings.systemPrompt
+          : undefined,
+      generationConfig: {
+        num_ctx: advanceSettings.maxTokens,
+        temperature: advanceSettings.temperature,
+        top_p: advanceSettings.topP,
+        top_k: advanceSettings.topK,
+        presence_penalty: advanceSettings.presencePenalty,
+        frequency_penalty: advanceSettings.frequencyPenalty,
+      },
+    };
   }
 
   private getEnabledTools(): Tool[] | undefined {
@@ -286,6 +310,15 @@ export class OllamaService extends AbstractLanguageModelService {
     let functionCallCount = 0;
     const MAX_FUNCTION_CALLS = 5;
 
+    const { systemPrompt, generationConfig } = this.getAdvanceSettings();
+
+    if (systemPrompt) {
+      conversationHistory.push({
+        role: 'system',
+        content: systemPrompt,
+      });
+    }
+
     try {
       if (!sendStreamResponse) {
         while (functionCallCount < MAX_FUNCTION_CALLS) {
@@ -293,7 +326,7 @@ export class OllamaService extends AbstractLanguageModelService {
             model,
             messages: conversationHistory,
             tools: this.getEnabledTools(),
-            options: this.generationConfig,
+            options: generationConfig,
           });
 
           if (
@@ -326,7 +359,7 @@ export class OllamaService extends AbstractLanguageModelService {
             messages: conversationHistory,
             stream: true,
             tools: this.getEnabledTools(),
-            options: this.generationConfig,
+            options: generationConfig,
           });
 
           let functionCallResults: Message[] = [];

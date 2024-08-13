@@ -131,7 +131,7 @@ export const ModelAdvanceSettingBar: React.FC<ModelAdvanceSettingsProps> = ({
                       handleInputChange('systemPrompt', e.target.value)
                     }
                     placeholder='Enter system prompt'
-                    autoSize={{ minRows: 3 }}
+                    autoSize={{ minRows: 3, maxRows: 10 }}
                   />
                 ) : (
                   <InputNumber

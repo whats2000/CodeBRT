@@ -1,15 +1,16 @@
 import * as vscode from 'vscode';
 import fs from 'fs';
-import {
+import type {
   Content,
   FunctionCall,
-  FunctionDeclarationSchemaType,
   FunctionResponsePart,
+  GenerationConfig,
   InlineDataPart,
   Part,
   Tool,
 } from '@google/generative-ai';
 import {
+  FunctionDeclarationSchemaType,
   GoogleGenerativeAI,
   HarmBlockThreshold,
   HarmCategory,
@@ -45,13 +46,6 @@ type GeminiModelsList = {
 };
 
 export class GeminiService extends AbstractLanguageModelService {
-  private readonly generationConfig = {
-    temperature: 1,
-    topK: 0,
-    topP: 0.95,
-    maxOutputTokens: 8192,
-  };
-
   private readonly safetySettings = [
     {
       category: HarmCategory.HARM_CATEGORY_HARASSMENT,
@@ -87,6 +81,42 @@ export class GeminiService extends AbstractLanguageModelService {
       defaultModelName,
       availableModelNames,
     );
+  }
+
+  private getAdvanceSettings(): {
+    systemPrompt: string | undefined;
+    generationConfig: Partial<GenerationConfig>;
+  } {
+    const advanceSettings =
+      this.historyManager.getCurrentHistory().advanceSettings;
+
+    if (!advanceSettings) {
+      return {
+        systemPrompt: undefined,
+        generationConfig: {},
+      };
+    }
+
+    if (advanceSettings.presencePenalty || advanceSettings.frequencyPenalty) {
+      vscode.window
+        .showWarningMessage(
+          'Presence and Frequency penalties are not supported by the Gemini API, so the settings will be ignored.',
+        )
+        .then();
+    }
+
+    return {
+      systemPrompt:
+        advanceSettings.systemPrompt.length > 0
+          ? advanceSettings.systemPrompt
+          : undefined,
+      generationConfig: {
+        maxOutputTokens: advanceSettings.maxTokens,
+        temperature: advanceSettings.temperature,
+        topP: advanceSettings.topP,
+        topK: advanceSettings.topK,
+      },
+    };
   }
 
   private getEnabledTools(): Tool[] | undefined {
@@ -220,7 +250,7 @@ export class GeminiService extends AbstractLanguageModelService {
         latestModels.some((model) => model.name === `models/${name}`),
       );
 
-      // Append the models to the available models if they are not already there
+      // Append the models to the available models if they aren't already there
       latestModels.forEach((model) => {
         if (!model.name || !model.supportedGenerationMethods) return;
         if (newAvailableModelNames.includes(model.name.replace('models/', '')))
@@ -309,12 +339,22 @@ export class GeminiService extends AbstractLanguageModelService {
     let queryParts = this.createQueryParts(query, images);
     let functionCallCount = 0;
     const MAX_FUNCTION_CALLS = 5;
+
+    const { systemPrompt, generationConfig } = this.getAdvanceSettings();
+    const systemInstruction: Content | undefined = systemPrompt
+      ? {
+          role: 'system',
+          parts: [{ text: systemPrompt }],
+        }
+      : undefined;
+
     try {
       if (!sendStreamResponse) {
         while (functionCallCount < MAX_FUNCTION_CALLS) {
           const response = await generativeModel
             .startChat({
-              generationConfig: this.generationConfig,
+              systemInstruction: systemInstruction,
+              generationConfig: generationConfig,
               safetySettings: this.safetySettings,
               history: conversationHistory,
               tools: this.getEnabledTools(),
@@ -353,7 +393,8 @@ export class GeminiService extends AbstractLanguageModelService {
         while (functionCallCount < MAX_FUNCTION_CALLS) {
           const result = await generativeModel
             .startChat({
-              generationConfig: this.generationConfig,
+              systemInstruction: systemInstruction,
+              generationConfig: generationConfig,
               safetySettings: this.safetySettings,
               history: conversationHistory,
               tools: this.getEnabledTools(),

@@ -13,6 +13,7 @@ import type {
   ToolUseBlock,
   ToolResultBlockParam,
 } from '@anthropic-ai/sdk/src/resources';
+import type { MessageCreateParamsNonStreaming } from '@anthropic-ai/sdk/resources/messages';
 import Anthropic from '@anthropic-ai/sdk';
 
 import type {
@@ -26,10 +27,6 @@ import { AbstractLanguageModelService } from './abstractLanguageModelService';
 import { ToolService } from '../tools';
 
 export class AnthropicService extends AbstractLanguageModelService {
-  private readonly generationConfig = {
-    max_tokens: 4096,
-  };
-
   constructor(
     context: vscode.ExtensionContext,
     settingsManager: SettingsManager,
@@ -46,6 +43,55 @@ export class AnthropicService extends AbstractLanguageModelService {
       defaultModelName,
       availableModelNames,
     );
+  }
+
+  private getAdvanceSettings(): {
+    systemPrompt: string | undefined;
+    generationConfig: Partial<MessageCreateParamsNonStreaming> & {
+      max_tokens: number;
+    };
+  } {
+    const advanceSettings =
+      this.historyManager.getCurrentHistory().advanceSettings;
+
+    if (!advanceSettings) {
+      return {
+        systemPrompt: undefined,
+        generationConfig: {
+          max_tokens: 4096,
+        },
+      };
+    }
+
+    if (advanceSettings.presencePenalty || advanceSettings.frequencyPenalty) {
+      vscode.window
+        .showWarningMessage(
+          'Presence and frequency penalties are not supported by the Anthropic API, so the settings will be ignored.',
+        )
+        .then();
+    }
+
+    const generationConfig: Partial<MessageCreateParamsNonStreaming> = {};
+    if (advanceSettings.temperature) {
+      generationConfig.temperature = advanceSettings.temperature;
+    }
+    if (advanceSettings.topP) {
+      generationConfig.top_p = advanceSettings.topP;
+    }
+    if (advanceSettings.topK) {
+      generationConfig.top_k = advanceSettings.topK;
+    }
+
+    return {
+      systemPrompt:
+        advanceSettings.systemPrompt.length > 0
+          ? advanceSettings.systemPrompt
+          : undefined,
+      generationConfig: {
+        max_tokens: advanceSettings.maxTokens ?? 4096,
+        ...generationConfig,
+      },
+    };
   }
 
   private getEnabledTools(): Tool[] | undefined {
@@ -308,15 +354,19 @@ export class AnthropicService extends AbstractLanguageModelService {
 
     let functionCallCount = 0;
     const MAX_FUNCTION_CALLS = 5;
+
+    const { systemPrompt, generationConfig } = this.getAdvanceSettings();
+
     try {
       if (!sendStreamResponse) {
         while (functionCallCount < MAX_FUNCTION_CALLS) {
           const response = await anthropic.messages.create({
             model: this.currentModel,
+            system: systemPrompt,
             messages: conversationHistory,
             tools: this.getEnabledTools(),
             stream: false,
-            ...this.generationConfig,
+            ...generationConfig,
           });
 
           if (response.content[0].type !== 'tool_use') {
@@ -351,10 +401,11 @@ export class AnthropicService extends AbstractLanguageModelService {
           const streamResponse = anthropic.messages
             .stream({
               model: this.currentModel,
+              system: systemPrompt,
               messages: conversationHistory,
               tools: this.getEnabledTools(),
               stream: true,
-              ...this.generationConfig,
+              ...generationConfig,
             })
             .on('connect', () => {
               updateStatus && updateStatus('');

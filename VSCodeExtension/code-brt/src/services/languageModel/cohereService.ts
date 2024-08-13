@@ -12,6 +12,7 @@ import { mapTypeToPythonFormat } from '../../utils';
 import { AbstractLanguageModelService } from './abstractLanguageModelService';
 import { HistoryManager, SettingsManager } from '../../api';
 import { ToolService } from '../tools';
+import { ChatRequest } from 'cohere-ai/api/client/requests/ChatRequest';
 
 export class CohereService extends AbstractLanguageModelService {
   constructor(
@@ -30,6 +31,40 @@ export class CohereService extends AbstractLanguageModelService {
       defaultModelName,
       availableModelNames,
     );
+  }
+
+  private getAdvanceSettings(): {
+    systemPrompt: string | undefined;
+    generationConfig: Partial<ChatRequest>;
+  } {
+    const advanceSettings =
+      this.historyManager.getCurrentHistory().advanceSettings;
+
+    if (!advanceSettings) {
+      return {
+        systemPrompt: undefined,
+        generationConfig: {},
+      };
+    }
+
+    return {
+      systemPrompt:
+        advanceSettings.systemPrompt.length > 0
+          ? advanceSettings.systemPrompt
+          : undefined,
+      generationConfig: {
+        maxTokens: advanceSettings.maxTokens,
+        temperature: advanceSettings.temperature,
+        k: advanceSettings.topK,
+        p: advanceSettings.topP,
+        presencePenalty: advanceSettings.presencePenalty
+          ? (advanceSettings.presencePenalty + 2) / 4
+          : undefined,
+        frequencyPenalty: advanceSettings.frequencyPenalty
+          ? (advanceSettings.frequencyPenalty + 2) / 4
+          : undefined,
+      },
+    };
   }
 
   private getEnabledTools(): Tool[] | undefined {
@@ -209,6 +244,16 @@ export class CohereService extends AbstractLanguageModelService {
     let toolResults: ToolResult[] = [];
     let functionCallCount = 0;
     const MAX_FUNCTION_CALLS = 5;
+
+    const { systemPrompt, generationConfig } = this.getAdvanceSettings();
+
+    if (systemPrompt) {
+      conversationHistory.unshift({
+        role: 'SYSTEM',
+        message: systemPrompt,
+      });
+    }
+
     try {
       if (!sendStreamResponse) {
         while (functionCallCount < MAX_FUNCTION_CALLS) {
@@ -221,6 +266,7 @@ export class CohereService extends AbstractLanguageModelService {
                 ? this.getEnabledTools()
                 : undefined,
             toolResults: toolResults.length > 0 ? toolResults : undefined,
+            ...generationConfig,
           });
 
           if (response.chatHistory) {
@@ -250,6 +296,7 @@ export class CohereService extends AbstractLanguageModelService {
                 ? this.getEnabledTools()
                 : undefined,
             toolResults: toolResults.length > 0 ? toolResults : undefined,
+            ...generationConfig,
           });
 
           let functionCalls = null;
