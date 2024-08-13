@@ -1,7 +1,7 @@
 import * as fs from 'fs';
 import * as path from 'path';
 
-import { HistoryManager } from '../../src/api/historyManager';
+import { HistoryManager } from '../../src/api';
 
 const CLEAN_AFTER_ALL = true;
 

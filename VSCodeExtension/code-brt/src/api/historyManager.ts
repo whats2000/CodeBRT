@@ -81,12 +81,12 @@ export class HistoryManager implements IHistoryManager {
       update_time: Date.now(),
       advanceSettings: {
         systemPrompt: 'You are a helpful assistant.',
-        maxTokens: null,
-        temperature: null,
-        topP: null,
-        topK: null,
-        presencePenalty: null,
-        frequencyPenalty: null,
+        maxTokens: undefined,
+        temperature: undefined,
+        topP: undefined,
+        topK: undefined,
+        presencePenalty: undefined,
+        frequencyPenalty: undefined,
       },
       entries: {},
     };

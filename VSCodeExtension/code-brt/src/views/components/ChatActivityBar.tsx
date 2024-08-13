@@ -40,12 +40,12 @@ export const ChatActivityBar = () => {
       current: '',
       advanceSettings: {
         systemPrompt: '',
-        maxTokens: null,
-        temperature: null,
-        topP: null,
-        topK: null,
-        presencePenalty: null,
-        frequencyPenalty: null,
+        maxTokens: undefined,
+        temperature: undefined,
+        topP: undefined,
+        topK: undefined,
+        presencePenalty: undefined,
+        frequencyPenalty: undefined,
       },
       entries: {},
     });
