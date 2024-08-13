@@ -29,7 +29,6 @@ export const ChatActivityBar = () => {
   );
   const [conversationHistory, setConversationHistory] =
     useState<ConversationHistory>({
-      title: '',
       create_time: 0,
       update_time: 0,
       root: '',
@@ -119,10 +118,10 @@ export const ChatActivityBar = () => {
         'error',
       ).catch(console.error),
     );
-    callApi('getLanguageModelConversationHistory', activeModelService)
+    callApi('getCurrentHistory')
       .then((history) => {
         if (history) {
-          setConversationHistory(history as ConversationHistory);
+          setConversationHistory(history);
         }
       })
       .then(() => {
@@ -172,11 +171,11 @@ export const ChatActivityBar = () => {
 
     const userEntryId = await callApi(
       'addConversationEntry',
-      activeModelService,
       conversationHistory.current,
       'user',
       inputMessage,
       uploadedImages,
+      activeModelService,
     );
     setConversationHistory((prevMessages): ConversationHistory => {
       const updatedEntries = {
@@ -235,10 +234,11 @@ export const ChatActivityBar = () => {
 
       const aiEntryId = await callApi(
         'addConversationEntry',
-        activeModelService,
         userEntryId,
         'AI',
         responseText,
+        undefined,
+        activeModelService,
       );
       setConversationHistory((prevMessages) => {
         const newEntries = { ...prevMessages.entries };
@@ -293,11 +293,11 @@ export const ChatActivityBar = () => {
     const entry = conversationHistory.entries[entryId];
     const newEntryId = await callApi(
       'addConversationEntry',
-      activeModelService,
       entry.parent ?? '',
       'user',
       editedMessage,
       entry.images,
+      activeModelService,
     );
 
     setConversationHistory((prevMessages): ConversationHistory => {
@@ -358,10 +358,11 @@ export const ChatActivityBar = () => {
 
       const aiEntryId = await callApi(
         'addConversationEntry',
-        activeModelService,
         newEntryId,
         'AI',
         responseText,
+        undefined,
+        activeModelService,
       );
       setConversationHistory((prevMessages) => {
         const newEntries = { ...prevMessages.entries };

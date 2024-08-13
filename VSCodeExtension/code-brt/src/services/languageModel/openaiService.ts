@@ -7,7 +7,7 @@ import type {
 import OpenAI from 'openai';
 
 import type { GetResponseOptions } from '../../types';
-import { SettingsManager } from '../../api';
+import { HistoryManager, SettingsManager } from '../../api';
 import { AbstractOpenaiLikeService } from './abstractOpenaiLikeService';
 import { MODEL_SERVICE_CONSTANTS } from '../../constants';
 
@@ -15,6 +15,7 @@ export class OpenAIService extends AbstractOpenaiLikeService {
   constructor(
     context: vscode.ExtensionContext,
     settingsManager: SettingsManager,
+    historyManager: HistoryManager,
   ) {
     const availableModelNames = settingsManager.get('openaiAvailableModels');
     const defaultModelName = settingsManager.get('lastSelectedModel').openai;
@@ -22,28 +23,11 @@ export class OpenAIService extends AbstractOpenaiLikeService {
     super(
       'openai',
       context,
-      'openAIConversationHistory.json',
       settingsManager,
+      historyManager,
       defaultModelName,
       availableModelNames,
     );
-
-    // Initialize and load conversation history
-    this.initialize().catch((error) =>
-      vscode.window.showErrorMessage(
-        'Failed to initialize OpenAI Service: ' + error,
-      ),
-    );
-  }
-
-  private async initialize() {
-    try {
-      await this.loadHistories();
-    } catch (error) {
-      vscode.window.showErrorMessage(
-        'Failed to initialize OpenAI Service History: ' + error,
-      );
-    }
   }
 
   public async getLatestAvailableModelNames(): Promise<string[]> {
@@ -102,7 +86,7 @@ export class OpenAIService extends AbstractOpenaiLikeService {
     });
 
     const conversationHistory = await this.conversationHistoryToContent(
-      this.getHistoryBeforeEntry(currentEntryID).entries,
+      this.historyManager.getHistoryBeforeEntry(currentEntryID).entries,
       query,
       images,
     );

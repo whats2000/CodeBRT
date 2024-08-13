@@ -23,7 +23,7 @@ import type {
 import { MODEL_SERVICE_CONSTANTS, toolsSchema } from '../../constants';
 import { mapFunctionDeclarationSchemaType } from '../../utils';
 import { AbstractLanguageModelService } from './abstractLanguageModelService';
-import { SettingsManager } from '../../api';
+import { HistoryManager, SettingsManager } from '../../api';
 import { ToolService } from '../tools';
 
 type GeminiModel = {
@@ -76,6 +76,7 @@ export class GeminiService extends AbstractLanguageModelService {
   constructor(
     context: vscode.ExtensionContext,
     settingsManager: SettingsManager,
+    historyManager: HistoryManager,
   ) {
     const availableModelNames = settingsManager.get('geminiAvailableModels');
     const defaultModelName = settingsManager.get('lastSelectedModel').gemini;
@@ -83,28 +84,12 @@ export class GeminiService extends AbstractLanguageModelService {
     super(
       'gemini',
       context,
-      'geminiConversationHistory.json',
       settingsManager,
+      historyManager,
       defaultModelName,
       availableModelNames,
     );
     this.tools = this.buildTools();
-
-    this.initialize().catch((error) =>
-      vscode.window.showErrorMessage(
-        'Failed to initialize Gemini Service: ' + error,
-      ),
-    );
-  }
-
-  private async initialize() {
-    try {
-      await this.loadHistories();
-    } catch (error) {
-      vscode.window.showErrorMessage(
-        'Failed to initialize Gemini Service History: ' + error,
-      );
-    }
   }
 
   private buildTools(): Tool[] {
@@ -148,7 +133,7 @@ export class GeminiService extends AbstractLanguageModelService {
     [key: string]: ConversationEntry;
   }): Content[] {
     let result: Content[] = [];
-    let currentEntry = entries[this.history.current];
+    let currentEntry = entries[this.historyManager.getCurrentHistory().current];
 
     while (currentEntry) {
       result.unshift({
@@ -313,7 +298,7 @@ export class GeminiService extends AbstractLanguageModelService {
     });
 
     const conversationHistory = this.conversationHistoryToContent(
-      this.getHistoryBeforeEntry(currentEntryID).entries,
+      this.historyManager.getHistoryBeforeEntry(currentEntryID).entries,
     );
 
     let queryParts = this.createQueryParts(query, images);

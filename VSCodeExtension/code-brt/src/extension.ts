@@ -13,7 +13,7 @@ import type {
 } from './types';
 import { FileUtils } from './utils';
 import { ViewKey } from './views';
-import { viewRegistration, SettingsManager } from './api';
+import { viewRegistration, SettingsManager, HistoryManager } from './api';
 import {
   AnthropicService,
   CohereService,
@@ -35,30 +35,32 @@ export const activate = async (ctx: vscode.ExtensionContext) => {
   const connectedViews: Partial<Record<ViewKey, vscode.WebviewView>> = {};
   const settingsManager = SettingsManager.getInstance(ctx);
 
+  const historyManager = new HistoryManager(ctx);
+
   const models: LoadedModelServices = {
     anthropic: {
-      service: new AnthropicService(ctx, settingsManager),
+      service: new AnthropicService(ctx, settingsManager, historyManager),
     },
     gemini: {
-      service: new GeminiService(ctx, settingsManager),
+      service: new GeminiService(ctx, settingsManager, historyManager),
     },
     cohere: {
-      service: new CohereService(ctx, settingsManager),
+      service: new CohereService(ctx, settingsManager, historyManager),
     },
     openai: {
-      service: new OpenAIService(ctx, settingsManager),
+      service: new OpenAIService(ctx, settingsManager, historyManager),
     },
     groq: {
-      service: new GroqService(ctx, settingsManager),
+      service: new GroqService(ctx, settingsManager, historyManager),
     },
     huggingFace: {
-      service: new HuggingFaceService(ctx, settingsManager),
+      service: new HuggingFaceService(ctx, settingsManager, historyManager),
     },
     ollama: {
-      service: new OllamaService(ctx, settingsManager),
+      service: new OllamaService(ctx, settingsManager, historyManager),
     },
     custom: {
-      service: new CustomApiService(ctx, settingsManager),
+      service: new CustomApiService(ctx, settingsManager, historyManager),
     },
   };
 
@@ -160,37 +162,38 @@ export const activate = async (ctx: vscode.ExtensionContext) => {
           : undefined,
       });
     },
-    getLanguageModelConversationHistory: (modelType) => {
-      return models[modelType].service.getConversationHistory();
+    getCurrentHistory: () => {
+      return historyManager.getCurrentHistory();
     },
-    addNewConversationHistory: (modelType) => {
-      return models[modelType].service.addNewConversationHistory();
+    addNewConversationHistory: async () => {
+      return await historyManager.addNewConversationHistory();
     },
-    editLanguageModelConversationHistory: (modelType, entryID, newMessage) => {
-      models[modelType].service.editConversationEntry(entryID, newMessage);
+    editLanguageModelConversationHistory: (entryID, newMessage) => {
+      historyManager.editConversationEntry(entryID, newMessage);
     },
     addConversationEntry: async (
-      modelType,
       parentID,
       sender,
       message,
       images?,
+      modelServiceType?,
     ) => {
-      return models[modelType].service.addConversationEntry(
+      return await historyManager.addConversationEntry(
         parentID,
         sender,
         message,
         images,
+        modelServiceType,
       );
     },
-    getHistories: (modelType) => {
-      return models[modelType].service.getHistories();
+    getHistories: () => {
+      return historyManager.getHistories();
     },
-    switchHistory: (modelType, historyID) => {
-      models[modelType].service.switchHistory(historyID);
+    switchHistory: (historyID) => {
+      historyManager.switchHistory(historyID);
     },
-    deleteHistory: (modelType, historyID) => {
-      return models[modelType].service.deleteHistory(historyID);
+    deleteHistory: async (historyID) => {
+      return await historyManager.deleteHistory(historyID);
     },
     getAvailableModels: (modelType) => {
       if (modelType === 'custom') {
@@ -219,8 +222,14 @@ export const activate = async (ctx: vscode.ExtensionContext) => {
     switchModel: (modelType, modelName) => {
       models[modelType].service.switchModel(modelName);
     },
-    updateHistoryTitleById: (modelType, historyID, title) => {
-      models[modelType].service.updateHistoryTitleById(historyID, title);
+    updateHistoryTitleById: (historyID, title) => {
+      historyManager.updateHistoryTitleById(historyID, title);
+    },
+    addHistoryTag: (historyID, tag) => {
+      historyManager.addTagToHistory(historyID, tag);
+    },
+    removeHistoryTag: (historyID, tag) => {
+      historyManager.removeTagFromHistory(historyID, tag);
     },
     getLatestAvailableModelNames: async (modelType) => {
       return await models[modelType].service.getLatestAvailableModelNames();

@@ -21,7 +21,7 @@ import type {
   ToolServiceType,
 } from '../../types';
 import { MODEL_SERVICE_CONSTANTS, toolsSchema } from '../../constants';
-import { SettingsManager } from '../../api';
+import { HistoryManager, SettingsManager } from '../../api';
 import { AbstractLanguageModelService } from './abstractLanguageModelService';
 import { ToolService } from '../tools';
 
@@ -42,6 +42,7 @@ export class AnthropicService extends AbstractLanguageModelService {
   constructor(
     context: vscode.ExtensionContext,
     settingsManager: SettingsManager,
+    historyManager: HistoryManager,
   ) {
     const availableModelNames = settingsManager.get('anthropicAvailableModels');
     const defaultModelName = settingsManager.get('lastSelectedModel').anthropic;
@@ -49,28 +50,11 @@ export class AnthropicService extends AbstractLanguageModelService {
     super(
       'anthropic',
       context,
-      'anthropicConversationHistory.json',
       settingsManager,
+      historyManager,
       defaultModelName,
       availableModelNames,
     );
-
-    // Initialize and load conversation history
-    this.initialize().catch((error) =>
-      vscode.window.showErrorMessage(
-        'Failed to initialize Anthropic Service: ' + error,
-      ),
-    );
-  }
-
-  private async initialize() {
-    try {
-      await this.loadHistories();
-    } catch (error) {
-      vscode.window.showErrorMessage(
-        'Failed to initialize Anthropic Service History: ' + error,
-      );
-    }
   }
 
   private conversationHistoryToContent(
@@ -78,7 +62,7 @@ export class AnthropicService extends AbstractLanguageModelService {
     query: string,
   ): MessageParam[] {
     const result: MessageParam[] = [];
-    let currentEntry = entries[this.history.current];
+    let currentEntry = entries[this.historyManager.getCurrentHistory().current];
 
     while (currentEntry) {
       result.unshift({
@@ -161,7 +145,7 @@ export class AnthropicService extends AbstractLanguageModelService {
     }
 
     const conversationHistory = this.conversationHistoryToContent(
-      this.getHistoryBeforeEntry(currentEntryID).entries,
+      this.historyManager.getHistoryBeforeEntry(currentEntryID).entries,
       query,
     );
 

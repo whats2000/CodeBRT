@@ -14,7 +14,7 @@ import type {
   ToolServiceType,
 } from '../../types';
 import { AbstractLanguageModelService } from './abstractLanguageModelService';
-import { SettingsManager } from '../../api';
+import { HistoryManager, SettingsManager } from '../../api';
 import { MODEL_SERVICE_CONSTANTS, toolsSchema } from '../../constants';
 import { ToolService } from '../tools';
 
@@ -38,6 +38,7 @@ export class HuggingFaceService extends AbstractLanguageModelService {
   constructor(
     context: vscode.ExtensionContext,
     settingsManager: SettingsManager,
+    historyManager: HistoryManager,
   ) {
     const availableModelNames = settingsManager.get(
       'huggingFaceAvailableModels',
@@ -48,28 +49,11 @@ export class HuggingFaceService extends AbstractLanguageModelService {
     super(
       'huggingFace',
       context,
-      'huggingFaceConversationHistory.json',
       settingsManager,
+      historyManager,
       defaultModelName,
       availableModelNames,
     );
-
-    // Initialize and load conversation history
-    this.initialize().catch((error) =>
-      vscode.window.showErrorMessage(
-        'Failed to initialize Hugging Face Service: ' + error,
-      ),
-    );
-  }
-
-  private async initialize() {
-    try {
-      await this.loadHistories();
-    } catch (error) {
-      vscode.window.showErrorMessage(
-        'Failed to initialize Hugging Face Service: ' + error,
-      );
-    }
   }
 
   private conversationHistoryToContent(
@@ -77,7 +61,7 @@ export class HuggingFaceService extends AbstractLanguageModelService {
     query: string,
   ): ChatCompletionInputMessage[] {
     const result: ChatCompletionInputMessage[] = [];
-    let currentEntry = entries[this.history.current];
+    let currentEntry = entries[this.historyManager.getCurrentHistory().current];
 
     while (currentEntry) {
       result.unshift({
@@ -184,7 +168,7 @@ export class HuggingFaceService extends AbstractLanguageModelService {
     );
 
     const conversationHistory = this.conversationHistoryToContent(
-      this.getHistoryBeforeEntry(currentEntryID).entries,
+      this.historyManager.getHistoryBeforeEntry(currentEntryID).entries,
       query,
     );
 

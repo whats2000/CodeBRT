@@ -27,7 +27,6 @@ export type ConversationEntry = {
  * @property entries - The entries of the conversation history
  */
 export type ConversationHistory = {
-  title: string;
   create_time: number;
   update_time: number;
   root: string;
@@ -42,17 +41,19 @@ export type ConversationHistory = {
  * @property title - The title of the history
  * @property create_time - The creation time of the history
  * @property update_time - The update time of the history
+ * @property tags - The tags associated with the history for classification
  */
 export type ConversationHistoryIndex = {
   id: string;
   title: string;
   create_time: number;
   update_time: number;
+  tags?: string[];
 };
 
 /**
- * A list of conversation histories
+ * A list of conversation histories index
  */
-export type ConversationHistoryList = {
-  [key: string]: ConversationHistory;
+export type ConversationHistoryIndexList = {
+  [key: string]: ConversationHistoryIndex;
 };

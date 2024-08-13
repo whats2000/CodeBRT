@@ -121,6 +121,7 @@ export const MessagesContainer: React.FC<MessagesContainerProps> = ({
   const { innerWidth } = useWindowSize();
 
   useEffect(() => {
+    setShowFloatButtons(false);
     setFloatButtonsXPosition(innerWidth - 85);
   }, [innerWidth]);
 
@@ -175,12 +176,7 @@ export const MessagesContainer: React.FC<MessagesContainerProps> = ({
     if (conversationHistory.entries[entryId].role === 'user') {
       await handleEditUserMessageSave(entryId, editedMessage);
     } else {
-      callApi(
-        'editLanguageModelConversationHistory',
-        modelType,
-        entryId,
-        editedMessage,
-      )
+      callApi('editLanguageModelConversationHistory', entryId, editedMessage)
         .then(() => {
           const updatedEntries = { ...conversationHistory.entries };
           updatedEntries[entryId].message = editedMessage;

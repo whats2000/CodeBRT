@@ -11,7 +11,7 @@ import type {
 } from '../../types';
 import { MODEL_SERVICE_CONSTANTS, toolsSchema } from '../../constants';
 import { AbstractLanguageModelService } from './abstractLanguageModelService';
-import { SettingsManager } from '../../api';
+import { HistoryManager, SettingsManager } from '../../api';
 import { ToolService } from '../tools';
 
 export class OllamaService extends AbstractLanguageModelService {
@@ -38,6 +38,7 @@ export class OllamaService extends AbstractLanguageModelService {
   constructor(
     context: vscode.ExtensionContext,
     settingsManager: SettingsManager,
+    historyManager: HistoryManager,
   ) {
     const availableModelNames = settingsManager.get('ollamaAvailableModels');
     const defaultModelName = settingsManager.get('lastSelectedModel').ollama;
@@ -45,27 +46,11 @@ export class OllamaService extends AbstractLanguageModelService {
     super(
       'ollama',
       context,
-      'ollamaConversationHistory.json',
       settingsManager,
+      historyManager,
       defaultModelName,
       availableModelNames,
     );
-
-    this.initialize().catch((error) =>
-      vscode.window.showErrorMessage(
-        'Failed to initialize Ollama Service History: ' + error,
-      ),
-    );
-  }
-
-  private async initialize() {
-    try {
-      await this.loadHistories();
-    } catch (error) {
-      vscode.window.showErrorMessage(
-        'Failed to initialize Ollama Service: ' + error,
-      );
-    }
   }
 
   private async conversationHistoryToContent(
@@ -76,7 +61,7 @@ export class OllamaService extends AbstractLanguageModelService {
     images?: string[],
   ): Promise<Message[]> {
     const result: Message[] = [];
-    let currentEntry = entries[this.history.current];
+    let currentEntry = entries[this.historyManager.getCurrentHistory().current];
 
     while (currentEntry) {
       result.unshift({
@@ -177,7 +162,7 @@ export class OllamaService extends AbstractLanguageModelService {
     });
 
     const conversationHistory = await this.conversationHistoryToContent(
-      this.getHistoryBeforeEntry(currentEntryID).entries,
+      this.historyManager.getHistoryBeforeEntry(currentEntryID).entries,
       query,
       images,
     );
