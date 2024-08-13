@@ -8,7 +8,6 @@ import type {
   ConversationHistory,
   ModelServiceType,
 } from '../../../types';
-import { fadeIn, fadeOut } from '../../styles';
 import { WebviewContext } from '../../WebviewContext';
 import { TopToolBar } from './MessagesContainer/TopToolBar';
 import { ImageContainer } from './MessagesContainer/ImageContainer';
@@ -17,14 +16,12 @@ import { TextEditContainer } from './MessagesContainer/TextEditContainer';
 import { MessageFloatButton } from './MessagesContainer/MessageFloatButton';
 import { useWindowSize } from '../../hooks';
 
-const StyledMessagesContainer = styled.div<{ $isActiveModelLoading: boolean }>`
+const StyledMessagesContainer = styled.div`
   flex-grow: 1;
   overflow-y: auto;
   padding: 10px 55px 10px 10px;
   border-top: 1px solid ${({ theme }) => theme.colorBorderSecondary};
   border-bottom: 1px solid ${({ theme }) => theme.colorBorderSecondary};
-  animation: ${(props) => (props.$isActiveModelLoading ? fadeOut : fadeIn)} 0.5s
-    ease-in-out;
 `;
 
 const MessageBubble = styled.div<{ $user: string }>`
@@ -279,10 +276,7 @@ export const MessagesContainer: React.FC<MessagesContainerProps> = ({
           <span>Loading conversation history...</span>
         </Spin>
       )}
-      <StyledMessagesContainer
-        $isActiveModelLoading={isActiveModelLoading}
-        ref={messagesContainerRef}
-      >
+      <StyledMessagesContainer ref={messagesContainerRef}>
         {conversationHistoryEntries.map((entry, index) => {
           return (
             <MessageBubble
