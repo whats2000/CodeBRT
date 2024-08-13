@@ -21,7 +21,7 @@ The purpose of this project is to create a AI assistant that can help users with
 
 The architecture of the project is as follows:
 
-**Soon to be updated**
+![](Files/img/system_architecture.png)
 
 ## Installation
 
@@ -30,28 +30,38 @@ The architecture of the project is as follows:
 ## Usage
 
 To start the extension, click the extension button to open the extension dialog.
+![](Files/img/tutorial_extension_icon.png)
 
 **Service selection**  
 We offered several types of services for users to choose, such as Gemini, OpenAI, Ollama…etc. Users can check the list and click on to change service.
+![](Files/img/service_selection.png)
 
 **Model setting**  
 In every service, users can set the model as they want. For example, in Gemini service we can choose the default models or edit the model list and customize the model we want.
+![](Files/img/model_selection.png)
 
 **General setting**  
 In general setting, we’ll set the api key to ensure that our model can be used. And then, users can set the page style by the Theme Primary color, Theme Algorithm and Theme Border Radius.
+![](Files/img/API_setting.png)
+![](Files/img/theme_setting.png)
+
+**Voice setting**  
+In voice setting, we'll set the ways of TTS & STT service. And also, voice types listed is allowed to choose by users.  
+![](Files/img/voice_setting.png)
 
 **Add & Remove chat**  
 Users can add new individual chat pages, and check them in the chat history. If you don’t need any page in the chat history, you can remove it by a click. 
+![](Files/img/add_remove_chat_button.png)
 
 **Upload picture**    
 We offered the service for users to upload local picture files for language models to analyze.
 
 **Upload audio**  
-We also offered the way for Speech-to-Text, users can use the record button to record their voice, and then the message will show up below.   
+We also offered the way for Speech-to-Text service, users can use the record button to record their voice, and then the message will show up.   
 
 **Chatbox Message**  
 Users can edit the chatbox message by the edit button, also, messages can be copied by the copy button. If necessary, users can use the audio service by clicking the speaker button, which is transformed by language model. 
-
+![](Files/img/chatbox.png)
 
 ## Contributing
 
