@@ -7,12 +7,14 @@ import type { Tag as TagType } from '../../../../../types';
 type PromptTagsProps = {
   id: string;
   tags: TagType[];
-  onTagsChange: (id: string, newTags: TagType[]) => void;
+  tagColors: React.MutableRefObject<{ [key: string]: string }>;
+  onTagsChange: (promptId: string, newTags: TagType[]) => void;
 };
 
 export const PromptTags: React.FC<PromptTagsProps> = ({
   id,
   tags,
+  tagColors,
   onTagsChange,
 }) => {
   const { token } = theme.useToken();
@@ -23,8 +25,10 @@ export const PromptTags: React.FC<PromptTagsProps> = ({
   const [inputColor, setInputColor] = useState('#108ee9');
 
   const handleTagClose = (removedTag: TagType) => {
-    const updatedTags = tags.filter((tag) => tag.name !== removedTag.name);
-    onTagsChange(id, updatedTags);
+    onTagsChange(
+      id,
+      tags.filter((tag) => tag.name !== removedTag.name),
+    );
   };
 
   const showInput = () => {
@@ -34,16 +38,28 @@ export const PromptTags: React.FC<PromptTagsProps> = ({
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setInputValue(e.target.value);
+
+    if (tagColors.current[e.target.value]) {
+      setInputColor(tagColors.current[e.target.value]);
+    }
   };
 
   const handleInputConfirm = () => {
-    if (inputValue && !tags.some((tag) => tag.name === inputValue)) {
+    if (inputValue) {
+      // Check if the tag name already exists in the tagColors mapping
+      if (!tagColors.current[inputValue]) {
+        tagColors.current[inputValue] = inputColor;
+      }
+
       const newTag: TagType = {
         name: inputValue,
         description: '',
-        color: inputColor,
+        color: tagColors.current[inputValue],
       };
-      onTagsChange(id, [...tags, newTag]);
+
+      if (!tags.some((tag) => tag.name === inputValue)) {
+        onTagsChange(id, [...tags, newTag]);
+      }
     }
     setInputVisible(false);
     setInputValue('');
@@ -67,7 +83,7 @@ export const PromptTags: React.FC<PromptTagsProps> = ({
           </Tag>
         ))}
       {inputVisible ? (
-        <Input.Group compact={true}>
+        <Input.Group compact>
           <Input
             ref={inputRef}
             type='text'
@@ -79,7 +95,7 @@ export const PromptTags: React.FC<PromptTagsProps> = ({
           />
           <ColorPicker
             size={'small'}
-            defaultValue={inputColor}
+            value={inputColor}
             onChange={(color) => setInputColor(color.toHexString())}
           />
         </Input.Group>

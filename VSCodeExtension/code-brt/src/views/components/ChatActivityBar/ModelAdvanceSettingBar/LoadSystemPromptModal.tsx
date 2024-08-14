@@ -1,4 +1,4 @@
-import React, { useState, useContext, useEffect } from 'react';
+import React, { useState, useContext, useEffect, useRef } from 'react';
 import {
   List,
   Button,
@@ -69,6 +69,9 @@ export const LoadSystemPromptModal: React.FC<LoadSystemPromptModalProps> = ({
   const [filterTags, setFilterTags] = useState<string[]>([]);
   const [systemPrompts, setSystemPrompts] = useState<SystemPrompt[]>([]);
   const [filteredPrompts, setFilteredPrompts] = useState<SystemPrompt[]>([]);
+
+  // Centralized tag colors mapping
+  const tagColors = useRef<{ [key: string]: string }>({});
 
   useEffect(() => {
     if (open) {
@@ -206,6 +209,7 @@ export const LoadSystemPromptModal: React.FC<LoadSystemPromptModalProps> = ({
                 <PromptTags
                   id={item.id}
                   tags={item.tags}
+                  tagColors={tagColors}
                   onTagsChange={onTagsChange}
                 />
               )}
