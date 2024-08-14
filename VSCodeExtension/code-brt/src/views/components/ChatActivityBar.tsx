@@ -39,7 +39,7 @@ export const ChatActivityBar = () => {
       top: [],
       current: '',
       advanceSettings: {
-        systemPrompt: '',
+        systemPrompt: 'You are a helpful assistant.',
         maxTokens: undefined,
         temperature: undefined,
         topP: undefined,
