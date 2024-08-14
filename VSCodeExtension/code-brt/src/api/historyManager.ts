@@ -127,6 +127,24 @@ export class HistoryManager implements IHistoryManager {
   }
 
   /**
+   * Recursively replace null with undefined in an object or array.
+   */
+  private replaceNullWithUndefined(obj: any): any {
+    if (obj === null) return undefined;
+    if (Array.isArray(obj)) {
+      return obj.map(this.replaceNullWithUndefined);
+    } else if (typeof obj === 'object') {
+      return Object.fromEntries(
+        Object.entries(obj).map(([key, value]) => [
+          key,
+          this.replaceNullWithUndefined(value),
+        ]),
+      );
+    }
+    return obj;
+  }
+
+  /**
    * Load a single conversation history by its ID
    */
   private async loadHistoryById(historyId: string): Promise<void> {
@@ -375,9 +393,9 @@ export class HistoryManager implements IHistoryManager {
 
     // Only save the history when it's created otherwise only store in memory
     if (this.historyIndex[historyID]) {
-      await this.saveHistoryIndex().catch((error) =>
+      await this.saveHistoryById(this.history).catch((error) =>
         vscode.window.showErrorMessage(
-          'Failed to save history index: ' + error,
+          'Failed to update model advance settings: ' + error,
         ),
       );
     }

@@ -1,16 +1,16 @@
 import * as vscode from 'vscode';
 import fs from 'fs';
-import type {
+import {
   Content,
   FunctionCall,
   FunctionResponsePart,
   GenerationConfig,
   InlineDataPart,
   Part,
+  SchemaType,
   Tool,
 } from '@google/generative-ai';
 import {
-  FunctionDeclarationSchemaType,
   GoogleGenerativeAI,
   HarmBlockThreshold,
   HarmCategory,
@@ -140,7 +140,7 @@ export class GeminiService extends AbstractLanguageModelService {
         },
         {} as {
           [key: string]: {
-            type: FunctionDeclarationSchemaType;
+            type: SchemaType;
             description: string;
             nullable: boolean;
           };
@@ -153,7 +153,7 @@ export class GeminiService extends AbstractLanguageModelService {
             name: tool.name,
             description: tool.description,
             parameters: {
-              type: FunctionDeclarationSchemaType.OBJECT,
+              type: SchemaType.OBJECT,
               properties,
             },
           },

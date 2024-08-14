@@ -75,15 +75,21 @@ export const ModelAdvanceSettingBar: React.FC<ModelAdvanceSettingsProps> = ({
   }, [isOpen]);
 
   const handleSave = async () => {
+    const sanitizedSettings = Object.fromEntries(
+      Object.entries(newAdvanceSettings).filter(
+        ([_, value]) => value !== null && value !== undefined,
+      ),
+    ) as ConversationModelAdvanceSettings;
+
     try {
       await callApi(
         'updateHistoryModelAdvanceSettings',
         conversationHistory.root,
-        newAdvanceSettings,
+        sanitizedSettings,
       );
       setConversationHistory((prev) => ({
         ...prev,
-        advanceSettings: newAdvanceSettings,
+        advanceSettings: sanitizedSettings,
       }));
     } catch (err) {
       console.error('Failed to save settings:', err);
