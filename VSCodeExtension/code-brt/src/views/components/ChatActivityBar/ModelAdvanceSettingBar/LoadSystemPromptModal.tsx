@@ -78,29 +78,37 @@ export const LoadSystemPromptModal: React.FC<LoadSystemPromptModalProps> = ({
   const [filteredPrompts, setFilteredPrompts] = useState<SystemPrompt[]>([]);
   const [isEditPromptFormOpen, setIsEditPromptFormOpen] = useState(false);
   const [editPrompt, setEditPrompt] = useState<SystemPrompt | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
 
   // Centralized tag colors mapping
   const tagColors = useRef<{ [key: string]: string }>({});
 
   useEffect(() => {
     if (open) {
-      callApi('getSetting', 'systemPrompts').then((response) => {
-        const promptsWithTags = response.map((prompt: SystemPrompt) => ({
-          ...prompt,
-          tags: Array.isArray(prompt.tags) ? prompt.tags : [],
-        }));
+      setIsLoading(true);
+      callApi('getSetting', 'systemPrompts')
+        .then((response) => {
+          const promptsWithTags = response.map((prompt: SystemPrompt) => ({
+            ...prompt,
+            tags: Array.isArray(prompt.tags) ? prompt.tags : [],
+          }));
 
-        // Initialize tagColors ref with existing tags
-        promptsWithTags.forEach((prompt: SystemPrompt) => {
-          prompt.tags.forEach((tag) => {
-            if (!tagColors.current[tag.name]) {
-              tagColors.current[tag.name] = tag.color;
-            }
+          // Initialize tagColors ref with existing tags
+          promptsWithTags.forEach((prompt: SystemPrompt) => {
+            prompt.tags.forEach((tag) => {
+              if (!tagColors.current[tag.name]) {
+                tagColors.current[tag.name] = tag.color;
+              }
+            });
           });
-        });
 
-        setSystemPrompts(promptsWithTags);
-      });
+          setSystemPrompts(promptsWithTags);
+          setIsLoading(false);
+        })
+        .catch((error) => {
+          console.error('Failed to get system prompts:', error);
+          setIsLoading(false);
+        });
     }
   }, [open]);
 
@@ -148,6 +156,11 @@ export const LoadSystemPromptModal: React.FC<LoadSystemPromptModalProps> = ({
   };
 
   const handleDrawerClose = () => {
+    if (isLoading) {
+      onClose();
+      return;
+    }
+
     // Save the updated system prompts when the drawer is closed
     callApi('setSetting', 'systemPrompts', systemPrompts).catch((error) => {
       console.error('Failed to update system prompts:', error);
@@ -214,6 +227,7 @@ export const LoadSystemPromptModal: React.FC<LoadSystemPromptModalProps> = ({
         open={open}
         onClose={handleDrawerClose}
         placement={'right'}
+        loading={isLoading}
       >
         {showTags && (
           <div style={{ padding: 16 }}>
