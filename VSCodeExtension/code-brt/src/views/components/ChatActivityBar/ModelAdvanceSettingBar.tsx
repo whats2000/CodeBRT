@@ -27,14 +27,14 @@ import { MODEL_ADVANCE_SETTINGS } from '../../../constants';
 import { SaveSystemPromptModal } from './ModelAdvanceSettingBar/SaveSystemPromptModal';
 import { LoadSystemPromptModal } from './ModelAdvanceSettingBar/LoadSystemPromptModal';
 
-export interface ModelAdvanceSettingsProps {
+export type ModelAdvanceSettingsProps = {
   isOpen: boolean;
   onClose: () => void;
   conversationHistory: ConversationHistory;
   setConversationHistory: React.Dispatch<
     React.SetStateAction<ConversationHistory>
   >;
-}
+};
 
 export const ModelAdvanceSettingBar: React.FC<ModelAdvanceSettingsProps> = ({
   isOpen,
@@ -192,6 +192,7 @@ export const ModelAdvanceSettingBar: React.FC<ModelAdvanceSettingsProps> = ({
                   width: '100%',
                   marginBottom: 20,
                 }}
+                wrap={true}
               >
                 <Button onClick={() => setLoadPromptOpen(true)}>
                   <ImportOutlined /> Load
