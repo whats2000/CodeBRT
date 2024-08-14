@@ -1,5 +1,15 @@
-import React, { useState, useContext, useEffect } from 'react';
-import { Modal, Form, Input, Button, Tag, ColorPicker, Flex } from 'antd';
+import React, { useState, useContext, useEffect, useRef } from 'react';
+import {
+  Modal,
+  Form,
+  Input,
+  Button,
+  Tag,
+  ColorPicker,
+  Flex,
+  AutoComplete,
+  Space,
+} from 'antd';
 import { PlusOutlined } from '@ant-design/icons';
 
 import type { SystemPrompt, Tag as TagType } from '../../../../types';
@@ -18,6 +28,7 @@ export const SaveSystemPromptModal: React.FC<SaveSystemPromptModalProps> = ({
 }) => {
   const { callApi } = useContext(WebviewContext);
   const [form] = Form.useForm();
+
   const [partialSettings, setPartialSettings] = useState<{
     systemPrompts: SystemPrompt[];
   }>({
@@ -25,15 +36,27 @@ export const SaveSystemPromptModal: React.FC<SaveSystemPromptModalProps> = ({
   });
 
   const [tags, setTags] = useState<TagType[]>([]);
+  const [allTags, setAllTags] = useState<string[]>([]);
   const [inputVisible, setInputVisible] = useState(false);
   const [inputValue, setInputValue] = useState('');
   const [color, setColor] = useState('#108ee9');
 
+  const tagColors = useRef<{ [key: string]: string }>({});
+
   useEffect(() => {
     if (open) {
-      callApi('getSetting', 'systemPrompts').then((response) => {
-        setPartialSettings({ systemPrompts: response });
-      });
+      callApi('getSetting', 'systemPrompts').then(
+        (response: SystemPrompt[]) => {
+          setPartialSettings({ systemPrompts: response });
+          const tagsAvailable = new Set<string>();
+          response.forEach((prompt) => {
+            if (Array.isArray(prompt.tags)) {
+              prompt.tags.forEach((tag) => tagsAvailable.add(tag.name));
+            }
+          });
+          setAllTags(Array.from(tagsAvailable));
+        },
+      );
       form.setFieldsValue({
         name: '',
         description: '',
@@ -77,24 +100,34 @@ export const SaveSystemPromptModal: React.FC<SaveSystemPromptModalProps> = ({
     setInputVisible(true);
   };
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setInputValue(e.target.value);
+  const handleInputChange = (value: string) => {
+    setInputValue(value);
+
+    if (tagColors.current[value]) {
+      setColor(tagColors.current[value]);
+    }
   };
 
   const handleInputConfirm = () => {
-    if (inputValue && !tags.find((tag) => tag.name === inputValue)) {
+    if (inputValue) {
+      // Check if the tag name already exists in the tagColors mapping
+      if (!tagColors.current[inputValue]) {
+        tagColors.current[inputValue] = color;
+      }
+
       const newTag: TagType = {
         name: inputValue,
         description: '',
-        color,
+        color: tagColors.current[inputValue],
       };
-      setTags([...tags, newTag]);
+
+      if (!tags.some((tag) => tag.name === inputValue)) {
+        setTags([...tags, newTag]);
+      }
     }
     setInputVisible(false);
     setInputValue('');
   };
-
-  console.log(partialSettings);
 
   return (
     <Modal
@@ -140,26 +173,31 @@ export const SaveSystemPromptModal: React.FC<SaveSystemPromptModalProps> = ({
               </Tag>
             ))}
             {inputVisible ? (
-              <Input
-                type='text'
-                size='small'
-                style={{ width: 78 }}
-                value={inputValue}
-                onChange={handleInputChange}
-                onBlur={handleInputConfirm}
-                onPressEnter={handleInputConfirm}
-              />
-            ) : (
-              <Button.Group>
-                <Button size='small' type='dashed' onClick={showInput}>
-                  <PlusOutlined /> New Tag
-                </Button>
-                <ColorPicker
-                  value={color}
+              <Space>
+                <AutoComplete
                   size={'small'}
+                  style={{ width: 200 }}
+                  options={allTags?.map((tag) => ({ value: tag }))}
+                  searchValue={inputValue}
+                  onChange={handleInputChange}
+                  onSelect={handleInputChange}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      handleInputConfirm();
+                    }
+                  }}
+                  placeholder='Enter or select tag'
+                />
+                <ColorPicker
+                  size={'small'}
+                  value={color}
                   onChange={(newColor) => setColor(newColor.toHexString())}
                 />
-              </Button.Group>
+              </Space>
+            ) : (
+              <Button size='small' type='dashed' onClick={showInput}>
+                <PlusOutlined /> New Tag
+              </Button>
             )}
           </Flex>
         </Form.Item>

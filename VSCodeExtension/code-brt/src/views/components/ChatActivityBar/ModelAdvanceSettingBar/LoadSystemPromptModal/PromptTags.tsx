@@ -8,9 +8,10 @@ import { BaseSelectRef } from 'rc-select';
 type PromptTagsProps = {
   id: string;
   tags: TagType[];
-  allTags: string[]; // List of all available tags for the AutoComplete
+  allTags: string[];
   tagColors: React.MutableRefObject<{ [key: string]: string }>;
   onTagsChange: (promptId: string, newTags: TagType[]) => void;
+  onTagEdit: (oldTag: TagType, newTag: TagType) => void;
 };
 
 export const PromptTags: React.FC<PromptTagsProps> = ({
@@ -19,6 +20,7 @@ export const PromptTags: React.FC<PromptTagsProps> = ({
   allTags,
   tagColors,
   onTagsChange,
+  onTagEdit,
 }) => {
   const { token } = theme.useToken();
   const inputRef = useRef<BaseSelectRef>(null);
@@ -26,7 +28,8 @@ export const PromptTags: React.FC<PromptTagsProps> = ({
   const [inputVisible, setInputVisible] = useState(false);
   const [inputValue, setInputValue] = useState('');
   const [inputColor, setInputColor] = useState('#108ee9');
-  const [editingTag, setEditingTag] = useState<string | null>(null);
+  const [editingTag, setEditingTag] = useState<TagType | null>(null);
+  const [editingIndex, setEditingIndex] = useState<number | null>(null);
 
   const handleTagClose = (removedTag: TagType) => {
     onTagsChange(
@@ -35,22 +38,40 @@ export const PromptTags: React.FC<PromptTagsProps> = ({
     );
   };
 
-  const showInput = () => {
-    setInputVisible(true);
-    setTimeout(() => inputRef.current?.focus(), 0);
+  const handleTagDoubleClick = (tag: TagType, index: number) => {
+    setEditingTag(tag);
+    setEditingIndex(index);
+    setInputValue(tag.name);
+    setInputColor(tag.color);
   };
 
   const handleInputChange = (value: string) => {
     setInputValue(value);
-
-    if (tagColors.current[value]) {
-      setInputColor(tagColors.current[value]);
-    }
+    setInputColor(tagColors.current[value] || '#108ee9');
   };
 
   const handleInputConfirm = () => {
-    if (inputValue) {
-      // Check if the tag name already exists in the tagColors mapping
+    if (editingTag && inputValue) {
+      const newTag: TagType = {
+        name: inputValue,
+        description: '',
+        color: inputColor,
+      };
+
+      // Update the tagColors reference
+      tagColors.current[inputValue] = inputColor;
+
+      // Update the tag list
+      const newTags = [...tags];
+      newTags[editingIndex as number] = newTag;
+
+      // Apply the change to all matching tags
+      onTagEdit(editingTag, newTag);
+
+      // Reset editing state
+      setEditingTag(null);
+      setEditingIndex(null);
+    } else if (!editingTag && inputValue) {
       if (!tagColors.current[inputValue]) {
         tagColors.current[inputValue] = inputColor;
       }
@@ -69,47 +90,54 @@ export const PromptTags: React.FC<PromptTagsProps> = ({
     setInputValue('');
   };
 
-  const handleTagDoubleClick = (tagName: string) => {
-    // Set the tag being edited
-    setEditingTag(tagName);
-    setInputColor(tagColors.current[tagName]);
-  };
-
   const handleColorChange = (newColor: string) => {
-    // Update the color for all tags with the same name
-    const updatedTags = tags.map((tag) =>
-      tag.name === editingTag ? { ...tag, color: newColor } : tag,
-    );
-    tagColors.current[editingTag as string] = newColor;
-    setEditingTag(null);
-    onTagsChange(id, updatedTags);
+    setInputColor(newColor);
   };
 
   return (
     <Space size={'small'} wrap>
-      {tags.length > 0 &&
-        tags.map((tag, index) => (
-          <Tag
-            key={`${tag.name}-${index}`}
-            color={tag.color}
-            closable
-            onClose={(e) => {
-              e.preventDefault();
-              handleTagClose(tag);
-            }}
-            onDoubleClick={() => handleTagDoubleClick(tag.name)} // Handle double-click
-            style={{ marginTop: 3, marginBottom: 3 }}
-          >
-            {tag.name}
-          </Tag>
-        ))}
-      {editingTag && (
-        <ColorPicker
-          value={inputColor}
-          onChange={(color) => handleColorChange(color.toHexString())}
-        />
-      )}
-      {inputVisible ? (
+      {tags.map((tag, index) => (
+        <React.Fragment key={`${tag.name}-${index}`}>
+          {editingTag && editingIndex === index ? (
+            <Space>
+              <AutoComplete
+                size={'small'}
+                ref={inputRef}
+                style={{ width: 200 }}
+                options={allTags?.map((tag) => ({ value: tag }))}
+                value={inputValue}
+                onChange={handleInputChange}
+                onSelect={handleInputChange}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    handleInputConfirm();
+                  }
+                }}
+                placeholder='Enter or select tag'
+              />
+              <ColorPicker
+                size={'small'}
+                value={inputColor}
+                onChange={(color) => handleColorChange(color.toHexString())}
+              />
+            </Space>
+          ) : (
+            <Tag
+              color={tag.color}
+              closable
+              onClose={(e) => {
+                e.preventDefault();
+                handleTagClose(tag);
+              }}
+              onDoubleClick={() => handleTagDoubleClick(tag, index)}
+              style={{ marginTop: 3, marginBottom: 3 }}
+            >
+              {tag.name}
+            </Tag>
+          )}
+        </React.Fragment>
+      ))}
+      {!editingTag && inputVisible && (
         <Space>
           <AutoComplete
             size={'small'}
@@ -129,12 +157,13 @@ export const PromptTags: React.FC<PromptTagsProps> = ({
           <ColorPicker
             size={'small'}
             value={inputColor}
-            onChange={(color) => setInputColor(color.toHexString())}
+            onChange={(color) => handleColorChange(color.toHexString())}
           />
         </Space>
-      ) : (
+      )}
+      {!inputVisible && !editingTag && (
         <Tag
-          onClick={showInput}
+          onClick={() => setInputVisible(true)}
           style={{
             background: token.colorBgContainer,
             borderStyle: 'dashed',
