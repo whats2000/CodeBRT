@@ -11,6 +11,7 @@ import {
   Flex,
   GlobalToken,
   theme,
+  Popover,
 } from 'antd';
 import { DeleteOutlined, EditOutlined, TagOutlined } from '@ant-design/icons';
 
@@ -203,7 +204,16 @@ export const LoadSystemPromptModal: React.FC<LoadSystemPromptModalProps> = ({
                 onClick={() => handleLoad(item.content)}
                 style={{ width: '100%' }}
               >
-                <Typography.Text>{item.name}</Typography.Text>
+                <Popover
+                  placement={'left'}
+                  content={
+                    item.description.length > 0 && (
+                      <Typography.Text>{item.description}</Typography.Text>
+                    )
+                  }
+                >
+                  <Typography.Text>{item.name}</Typography.Text>
+                </Popover>
               </div>
               {showTags && (
                 <PromptTags
