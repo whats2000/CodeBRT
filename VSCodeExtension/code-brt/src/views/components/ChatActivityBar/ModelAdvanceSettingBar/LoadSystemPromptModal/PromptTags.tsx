@@ -1,12 +1,14 @@
 import React, { useRef, useState } from 'react';
-import { ColorPicker, Input, InputRef, Space, Tag, theme } from 'antd';
+import { AutoComplete, ColorPicker, Space, Tag, theme } from 'antd';
 import { PlusOutlined } from '@ant-design/icons';
 
 import type { Tag as TagType } from '../../../../../types';
+import { BaseSelectRef } from 'rc-select';
 
 type PromptTagsProps = {
   id: string;
   tags: TagType[];
+  allTags: string[]; // List of all available tags for the AutoComplete
   tagColors: React.MutableRefObject<{ [key: string]: string }>;
   onTagsChange: (promptId: string, newTags: TagType[]) => void;
 };
@@ -14,15 +16,17 @@ type PromptTagsProps = {
 export const PromptTags: React.FC<PromptTagsProps> = ({
   id,
   tags,
+  allTags,
   tagColors,
   onTagsChange,
 }) => {
   const { token } = theme.useToken();
-  const inputRef = useRef<InputRef>(null);
+  const inputRef = useRef<BaseSelectRef>(null);
 
   const [inputVisible, setInputVisible] = useState(false);
   const [inputValue, setInputValue] = useState('');
   const [inputColor, setInputColor] = useState('#108ee9');
+  const [editingTag, setEditingTag] = useState<string | null>(null);
 
   const handleTagClose = (removedTag: TagType) => {
     onTagsChange(
@@ -36,11 +40,11 @@ export const PromptTags: React.FC<PromptTagsProps> = ({
     setTimeout(() => inputRef.current?.focus(), 0);
   };
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setInputValue(e.target.value);
+  const handleInputChange = (value: string) => {
+    setInputValue(value);
 
-    if (tagColors.current[e.target.value]) {
-      setInputColor(tagColors.current[e.target.value]);
+    if (tagColors.current[value]) {
+      setInputColor(tagColors.current[value]);
     }
   };
 
@@ -65,6 +69,22 @@ export const PromptTags: React.FC<PromptTagsProps> = ({
     setInputValue('');
   };
 
+  const handleTagDoubleClick = (tagName: string) => {
+    // Set the tag being edited
+    setEditingTag(tagName);
+    setInputColor(tagColors.current[tagName]);
+  };
+
+  const handleColorChange = (newColor: string) => {
+    // Update the color for all tags with the same name
+    const updatedTags = tags.map((tag) =>
+      tag.name === editingTag ? { ...tag, color: newColor } : tag,
+    );
+    tagColors.current[editingTag as string] = newColor;
+    setEditingTag(null);
+    onTagsChange(id, updatedTags);
+  };
+
   return (
     <Space size={'small'} wrap>
       {tags.length > 0 &&
@@ -77,28 +97,41 @@ export const PromptTags: React.FC<PromptTagsProps> = ({
               e.preventDefault();
               handleTagClose(tag);
             }}
+            onDoubleClick={() => handleTagDoubleClick(tag.name)} // Handle double-click
             style={{ marginTop: 3, marginBottom: 3 }}
           >
             {tag.name}
           </Tag>
         ))}
+      {editingTag && (
+        <ColorPicker
+          value={inputColor}
+          onChange={(color) => handleColorChange(color.toHexString())}
+        />
+      )}
       {inputVisible ? (
-        <Input.Group compact>
-          <Input
+        <Space>
+          <AutoComplete
+            size={'small'}
             ref={inputRef}
-            type='text'
-            size='small'
-            style={{ width: 78 }}
+            style={{ width: 200 }}
+            options={allTags?.map((tag) => ({ value: tag }))}
             value={inputValue}
             onChange={handleInputChange}
-            onPressEnter={handleInputConfirm}
+            onSelect={handleInputChange}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') {
+                handleInputConfirm();
+              }
+            }}
+            placeholder='Enter or select tag'
           />
           <ColorPicker
             size={'small'}
             value={inputColor}
             onChange={(color) => setInputColor(color.toHexString())}
           />
-        </Input.Group>
+        </Space>
       ) : (
         <Tag
           onClick={showInput}

@@ -210,6 +210,7 @@ export const LoadSystemPromptModal: React.FC<LoadSystemPromptModalProps> = ({
                   id={item.id}
                   tags={item.tags}
                   tagColors={tagColors}
+                  allTags={allTags}
                   onTagsChange={onTagsChange}
                 />
               )}
