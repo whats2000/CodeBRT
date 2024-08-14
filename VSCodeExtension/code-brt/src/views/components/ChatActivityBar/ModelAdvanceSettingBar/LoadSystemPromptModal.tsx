@@ -23,6 +23,7 @@ import type {
 import { WebviewContext } from '../../../WebviewContext';
 import { PromptTags } from './LoadSystemPromptModal/PromptTags';
 import styled from 'styled-components';
+import { EditPromptForm } from './LoadSystemPromptModal/EditPromptForm';
 
 const StyledDrawer = styled(Drawer)`
   & .ant-drawer-header {
@@ -41,7 +42,6 @@ const StyledListItem = styled(List.Item)<{
   margin: 4px;
   padding: 8px 0 !important;
   border-radius: 4px;
-
   background-color: transparent;
 
   &:hover {
@@ -70,6 +70,8 @@ export const LoadSystemPromptModal: React.FC<LoadSystemPromptModalProps> = ({
   const [filterTags, setFilterTags] = useState<string[]>([]);
   const [systemPrompts, setSystemPrompts] = useState<SystemPrompt[]>([]);
   const [filteredPrompts, setFilteredPrompts] = useState<SystemPrompt[]>([]);
+  const [isEditPromptFormOpen, setIsEditPromptFormOpen] = useState(false);
+  const [editPrompt, setEditPrompt] = useState<SystemPrompt | null>(null);
 
   // Centralized tag colors mapping
   const tagColors = useRef<{ [key: string]: string }>({});
@@ -144,90 +146,123 @@ export const LoadSystemPromptModal: React.FC<LoadSystemPromptModalProps> = ({
     );
   };
 
+  const openEditModal = (prompt: SystemPrompt) => {
+    setEditPrompt(prompt);
+    setIsEditPromptFormOpen(true);
+  };
+
+  const saveEditedPrompt = (updatedPrompt: SystemPrompt) => {
+    setSystemPrompts((prevPrompts) =>
+      prevPrompts.map((prompt) =>
+        prompt.id === updatedPrompt.id ? updatedPrompt : prompt,
+      ),
+    );
+    setIsEditPromptFormOpen(false);
+  };
+
   return (
-    <StyledDrawer
-      title={
-        <Flex justify={'space-between'} align={'center'}>
-          <Typography.Text>Load System Prompt</Typography.Text>
-          <Tooltip title='Show Tags'>
-            <Button
-              type={showTags ? 'primary' : 'default'}
-              icon={<TagOutlined />}
-              onClick={() => setShowTags((prev) => !prev)}
-            />
-          </Tooltip>
-        </Flex>
-      }
-      open={open}
-      onClose={handleDrawerClose} // Use the new handler here
-      placement={'right'}
-    >
-      {showTags && (
-        <div style={{ padding: 16 }}>
-          <Select
-            mode='tags'
-            style={{ width: '100%' }}
-            placeholder='Filter by tags'
-            value={filterTags}
-            onChange={setFilterTags}
-          >
-            {allTags.map((tag) => (
-              <Select.Option key={tag} value={tag}>
-                {tag}
-              </Select.Option>
-            ))}
-          </Select>
-        </div>
-      )}
-      <List
-        dataSource={filteredPrompts}
-        renderItem={(item) => (
-          <StyledListItem
-            $token={token}
-            actions={[
-              <Button type='text' icon={<EditOutlined />} ghost={true} />,
-              <Popconfirm
-                title='Are you sure you want to delete this prompt?'
-                onConfirm={() => handleDelete(item.id)}
-                okText='Yes'
-                cancelText='No'
-              >
-                <Button type={'text'} danger={true} icon={<DeleteOutlined />} />
-              </Popconfirm>,
-            ]}
-          >
-            <Space
-              direction='vertical'
-              style={{ paddingLeft: 24, width: '100%', maxWidth: '65%' }}
+    <>
+      <StyledDrawer
+        title={
+          <Flex justify={'space-between'} align={'center'}>
+            <Typography.Text>Load System Prompt</Typography.Text>
+            <Tooltip title='Show Tags'>
+              <Button
+                type={showTags ? 'primary' : 'default'}
+                icon={<TagOutlined />}
+                onClick={() => setShowTags((prev) => !prev)}
+              />
+            </Tooltip>
+          </Flex>
+        }
+        open={open}
+        onClose={handleDrawerClose}
+        placement={'right'}
+      >
+        {showTags && (
+          <div style={{ padding: 16 }}>
+            <Select
+              mode='tags'
+              style={{ width: '100%' }}
+              placeholder='Filter by tags'
+              value={filterTags}
+              onChange={setFilterTags}
             >
-              <div
-                onClick={() => handleLoad(item.content)}
-                style={{ width: '100%' }}
-              >
-                <Popover
-                  placement={'left'}
-                  content={
-                    item.description.length > 0 && (
-                      <Typography.Text>{item.description}</Typography.Text>
-                    )
-                  }
-                >
-                  <Typography.Text>{item.name}</Typography.Text>
-                </Popover>
-              </div>
-              {showTags && (
-                <PromptTags
-                  id={item.id}
-                  tags={item.tags}
-                  tagColors={tagColors}
-                  allTags={allTags}
-                  onTagsChange={onTagsChange}
-                />
-              )}
-            </Space>
-          </StyledListItem>
+              {allTags.map((tag) => (
+                <Select.Option key={tag} value={tag}>
+                  {tag}
+                </Select.Option>
+              ))}
+            </Select>
+          </div>
         )}
-      />
-    </StyledDrawer>
+        <List
+          dataSource={filteredPrompts}
+          renderItem={(item) => (
+            <StyledListItem
+              $token={token}
+              actions={[
+                <Button
+                  type='text'
+                  icon={<EditOutlined />}
+                  ghost={true}
+                  onClick={() => openEditModal(item)}
+                />,
+                <Popconfirm
+                  title='Are you sure you want to delete this prompt?'
+                  onConfirm={() => handleDelete(item.id)}
+                  okText='Yes'
+                  cancelText='No'
+                >
+                  <Button
+                    type={'text'}
+                    danger={true}
+                    icon={<DeleteOutlined />}
+                  />
+                </Popconfirm>,
+              ]}
+            >
+              <Space
+                direction='vertical'
+                style={{ paddingLeft: 24, width: '100%', maxWidth: '65%' }}
+              >
+                <div
+                  onClick={() => handleLoad(item.content)}
+                  style={{ width: '100%' }}
+                >
+                  <Popover
+                    placement={'left'}
+                    content={
+                      item.description.length > 0 && (
+                        <Typography.Text>{item.description}</Typography.Text>
+                      )
+                    }
+                  >
+                    <Typography.Text>{item.name}</Typography.Text>
+                  </Popover>
+                </div>
+                {showTags && (
+                  <PromptTags
+                    id={item.id}
+                    tags={item.tags}
+                    tagColors={tagColors}
+                    allTags={allTags}
+                    onTagsChange={onTagsChange}
+                  />
+                )}
+              </Space>
+            </StyledListItem>
+          )}
+        />
+      </StyledDrawer>
+      {editPrompt && (
+        <EditPromptForm
+          open={isEditPromptFormOpen}
+          prompt={editPrompt}
+          onClose={() => setIsEditPromptFormOpen(false)}
+          onSave={saveEditedPrompt}
+        />
+      )}
+    </>
   );
 };
