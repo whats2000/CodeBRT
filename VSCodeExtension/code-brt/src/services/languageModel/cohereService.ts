@@ -15,6 +15,14 @@ import { ToolService } from '../tools';
 import { ChatRequest } from 'cohere-ai/api/client/requests/ChatRequest';
 
 export class CohereService extends AbstractLanguageModelService {
+  private readonly modelsWithoutTools = [
+    'command',
+    'command-light',
+    'c4ai-aya-23-35b',
+    'command-light-nightly',
+    'c4ai-aya-23-8b',
+  ];
+
   constructor(
     context: vscode.ExtensionContext,
     settingsManager: SettingsManager,
@@ -256,6 +264,9 @@ export class CohereService extends AbstractLanguageModelService {
       });
     }
 
+    // Determine whether the current model should use tools
+    const shouldUseTools = !this.modelsWithoutTools.includes(this.currentModel);
+
     try {
       if (!sendStreamResponse) {
         while (functionCallCount < MAX_FUNCTION_CALLS) {
@@ -263,10 +274,7 @@ export class CohereService extends AbstractLanguageModelService {
             model: this.currentModel,
             message: toolResults.length > 0 ? '' : query,
             chatHistory: conversationHistory,
-            tools:
-              this.currentModel !== 'command'
-                ? this.getEnabledTools()
-                : undefined,
+            tools: shouldUseTools ? this.getEnabledTools() : undefined,
             toolResults: toolResults.length > 0 ? toolResults : undefined,
             ...generationConfig,
           });
@@ -293,10 +301,7 @@ export class CohereService extends AbstractLanguageModelService {
             model: this.currentModel,
             message: toolResults.length > 0 ? '' : query,
             chatHistory: conversationHistory,
-            tools:
-              this.currentModel !== 'command'
-                ? this.getEnabledTools()
-                : undefined,
+            tools: shouldUseTools ? this.getEnabledTools() : undefined,
             toolResults: toolResults.length > 0 ? toolResults : undefined,
             ...generationConfig,
           });
