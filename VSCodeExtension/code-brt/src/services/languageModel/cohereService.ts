@@ -54,7 +54,9 @@ export class CohereService extends AbstractLanguageModelService {
           : undefined,
       generationConfig: {
         maxTokens: advanceSettings.maxTokens,
-        temperature: advanceSettings.temperature,
+        temperature: advanceSettings.temperature
+          ? advanceSettings.temperature / 2
+          : undefined,
         k: advanceSettings.topK,
         p: advanceSettings.topP,
         presencePenalty: advanceSettings.presencePenalty

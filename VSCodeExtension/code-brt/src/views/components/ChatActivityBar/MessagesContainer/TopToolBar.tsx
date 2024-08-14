@@ -144,7 +144,7 @@ export const TopToolBar: React.FC<MessagesTopToolBarProps> = ({
           ? modelType.charAt(0).toUpperCase() + modelType.slice(1)
           : 'You'}
       </RespondCharacter>
-      <Flex gap={1}>
+      <Flex gap={1} wrap={true} justify={'flex-end'}>
         {parent && siblingCount > 1 && (
           <>
             <Button
