@@ -83,6 +83,16 @@ export const LoadSystemPromptModal: React.FC<LoadSystemPromptModalProps> = ({
           ...prompt,
           tags: Array.isArray(prompt.tags) ? prompt.tags : [],
         }));
+
+        // Initialize tagColors ref with existing tags
+        promptsWithTags.forEach((prompt: SystemPrompt) => {
+          prompt.tags.forEach((tag) => {
+            if (!tagColors.current[tag.name]) {
+              tagColors.current[tag.name] = tag.color;
+            }
+          });
+        });
+
         setSystemPrompts(promptsWithTags);
       });
     }
@@ -127,13 +137,9 @@ export const LoadSystemPromptModal: React.FC<LoadSystemPromptModalProps> = ({
 
   const handleDrawerClose = () => {
     // Save the updated system prompts when the drawer is closed
-    callApi('setSetting', 'systemPrompts', systemPrompts)
-      .then(() => {
-        console.log('System prompts updated successfully');
-      })
-      .catch((error) => {
-        console.error('Failed to update system prompts:', error);
-      });
+    callApi('setSetting', 'systemPrompts', systemPrompts).catch((error) => {
+      console.error('Failed to update system prompts:', error);
+    });
 
     onClose();
   };
@@ -158,6 +164,24 @@ export const LoadSystemPromptModal: React.FC<LoadSystemPromptModalProps> = ({
       ),
     );
     setIsEditPromptFormOpen(false);
+  };
+
+  // Method to update all tags with the same name across all prompts
+  const changeTag = (oldTag: TagType, newTag: TagType) => {
+    setSystemPrompts((prevPrompts) =>
+      prevPrompts.map((prompt) => {
+        const updatedTags = prompt.tags.map((tag) =>
+          tag.name === oldTag.name ? { ...tag, ...newTag } : tag,
+        );
+        return { ...prompt, tags: updatedTags };
+      }),
+    );
+
+    // Update the tagColors ref
+    if (tagColors.current[oldTag.name]) {
+      delete tagColors.current[oldTag.name];
+    }
+    tagColors.current[newTag.name] = newTag.color;
   };
 
   return (
@@ -248,6 +272,7 @@ export const LoadSystemPromptModal: React.FC<LoadSystemPromptModalProps> = ({
                     tagColors={tagColors}
                     allTags={allTags}
                     onTagsChange={onTagsChange}
+                    onTagEdit={changeTag}
                   />
                 )}
               </Space>

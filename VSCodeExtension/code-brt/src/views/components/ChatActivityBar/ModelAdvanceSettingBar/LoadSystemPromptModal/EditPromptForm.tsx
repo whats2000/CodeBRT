@@ -47,6 +47,7 @@ export const EditPromptForm: React.FC<EditPromptFormProps> = ({
       title='Edit System Prompt'
       open={open}
       onCancel={onClose}
+      zIndex={2000}
       footer={[
         <Button key='cancel' onClick={onClose}>
           Cancel
