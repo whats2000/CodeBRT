@@ -159,9 +159,11 @@ export type ViewApi = {
 
   /**
    * Update the current history's model advance settings.
+   * @param historyID - The ID of the history to update the advance settings for.
    * @param advanceSettings - The new advance settings.
    */
-  updateCurrentHistoryModelAdvanceSettings: (
+  updateHistoryModelAdvanceSettings: (
+    historyID: string,
     advanceSettings: ConversationModelAdvanceSettings,
   ) => void;
 

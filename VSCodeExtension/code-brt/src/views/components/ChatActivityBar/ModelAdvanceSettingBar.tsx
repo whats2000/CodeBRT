@@ -77,7 +77,8 @@ export const ModelAdvanceSettingBar: React.FC<ModelAdvanceSettingsProps> = ({
   const handleSave = async () => {
     try {
       await callApi(
-        'updateCurrentHistoryModelAdvanceSettings',
+        'updateHistoryModelAdvanceSettings',
+        conversationHistory.root,
         newAdvanceSettings,
       );
       setConversationHistory((prev) => ({

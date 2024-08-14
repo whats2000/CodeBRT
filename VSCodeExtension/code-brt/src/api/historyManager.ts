@@ -367,14 +367,19 @@ export class HistoryManager implements IHistoryManager {
     );
   }
 
-  public async updateCurrentHistoryModelAdvanceSettings(
+  public async updateHistoryModelAdvanceSettings(
+    historyID: string,
     advanceSettings: ConversationModelAdvanceSettings,
   ): Promise<void> {
     this.history.advanceSettings = advanceSettings;
-    await this.saveHistoryById(this.history).catch((error) =>
-      vscode.window.showErrorMessage(
-        'Failed to update model advance settings: ' + error,
-      ),
-    );
+
+    // Only save the history when it's created otherwise only store in memory
+    if (this.historyIndex[historyID]) {
+      await this.saveHistoryIndex().catch((error) =>
+        vscode.window.showErrorMessage(
+          'Failed to save history index: ' + error,
+        ),
+      );
+    }
   }
 }

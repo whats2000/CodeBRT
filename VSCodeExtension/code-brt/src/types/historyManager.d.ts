@@ -92,7 +92,8 @@ export type IHistoryManager = {
   /**
    * Update the current history's model advance settings
    */
-  updateCurrentHistoryModelAdvanceSettings(
+  updateHistoryModelAdvanceSettings(
+    historyID: string,
     advanceSettings: ConversationModelAdvanceSettings,
   ): Promise<void>;
 };

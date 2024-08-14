@@ -189,8 +189,11 @@ export const activate = async (ctx: vscode.ExtensionContext) => {
     removeHistoryTag: (historyID, tag) => {
       historyManager.removeTagFromHistory(historyID, tag);
     },
-    updateCurrentHistoryModelAdvanceSettings: (advanceSettings) => {
-      historyManager.updateCurrentHistoryModelAdvanceSettings(advanceSettings);
+    updateHistoryModelAdvanceSettings: (historyID, advanceSettings) => {
+      historyManager.updateHistoryModelAdvanceSettings(
+        historyID,
+        advanceSettings,
+      );
     },
     addConversationEntry: async (
       parentID,
