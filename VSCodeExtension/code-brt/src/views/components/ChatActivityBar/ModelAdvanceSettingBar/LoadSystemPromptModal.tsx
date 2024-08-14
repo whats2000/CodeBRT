@@ -1,4 +1,5 @@
 import React, { useState, useContext, useEffect, useRef } from 'react';
+import type { GlobalToken } from 'antd';
 import {
   List,
   Button,
@@ -9,11 +10,16 @@ import {
   Select,
   Space,
   Flex,
-  GlobalToken,
   theme,
   Popover,
+  AutoComplete,
 } from 'antd';
-import { DeleteOutlined, EditOutlined, TagOutlined } from '@ant-design/icons';
+import {
+  DeleteOutlined,
+  EditOutlined,
+  FilterOutlined,
+} from '@ant-design/icons';
+import styled from 'styled-components';
 
 import type {
   ConversationModelAdvanceSettings,
@@ -22,7 +28,6 @@ import type {
 } from '../../../../types';
 import { WebviewContext } from '../../../WebviewContext';
 import { PromptTags } from './LoadSystemPromptModal/PromptTags';
-import styled from 'styled-components';
 import { EditPromptForm } from './LoadSystemPromptModal/EditPromptForm';
 
 const StyledDrawer = styled(Drawer)`
@@ -68,6 +73,7 @@ export const LoadSystemPromptModal: React.FC<LoadSystemPromptModalProps> = ({
   const [showTags, setShowTags] = useState(false);
   const [allTags, setAllTags] = useState<string[]>([]);
   const [filterTags, setFilterTags] = useState<string[]>([]);
+  const [filterName, setFilterName] = useState<string>(''); // State for name filter
   const [systemPrompts, setSystemPrompts] = useState<SystemPrompt[]>([]);
   const [filteredPrompts, setFilteredPrompts] = useState<SystemPrompt[]>([]);
   const [isEditPromptFormOpen, setIsEditPromptFormOpen] = useState(false);
@@ -109,15 +115,21 @@ export const LoadSystemPromptModal: React.FC<LoadSystemPromptModalProps> = ({
   }, [systemPrompts]);
 
   useEffect(() => {
-    if (filterTags.length === 0) {
-      setFilteredPrompts(systemPrompts);
-    } else {
-      const filtered = systemPrompts.filter((prompt) =>
-        filterTags.every((tag) => prompt.tags.some((t) => t.name === tag)),
-      );
-      setFilteredPrompts(filtered);
-    }
-  }, [filterTags, systemPrompts]);
+    const filteredByTags =
+      filterTags.length === 0
+        ? systemPrompts
+        : systemPrompts.filter((prompt) =>
+            filterTags.every((tag) => prompt.tags.some((t) => t.name === tag)),
+          );
+
+    const filteredByName = filterName
+      ? filteredByTags.filter((prompt) =>
+          prompt.name.toLowerCase().includes(filterName.toLowerCase()),
+        )
+      : filteredByTags;
+
+    setFilteredPrompts(filteredByName);
+  }, [filterTags, filterName, systemPrompts]);
 
   const handleLoad = (content: string) => {
     setNewAdvanceSettings((prevSettings) => ({
@@ -193,7 +205,7 @@ export const LoadSystemPromptModal: React.FC<LoadSystemPromptModalProps> = ({
             <Tooltip title='Show Tags'>
               <Button
                 type={showTags ? 'primary' : 'default'}
-                icon={<TagOutlined />}
+                icon={<FilterOutlined />}
                 onClick={() => setShowTags((prev) => !prev)}
               />
             </Tooltip>
@@ -205,6 +217,18 @@ export const LoadSystemPromptModal: React.FC<LoadSystemPromptModalProps> = ({
       >
         {showTags && (
           <div style={{ padding: 16 }}>
+            <AutoComplete
+              style={{ width: '100%', marginBottom: 16 }}
+              placeholder='Search by name'
+              options={systemPrompts.map((prompt) => ({ value: prompt.name }))}
+              value={filterName}
+              onChange={(value) => setFilterName(value)}
+              filterOption={(inputValue, option) =>
+                option?.value
+                  .toLowerCase()
+                  .includes(inputValue.toLowerCase()) as boolean
+              }
+            />
             <Select
               mode='tags'
               style={{ width: '100%' }}
