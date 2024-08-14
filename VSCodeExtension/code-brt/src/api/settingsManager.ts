@@ -66,6 +66,7 @@ export class SettingsManager {
       webSearch: { active: false },
       urlFetcher: { active: false },
     },
+    systemPrompts: [],
   };
   private readonly defaultCrossDeviceSettings: ExtensionSettingsCrossDevice = {
     anthropicApiKey: '',

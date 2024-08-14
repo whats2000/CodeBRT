@@ -6,11 +6,10 @@ import {
   Button,
   Row,
   Col,
-  Form,
   Typography,
   Tooltip,
   Space,
-  Flex,
+  Form,
 } from 'antd';
 import {
   ClearOutlined,
@@ -25,6 +24,8 @@ import type {
 } from '../../../types';
 import { WebviewContext } from '../../WebviewContext';
 import { MODEL_ADVANCE_SETTINGS } from '../../../constants';
+import { SaveSystemPromptModal } from './ModelAdvanceSettingBar/SaveSystemPromptModal';
+import { LoadSystemPromptModal } from './ModelAdvanceSettingBar/LoadSystemPromptModal';
 
 export interface ModelAdvanceSettingsProps {
   isOpen: boolean;
@@ -49,24 +50,30 @@ export const ModelAdvanceSettingBar: React.FC<ModelAdvanceSettingsProps> = ({
   const [showMoreInfoSettingName, setShowMoreInfoSettingName] = useState<
     string | null
   >(null);
+  const [savePromptOpen, setSavePromptOpen] = useState(false);
+  const [loadPromptOpen, setLoadPromptOpen] = useState(false);
 
   useEffect(() => {
     if (isOpen) {
       setNewAdvanceSettings(advanceSettings);
     } else {
-      handleSave();
+      handleSave().then();
     }
   }, [isOpen]);
 
-  const handleSave = () => {
-    callApi('updateCurrentHistoryModelAdvanceSettings', newAdvanceSettings)
-      .then(() => {
-        setConversationHistory((prev) => ({
-          ...prev,
-          advanceSettings: newAdvanceSettings,
-        }));
-      })
-      .catch((err) => console.error('Failed to save settings:', err));
+  const handleSave = async () => {
+    try {
+      await callApi(
+        'updateCurrentHistoryModelAdvanceSettings',
+        newAdvanceSettings,
+      );
+      setConversationHistory((prev) => ({
+        ...prev,
+        advanceSettings: newAdvanceSettings,
+      }));
+    } catch (err) {
+      console.error('Failed to save settings:', err);
+    }
   };
 
   const handleInputChange = (
@@ -80,160 +87,169 @@ export const ModelAdvanceSettingBar: React.FC<ModelAdvanceSettingsProps> = ({
   };
 
   const clearField = (field: keyof ConversationModelAdvanceSettings) => {
-    if (field === 'systemPrompt') {
-      setNewAdvanceSettings((prev) => ({
-        ...prev,
-        systemPrompt: 'You are a helpful assistant.',
-      }));
-      return;
-    }
-
     setNewAdvanceSettings((prev) => ({
       ...prev,
-      [field]: null,
+      [field]: field === 'systemPrompt' ? 'You are a helpful assistant.' : null,
     }));
   };
 
-  return (
-    <Drawer
-      title='Model Advance Settings'
-      placement='left'
-      closable={true}
-      onClose={onClose}
-      open={isOpen}
-    >
-      {Object.entries(newAdvanceSettings).map(([key, value]) => (
-        <>
-          <Form.Item
-            label={
-              <Space>
-                <span>
-                  {key.charAt(0).toUpperCase() +
-                    key.slice(1).replace(/([A-Z])/g, ' $1')}
-                </span>
-                <Tooltip title='Click to show more information'>
-                  <Typography.Link
-                    type={'secondary'}
-                    onClick={() =>
-                      setShowMoreInfoSettingName(
-                        showMoreInfoSettingName === key ? null : key,
-                      )
-                    }
-                  >
-                    <QuestionCircleFilled />
-                  </Typography.Link>
-                </Tooltip>
-              </Space>
-            }
-            layout={'vertical'}
-            key={key}
-          >
-            {key === 'systemPrompt' ? (
-              <Input.TextArea
-                value={newAdvanceSettings.systemPrompt || ''}
-                onChange={(e) =>
-                  handleInputChange('systemPrompt', e.target.value)
-                }
-                placeholder='Enter system prompt'
-                autoSize={{ minRows: 2, maxRows: 10 }}
-                allowClear
-              />
-            ) : (
-              <Row gutter={8} align={'middle'}>
-                <Col flex={'auto'}>
-                  <InputNumber
-                    max={
-                      MODEL_ADVANCE_SETTINGS[
-                        key as keyof ConversationModelAdvanceSettings
-                      ].range.max
-                    }
-                    min={
-                      MODEL_ADVANCE_SETTINGS[
-                        key as keyof ConversationModelAdvanceSettings
-                      ].range.min
-                    }
-                    style={{ width: '100%' }}
-                    value={value as number | null}
-                    onChange={(val) =>
-                      handleInputChange(
-                        key as keyof ConversationModelAdvanceSettings,
-                        val,
-                      )
-                    }
-                    placeholder={`Enter ${key}`}
-                    changeOnWheel={true}
-                  />
-                </Col>
-                <Col>
-                  {key !== 'systemPrompt' && (
-                    <Tooltip title='Clear field' placement={'right'}>
-                      <Button
-                        type='text'
-                        danger={true}
-                        icon={<ClearOutlined />}
-                        onClick={() =>
-                          clearField(
-                            key as keyof ConversationModelAdvanceSettings,
-                          )
-                        }
-                      />
-                    </Tooltip>
-                  )}
-                </Col>
-              </Row>
-            )}
-          </Form.Item>
-          {key === 'systemPrompt' && (
-            <Flex
-              justify={'space-between'}
-              style={{ width: '100%', marginBottom: 20 }}
+  const handleMoreInfoToggle = (key: string) => {
+    setShowMoreInfoSettingName(showMoreInfoSettingName === key ? null : key);
+  };
+
+  const renderFormItem = (key: string, value: number | string | null) => (
+    <Form.Item
+      label={
+        <Space>
+          <span>
+            {key.charAt(0).toUpperCase() +
+              key.slice(1).replace(/([A-Z])/g, ' $1')}
+          </span>
+          <Tooltip title='Click to show more information'>
+            <Typography.Link
+              type={'secondary'}
+              onClick={() => handleMoreInfoToggle(key)}
             >
-              <Button>
-                <ImportOutlined /> Load
-              </Button>
-              <Button>
-                <SaveOutlined /> Save
-              </Button>
-              <Button danger={true} onClick={() => clearField('systemPrompt')}>
-                <ClearOutlined /> Set Default
-              </Button>
-            </Flex>
-          )}
-          {showMoreInfoSettingName === key && (
-            <Typography.Paragraph type={'secondary'}>
-              {
+              <QuestionCircleFilled />
+            </Typography.Link>
+          </Tooltip>
+        </Space>
+      }
+      key={key}
+      layout={'vertical'}
+    >
+      {key === 'systemPrompt' ? (
+        <Input.TextArea
+          value={(value as string) || ''}
+          onChange={(e) =>
+            handleInputChange(
+              key as keyof ConversationModelAdvanceSettings,
+              e.target.value,
+            )
+          }
+          placeholder='Enter system prompt'
+          autoSize={{ minRows: 2, maxRows: 10 }}
+        />
+      ) : (
+        <Row gutter={8} align={'middle'}>
+          <Col flex={'auto'}>
+            <InputNumber
+              max={
                 MODEL_ADVANCE_SETTINGS[
                   key as keyof ConversationModelAdvanceSettings
-                ].description
-              }{' '}
-              {MODEL_ADVANCE_SETTINGS[
-                key as keyof ConversationModelAdvanceSettings
-              ].link && (
-                <Typography.Link
-                  type={'warning'}
-                  href={
-                    MODEL_ADVANCE_SETTINGS[
-                      key as keyof ConversationModelAdvanceSettings
-                    ].link
-                  }
-                  target='_blank'
-                  rel='noreferrer'
-                >
-                  Learn more
-                </Typography.Link>
-              )}
-            </Typography.Paragraph>
-          )}
-        </>
-      ))}
-      <Button
-        type='primary'
-        ghost={true}
-        onClick={onClose}
-        style={{ marginTop: 20, width: '100%' }}
+                ].range.max
+              }
+              min={
+                MODEL_ADVANCE_SETTINGS[
+                  key as keyof ConversationModelAdvanceSettings
+                ].range.min
+              }
+              style={{ width: '100%' }}
+              value={value as number | null}
+              onChange={(val) =>
+                handleInputChange(
+                  key as keyof ConversationModelAdvanceSettings,
+                  val,
+                )
+              }
+              placeholder={`Enter ${key}`}
+              changeOnWheel={true}
+            />
+          </Col>
+          <Col>
+            <Tooltip title='Clear field' placement={'right'}>
+              <Button
+                type='text'
+                danger
+                icon={<ClearOutlined />}
+                onClick={() =>
+                  clearField(key as keyof ConversationModelAdvanceSettings)
+                }
+              />
+            </Tooltip>
+          </Col>
+        </Row>
+      )}
+    </Form.Item>
+  );
+
+  return (
+    <>
+      <Drawer
+        title='Model Advance Settings'
+        placement='left'
+        closable={true}
+        onClose={onClose}
+        open={isOpen}
       >
-        Close and Save
-      </Button>
-    </Drawer>
+        {Object.entries(newAdvanceSettings).map(([key, value]) => (
+          <React.Fragment key={key}>
+            {renderFormItem(key, value as number | string | null)}
+            {key === 'systemPrompt' && (
+              <Space
+                style={{
+                  justifyContent: 'space-between',
+                  width: '100%',
+                  marginBottom: 20,
+                }}
+              >
+                <Button onClick={() => setLoadPromptOpen(true)}>
+                  <ImportOutlined /> Load
+                </Button>
+                <Button onClick={() => setSavePromptOpen(true)}>
+                  <SaveOutlined /> Save
+                </Button>
+                <Button danger onClick={() => clearField('systemPrompt')}>
+                  <ClearOutlined /> Set Default
+                </Button>
+              </Space>
+            )}
+            {showMoreInfoSettingName === key && (
+              <Typography.Paragraph type={'secondary'}>
+                {
+                  MODEL_ADVANCE_SETTINGS[
+                    key as keyof ConversationModelAdvanceSettings
+                  ].description
+                }{' '}
+                {MODEL_ADVANCE_SETTINGS[
+                  key as keyof ConversationModelAdvanceSettings
+                ].link && (
+                  <Typography.Link
+                    href={
+                      MODEL_ADVANCE_SETTINGS[
+                        key as keyof ConversationModelAdvanceSettings
+                      ].link
+                    }
+                    target='_blank'
+                    rel='noreferrer'
+                    type={'warning'}
+                  >
+                    Learn more
+                  </Typography.Link>
+                )}
+              </Typography.Paragraph>
+            )}
+          </React.Fragment>
+        ))}
+        <Button
+          type='primary'
+          ghost
+          onClick={onClose}
+          style={{ marginTop: 20, width: '100%' }}
+        >
+          Close and Save
+        </Button>
+      </Drawer>
+      <SaveSystemPromptModal
+        open={savePromptOpen}
+        onClose={() => setSavePromptOpen(false)}
+        currentPromptContent={newAdvanceSettings.systemPrompt}
+      />
+      <LoadSystemPromptModal
+        open={loadPromptOpen}
+        onClose={() => setLoadPromptOpen(false)}
+        setNewAdvanceSettings={setNewAdvanceSettings}
+      />
+    </>
   );
 };

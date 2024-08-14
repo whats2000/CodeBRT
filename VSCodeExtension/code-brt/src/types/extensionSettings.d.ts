@@ -9,6 +9,38 @@ import {
 import { ToolServiceType } from './toolServicesType';
 
 /**
+ * A Tag object for categorizing System Prompts
+ * @property color - The color associated with the tag
+ * @property name - The name of the tag
+ * @property description - A brief description of the tag
+ */
+export type Tag = {
+  color: string;
+  name: string;
+  description: string;
+};
+
+/**
+ * A System Prompt object for storing prompt details
+ * @property id - A unique identifier for the system prompt
+ * @property name - The name of the system prompt
+ * @property description - A brief description of the system prompt
+ * @property content - The actual prompt content
+ * @property tags - An array of tags associated with the system prompt
+ * @property createdAt - The timestamp when the prompt was created
+ * @property updatedAt - The timestamp when the prompt was last updated
+ */
+export type SystemPrompt = {
+  id: string;
+  name: string;
+  description: string;
+  content: string;
+  tags: Tag[];
+  createdAt: number;
+  updatedAt: number;
+};
+
+/**
  * Represents the settings for a reference voice for the GPT-SoVits API.
  * @property id - Identifier for the voice setting
  * @property name - The name of the voice setting
@@ -93,6 +125,7 @@ export type ExtensionSettingsLocal = {
       active: boolean;
     };
   };
+  systemPrompts: SystemPrompt[];
 };
 
 /**
