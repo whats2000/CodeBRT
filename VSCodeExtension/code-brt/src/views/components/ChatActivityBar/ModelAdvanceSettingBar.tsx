@@ -36,6 +36,16 @@ export type ModelAdvanceSettingsProps = {
   >;
 };
 
+const DEFAULT_ADVANCE_SETTINGS: ConversationModelAdvanceSettings = {
+  systemPrompt: 'You are a helpful assistant.',
+  maxTokens: undefined,
+  temperature: undefined,
+  topP: undefined,
+  topK: undefined,
+  presencePenalty: undefined,
+  frequencyPenalty: undefined,
+};
+
 export const ModelAdvanceSettingBar: React.FC<ModelAdvanceSettingsProps> = ({
   isOpen,
   onClose,
@@ -55,7 +65,10 @@ export const ModelAdvanceSettingBar: React.FC<ModelAdvanceSettingsProps> = ({
 
   useEffect(() => {
     if (isOpen) {
-      setNewAdvanceSettings(advanceSettings);
+      setNewAdvanceSettings({
+        ...DEFAULT_ADVANCE_SETTINGS,
+        ...advanceSettings,
+      });
     } else {
       handleSave().then();
     }
