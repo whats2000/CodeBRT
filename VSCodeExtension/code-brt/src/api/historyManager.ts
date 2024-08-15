@@ -371,6 +371,9 @@ export class HistoryManager implements IHistoryManager {
     historyID: string,
     advanceSettings: ConversationModelAdvanceSettings,
   ): Promise<void> {
+    // Prevent updating the advance settings if the history got swapped
+    if (this.history.root !== historyID) return;
+
     this.history.advanceSettings = advanceSettings;
 
     // Only save the history when it's created otherwise only store in memory
