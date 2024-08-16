@@ -6,7 +6,7 @@ import { ControlOutlined } from '@ant-design/icons';
 import { useSelector, useDispatch } from 'react-redux';
 
 import type { ModelServiceType } from '../../types';
-import type { RootState } from '../redux';
+import { RootState, store } from '../redux';
 import { INPUT_MESSAGE_KEY, UPLOADED_IMAGES_KEY } from '../../constants';
 import {
   addEntry,
@@ -199,50 +199,56 @@ export const ChatActivityBar = () => {
     dispatch(addTempAIResponseEntry({ parentId: userEntry.id }));
     scrollToBottom(false);
 
-    try {
-      const responseText = await callApi(
-        'getLanguageModelResponse',
-        activeModelService,
-        message,
-        images.length > 0 ? images : undefined,
-        isEdited ? userEntry.id : undefined,
-        true,
-        true,
-      );
+    callApi(
+      'getLanguageModelResponse',
+      activeModelService,
+      message,
+      images.length > 0 ? images : undefined,
+      isEdited ? userEntry.id : undefined,
+      true,
+      true,
+    )
+      .then(async (response) => {
+        const responseText = await response;
+        if (!store.getState().conversation?.tempId) {
+          callApi(
+            'alertMessage',
+            'The temporary entry id is not found',
+            'error',
+          ).catch(console.error);
+          setIsProcessing(false);
+          return;
+        }
 
-      if (!conversationHistory.tempId) {
+        const aiEntry = await callApi(
+          'addConversationEntry',
+          userEntry.id,
+          'AI',
+          responseText,
+          undefined,
+          activeModelService,
+        );
+
+        dispatch(replaceTempEntry(aiEntry));
+
+        if (!isEdited) {
+          setInputMessage('');
+          setUploadedImages([]);
+        }
+
+        setTimeout(() => {
+          setIsProcessing(false);
+          scrollToBottom(true);
+        }, 1000);
+      })
+      .catch((error) => {
+        callApi(
+          'alertMessage',
+          `Failed to get response: ${error}`,
+          'error',
+        ).catch(console.error);
         setIsProcessing(false);
-        return;
-      }
-
-      const aiEntry = await callApi(
-        'addConversationEntry',
-        userEntry.id,
-        'AI',
-        responseText,
-        undefined,
-        activeModelService,
-      );
-
-      dispatch(replaceTempEntry(aiEntry));
-
-      if (!isEdited) {
-        setInputMessage('');
-        setUploadedImages([]);
-      }
-
-      setTimeout(() => {
-        setIsProcessing(false);
-        scrollToBottom(true);
-      }, 1000);
-    } catch (error) {
-      callApi(
-        'alertMessage',
-        `Failed to get response: ${error}`,
-        'error',
-      ).catch(console.error);
-      setIsProcessing(false);
-    }
+      });
   };
 
   const sendMessage = async () => {

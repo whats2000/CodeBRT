@@ -150,7 +150,7 @@ export const HistorySidebar: React.FC<HistorySidebarProps> = ({
           return updatedHistories;
         });
 
-        setConversationHistory(await newConversationHistory);
+        dispatch(setConversationHistory(await newConversationHistory));
       })
       .catch((error) =>
         callApi(

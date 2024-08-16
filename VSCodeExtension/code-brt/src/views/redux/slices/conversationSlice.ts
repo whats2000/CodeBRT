@@ -63,7 +63,6 @@ const conversationSlice = createSlice({
         parent: action.payload.parentId,
         children: [],
       };
-      state.entries[action.payload.parentId].children.push(tempId);
       state.current = tempId;
       state.tempId = tempId;
     },
