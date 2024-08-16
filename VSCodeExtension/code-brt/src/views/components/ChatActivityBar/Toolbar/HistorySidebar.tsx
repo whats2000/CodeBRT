@@ -3,14 +3,16 @@ import styled from 'styled-components';
 import { Divider, GlobalToken, Select, Tooltip } from 'antd';
 import { Drawer, List, Typography, Button, theme, Flex } from 'antd';
 import { TagOutlined } from '@ant-design/icons';
+import { useDispatch, useSelector } from 'react-redux';
 import { differenceInDays, isBefore, isToday, isYesterday } from 'date-fns';
 
 import type {
-  ConversationHistory,
   ConversationHistoryIndexList,
   ModelServiceType,
 } from '../../../../types';
+import type { RootState } from '../../../redux';
 import { WebviewContext } from '../../../WebviewContext';
+import { setConversationHistory } from '../../../redux/slices/conversationSlice';
 import { HistoryListItem } from './HistorySidebar/HistoryListItem';
 
 const StyledDrawer = styled(Drawer)`
@@ -39,20 +41,20 @@ type HistorySidebarProps = {
   isOpen: boolean;
   onClose: () => void;
   activeModelService: ModelServiceType | 'loading...';
-  conversationHistory: ConversationHistory;
-  setConversationHistory: React.Dispatch<
-    React.SetStateAction<ConversationHistory>
-  >;
 };
 
 export const HistorySidebar: React.FC<HistorySidebarProps> = ({
   isOpen,
   onClose,
   activeModelService,
-  conversationHistory,
-  setConversationHistory,
 }) => {
   const { callApi } = useContext(WebviewContext);
+
+  const dispatch = useDispatch();
+  const conversationHistory = useSelector(
+    (state: RootState) => state.conversation,
+  );
+
   const [histories, setHistories] = useState<ConversationHistoryIndexList>({});
   const [isLoading, setIsLoading] = useState(true);
   const [editingHistoryID, setEditingHistoryID] = useState<string | null>(null);
@@ -121,7 +123,7 @@ export const HistorySidebar: React.FC<HistorySidebarProps> = ({
     callApi('switchHistory', historyID)
       .then(() => callApi('getCurrentHistory'))
       .then((history) => {
-        setConversationHistory(history);
+        dispatch(setConversationHistory(history));
         setIsLoading(false);
       })
       .catch((error) => {

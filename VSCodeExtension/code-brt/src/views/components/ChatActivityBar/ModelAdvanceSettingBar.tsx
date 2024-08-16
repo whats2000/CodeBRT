@@ -17,24 +17,15 @@ import {
   QuestionCircleFilled,
   SaveOutlined,
 } from '@ant-design/icons';
+import { useDispatch, useSelector } from 'react-redux';
 
-import type {
-  ConversationHistory,
-  ConversationModelAdvanceSettings,
-} from '../../../types';
+import type { ConversationModelAdvanceSettings } from '../../../types';
+import type { RootState } from '../../redux';
 import { WebviewContext } from '../../WebviewContext';
 import { MODEL_ADVANCE_SETTINGS } from '../../../constants';
 import { SaveSystemPromptModal } from './ModelAdvanceSettingBar/SaveSystemPromptModal';
 import { LoadSystemPromptModal } from './ModelAdvanceSettingBar/LoadSystemPromptModal';
-
-export type ModelAdvanceSettingsProps = {
-  isOpen: boolean;
-  onClose: () => void;
-  conversationHistory: ConversationHistory;
-  setConversationHistory: React.Dispatch<
-    React.SetStateAction<ConversationHistory>
-  >;
-};
+import { setAdvanceSettings } from '../../redux/slices/conversationSlice';
 
 const DEFAULT_ADVANCE_SETTINGS: ConversationModelAdvanceSettings = {
   systemPrompt: 'You are a helpful assistant.',
@@ -46,13 +37,22 @@ const DEFAULT_ADVANCE_SETTINGS: ConversationModelAdvanceSettings = {
   frequencyPenalty: undefined,
 };
 
+export type ModelAdvanceSettingsProps = {
+  isOpen: boolean;
+  onClose: () => void;
+};
+
 export const ModelAdvanceSettingBar: React.FC<ModelAdvanceSettingsProps> = ({
   isOpen,
   onClose,
-  conversationHistory,
-  setConversationHistory,
 }) => {
   const { callApi } = useContext(WebviewContext);
+
+  const dispatch = useDispatch();
+  const conversationHistory = useSelector(
+    (state: RootState) => state.conversation,
+  );
+
   const { advanceSettings } = conversationHistory;
 
   const [newAdvanceSettings, setNewAdvanceSettings] =
@@ -87,10 +87,7 @@ export const ModelAdvanceSettingBar: React.FC<ModelAdvanceSettingsProps> = ({
         conversationHistory.root,
         sanitizedSettings,
       );
-      setConversationHistory((prev) => ({
-        ...prev,
-        advanceSettings: sanitizedSettings,
-      }));
+      dispatch(setAdvanceSettings(sanitizedSettings));
     } catch (err) {
       console.error('Failed to save settings:', err);
     }

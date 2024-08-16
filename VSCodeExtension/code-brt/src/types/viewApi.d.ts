@@ -1,5 +1,6 @@
 import { CustomModelSettings, ExtensionSettings } from './extensionSettings';
 import {
+  ConversationEntry,
   ConversationHistory,
   ConversationHistoryIndexList,
   ConversationModelAdvanceSettings,
@@ -182,7 +183,7 @@ export type ViewApi = {
     message: string,
     images?: string[],
     modelServiceType?: ModelServiceType,
-  ) => Promise<string>;
+  ) => Promise<ConversationEntry>;
 
   /**
    * Get the available models for a language model.

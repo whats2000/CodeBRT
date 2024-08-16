@@ -9,8 +9,10 @@ import {
   AudioOutlined,
 } from '@ant-design/icons';
 import styled from 'styled-components';
+import { useDispatch } from 'react-redux';
 
-import { ConversationHistory, ModelServiceType } from '../../../types';
+import { ModelServiceType } from '../../../types';
+import { setConversationHistory } from '../../redux/slices/conversationSlice';
 import { WebviewContext } from '../../WebviewContext';
 import { EditModelListBar } from './Toolbar/EditModelListBar';
 import { HistorySidebar } from './Toolbar/HistorySidebar';
@@ -34,12 +36,8 @@ type ToolbarProps = {
   setActiveModelService: React.Dispatch<
     React.SetStateAction<ModelServiceType | 'loading...'>
   >;
-  conversationHistory: ConversationHistory;
   isActiveModelLoading: boolean;
   setIsActiveModelLoading: React.Dispatch<React.SetStateAction<boolean>>;
-  setConversationHistory: React.Dispatch<
-    React.SetStateAction<ConversationHistory>
-  >;
   setTheme: (newTheme: {
     primaryColor?: string | undefined;
     algorithm?:
@@ -54,10 +52,8 @@ type ToolbarProps = {
 export const Toolbar: React.FC<ToolbarProps> = ({
   activeModelService,
   setActiveModelService,
-  conversationHistory,
   isActiveModelLoading,
   setIsActiveModelLoading,
-  setConversationHistory,
   setTheme,
 }) => {
   const { callApi } = useContext(WebviewContext);
@@ -71,6 +67,7 @@ export const Toolbar: React.FC<ToolbarProps> = ({
     'ollama',
     'custom',
   ];
+
   const [availableModels, setAvailableModels] = useState<string[]>([]);
   const [selectedModel, setSelectedModel] = useState<string>('');
   const [isHistorySidebarOpen, setIsHistorySidebarOpen] = useState(false);
@@ -78,6 +75,8 @@ export const Toolbar: React.FC<ToolbarProps> = ({
   const [isVoiceSettingsOpen, setIsVoiceSettingsOpen] = useState(false);
   const [isSelectModelOpen, setIsSelectModelOpen] = useState(false);
   const [isEditModelListOpen, setIsEditModelListOpen] = useState(false);
+
+  const dispatch = useDispatch();
 
   const { innerWidth } = useWindowSize();
 
@@ -118,7 +117,7 @@ export const Toolbar: React.FC<ToolbarProps> = ({
     }
     callApi('addNewConversationHistory')
       .then(async (newConversationHistory) =>
-        setConversationHistory(await newConversationHistory),
+        dispatch(setConversationHistory(await newConversationHistory)),
       )
       .catch((error) =>
         console.error('Failed to clear conversation history:', error),
@@ -327,9 +326,7 @@ export const Toolbar: React.FC<ToolbarProps> = ({
       <HistorySidebar
         isOpen={isHistorySidebarOpen}
         onClose={toggleHistorySidebar}
-        conversationHistory={conversationHistory}
         activeModelService={activeModelService}
-        setConversationHistory={setConversationHistory}
       />
       <SettingsBar
         isOpen={isSettingsOpen}

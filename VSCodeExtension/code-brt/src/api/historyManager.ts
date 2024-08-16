@@ -198,7 +198,7 @@ export class HistoryManager implements IHistoryManager {
     message: string,
     images?: string[],
     modelServiceType?: ModelServiceType,
-  ): Promise<string> {
+  ): Promise<ConversationEntry> {
     const newID = uuidV4();
     const newEntry: ConversationEntry = {
       id: newID,
@@ -214,7 +214,7 @@ export class HistoryManager implements IHistoryManager {
         vscode.window
           .showErrorMessage('Parent entry not found: ' + parentID)
           .then();
-        return '';
+        return newEntry;
       }
       this.history.entries[parentID].children.push(newID);
     } else {
@@ -261,7 +261,7 @@ export class HistoryManager implements IHistoryManager {
       await this.addTagToHistory(this.history.root, modelServiceType);
     }
 
-    return newID;
+    return newEntry;
   }
 
   public async editConversationEntry(

@@ -1,4 +1,5 @@
 import type {
+  ConversationEntry,
   ConversationHistory,
   ConversationHistoryIndexList,
   ConversationModelAdvanceSettings,
@@ -40,7 +41,7 @@ export type IHistoryManager = {
     message: string,
     images?: string[],
     modelServiceType?: ModelServiceType,
-  ): Promise<string>;
+  ): Promise<ConversationEntry>;
 
   /**
    * Edit a conversation entry

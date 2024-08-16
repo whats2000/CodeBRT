@@ -11,12 +11,15 @@ import {
   SoundOutlined,
 } from '@ant-design/icons';
 import styled from 'styled-components';
+import { useDispatch, useSelector } from 'react-redux';
 
 import type {
   ConversationEntry,
   ConversationHistory,
   ModelServiceType,
 } from '../../../../types';
+import type { RootState } from '../../../redux';
+import { updateCurrentEntry } from '../../../redux/slices/conversationSlice';
 
 const RespondCharacter = styled(Typography.Text)<{ $user: string }>`
   color: ${({ $user, theme }) =>
@@ -27,10 +30,6 @@ const RespondCharacter = styled(Typography.Text)<{ $user: string }>`
 
 type MessagesTopToolBarProps = {
   modelType: ModelServiceType | 'loading...';
-  conversationHistory: ConversationHistory;
-  setConversationHistory: React.Dispatch<
-    React.SetStateAction<ConversationHistory>
-  >;
   index: number;
   conversationHistoryEntries: ConversationEntry[];
   isAudioPlaying: boolean;
@@ -46,8 +45,6 @@ type MessagesTopToolBarProps = {
 
 export const TopToolBar: React.FC<MessagesTopToolBarProps> = ({
   modelType,
-  conversationHistory,
-  setConversationHistory,
   index,
   conversationHistoryEntries,
   isAudioPlaying,
@@ -61,6 +58,11 @@ export const TopToolBar: React.FC<MessagesTopToolBarProps> = ({
   isProcessing,
 }) => {
   const { token } = theme.useToken();
+
+  const dispatch = useDispatch();
+  const conversationHistory = useSelector(
+    (state: RootState) => state.conversation,
+  );
 
   const entry = conversationHistoryEntries[index];
   const top = conversationHistory.top;
@@ -98,11 +100,7 @@ export const TopToolBar: React.FC<MessagesTopToolBarProps> = ({
       while (nextEntry.children.length > 0) {
         nextEntry = conversationHistory.entries[nextEntry.children[0]];
       }
-
-      setConversationHistory((prevMessages) => ({
-        ...prevMessages,
-        current: nextEntry.id,
-      }));
+      dispatch(updateCurrentEntry(nextEntry.id));
     }
   };
 
@@ -129,11 +127,7 @@ export const TopToolBar: React.FC<MessagesTopToolBarProps> = ({
       while (nextEntry?.children?.length > 0) {
         nextEntry = history.entries[nextEntry.children[0]];
       }
-
-      setConversationHistory((prevMessages) => ({
-        ...prevMessages,
-        current: nextEntry.id,
-      }));
+      dispatch(updateCurrentEntry(nextEntry.id));
     }
   };
 

@@ -1,12 +1,19 @@
 import { useContext, useState, useEffect, useRef } from 'react';
 import styled from 'styled-components';
-import { v4 as uuidV4 } from 'uuid';
 import { Content } from 'antd/es/layout/layout';
 import { ConfigProvider, FloatButton, Tooltip } from 'antd';
 import { ControlOutlined } from '@ant-design/icons';
+import { useSelector, useDispatch } from 'react-redux';
 
-import type { ConversationHistory, ModelServiceType } from '../../types';
+import type { ModelServiceType } from '../../types';
+import type { RootState } from '../redux';
 import { INPUT_MESSAGE_KEY, UPLOADED_IMAGES_KEY } from '../../constants';
+import {
+  addEntry,
+  addTempAIResponseEntry,
+  handleStreamResponse,
+  replaceTempEntry,
+} from '../redux/slices/conversationSlice';
 import { WebviewContext } from '../WebviewContext';
 import { useDragAndDrop, useThemeConfig, useWindowSize } from '../hooks';
 import { Toolbar } from './ChatActivityBar/Toolbar';
@@ -31,24 +38,6 @@ export const ChatActivityBar = () => {
   const [inputMessage, setInputMessage] = useState(
     localStorage.getItem(INPUT_MESSAGE_KEY) || '',
   );
-  const [conversationHistory, setConversationHistory] =
-    useState<ConversationHistory>({
-      create_time: 0,
-      update_time: 0,
-      root: '',
-      top: [],
-      current: '',
-      advanceSettings: {
-        systemPrompt: 'You are a helpful assistant.',
-        maxTokens: undefined,
-        temperature: undefined,
-        topP: undefined,
-        topK: undefined,
-        presencePenalty: undefined,
-        frequencyPenalty: undefined,
-      },
-      entries: {},
-    });
   const [isProcessing, setIsProcessing] = useState(false);
   const [activeModelService, setActiveModelService] = useState<
     ModelServiceType | 'loading...'
@@ -65,6 +54,11 @@ export const ChatActivityBar = () => {
   const messageEndRef = useRef<HTMLDivElement>(null);
   const messagesContainerRef = useRef<HTMLDivElement>(null);
   const inputContainerRef = useRef<HTMLDivElement>(null);
+
+  const dispatch = useDispatch();
+  const conversationHistory = useSelector(
+    (state: RootState) => state.conversation,
+  );
 
   const [theme, setTheme] = useThemeConfig();
 
@@ -119,34 +113,6 @@ export const ChatActivityBar = () => {
     return position < threshold;
   };
 
-  const handleStreamResponse = (responseFromMessage: string) => {
-    setConversationHistory((prevMessages) => {
-      const newEntries = { ...prevMessages.entries };
-      const currentID = prevMessages.current;
-
-      if (newEntries[currentID] && newEntries[currentID].role === 'AI') {
-        newEntries[currentID] = {
-          ...newEntries[currentID],
-          message: newEntries[currentID].message + responseFromMessage,
-        };
-      } else {
-        const tempId = `temp-${uuidV4()}`;
-        newEntries[tempId] = {
-          id: tempId,
-          role: 'AI',
-          message: responseFromMessage,
-          parent: currentID,
-          children: [],
-        };
-        prevMessages.current = tempId;
-      }
-      return { ...prevMessages, entries: newEntries };
-    });
-    if (isNearBottom()) {
-      scrollToBottom(false);
-    }
-  };
-
   useEffect(() => {
     setIsActiveModelLoading(true);
     // Load the last used model
@@ -166,10 +132,17 @@ export const ChatActivityBar = () => {
         setIsActiveModelLoading(false);
       });
 
+    const handleStreamResponseEvent = (responseFromMessage: string) => {
+      dispatch(handleStreamResponse(responseFromMessage));
+      if (isNearBottom()) {
+        scrollToBottom(false);
+      }
+    };
+
     // Add listener for stream response
-    addListener('streamResponse', handleStreamResponse);
+    addListener('streamResponse', handleStreamResponseEvent);
     return () => {
-      removeListener('streamResponse', handleStreamResponse);
+      removeListener('streamResponse', handleStreamResponseEvent);
     };
   }, []);
 
@@ -193,110 +166,71 @@ export const ChatActivityBar = () => {
     localStorage.setItem(UPLOADED_IMAGES_KEY, JSON.stringify(uploadedImages));
   }, [uploadedImages]);
 
-  const sendMessage = async () => {
-    if (isProcessing) return;
-    if (activeModelService === 'loading...') return;
-    if (!inputMessage.trim()) return;
+  const processMessage = async ({
+    message,
+    parentId,
+    images = [],
+    isEdited = false,
+  }: {
+    message: string;
+    parentId: string;
+    images?: string[];
+    isEdited?: boolean;
+  }) => {
+    if (
+      isProcessing ||
+      activeModelService === 'loading...' ||
+      !message.trim()
+    ) {
+      return;
+    }
     setIsProcessing(true);
 
-    const userEntryId = await callApi(
+    const userEntry = await callApi(
       'addConversationEntry',
-      conversationHistory.current,
+      parentId,
       'user',
-      inputMessage,
-      uploadedImages,
+      message,
+      images,
       activeModelService,
     );
-    setConversationHistory((prevMessages): ConversationHistory => {
-      const updatedEntries = {
-        ...prevMessages.entries,
-        [userEntryId]: {
-          id: userEntryId,
-          role: 'user',
-          message: inputMessage,
-          images: uploadedImages,
-          parent: conversationHistory.current,
-          children: [],
-        },
-      };
 
-      const parentEntry = updatedEntries[conversationHistory.current];
-      if (parentEntry) {
-        parentEntry.children = [...parentEntry.children, userEntryId];
-      }
-
-      return {
-        ...prevMessages,
-        top: prevMessages.top.length === 0 ? [userEntryId] : prevMessages.top,
-        entries: updatedEntries as ConversationHistory['entries'],
-        current: userEntryId,
-        root: prevMessages.root === '' ? userEntryId : prevMessages.root,
-      };
-    });
-
-    const tempId = `temp-${uuidV4()}`;
-    setConversationHistory((prevMessages) => ({
-      ...prevMessages,
-      entries: {
-        ...prevMessages.entries,
-        [tempId]: {
-          id: tempId,
-          role: 'AI',
-          message: '',
-          parent: userEntryId,
-          children: [],
-        },
-      },
-      current: tempId,
-    }));
+    dispatch(addEntry(userEntry));
+    dispatch(addTempAIResponseEntry({ parentId: userEntry.id }));
     scrollToBottom(false);
 
     try {
-      const responseText = (await callApi(
+      const responseText = await callApi(
         'getLanguageModelResponse',
         activeModelService,
-        inputMessage,
-        uploadedImages.length > 0 ? uploadedImages : undefined,
-        undefined,
+        message,
+        images.length > 0 ? images : undefined,
+        isEdited ? userEntry.id : undefined,
         true,
         true,
-      )) as string;
+      );
 
-      const aiEntryId = await callApi(
+      if (!conversationHistory.tempId) {
+        setIsProcessing(false);
+        return;
+      }
+
+      const aiEntry = await callApi(
         'addConversationEntry',
-        userEntryId,
+        userEntry.id,
         'AI',
         responseText,
         undefined,
         activeModelService,
       );
-      setConversationHistory((prevMessages) => {
-        const newEntries = { ...prevMessages.entries };
-        if (newEntries[tempId]) {
-          delete newEntries[tempId];
-        }
-        newEntries[aiEntryId] = {
-          id: aiEntryId,
-          role: 'AI',
-          message: responseText,
-          parent: userEntryId,
-          children: [],
-        };
 
-        const userEntry = newEntries[userEntryId];
-        if (userEntry) {
-          userEntry.children = [...userEntry.children, aiEntryId];
-        }
+      dispatch(replaceTempEntry(aiEntry));
 
-        return {
-          ...prevMessages,
-          entries: newEntries,
-          current: aiEntryId,
-        };
-      });
+      if (!isEdited) {
+        setInputMessage('');
+        setUploadedImages([]);
+      }
 
-      setInputMessage('');
-      setUploadedImages([]);
       setTimeout(() => {
         setIsProcessing(false);
         scrollToBottom(true);
@@ -311,126 +245,25 @@ export const ChatActivityBar = () => {
     }
   };
 
+  const sendMessage = async () => {
+    await processMessage({
+      message: inputMessage,
+      parentId: conversationHistory.current,
+      images: uploadedImages,
+    });
+  };
+
   const handleEditUserMessageSave = async (
     entryId: string,
     editedMessage: string,
   ) => {
-    if (isProcessing) return;
-    if (activeModelService === 'loading...') return;
-    if (!editedMessage.trim()) return;
-    setIsProcessing(true);
-
     const entry = conversationHistory.entries[entryId];
-    const newEntryId = await callApi(
-      'addConversationEntry',
-      entry.parent ?? '',
-      'user',
-      editedMessage,
-      entry.images,
-      activeModelService,
-    );
-
-    setConversationHistory((prevMessages): ConversationHistory => {
-      const updatedEntries = {
-        ...prevMessages.entries,
-        [newEntryId]: {
-          id: newEntryId,
-          role: 'user',
-          message: editedMessage,
-          images: entry.images,
-          parent: entry.parent,
-          children: [],
-        },
-      };
-
-      if (entry.parent) {
-        const parentEntry = updatedEntries[entry.parent];
-        parentEntry.children = [...parentEntry.children, newEntryId];
-      }
-
-      return {
-        ...prevMessages,
-        top: entry.parent
-          ? prevMessages.top
-          : [...prevMessages.top, newEntryId],
-        entries: updatedEntries as ConversationHistory['entries'],
-        current: newEntryId,
-      };
+    await processMessage({
+      message: editedMessage,
+      parentId: entry.parent ?? '',
+      images: entry.images,
+      isEdited: true,
     });
-
-    const tempId = `temp-${uuidV4()}`;
-    setConversationHistory((prevMessages) => ({
-      ...prevMessages,
-      entries: {
-        ...prevMessages.entries,
-        [tempId]: {
-          id: tempId,
-          role: 'AI',
-          message: '',
-          parent: newEntryId,
-          children: [],
-        },
-      },
-      current: tempId,
-    }));
-    scrollToBottom(false);
-
-    try {
-      const responseText = (await callApi(
-        'getLanguageModelResponse',
-        activeModelService,
-        editedMessage,
-        entry.images && entry.images.length > 0 ? entry.images : undefined,
-        newEntryId,
-        true,
-        true,
-      )) as string;
-
-      const aiEntryId = await callApi(
-        'addConversationEntry',
-        newEntryId,
-        'AI',
-        responseText,
-        undefined,
-        activeModelService,
-      );
-      setConversationHistory((prevMessages) => {
-        const newEntries = { ...prevMessages.entries };
-        if (newEntries[tempId]) {
-          delete newEntries[tempId];
-        }
-        newEntries[aiEntryId] = {
-          id: aiEntryId,
-          role: 'AI',
-          message: responseText,
-          parent: newEntryId,
-          children: [],
-        };
-
-        const userEntry = newEntries[newEntryId];
-        if (userEntry) {
-          userEntry.children = [...userEntry.children, aiEntryId];
-        }
-
-        return {
-          ...prevMessages,
-          entries: newEntries,
-          current: aiEntryId,
-        };
-      });
-
-      setTimeout(() => {
-        setIsProcessing(false);
-        scrollToBottom(true);
-      }, 1000);
-    } catch (error) {
-      callApi(
-        'alertMessage',
-        `Failed to get response: ${error}`,
-        'error',
-      ).catch(console.error);
-      setIsProcessing(false);
-    }
   };
 
   const handleImageUpload = (files: FileList | null) => {
@@ -464,17 +297,13 @@ export const ChatActivityBar = () => {
     <ConfigProvider theme={theme}>
       <Container ref={dropRef}>
         <Toolbar
-          conversationHistory={conversationHistory}
           activeModelService={activeModelService}
           isActiveModelLoading={isActiveModelLoading}
           setIsActiveModelLoading={setIsActiveModelLoading}
-          setConversationHistory={setConversationHistory}
           setActiveModelService={setActiveModelService}
           setTheme={setTheme}
         />
         <MessagesContainer
-          conversationHistory={conversationHistory}
-          setConversationHistory={setConversationHistory}
           modelType={activeModelService}
           isActiveModelLoading={isActiveModelLoading}
           messagesContainerRef={messagesContainerRef}
@@ -511,8 +340,6 @@ export const ChatActivityBar = () => {
       <ModelAdvanceSettingBar
         isOpen={isModelAdvanceSettingBarOpen}
         onClose={() => setIsModelAdvanceSettingBarOpen(false)}
-        conversationHistory={conversationHistory}
-        setConversationHistory={setConversationHistory}
       />
     </ConfigProvider>
   );

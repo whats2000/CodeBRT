@@ -1,5 +1,7 @@
 import React from 'react';
 import { createRoot } from 'react-dom/client';
+import { Provider } from 'react-redux';
+import { store } from './redux';
 
 import { WebviewApi, WithWebviewContext } from './WebviewContext';
 import { ChatActivityBar } from './components/ChatActivityBar';
@@ -45,7 +47,9 @@ export function render<V extends ViewKey>(
 
   root.render(
     <WithWebviewContext vscodeApi={vscodeApi}>
-      <Component />
+      <Provider store={store}>
+        <Component />
+      </Provider>
     </WithWebviewContext>,
   );
 }
