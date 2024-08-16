@@ -63,6 +63,35 @@ export const ChatActivityBar = () => {
   const [theme, setTheme] = useThemeConfig();
 
   const dropRef = useDragAndDrop((files) => handleImageUpload(files));
+  const bufferRef = useRef<string>('');
+  const isProcessingRef = useRef<boolean>(false);
+  const processingIntervalRef = useRef<NodeJS.Timeout | null>(null);
+
+  useEffect(() => {
+    const handleStreamResponseEvent = (responseFromMessage: string) => {
+      bufferRef.current += responseFromMessage;
+
+      if (!isProcessingRef.current) {
+        isProcessingRef.current = true;
+
+        setTimeout(() => {
+          if (bufferRef.current) {
+            dispatch(handleStreamResponse(bufferRef.current));
+            bufferRef.current = '';
+          }
+
+          isProcessingRef.current = false;
+        }, 100);
+      }
+    };
+
+    // Add listener for stream response
+    addListener('streamResponse', handleStreamResponseEvent);
+
+    return () => {
+      removeListener('streamResponse', handleStreamResponseEvent);
+    };
+  }, [dispatch]);
 
   useEffect(() => {
     setFloatButtonsXPosition(innerWidth - 84);
@@ -92,27 +121,6 @@ export const ChatActivityBar = () => {
     };
   }, [inputContainerRef]);
 
-  const scrollToBottom = (smooth: boolean = true) => {
-    if (messagesContainerRef.current) {
-      if (smooth) {
-        messageEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-      } else {
-        messageEndRef.current?.scrollIntoView();
-      }
-    }
-  };
-
-  const isNearBottom = () => {
-    const threshold = 300;
-    if (!messagesContainerRef.current) return false;
-
-    const { scrollTop, scrollHeight, clientHeight } =
-      messagesContainerRef.current;
-    const position = scrollHeight - scrollTop - clientHeight;
-
-    return position < threshold;
-  };
-
   useEffect(() => {
     setIsActiveModelLoading(true);
     // Load the last used model
@@ -131,19 +139,6 @@ export const ChatActivityBar = () => {
         ).catch(console.error);
         setIsActiveModelLoading(false);
       });
-
-    const handleStreamResponseEvent = (responseFromMessage: string) => {
-      dispatch(handleStreamResponse(responseFromMessage));
-      if (isNearBottom()) {
-        scrollToBottom(false);
-      }
-    };
-
-    // Add listener for stream response
-    addListener('streamResponse', handleStreamResponseEvent);
-    return () => {
-      removeListener('streamResponse', handleStreamResponseEvent);
-    };
   }, []);
 
   useEffect(() => {
@@ -166,6 +161,44 @@ export const ChatActivityBar = () => {
     localStorage.setItem(UPLOADED_IMAGES_KEY, JSON.stringify(uploadedImages));
   }, [uploadedImages]);
 
+  const scrollToBottom = (smooth: boolean = true) => {
+    if (messagesContainerRef.current) {
+      if (smooth) {
+        messageEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+      } else {
+        messageEndRef.current?.scrollIntoView();
+      }
+    }
+  };
+
+  const isNearBottom = () => {
+    const threshold = 300;
+    if (!messagesContainerRef.current) return false;
+
+    const { scrollTop, scrollHeight, clientHeight } =
+      messagesContainerRef.current;
+    const position = scrollHeight - scrollTop - clientHeight;
+
+    return position < threshold;
+  };
+
+  const startScrollInterval = () => {
+    if (!processingIntervalRef.current) {
+      processingIntervalRef.current = setInterval(() => {
+        if (isNearBottom()) {
+          scrollToBottom(false);
+        }
+      }, 50);
+    }
+  };
+
+  const stopScrollInterval = () => {
+    if (processingIntervalRef.current) {
+      clearInterval(processingIntervalRef.current);
+      processingIntervalRef.current = null;
+    }
+  };
+
   const processMessage = async ({
     message,
     parentId,
@@ -185,6 +218,7 @@ export const ChatActivityBar = () => {
       return;
     }
     setIsProcessing(true);
+    startScrollInterval();
 
     const userEntry = await callApi(
       'addConversationEntry',
@@ -197,7 +231,6 @@ export const ChatActivityBar = () => {
 
     dispatch(addEntry(userEntry));
     dispatch(addTempAIResponseEntry({ parentId: userEntry.id }));
-    scrollToBottom(false);
 
     callApi(
       'getLanguageModelResponse',
@@ -211,12 +244,8 @@ export const ChatActivityBar = () => {
       .then(async (response) => {
         const responseText = await response;
         if (!store.getState().conversation?.tempId) {
-          callApi(
-            'alertMessage',
-            'The temporary entry id is not found',
-            'error',
-          ).catch(console.error);
           setIsProcessing(false);
+          stopScrollInterval();
           return;
         }
 
@@ -235,6 +264,8 @@ export const ChatActivityBar = () => {
           setInputMessage('');
           setUploadedImages([]);
         }
+
+        stopScrollInterval();
 
         setTimeout(() => {
           setIsProcessing(false);
