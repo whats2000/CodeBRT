@@ -4,7 +4,7 @@ import { Spin, theme } from 'antd';
 import { useDispatch, useSelector } from 'react-redux';
 import * as hljs from 'react-syntax-highlighter/dist/cjs/styles/hljs';
 
-import type { ConversationEntry, ModelServiceType } from '../../../types';
+import type { ConversationEntry } from '../../../types';
 import type { RootState } from '../../redux';
 import { WebviewContext } from '../../WebviewContext';
 import { TopToolBar } from './MessagesContainer/TopToolBar';
@@ -56,8 +56,6 @@ const traverseHistory = (
 };
 
 type MessagesContainerProps = {
-  modelType: ModelServiceType | 'loading...';
-  isActiveModelLoading: boolean;
   messagesContainerRef: React.RefObject<HTMLDivElement>;
   isProcessing: boolean;
   scrollToBottom: (smooth?: boolean) => void;
@@ -69,8 +67,6 @@ type MessagesContainerProps = {
 };
 
 export const MessagesContainer: React.FC<MessagesContainerProps> = ({
-  modelType,
-  isActiveModelLoading,
   messagesContainerRef,
   isProcessing,
   scrollToBottom,
@@ -101,6 +97,9 @@ export const MessagesContainer: React.FC<MessagesContainerProps> = ({
   const dispatch = useDispatch();
   const conversationHistory = useSelector(
     (state: RootState) => state.conversation,
+  );
+  const { activeModelService, isLoading } = useSelector(
+    (state: RootState) => state.modelService,
   );
 
   const { token } = theme.useToken();
@@ -167,7 +166,7 @@ export const MessagesContainer: React.FC<MessagesContainerProps> = ({
   };
 
   const handleSaveEdit = async (entryId: string) => {
-    if (modelType === 'loading...') return;
+    if (activeModelService === 'loading...') return;
 
     if (conversationHistory.entries[entryId].role === 'user') {
       await handleEditUserMessageSave(entryId, editedMessage);
@@ -265,9 +264,9 @@ export const MessagesContainer: React.FC<MessagesContainerProps> = ({
 
   return (
     <>
-      {isActiveModelLoading && (
+      {isLoading && (
         <Spin fullscreen={true} size={'large'}>
-          <span>Loading conversation history...</span>
+          <span>Setting up the model...</span>
         </Spin>
       )}
       <StyledMessagesContainer ref={messagesContainerRef}>
@@ -280,7 +279,7 @@ export const MessagesContainer: React.FC<MessagesContainerProps> = ({
               onMouseEnter={(e) => handleMouseEnter(e, entry)}
             >
               <TopToolBar
-                modelType={modelType}
+                modelType={activeModelService}
                 index={index}
                 conversationHistoryEntries={conversationHistoryEntries}
                 isAudioPlaying={isAudioPlaying}

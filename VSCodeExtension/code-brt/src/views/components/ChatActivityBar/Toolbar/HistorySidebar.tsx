@@ -6,10 +6,7 @@ import { TagOutlined } from '@ant-design/icons';
 import { useDispatch, useSelector } from 'react-redux';
 import { differenceInDays, isBefore, isToday, isYesterday } from 'date-fns';
 
-import type {
-  ConversationHistoryIndexList,
-  ModelServiceType,
-} from '../../../../types';
+import type { ConversationHistoryIndexList } from '../../../../types';
 import type { RootState } from '../../../redux';
 import { WebviewContext } from '../../../WebviewContext';
 import { setConversationHistory } from '../../../redux/slices/conversationSlice';
@@ -40,19 +37,20 @@ const NoHistoryMessageContainer = styled.div`
 type HistorySidebarProps = {
   isOpen: boolean;
   onClose: () => void;
-  activeModelService: ModelServiceType | 'loading...';
 };
 
 export const HistorySidebar: React.FC<HistorySidebarProps> = ({
   isOpen,
   onClose,
-  activeModelService,
 }) => {
   const { callApi } = useContext(WebviewContext);
 
   const dispatch = useDispatch();
   const conversationHistory = useSelector(
     (state: RootState) => state.conversation,
+  );
+  const activeModelService = useSelector(
+    (state: RootState) => state.modelService.activeModelService,
   );
 
   const [histories, setHistories] = useState<ConversationHistoryIndexList>({});

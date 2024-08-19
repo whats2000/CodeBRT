@@ -1,28 +1,32 @@
 import React, { useContext, useEffect, useState } from 'react';
 import { Drawer } from 'antd';
+import { useDispatch, useSelector } from 'react-redux';
 
-import type { CustomModelSettings, ModelServiceType } from '../../../../types';
+import type { CustomModelSettings } from '../../../../types';
+import type { AppDispatch, RootState } from '../../../redux';
 import { WebviewContext } from '../../../WebviewContext';
 import { ModelForm } from './EditModelListBar/ModelForm';
 import { CustomModelForm } from './EditModelListBar/CustomModelForm';
+import { updateAvailableModels } from '../../../redux/slices/modelServiceSlice';
 
 type EditModelListBarProps = {
   isOpen: boolean;
   onClose: () => void;
-  activeModelService: ModelServiceType | 'loading...';
-  handleEditModelListSave: (models: string[]) => void;
 };
 
 export const EditModelListBar: React.FC<EditModelListBarProps> = ({
   isOpen,
   onClose,
-  activeModelService,
-  handleEditModelListSave,
 }) => {
   const { callApi } = useContext(WebviewContext);
   const [customModels, setCustomModels] = useState<CustomModelSettings[]>([]);
   const [availableModels, setAvailableModels] = useState<string[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+
+  const dispatch = useDispatch<AppDispatch>();
+  const activeModelService = useSelector(
+    (state: RootState) => state.modelService.activeModelService,
+  );
 
   useEffect(() => {
     setIsLoading(true);
@@ -60,6 +64,15 @@ export const EditModelListBar: React.FC<EditModelListBarProps> = ({
       }
     }
   }, [isOpen, activeModelService]);
+
+  const handleEditModelListSave = (newAvailableModels: string[]) => {
+    dispatch(
+      updateAvailableModels({
+        modelType: activeModelService,
+        newAvailableModels,
+      }),
+    );
+  };
 
   return (
     <Drawer

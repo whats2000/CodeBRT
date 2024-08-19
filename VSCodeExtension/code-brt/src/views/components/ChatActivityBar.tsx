@@ -5,7 +5,6 @@ import { ConfigProvider, FloatButton, Tooltip } from 'antd';
 import { ControlOutlined } from '@ant-design/icons';
 import { useSelector, useDispatch } from 'react-redux';
 
-import type { ModelServiceType } from '../../types';
 import { AppDispatch, RootState } from '../redux';
 import { INPUT_MESSAGE_KEY, UPLOADED_IMAGES_KEY } from '../../constants';
 import {
@@ -21,7 +20,10 @@ import { InputContainer } from './ChatActivityBar/InputContainer';
 import { MessagesContainer } from './ChatActivityBar/MessagesContainer';
 import { ToolActivateFloatButtons } from './ChatActivityBar/ToolActivateFloatButtons';
 import { ModelAdvanceSettingBar } from './ChatActivityBar/ModelAdvanceSettingBar';
-import { initializeModelService } from '../redux/slices/modelServiceSlice';
+import {
+  loadModelService,
+  startLoading,
+} from '../redux/slices/modelServiceSlice';
 
 const Container = styled(Content)`
   display: flex;
@@ -40,13 +42,9 @@ export const ChatActivityBar = () => {
     localStorage.getItem(INPUT_MESSAGE_KEY) || '',
   );
   const [isProcessing, setIsProcessing] = useState(false);
-  const [activeModelService, setActiveModelService] = useState<
-    ModelServiceType | 'loading...'
-  >('loading...');
   const [uploadedImages, setUploadedImages] = useState<string[]>(
     JSON.parse(localStorage.getItem(UPLOADED_IMAGES_KEY) || '[]'),
   );
-  const [isActiveModelLoading, setIsActiveModelLoading] = useState(false);
   const [floatButtonBaseYPosition, setFloatButtonBaseYPosition] = useState(60);
   const [floatButtonsXPosition, setFloatButtonsXPosition] = useState(0);
   const [isModelAdvanceSettingBarOpen, setIsModelAdvanceSettingBarOpen] =
@@ -59,6 +57,9 @@ export const ChatActivityBar = () => {
   const dispatch = useDispatch<AppDispatch>();
   const conversationHistory = useSelector(
     (state: RootState) => state.conversation,
+  );
+  const { activeModelService } = useSelector(
+    (state: RootState) => state.modelService,
   );
 
   const [theme, setTheme] = useThemeConfig();
@@ -124,37 +125,28 @@ export const ChatActivityBar = () => {
   }, [inputContainerRef]);
 
   useEffect(() => {
-    setIsActiveModelLoading(true);
-    // Load the last used model
-    callApi('getSetting', 'lastUsedModelService')
-      .then((lastUsedModelService: ModelServiceType) => {
+    const initModelService = async () => {
+      dispatch(startLoading());
+
+      try {
+        const lastUsedModelService = await callApi(
+          'getSetting',
+          'lastUsedModelService',
+        );
         if (lastUsedModelService) {
-          setActiveModelService(lastUsedModelService);
+          dispatch(loadModelService(lastUsedModelService));
         }
-        setIsActiveModelLoading(false);
-      })
-      .catch((error) => {
+      } catch (error) {
         callApi(
           'alertMessage',
-          `Failed to get last used model: ${error}`,
+          `Failed to clear conversation history: ${error}`,
           'error',
         ).catch(console.error);
-        setIsActiveModelLoading(false);
-      });
+      }
+    };
+
+    initModelService().catch(console.error);
   }, []);
-
-  useEffect(() => {
-    if (activeModelService === 'loading...') return;
-
-    callApi('setSetting', 'lastUsedModelService', activeModelService).catch(
-      (error) =>
-        callApi(
-          'alertMessage',
-          `Failed to save last used model: ${error}`,
-          'error',
-        ).catch(console.error),
-    );
-  }, [activeModelService]);
 
   useEffect(() => {
     localStorage.setItem(INPUT_MESSAGE_KEY, inputMessage);
@@ -340,16 +332,8 @@ export const ChatActivityBar = () => {
   return (
     <ConfigProvider theme={theme}>
       <Container ref={dropRef}>
-        <Toolbar
-          activeModelService={activeModelService}
-          isActiveModelLoading={isActiveModelLoading}
-          setIsActiveModelLoading={setIsActiveModelLoading}
-          setActiveModelService={setActiveModelService}
-          setTheme={setTheme}
-        />
+        <Toolbar setTheme={setTheme} />
         <MessagesContainer
-          modelType={activeModelService}
-          isActiveModelLoading={isActiveModelLoading}
           messagesContainerRef={messagesContainerRef}
           isProcessing={isProcessing}
           scrollToBottom={scrollToBottom}
