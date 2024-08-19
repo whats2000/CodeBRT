@@ -36,11 +36,9 @@ const modelServiceSlice = createSlice({
     finishLoading(state) {
       state.isLoading = false;
     },
-    resetModelService(state) {
-      state.activeModelService = 'loading...';
+    resetModels(state) {
       state.availableModels = [];
       state.selectedModel = '';
-      state.isLoading = true;
     },
   },
 });
@@ -51,7 +49,7 @@ export const {
   setAvailableModels,
   setSelectedModel,
   finishLoading,
-  resetModelService,
+  resetModels,
 } = modelServiceSlice.actions;
 
 export const modelServiceReducer = modelServiceSlice.reducer;

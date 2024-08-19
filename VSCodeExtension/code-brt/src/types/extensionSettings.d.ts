@@ -90,7 +90,7 @@ export type CustomModelSettings = {
  * @property huggingFaceAvailableModels - The available models for the Hugging Face API
  * @property ollamaClientHost - The host URL for the Ollama client
  * @property ollamaAvailableModels - The available models for the Ollama API
- * @property lastUsedModel - The last used model
+ * @property lastUsedModelService - The last used model service
  * @property lastSelectedModel - The last selected model for each model service
  * @property customModels - A list of custom models
  * @property selectedTextToVoiceService - The selected text-to-voice service
@@ -110,7 +110,7 @@ export type ExtensionSettingsLocal = {
   huggingFaceAvailableModels: string[];
   ollamaClientHost: string;
   ollamaAvailableModels: string[];
-  lastUsedModel: ModelServiceType;
+  lastUsedModelService: ModelServiceType;
   lastSelectedModel: {
     [keyof in ModelServiceType]: string;
   };

@@ -45,7 +45,7 @@ export class SettingsManager {
     huggingFaceAvailableModels: ['HuggingFaceH4/zephyr-7b-beta'],
     ollamaClientHost: 'http://127.0.0.1:11434',
     ollamaAvailableModels: ['Auto Detect'],
-    lastUsedModel: 'gemini',
+    lastUsedModelService: 'gemini',
     lastSelectedModel: {
       gemini: 'gemini-1.5-pro-latest',
       anthropic: 'claude-3-5-sonnet-20240620',

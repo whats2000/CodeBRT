@@ -124,10 +124,10 @@ export const ChatActivityBar = () => {
   useEffect(() => {
     setIsActiveModelLoading(true);
     // Load the last used model
-    callApi('getSetting', 'lastUsedModel')
-      .then((lastUsedModel) => {
-        if (lastUsedModel) {
-          setActiveModelService(lastUsedModel as ModelServiceType);
+    callApi('getSetting', 'lastUsedModelService')
+      .then((lastUsedModelService) => {
+        if (lastUsedModelService) {
+          setActiveModelService(lastUsedModelService as ModelServiceType);
         }
         setIsActiveModelLoading(false);
       })
@@ -144,12 +144,13 @@ export const ChatActivityBar = () => {
   useEffect(() => {
     if (activeModelService === 'loading...') return;
 
-    callApi('setSetting', 'lastUsedModel', activeModelService).catch((error) =>
-      callApi(
-        'alertMessage',
-        `Failed to save last used model: ${error}`,
-        'error',
-      ).catch(console.error),
+    callApi('setSetting', 'lastUsedModelService', activeModelService).catch(
+      (error) =>
+        callApi(
+          'alertMessage',
+          `Failed to save last used model: ${error}`,
+          'error',
+        ).catch(console.error),
     );
   }, [activeModelService]);
 
