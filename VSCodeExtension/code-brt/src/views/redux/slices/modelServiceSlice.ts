@@ -1,7 +1,9 @@
 import type { PayloadAction } from '@reduxjs/toolkit';
+import { createAsyncThunk } from '@reduxjs/toolkit';
 import { createSlice } from '@reduxjs/toolkit';
 
-import type { ModelServiceType } from '../../../types';
+import { RootState } from '../store';
+import type { ModelServiceType, ViewApi } from '../../../types';
 
 type ModelServiceState = {
   activeModelService: ModelServiceType | 'loading...';
@@ -9,6 +11,50 @@ type ModelServiceState = {
   selectedModel: string;
   isLoading: boolean;
 };
+
+export const initializeModelService = createAsyncThunk<
+  void,
+  ModelServiceType,
+  {
+    state: RootState;
+    extra: {
+      callApi: <K extends keyof ViewApi>(
+        key: K,
+        ...params: Parameters<ViewApi[K]>
+      ) => Promise<ReturnType<ViewApi[K]>>;
+    };
+  }
+>(
+  'modelService/initialize',
+  async (modelServiceType, { dispatch, extra: { callApi } }) => {
+    dispatch(startLoading());
+    dispatch(resetModels());
+
+    dispatch(setActiveModelService(modelServiceType));
+
+    try {
+      const availableModels = await callApi(
+        'getAvailableModels',
+        modelServiceType,
+      );
+
+      dispatch(setAvailableModels(availableModels));
+
+      const selectedModel = await callApi('getCurrentModel', modelServiceType);
+
+      dispatch(setSelectedModel(selectedModel));
+
+      dispatch(finishLoading());
+    } catch (error) {
+      callApi(
+        'alertMessage',
+        `Failed to load model service data: ${error}`,
+        'error',
+      ).catch(console.error);
+      dispatch(finishLoading());
+    }
+  },
+);
 
 const initialState: ModelServiceState = {
   activeModelService: 'loading...',

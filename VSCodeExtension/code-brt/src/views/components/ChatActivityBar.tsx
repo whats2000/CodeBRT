@@ -6,7 +6,7 @@ import { ControlOutlined } from '@ant-design/icons';
 import { useSelector, useDispatch } from 'react-redux';
 
 import type { ModelServiceType } from '../../types';
-import { RootState, store } from '../redux';
+import { AppDispatch, RootState } from '../redux';
 import { INPUT_MESSAGE_KEY, UPLOADED_IMAGES_KEY } from '../../constants';
 import {
   addEntry,
@@ -21,6 +21,7 @@ import { InputContainer } from './ChatActivityBar/InputContainer';
 import { MessagesContainer } from './ChatActivityBar/MessagesContainer';
 import { ToolActivateFloatButtons } from './ChatActivityBar/ToolActivateFloatButtons';
 import { ModelAdvanceSettingBar } from './ChatActivityBar/ModelAdvanceSettingBar';
+import { initializeModelService } from '../redux/slices/modelServiceSlice';
 
 const Container = styled(Content)`
   display: flex;
@@ -55,7 +56,7 @@ export const ChatActivityBar = () => {
   const messagesContainerRef = useRef<HTMLDivElement>(null);
   const inputContainerRef = useRef<HTMLDivElement>(null);
 
-  const dispatch = useDispatch();
+  const dispatch = useDispatch<AppDispatch>();
   const conversationHistory = useSelector(
     (state: RootState) => state.conversation,
   );
@@ -66,6 +67,7 @@ export const ChatActivityBar = () => {
   const bufferRef = useRef<string>('');
   const isProcessingRef = useRef<boolean>(false);
   const processingIntervalRef = useRef<NodeJS.Timeout | null>(null);
+  const tempIdRef = useRef<string | null>(null);
 
   useEffect(() => {
     const handleStreamResponseEvent = (responseFromMessage: string) => {
@@ -125,9 +127,9 @@ export const ChatActivityBar = () => {
     setIsActiveModelLoading(true);
     // Load the last used model
     callApi('getSetting', 'lastUsedModelService')
-      .then((lastUsedModelService) => {
+      .then((lastUsedModelService: ModelServiceType) => {
         if (lastUsedModelService) {
-          setActiveModelService(lastUsedModelService as ModelServiceType);
+          setActiveModelService(lastUsedModelService);
         }
         setIsActiveModelLoading(false);
       })
@@ -161,6 +163,10 @@ export const ChatActivityBar = () => {
   useEffect(() => {
     localStorage.setItem(UPLOADED_IMAGES_KEY, JSON.stringify(uploadedImages));
   }, [uploadedImages]);
+
+  useEffect(() => {
+    tempIdRef.current = conversationHistory.tempId;
+  }, [conversationHistory.tempId]);
 
   const scrollToBottom = (smooth: boolean = true) => {
     if (messagesContainerRef.current) {
@@ -244,7 +250,7 @@ export const ChatActivityBar = () => {
     )
       .then(async (response) => {
         const responseText = await response;
-        if (!store.getState().conversation?.tempId) {
+        if (!tempIdRef.current) {
           setIsProcessing(false);
           stopScrollInterval();
           return;
