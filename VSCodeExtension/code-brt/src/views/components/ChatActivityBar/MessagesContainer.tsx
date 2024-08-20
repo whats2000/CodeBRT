@@ -1,5 +1,5 @@
 import React, { useContext, useEffect, useState } from 'react';
-import styled from 'styled-components';
+import styled, { keyframes } from 'styled-components';
 import { Spin, theme } from 'antd';
 import { useDispatch, useSelector } from 'react-redux';
 import * as hljs from 'react-syntax-highlighter/dist/cjs/styles/hljs';
@@ -15,12 +15,33 @@ import { MessageFloatButton } from './MessagesContainer/MessageFloatButton';
 import { useWindowSize } from '../../hooks';
 import { updateEntryMessage } from '../../redux/slices/conversationSlice';
 
-const StyledMessagesContainer = styled.div`
+const fadeInAnimation = keyframes`
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+`;
+
+const fadeOutAnimation = keyframes`
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+  }
+`;
+
+const StyledMessagesContainer = styled.div<{ $isLoading: boolean }>`
   flex-grow: 1;
   overflow-y: auto;
   padding: 10px 55px 10px 10px;
   border-top: 1px solid ${({ theme }) => theme.colorBorderSecondary};
   border-bottom: 1px solid ${({ theme }) => theme.colorBorderSecondary};
+  animation: ${(props) =>
+      props.$isLoading ? fadeOutAnimation : fadeInAnimation}
+    0.5s ease-in-out;
 `;
 
 const MessageBubble = styled.div<{ $user: string }>`
@@ -269,7 +290,15 @@ export const MessagesContainer: React.FC<MessagesContainerProps> = ({
           <span>Setting up the model...</span>
         </Spin>
       )}
-      <StyledMessagesContainer ref={messagesContainerRef}>
+      {conversationHistory.isLoading && (
+        <Spin fullscreen={true} size={'large'}>
+          <span>Fetching conversation history...</span>
+        </Spin>
+      )}
+      <StyledMessagesContainer
+        $isLoading={conversationHistory.isLoading}
+        ref={messagesContainerRef}
+      >
         {conversationHistoryEntries.map((entry, index) => {
           return (
             <MessageBubble
