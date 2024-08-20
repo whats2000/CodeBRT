@@ -129,23 +129,26 @@ export class HistoryManager implements IHistoryManager {
   /**
    * Load a single conversation history by its ID
    */
-  private async loadHistoryById(historyId: string): Promise<void> {
+  private async loadHistoryById(
+    historyId: string,
+  ): Promise<ConversationHistory> {
     if (!this.historiesFolderPath) {
-      return;
+      return this.getDefaultConversationHistory();
     }
     const filePath = path.join(this.historiesFolderPath, `${historyId}.json`);
     if (!fs.existsSync(filePath)) {
       vscode.window.showErrorMessage('History file not found: ' + historyId);
-      return;
+      return this.getDefaultConversationHistory();
     }
     try {
       const data = await fs.promises.readFile(filePath, 'utf8');
-      this.history = {
+      return {
         ...this.getDefaultConversationHistory(),
         ...JSON.parse(data),
       };
     } catch (error) {
       vscode.window.showErrorMessage('Failed to load history: ' + error);
+      return this.getDefaultConversationHistory();
     }
   }
 
@@ -300,14 +303,18 @@ export class HistoryManager implements IHistoryManager {
     }
   }
 
-  public async switchHistory(historyID: string): Promise<void> {
+  public async switchHistory(historyID: string): Promise<ConversationHistory> {
     if (this.historyIndex[historyID]) {
-      await this.loadHistoryById(historyID);
       await this.saveHistoryById(this.history).catch((error) =>
-        vscode.window.showErrorMessage('Failed to switch history: ' + error),
+        vscode.window.showErrorMessage(
+          'Failed to save current history: ' + error,
+        ),
       );
+      this.history = await this.loadHistoryById(historyID);
+      return this.history;
     } else {
       vscode.window.showErrorMessage('History not found: ' + historyID).then();
+      return this.history;
     }
   }
 

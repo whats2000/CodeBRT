@@ -1,10 +1,15 @@
-import type { PayloadAction } from '@reduxjs/toolkit';
+import { createAsyncThunk, PayloadAction } from '@reduxjs/toolkit';
 import { createSlice } from '@reduxjs/toolkit';
 import { v4 as uuidV4 } from 'uuid';
 
 import type { ConversationEntry, ConversationHistory } from '../../../types';
+import type { CallAPI } from '../../WebviewContext';
+import type { RootState } from '../store';
 
-const initialState: ConversationHistory & { tempId: string | null } = {
+const initialState: ConversationHistory & {
+  tempId: string | null;
+  isLoading: boolean;
+} = {
   create_time: 0,
   update_time: 0,
   root: '',
@@ -21,14 +26,53 @@ const initialState: ConversationHistory & { tempId: string | null } = {
   },
   entries: {},
   tempId: null,
+  isLoading: false,
 };
+
+export const switchHistory = createAsyncThunk<
+  void,
+  string,
+  {
+    state: RootState;
+    extra: {
+      callApi: CallAPI;
+    };
+  }
+>(
+  'conversation/switchHistory',
+  async (historyID, { getState, dispatch, extra: { callApi } }) => {
+    const state = getState().conversation;
+    if (state.isLoading || state.root === historyID) {
+      return;
+    }
+
+    dispatch(startLoading());
+    const newHistory = await callApi('switchHistory', historyID).catch(
+      console.error,
+    );
+
+    if (!newHistory) {
+      dispatch(finishLoading());
+      return;
+    }
+
+    dispatch(setConversationHistory(newHistory));
+    dispatch(finishLoading());
+  },
+);
 
 const conversationSlice = createSlice({
   name: 'conversation',
   initialState,
   reducers: {
+    startLoading(state) {
+      state.isLoading = true;
+    },
+    finishLoading(state) {
+      state.isLoading = false;
+    },
     setConversationHistory(_state, action: PayloadAction<ConversationHistory>) {
-      return { ...action.payload, tempId: null };
+      return { ...action.payload, tempId: null, isLoading: false };
     },
     handleStreamResponse(state, action: PayloadAction<string>) {
       const { tempId, entries } = state;
@@ -106,6 +150,8 @@ const conversationSlice = createSlice({
 });
 
 export const {
+  startLoading,
+  finishLoading,
   setConversationHistory,
   handleStreamResponse,
   addEntry,

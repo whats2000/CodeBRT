@@ -127,8 +127,9 @@ export type ViewApi = {
   /**
    * Switch the conversation history.
    * @param historyID - The ID of the history to switch to.
+   * @returns The new conversation history.
    */
-  switchHistory: (historyID: string) => void;
+  switchHistory: (historyID: string) => Promise<ConversationHistory>;
 
   /**
    * Delete a conversation history.

@@ -175,7 +175,7 @@ export const activate = async (ctx: vscode.ExtensionContext) => {
       return historyManager.getHistories();
     },
     switchHistory: (historyID) => {
-      historyManager.switchHistory(historyID);
+      return historyManager.switchHistory(historyID);
     },
     deleteHistory: async (historyID) => {
       return await historyManager.deleteHistory(historyID);

@@ -7,9 +7,12 @@ import { useDispatch, useSelector } from 'react-redux';
 import { differenceInDays, isBefore, isToday, isYesterday } from 'date-fns';
 
 import type { ConversationHistoryIndexList } from '../../../../types';
-import type { RootState } from '../../../redux';
+import type { AppDispatch, RootState } from '../../../redux';
 import { WebviewContext } from '../../../WebviewContext';
-import { setConversationHistory } from '../../../redux/slices/conversationSlice';
+import {
+  setConversationHistory,
+  switchHistory,
+} from '../../../redux/slices/conversationSlice';
 import { HistoryListItem } from './HistorySidebar/HistoryListItem';
 
 const StyledDrawer = styled(Drawer)`
@@ -17,9 +20,13 @@ const StyledDrawer = styled(Drawer)`
     padding: 10px;
   }
 
-  & .ant-drawer-body {
-    padding: 0;
-  }
+  ${({ loading }) =>
+    !loading &&
+    `
+      & .ant-drawer-body {
+        padding: 0;
+      }
+    `}
 `;
 
 const StyledList = styled(List)<{ $token: GlobalToken }>`
@@ -45,7 +52,7 @@ export const HistorySidebar: React.FC<HistorySidebarProps> = ({
 }) => {
   const { callApi } = useContext(WebviewContext);
 
-  const dispatch = useDispatch();
+  const dispatch = useDispatch<AppDispatch>();
   const conversationHistory = useSelector(
     (state: RootState) => state.conversation,
   );
@@ -109,29 +116,8 @@ export const HistorySidebar: React.FC<HistorySidebarProps> = ({
     setAllTags(tagsAvailable);
   }, [histories]);
 
-  const switchHistory = (historyID: string) => {
-    if (historyID === conversationHistory.root) return;
-
-    setIsLoading(true);
-
-    if (activeModelService === 'loading...') {
-      return;
-    }
-
-    callApi('switchHistory', historyID)
-      .then(() => callApi('getCurrentHistory'))
-      .then((history) => {
-        dispatch(setConversationHistory(history));
-        setIsLoading(false);
-      })
-      .catch((error) => {
-        callApi(
-          'alertMessage',
-          `Failed to switch history: ${error}`,
-          'error',
-        ).catch(console.error);
-        setIsLoading(false);
-      });
+  const handleSwitchHistory = (historyID: string) => {
+    dispatch(switchHistory(historyID));
     onClose();
   };
 
@@ -217,7 +203,7 @@ export const HistorySidebar: React.FC<HistorySidebarProps> = ({
           histories={histories}
           setHistories={setHistories}
           deleteHistory={deleteHistory}
-          switchHistory={switchHistory}
+          switchHistory={handleSwitchHistory}
           editingHistoryID={editingHistoryID}
           titleInput={titleInput}
           handleTitleChange={handleTitleChange}
@@ -291,7 +277,7 @@ export const HistorySidebar: React.FC<HistorySidebarProps> = ({
       open={isOpen}
       onClose={onClose}
       placement='left'
-      loading={isLoading || !isOpen}
+      loading={isLoading || conversationHistory.isLoading || !isOpen}
     >
       {Object.keys(histories).length === 0 ? (
         <NoHistoryMessageContainer>

@@ -3,12 +3,8 @@ import { createAsyncThunk } from '@reduxjs/toolkit';
 import { createSlice } from '@reduxjs/toolkit';
 
 import { RootState } from '../store';
-import type { ModelServiceType, ViewApi } from '../../../types';
-
-type CallAPI = <K extends keyof ViewApi>(
-  key: K,
-  ...params: Parameters<ViewApi[K]>
-) => Promise<ReturnType<ViewApi[K]>>;
+import type { ModelServiceType } from '../../../types';
+import type { CallAPI } from '../../WebviewContext';
 
 type ModelServiceState = {
   activeModelService: ModelServiceType | 'loading...';
