@@ -2,7 +2,7 @@ import React, { useContext, useEffect, useState } from 'react';
 import styled from 'styled-components';
 import { Divider, GlobalToken, Select, Tooltip } from 'antd';
 import { Drawer, List, Typography, Button, theme, Flex } from 'antd';
-import { TagOutlined } from '@ant-design/icons';
+import { FilterOutlined } from '@ant-design/icons';
 import { useDispatch, useSelector } from 'react-redux';
 import { differenceInDays, isBefore, isToday, isYesterday } from 'date-fns';
 
@@ -64,7 +64,7 @@ export const HistorySidebar: React.FC<HistorySidebarProps> = ({
   const [isLoading, setIsLoading] = useState(true);
   const [editingHistoryID, setEditingHistoryID] = useState<string | null>(null);
   const [titleInput, setTitleInput] = useState('');
-  const [showTags, setShowTags] = useState(false);
+  const [showFilter, setShowFilter] = useState(false);
   const [allTags, setAllTags] = useState<string[]>([]);
   const [filterTags, setFilterTags] = useState<string[]>([]);
 
@@ -180,7 +180,7 @@ export const HistorySidebar: React.FC<HistorySidebarProps> = ({
   };
 
   const getFilteredHistoriesIds = (histories: ConversationHistoryIndexList) => {
-    if (!showTags) {
+    if (!showFilter) {
       return Object.keys(histories);
     }
 
@@ -213,7 +213,7 @@ export const HistorySidebar: React.FC<HistorySidebarProps> = ({
           handleTitleChange={handleTitleChange}
           handleTitleBlur={handleTitleBlur}
           handleTitleDoubleClick={handleTitleDoubleClick}
-          showTags={showTags}
+          showTags={showFilter}
         />
       </>
     );
@@ -270,13 +270,13 @@ export const HistorySidebar: React.FC<HistorySidebarProps> = ({
         <Flex justify={'space-between'} align={'center'}>
           <Typography.Text>Chat History</Typography.Text>
           <Tooltip
-            title={showTags ? 'Hide Tags' : 'Show Tags'}
+            title={showFilter ? 'Hide Filter' : 'Show Filter'}
             placement={'right'}
           >
             <Button
-              type={showTags ? 'primary' : 'default'}
-              icon={<TagOutlined />}
-              onClick={() => setShowTags((prev) => !prev)}
+              type={showFilter ? 'primary' : 'default'}
+              icon={<FilterOutlined />}
+              onClick={() => setShowFilter((prev) => !prev)}
             />
           </Tooltip>
         </Flex>
@@ -292,7 +292,7 @@ export const HistorySidebar: React.FC<HistorySidebarProps> = ({
         </NoHistoryMessageContainer>
       ) : (
         <>
-          {showTags && (
+          {showFilter && (
             <div style={{ padding: 16 }}>
               <Select
                 showSearch={true}

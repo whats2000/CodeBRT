@@ -70,7 +70,7 @@ export const LoadSystemPromptBar: React.FC<LoadSystemPromptBarProps> = ({
   const { callApi } = useContext(WebviewContext);
   const { token } = theme.useToken();
 
-  const [showTags, setShowTags] = useState(false);
+  const [showFilter, setShowFilter] = useState(false);
   const [allTags, setAllTags] = useState<string[]>([]);
   const [filterTags, setFilterTags] = useState<string[]>([]);
   const [filterName, setFilterName] = useState<string>(''); // State for name filter
@@ -216,13 +216,13 @@ export const LoadSystemPromptBar: React.FC<LoadSystemPromptBarProps> = ({
           <Flex justify={'space-between'} align={'center'}>
             <Typography.Text>Load System Prompt</Typography.Text>
             <Tooltip
-              title={showTags ? 'Hide Filters' : 'Show Filters'}
+              title={showFilter ? 'Hide Filters' : 'Show Filters'}
               placement={'left'}
             >
               <Button
-                type={showTags ? 'primary' : 'default'}
+                type={showFilter ? 'primary' : 'default'}
                 icon={<FilterOutlined />}
-                onClick={() => setShowTags((prev) => !prev)}
+                onClick={() => setShowFilter((prev) => !prev)}
               />
             </Tooltip>
           </Flex>
@@ -232,7 +232,7 @@ export const LoadSystemPromptBar: React.FC<LoadSystemPromptBarProps> = ({
         placement={'right'}
         loading={isLoading}
       >
-        {showTags && (
+        {showFilter && (
           <div style={{ padding: 16 }}>
             <AutoComplete
               style={{ width: '100%', marginBottom: 16 }}
@@ -262,7 +262,7 @@ export const LoadSystemPromptBar: React.FC<LoadSystemPromptBarProps> = ({
           </div>
         )}
         <List
-          dataSource={showTags ? filteredPrompts : systemPrompts}
+          dataSource={showFilter ? filteredPrompts : systemPrompts}
           renderItem={(item) => (
             <StyledListItem
               $token={token}
@@ -306,7 +306,7 @@ export const LoadSystemPromptBar: React.FC<LoadSystemPromptBarProps> = ({
                     <Typography.Text>{item.name}</Typography.Text>
                   </Popover>
                 </div>
-                {showTags && (
+                {showFilter && (
                   <PromptTags
                     id={item.id}
                     tags={item.tags}
