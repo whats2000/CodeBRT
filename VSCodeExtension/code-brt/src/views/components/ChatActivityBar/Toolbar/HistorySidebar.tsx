@@ -180,6 +180,10 @@ export const HistorySidebar: React.FC<HistorySidebarProps> = ({
   };
 
   const getFilteredHistoriesIds = (histories: ConversationHistoryIndexList) => {
+    if (!showTags) {
+      return Object.keys(histories);
+    }
+
     return Object.keys(histories).filter((historyID) =>
       filterTags.length > 0
         ? histories[historyID].tags?.some
