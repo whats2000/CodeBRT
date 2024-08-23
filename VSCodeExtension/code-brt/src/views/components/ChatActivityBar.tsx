@@ -21,6 +21,10 @@ import { MessagesContainer } from './ChatActivityBar/MessagesContainer';
 import { ToolActivateFloatButtons } from './ChatActivityBar/ToolActivateFloatButtons';
 import { ModelAdvanceSettingBar } from './ChatActivityBar/ModelAdvanceSettingBar';
 import {
+  handleFilesUpload,
+  clearUploadedFiles,
+} from '../redux/slices/fileUploadSlice';
+import {
   loadModelService,
   startLoading,
 } from '../redux/slices/modelServiceSlice';
@@ -42,9 +46,6 @@ export const ChatActivityBar = () => {
     localStorage.getItem(INPUT_MESSAGE_KEY) || '',
   );
   const [isProcessing, setIsProcessing] = useState(false);
-  const [uploadedFiles, setUploadedFiles] = useState<string[]>(
-    JSON.parse(localStorage.getItem(UPLOADED_FILES_KEY) || '[]'),
-  );
   const [floatButtonBaseYPosition, setFloatButtonBaseYPosition] = useState(60);
   const [floatButtonsXPosition, setFloatButtonsXPosition] = useState(0);
   const [isModelAdvanceSettingBarOpen, setIsModelAdvanceSettingBarOpen] =
@@ -60,6 +61,9 @@ export const ChatActivityBar = () => {
   );
   const { activeModelService } = useSelector(
     (state: RootState) => state.modelService,
+  );
+  const uploadedFiles = useSelector(
+    (state: RootState) => state.fileUpload.uploadedFiles,
   );
 
   const [theme, setTheme] = useThemeConfig();
@@ -201,12 +205,12 @@ export const ChatActivityBar = () => {
   const processMessage = async ({
     message,
     parentId,
-    images = [],
+    files = [],
     isEdited = false,
   }: {
     message: string;
     parentId: string;
-    images?: string[];
+    files?: string[];
     isEdited?: boolean;
   }) => {
     if (
@@ -224,7 +228,7 @@ export const ChatActivityBar = () => {
       parentId,
       'user',
       message,
-      images,
+      files,
       activeModelService,
     );
 
@@ -235,7 +239,7 @@ export const ChatActivityBar = () => {
       'getLanguageModelResponse',
       activeModelService,
       message,
-      images.length > 0 ? images : undefined,
+      files.length > 0 ? files : undefined,
       isEdited ? userEntry.id : undefined,
       true,
       true,
@@ -261,7 +265,7 @@ export const ChatActivityBar = () => {
 
         if (!isEdited) {
           setInputMessage('');
-          setUploadedFiles([]);
+          dispatch(clearUploadedFiles());
         }
 
         setTimeout(() => {
@@ -283,7 +287,7 @@ export const ChatActivityBar = () => {
     await processMessage({
       message: inputMessage,
       parentId: conversationHistory.current,
-      images: uploadedFiles,
+      files: uploadedFiles,
     });
   };
 
@@ -295,33 +299,9 @@ export const ChatActivityBar = () => {
     await processMessage({
       message: editedMessage,
       parentId: entry.parent ?? '',
-      images: entry.images,
+      files: entry.images,
       isEdited: true,
     });
-  };
-
-  const handleFilesUpload = (files: FileList | null) => {
-    if (!(files && files.length > 0)) {
-      return;
-    }
-
-    const fileArray = Array.from(files);
-    fileArray.map((file) => {
-      const reader = new FileReader();
-      reader.readAsDataURL(file);
-      reader.onload = async () => {
-        if (reader.result) {
-          const fileName = await callApi('uploadFile', reader.result as string);
-
-          setUploadedFiles((prevImages) => [...prevImages, fileName]);
-        }
-      };
-    });
-  };
-
-  const handleFileRemove = async (filePath: string) => {
-    await callApi('deleteFile', filePath);
-    setUploadedFiles((prev) => prev.filter((path) => path !== filePath));
   };
 
   return (
@@ -336,13 +316,10 @@ export const ChatActivityBar = () => {
         />
         <InputContainer
           inputContainerRef={inputContainerRef}
-          uploadedFiles={uploadedFiles}
-          handleFilesUpload={handleFilesUpload}
           inputMessage={inputMessage}
           setInputMessage={setInputMessage}
           sendMessage={sendMessage}
           isProcessing={isProcessing}
-          handleFileRemove={handleFileRemove}
         />
       </Container>
       <Tooltip title={'Model Advance Settings'} placement={'left'}>

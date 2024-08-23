@@ -233,9 +233,13 @@ export type ViewApi = {
   /**
    * Get the response for a query with a file.
    * @param base64Data - The base64 data of the file.
+   * @param originalFileName - The original filename.
    * @returns The path of the file.
    */
-  uploadFile: (base64Data: string) => Promise<string>;
+  uploadFile: (
+    base64Data: string,
+    originalFileName?: string,
+  ) => Promise<string>;
 
   /**
    * Delete an image.

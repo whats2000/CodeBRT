@@ -8,9 +8,15 @@ import {
   SendOutlined,
   UploadOutlined,
 } from '@ant-design/icons';
+import { useDispatch, useSelector } from 'react-redux';
 
+import type { AppDispatch, RootState } from '../../redux';
 import { WebviewContext } from '../../WebviewContext';
 import { useClipboardImage, useWindowSize } from '../../hooks';
+import {
+  deleteFile,
+  handleFilesUpload,
+} from '../../redux/slices/fileUploadSlice';
 
 const StyledInputContainer = styled.div`
   display: flex;
@@ -35,9 +41,6 @@ type InputContainerProps = {
   setInputMessage: React.Dispatch<React.SetStateAction<string>>;
   sendMessage: () => void;
   isProcessing: boolean;
-  uploadedFiles: string[];
-  handleFilesUpload: (files: FileList | null) => void;
-  handleFileRemove: (filePath: string) => void;
 };
 
 export const InputContainer = ({
@@ -46,9 +49,6 @@ export const InputContainer = ({
   setInputMessage,
   sendMessage,
   isProcessing,
-  uploadedFiles,
-  handleFilesUpload,
-  handleFileRemove,
 }: InputContainerProps) => {
   const { callApi } = useContext(WebviewContext);
   const [enterPressCount, setEnterPressCount] = useState(0);
@@ -58,7 +58,10 @@ export const InputContainer = ({
   const [isRecording, setIsRecording] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  useClipboardImage((files) => handleFilesUpload(files));
+  const dispatch = useDispatch<AppDispatch>();
+  const { uploadedFiles } = useSelector((state: RootState) => state.fileUpload);
+
+  useClipboardImage((files) => dispatch(handleFilesUpload(files)));
 
   const { innerWidth } = useWindowSize();
 
@@ -90,7 +93,11 @@ export const InputContainer = ({
   };
 
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    handleFilesUpload(event.target.files);
+    if (!event.target.files || event.target.files.length === 0) {
+      return;
+    }
+
+    dispatch(handleFilesUpload(event.target.files));
     event.target.value = '';
   };
 
@@ -129,7 +136,7 @@ export const InputContainer = ({
       setFileList(
         urls.map((url, index) => ({
           uid: index.toString(),
-          name: `File ${index + 1}`,
+          name: uploadedFiles[index].split('\\').pop() as string,
           status: 'done',
           url,
         })),
@@ -142,11 +149,20 @@ export const InputContainer = ({
     const index = fileList.indexOf(file);
     const newFileList = [...fileList];
     newFileList.splice(index, 1);
-    handleFileRemove(uploadedFiles[index]);
+    dispatch(deleteFile(uploadedFiles[index]));
     setFileList(newFileList);
   };
 
   const handlePreview = async (file: UploadFile) => {
+    if (
+      !file.url
+        ?.split('.')
+        .pop()
+        ?.match(/(png|jpe?g|gif|webp)/i)
+    ) {
+      return;
+    }
+
     setPreviewImage(file.url || (file.preview as string));
     setPreviewOpen(true);
   };
@@ -182,7 +198,7 @@ export const InputContainer = ({
         />
         <input
           type='file'
-          accept='image/*,.pdf'
+          accept='.png,.jpg,.jpeg,.gif,.webp,.pdf'
           multiple={true}
           ref={fileInputRef}
           onInput={handleFileChange}

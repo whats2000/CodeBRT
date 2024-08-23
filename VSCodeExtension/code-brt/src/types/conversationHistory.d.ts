@@ -4,6 +4,7 @@
  * @property role - The role of the entry ('user' or 'AI')
  * @property message - The message of the entry
  * @property images - The images referenced by the entry in path
+ * @property files - The files referenced by the entry in path
  * @property parent - The parent ID of the entry
  * @property children - The children's ID of the entry
  */
@@ -12,6 +13,7 @@ export type ConversationEntry = {
   role: 'user' | 'AI';
   message: string;
   images?: string[];
+  files?: string[];
   parent: string | null;
   children: string[];
 };

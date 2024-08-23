@@ -240,8 +240,8 @@ export const activate = async (ctx: vscode.ExtensionContext) => {
     getLatestAvailableModelNames: async (modelType) => {
       return await models[modelType].service.getLatestAvailableModelNames();
     },
-    uploadFile: async (base64Data) => {
-      return FileUtils.uploadFile(ctx, base64Data);
+    uploadFile: async (base64Data, originalFileName) => {
+      return FileUtils.uploadFile(ctx, base64Data, originalFileName);
     },
     deleteFile: FileUtils.deleteFile,
     getWebviewUri: async (absolutePath: string) => {
