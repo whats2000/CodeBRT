@@ -1,15 +1,17 @@
 import { createAsyncThunk, createSlice, PayloadAction } from '@reduxjs/toolkit';
+
 import type { RootState } from '../store';
 import type { CallAPI } from '../../WebviewContext';
+import { UPLOADED_FILES_KEY } from '../../../constants';
 
-interface FileUploadState {
+type FileUploadState = {
   uploadedFiles: string[];
   isUploading: boolean;
   error: string | null;
-}
+};
 
 const initialState: FileUploadState = {
-  uploadedFiles: [],
+  uploadedFiles: JSON.parse(localStorage.getItem(UPLOADED_FILES_KEY) || '[]'),
   isUploading: false,
   error: null,
 };
