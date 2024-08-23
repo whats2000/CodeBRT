@@ -54,7 +54,7 @@ const StyledListItem = styled(List.Item)<{
   }
 `;
 
-type LoadSystemPromptModalProps = {
+type LoadSystemPromptBarProps = {
   open: boolean;
   onClose: () => void;
   setNewAdvanceSettings: React.Dispatch<
@@ -62,7 +62,7 @@ type LoadSystemPromptModalProps = {
   >;
 };
 
-export const LoadSystemPromptModal: React.FC<LoadSystemPromptModalProps> = ({
+export const LoadSystemPromptBar: React.FC<LoadSystemPromptBarProps> = ({
   open,
   onClose,
   setNewAdvanceSettings,
@@ -215,7 +215,10 @@ export const LoadSystemPromptModal: React.FC<LoadSystemPromptModalProps> = ({
         title={
           <Flex justify={'space-between'} align={'center'}>
             <Typography.Text>Load System Prompt</Typography.Text>
-            <Tooltip title='Show Tags'>
+            <Tooltip
+              title={showTags ? 'Hide Filters' : 'Show Filters'}
+              placement={'left'}
+            >
               <Button
                 type={showTags ? 'primary' : 'default'}
                 icon={<FilterOutlined />}
@@ -259,7 +262,7 @@ export const LoadSystemPromptModal: React.FC<LoadSystemPromptModalProps> = ({
           </div>
         )}
         <List
-          dataSource={filteredPrompts}
+          dataSource={showTags ? filteredPrompts : systemPrompts}
           renderItem={(item) => (
             <StyledListItem
               $token={token}

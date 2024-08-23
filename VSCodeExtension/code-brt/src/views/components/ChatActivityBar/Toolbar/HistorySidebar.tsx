@@ -265,7 +265,10 @@ export const HistorySidebar: React.FC<HistorySidebarProps> = ({
       title={
         <Flex justify={'space-between'} align={'center'}>
           <Typography.Text>Chat History</Typography.Text>
-          <Tooltip title='Show Tags' placement={'right'}>
+          <Tooltip
+            title={showTags ? 'Hide Tags' : 'Show Tags'}
+            placement={'right'}
+          >
             <Button
               type={showTags ? 'primary' : 'default'}
               icon={<TagOutlined />}
