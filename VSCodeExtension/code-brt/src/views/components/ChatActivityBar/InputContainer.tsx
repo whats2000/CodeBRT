@@ -12,7 +12,7 @@ import { useDispatch, useSelector } from 'react-redux';
 
 import type { AppDispatch, RootState } from '../../redux';
 import { WebviewContext } from '../../WebviewContext';
-import { useClipboardImage, useWindowSize } from '../../hooks';
+import { useClipboardFiles, useWindowSize } from '../../hooks';
 import {
   deleteFile,
   handleFilesUpload,
@@ -61,7 +61,7 @@ export const InputContainer = ({
   const dispatch = useDispatch<AppDispatch>();
   const { uploadedFiles } = useSelector((state: RootState) => state.fileUpload);
 
-  useClipboardImage((files) => dispatch(handleFilesUpload(files)));
+  useClipboardFiles((files) => dispatch(handleFilesUpload(files)));
 
   const { innerWidth } = useWindowSize();
 

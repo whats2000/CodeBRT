@@ -68,7 +68,7 @@ export const ChatActivityBar = () => {
 
   const [theme, setTheme] = useThemeConfig();
 
-  const dropRef = useDragAndDrop((files) => handleFilesUpload(files));
+  const dropRef = useDragAndDrop((files) => dispatch(handleFilesUpload(files)));
   const bufferRef = useRef<string>('');
   const isProcessingRef = useRef<boolean>(false);
   const processingIntervalRef = useRef<NodeJS.Timeout | null>(null);
