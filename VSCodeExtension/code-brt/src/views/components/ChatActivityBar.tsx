@@ -6,7 +6,7 @@ import { ControlOutlined } from '@ant-design/icons';
 import { useSelector, useDispatch } from 'react-redux';
 
 import { AppDispatch, RootState } from '../redux';
-import { INPUT_MESSAGE_KEY, UPLOADED_IMAGES_KEY } from '../../constants';
+import { INPUT_MESSAGE_KEY, UPLOADED_FILES_KEY } from '../../constants';
 import {
   addEntry,
   addTempAIResponseEntry,
@@ -42,8 +42,8 @@ export const ChatActivityBar = () => {
     localStorage.getItem(INPUT_MESSAGE_KEY) || '',
   );
   const [isProcessing, setIsProcessing] = useState(false);
-  const [uploadedImages, setUploadedImages] = useState<string[]>(
-    JSON.parse(localStorage.getItem(UPLOADED_IMAGES_KEY) || '[]'),
+  const [uploadedFiles, setUploadedFiles] = useState<string[]>(
+    JSON.parse(localStorage.getItem(UPLOADED_FILES_KEY) || '[]'),
   );
   const [floatButtonBaseYPosition, setFloatButtonBaseYPosition] = useState(60);
   const [floatButtonsXPosition, setFloatButtonsXPosition] = useState(0);
@@ -64,7 +64,7 @@ export const ChatActivityBar = () => {
 
   const [theme, setTheme] = useThemeConfig();
 
-  const dropRef = useDragAndDrop((files) => handleImageUpload(files));
+  const dropRef = useDragAndDrop((files) => handleFilesUpload(files));
   const bufferRef = useRef<string>('');
   const isProcessingRef = useRef<boolean>(false);
   const processingIntervalRef = useRef<NodeJS.Timeout | null>(null);
@@ -153,8 +153,8 @@ export const ChatActivityBar = () => {
   }, [inputMessage]);
 
   useEffect(() => {
-    localStorage.setItem(UPLOADED_IMAGES_KEY, JSON.stringify(uploadedImages));
-  }, [uploadedImages]);
+    localStorage.setItem(UPLOADED_FILES_KEY, JSON.stringify(uploadedFiles));
+  }, [uploadedFiles]);
 
   useEffect(() => {
     tempIdRef.current = conversationHistory.tempId;
@@ -261,7 +261,7 @@ export const ChatActivityBar = () => {
 
         if (!isEdited) {
           setInputMessage('');
-          setUploadedImages([]);
+          setUploadedFiles([]);
         }
 
         setTimeout(() => {
@@ -283,7 +283,7 @@ export const ChatActivityBar = () => {
     await processMessage({
       message: inputMessage,
       parentId: conversationHistory.current,
-      images: uploadedImages,
+      images: uploadedFiles,
     });
   };
 
@@ -300,7 +300,7 @@ export const ChatActivityBar = () => {
     });
   };
 
-  const handleImageUpload = (files: FileList | null) => {
+  const handleFilesUpload = (files: FileList | null) => {
     if (!(files && files.length > 0)) {
       return;
     }
@@ -311,20 +311,17 @@ export const ChatActivityBar = () => {
       reader.readAsDataURL(file);
       reader.onload = async () => {
         if (reader.result) {
-          const fileName = await callApi(
-            'uploadImage',
-            reader.result as string,
-          );
+          const fileName = await callApi('uploadFile', reader.result as string);
 
-          setUploadedImages((prevImages) => [...prevImages, fileName]);
+          setUploadedFiles((prevImages) => [...prevImages, fileName]);
         }
       };
     });
   };
 
-  const handleImageRemove = async (imagePath: string) => {
-    await callApi('deleteImage', imagePath);
-    setUploadedImages((prev) => prev.filter((path) => path !== imagePath));
+  const handleFileRemove = async (filePath: string) => {
+    await callApi('deleteFile', filePath);
+    setUploadedFiles((prev) => prev.filter((path) => path !== filePath));
   };
 
   return (
@@ -339,13 +336,13 @@ export const ChatActivityBar = () => {
         />
         <InputContainer
           inputContainerRef={inputContainerRef}
-          uploadedImages={uploadedImages}
-          handleImageUpload={handleImageUpload}
+          uploadedFiles={uploadedFiles}
+          handleFilesUpload={handleFilesUpload}
           inputMessage={inputMessage}
           setInputMessage={setInputMessage}
           sendMessage={sendMessage}
           isProcessing={isProcessing}
-          handleImageRemove={handleImageRemove}
+          handleFileRemove={handleFileRemove}
         />
       </Container>
       <Tooltip title={'Model Advance Settings'} placement={'left'}>

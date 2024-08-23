@@ -35,9 +35,9 @@ type InputContainerProps = {
   setInputMessage: React.Dispatch<React.SetStateAction<string>>;
   sendMessage: () => void;
   isProcessing: boolean;
-  uploadedImages: string[];
-  handleImageUpload: (files: FileList | null) => void;
-  handleImageRemove: (imagePath: string) => void;
+  uploadedFiles: string[];
+  handleFilesUpload: (files: FileList | null) => void;
+  handleFileRemove: (filePath: string) => void;
 };
 
 export const InputContainer = ({
@@ -46,9 +46,9 @@ export const InputContainer = ({
   setInputMessage,
   sendMessage,
   isProcessing,
-  uploadedImages,
-  handleImageUpload,
-  handleImageRemove,
+  uploadedFiles,
+  handleFilesUpload,
+  handleFileRemove,
 }: InputContainerProps) => {
   const { callApi } = useContext(WebviewContext);
   const [enterPressCount, setEnterPressCount] = useState(0);
@@ -58,7 +58,7 @@ export const InputContainer = ({
   const [isRecording, setIsRecording] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  useClipboardImage((files) => handleImageUpload(files));
+  useClipboardImage((files) => handleFilesUpload(files));
 
   const { innerWidth } = useWindowSize();
 
@@ -90,7 +90,7 @@ export const InputContainer = ({
   };
 
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    handleImageUpload(event.target.files);
+    handleFilesUpload(event.target.files);
     event.target.value = '';
   };
 
@@ -120,28 +120,29 @@ export const InputContainer = ({
   useEffect(() => {
     const updateImageUris = async () => {
       const urls = await Promise.all(
-        uploadedImages.map(async (imagePath) => {
-          const uri = await callApi('getWebviewUri', imagePath);
+        uploadedFiles.map(async (filePath) => {
+          const uri = await callApi('getWebviewUri', filePath);
           return uri as string;
         }),
       );
+
       setFileList(
         urls.map((url, index) => ({
           uid: index.toString(),
-          name: `image-${index + 1}`,
+          name: `File ${index + 1}`,
           status: 'done',
           url,
         })),
       );
     };
     updateImageUris().catch((error) => console.error(error));
-  }, [uploadedImages, callApi]);
+  }, [uploadedFiles, callApi]);
 
   const handleRemove = (file: UploadFile) => {
     const index = fileList.indexOf(file);
     const newFileList = [...fileList];
     newFileList.splice(index, 1);
-    handleImageRemove(uploadedImages[index]);
+    handleFileRemove(uploadedFiles[index]);
     setFileList(newFileList);
   };
 
@@ -181,7 +182,7 @@ export const InputContainer = ({
         />
         <input
           type='file'
-          accept='image/*'
+          accept='image/*,.pdf'
           multiple={true}
           ref={fileInputRef}
           onInput={handleFileChange}

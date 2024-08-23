@@ -235,13 +235,14 @@ export type ViewApi = {
    * @param base64Data - The base64 data of the file.
    * @returns The path of the file.
    */
-  uploadImage: (base64Data: string) => Promise<string>;
+  uploadFile: (base64Data: string) => Promise<string>;
 
   /**
    * Delete an image.
-   * @param imagePath - The path of the image to delete.
+   * @param filePath - The path of the file to delete.
+   * Only work for user uploaded files.
    */
-  deleteImage: (imagePath: string) => Promise<void>;
+  deleteFile: (filePath: string) => Promise<void>;
 
   /**
    * Get the webview URI for a path.

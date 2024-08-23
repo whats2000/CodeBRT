@@ -16,7 +16,12 @@ export const SaveSystemPromptModal: React.FC<SaveSystemPromptModalProps> = ({
   currentPromptContent,
 }) => {
   const { callApi } = useContext(WebviewContext);
-  const [form] = Form.useForm();
+  const [form] = Form.useForm<{
+    name: string;
+    description: string;
+    content: string;
+    tags: string[];
+  }>();
 
   const [partialSettings, setPartialSettings] = useState<{
     systemPrompts: SystemPrompt[];

@@ -41,7 +41,7 @@ export abstract class FileUtils {
     try {
       await fs.writeFile(fileName, buffer);
     } catch (error) {
-      throw new Error('Failed to write image file: ' + error);
+      throw new Error('Failed to write file: ' + error);
     }
 
     return fileName;
