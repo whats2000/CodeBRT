@@ -243,8 +243,8 @@ export const ChatActivityBar = () => {
       .then(async (response) => {
         const responseText = await response;
         if (!tempIdRef.current) {
-          setIsProcessing(false);
           stopScrollInterval();
+          setIsProcessing(false);
           return;
         }
 
@@ -264,12 +264,10 @@ export const ChatActivityBar = () => {
           setUploadedImages([]);
         }
 
-        stopScrollInterval();
-
         setTimeout(() => {
+          stopScrollInterval();
           setIsProcessing(false);
-          scrollToBottom(true);
-        }, 1000);
+        }, 500);
       })
       .catch((error) => {
         callApi(
@@ -336,7 +334,6 @@ export const ChatActivityBar = () => {
         <MessagesContainer
           messagesContainerRef={messagesContainerRef}
           isProcessing={isProcessing}
-          scrollToBottom={scrollToBottom}
           messageEndRef={messageEndRef}
           handleEditUserMessageSave={handleEditUserMessageSave}
         />

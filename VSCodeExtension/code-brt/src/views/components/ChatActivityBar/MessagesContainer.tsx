@@ -79,7 +79,6 @@ const traverseHistory = (
 type MessagesContainerProps = {
   messagesContainerRef: React.RefObject<HTMLDivElement>;
   isProcessing: boolean;
-  scrollToBottom: (smooth?: boolean) => void;
   messageEndRef: React.RefObject<HTMLDivElement>;
   handleEditUserMessageSave: (
     entryId: string,
@@ -90,7 +89,6 @@ type MessagesContainerProps = {
 export const MessagesContainer: React.FC<MessagesContainerProps> = ({
   messagesContainerRef,
   isProcessing,
-  scrollToBottom,
   messageEndRef,
   handleEditUserMessageSave,
 }) => {
@@ -337,7 +335,6 @@ export const MessagesContainer: React.FC<MessagesContainerProps> = ({
                     entry={entry}
                     conversationHistoryCurrent={conversationHistory.current}
                     isProcessing={isProcessing}
-                    scrollToBottom={scrollToBottom}
                     hljsTheme={partialSettings.hljsTheme}
                     setHljsTheme={setHljsTheme}
                     toolStatus={toolStatus}

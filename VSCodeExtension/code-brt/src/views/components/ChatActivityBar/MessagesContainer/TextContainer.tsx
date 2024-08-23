@@ -17,7 +17,6 @@ type MessageTextContainerProps = {
   entry: ConversationEntry;
   conversationHistoryCurrent: string;
   isProcessing: boolean;
-  scrollToBottom: () => void;
   hljsTheme: keyof typeof hljs;
   setHljsTheme: (theme: keyof typeof hljs) => void;
   toolStatus: string;
@@ -27,7 +26,6 @@ export const TextContainer: React.FC<MessageTextContainerProps> = ({
   entry,
   conversationHistoryCurrent,
   isProcessing,
-  scrollToBottom,
   hljsTheme,
   setHljsTheme,
   toolStatus,
@@ -41,7 +39,6 @@ export const TextContainer: React.FC<MessageTextContainerProps> = ({
           <TypingAnimation
             message={entry.message}
             isProcessing={isProcessing}
-            scrollToBottom={scrollToBottom}
             hljsTheme={hljsTheme}
             setHljsTheme={setHljsTheme}
           />
