@@ -51,7 +51,7 @@ describe('HistoryManager', () => {
 
     expect(newHistory).toBeDefined();
     expect(newHistory.root).toBeDefined();
-    expect(historyManager.getHistories()[newHistory.root]).toBeDefined();
+    expect(historyManager.getHistoryIndexes()[newHistory.root]).toBeDefined();
 
     const filePath = path.join(historiesPath, `${newHistory.root}.json`);
 
@@ -98,7 +98,9 @@ describe('HistoryManager', () => {
     const newTitle = 'Updated Title';
     await historyManager.updateHistoryTitleById(newHistory.root, newTitle);
 
-    expect(historyManager.getHistories()[newHistory.root].title).toBe(newTitle);
+    expect(historyManager.getHistoryIndexes()[newHistory.root].title).toBe(
+      newTitle,
+    );
 
     const filePath = path.join(vscodePath, 'historyIndex.json');
     const historyIndex = JSON.parse(fs.readFileSync(filePath, 'utf8'));
@@ -124,7 +126,7 @@ describe('HistoryManager', () => {
 
     expect(deletedHistory).toBeDefined();
 
-    expect(historyManager.getHistories()[rootId]).toBeUndefined();
+    expect(historyManager.getHistoryIndexes()[rootId]).toBeUndefined();
 
     const filePath = path.join(historiesPath, `${rootId}.json`);
     expect(fs.existsSync(filePath)).toBe(false);

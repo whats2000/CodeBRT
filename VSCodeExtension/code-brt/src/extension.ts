@@ -171,8 +171,8 @@ export const activate = async (ctx: vscode.ExtensionContext) => {
     editLanguageModelConversationHistory: (entryID, newMessage) => {
       historyManager.editConversationEntry(entryID, newMessage);
     },
-    getHistories: () => {
-      return historyManager.getHistories();
+    getHistoryIndexes: () => {
+      return historyManager.getHistoryIndexes();
     },
     switchHistory: (historyID) => {
       return historyManager.switchHistory(historyID);

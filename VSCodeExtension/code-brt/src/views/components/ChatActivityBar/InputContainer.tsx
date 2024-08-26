@@ -214,11 +214,7 @@ export const InputContainer = ({
           value={inputMessage}
           onChange={(e) => setInputMessage(e.target.value)}
           onKeyDown={handleKeyDown}
-          placeholder={
-            innerWidth > 520
-              ? 'Paste images or hold SHIFT key drop them...'
-              : 'Ask...'
-          }
+          placeholder={innerWidth > 520 ? 'Paste images...' : 'Ask...'}
           disabled={isProcessing}
           autoSize={{ minRows: 1, maxRows: 10 }}
           allowClear

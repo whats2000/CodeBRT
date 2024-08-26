@@ -318,7 +318,7 @@ export class HistoryManager implements IHistoryManager {
     }
   }
 
-  public getHistories(): ConversationHistoryIndexList {
+  public getHistoryIndexes(): ConversationHistoryIndexList {
     return this.historyIndex;
   }
 

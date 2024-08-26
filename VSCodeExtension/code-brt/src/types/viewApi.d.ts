@@ -122,7 +122,7 @@ export type ViewApi = {
   /**
    * Get the conversation history list.
    */
-  getHistories: () => ConversationHistoryIndexList;
+  getHistoryIndexes: () => ConversationHistoryIndexList;
 
   /**
    * Switch the conversation history.
@@ -236,10 +236,7 @@ export type ViewApi = {
    * @param originalFileName - The original filename.
    * @returns The path of the file.
    */
-  uploadFile: (
-    base64Data: string,
-    originalFileName?: string,
-  ) => Promise<string>;
+  uploadFile: (base64Data: string, originalFileName: string) => Promise<string>;
 
   /**
    * Delete an image.

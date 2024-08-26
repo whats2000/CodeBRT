@@ -60,7 +60,8 @@ export const HistorySidebar: React.FC<HistorySidebarProps> = ({
     (state: RootState) => state.modelService.activeModelService,
   );
 
-  const [histories, setHistories] = useState<ConversationHistoryIndexList>({});
+  const [historyIndexes, setHistoryIndexes] =
+    useState<ConversationHistoryIndexList>({});
   const [isLoading, setIsLoading] = useState(true);
   const [editingHistoryID, setEditingHistoryID] = useState<string | null>(null);
   const [titleInput, setTitleInput] = useState('');
@@ -78,16 +79,16 @@ export const HistorySidebar: React.FC<HistorySidebarProps> = ({
         return;
       }
 
-      callApi('getHistories')
-        .then((histories) => {
-          const sortedHistoriesArray = Object.keys(histories)
-            .map((key) => histories[key])
+      callApi('getHistoryIndexes')
+        .then((historyIndexes) => {
+          const sortedHistoriesArray = Object.keys(historyIndexes)
+            .map((key) => historyIndexes[key])
             .sort((a, b) => b.update_time - a.update_time);
 
           const sortedHistories = Object.fromEntries(
             sortedHistoriesArray.map((history) => [history.id, history]),
           );
-          setHistories(sortedHistories);
+          setHistoryIndexes(sortedHistories);
           setIsLoading(false);
         })
         .catch((error) => {
@@ -102,7 +103,7 @@ export const HistorySidebar: React.FC<HistorySidebarProps> = ({
   }, [isOpen, activeModelService]);
 
   useEffect(() => {
-    const tagsAvailable = Object.values(histories).reduce(
+    const tagsAvailable = Object.values(historyIndexes).reduce(
       (acc: string[], history) => {
         if (!history.tags) {
           return acc;
@@ -114,7 +115,7 @@ export const HistorySidebar: React.FC<HistorySidebarProps> = ({
     );
 
     setAllTags(tagsAvailable);
-  }, [histories]);
+  }, [historyIndexes]);
 
   const handleSwitchHistory = (historyID: string) => {
     dispatch(switchHistory(historyID));
@@ -128,7 +129,7 @@ export const HistorySidebar: React.FC<HistorySidebarProps> = ({
 
     callApi('deleteHistory', historyID)
       .then(async (newConversationHistory) => {
-        setHistories((prevHistories) => {
+        setHistoryIndexes((prevHistories) => {
           const updatedHistories = { ...prevHistories };
           delete updatedHistories[historyID];
           return updatedHistories;
@@ -161,7 +162,7 @@ export const HistorySidebar: React.FC<HistorySidebarProps> = ({
 
     callApi('updateHistoryTitleById', historyID, titleInput)
       .then(() => {
-        setHistories((prevHistories) => ({
+        setHistoryIndexes((prevHistories) => ({
           ...prevHistories,
           [historyID]: {
             ...prevHistories[historyID],
@@ -204,8 +205,8 @@ export const HistorySidebar: React.FC<HistorySidebarProps> = ({
         <HistoryListItem
           historyID={historyID}
           conversationHistory={conversationHistory}
-          histories={histories}
-          setHistories={setHistories}
+          histories={historyIndexes}
+          setHistories={setHistoryIndexes}
           deleteHistory={deleteHistory}
           switchHistory={handleSwitchHistory}
           editingHistoryID={editingHistoryID}
@@ -220,11 +221,11 @@ export const HistorySidebar: React.FC<HistorySidebarProps> = ({
   };
 
   const renderWithDividers = (historyID: string, index: number) => {
-    const historyIDs = getFilteredHistoriesIds(histories);
-    const historyUpdateTime = new Date(histories[historyID].update_time);
+    const historyIDs = getFilteredHistoriesIds(historyIndexes);
+    const historyUpdateTime = new Date(historyIndexes[historyID].update_time);
     const prevHistoryUpdateTime =
       index > 0
-        ? new Date(histories[historyIDs[index - 1]]?.update_time)
+        ? new Date(historyIndexes[historyIDs[index - 1]]?.update_time)
         : null;
     const now = new Date(); // Current date
 
@@ -286,7 +287,7 @@ export const HistorySidebar: React.FC<HistorySidebarProps> = ({
       placement='left'
       loading={isLoading || conversationHistory.isLoading || !isOpen}
     >
-      {Object.keys(histories).length === 0 ? (
+      {Object.keys(historyIndexes).length === 0 ? (
         <NoHistoryMessageContainer>
           <Typography.Text>Nothing Currently</Typography.Text>
         </NoHistoryMessageContainer>
@@ -313,7 +314,7 @@ export const HistorySidebar: React.FC<HistorySidebarProps> = ({
           <StyledList
             $token={token}
             split={false}
-            dataSource={getFilteredHistoriesIds(histories)}
+            dataSource={getFilteredHistoriesIds(historyIndexes)}
             renderItem={
               renderWithDividers as <T>(
                 item: T,

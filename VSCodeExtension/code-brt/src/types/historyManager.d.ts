@@ -67,7 +67,7 @@ export type IHistoryManager = {
    * Get the histories index
    * @returns The history index
    */
-  getHistories(): ConversationHistoryIndexList;
+  getHistoryIndexes(): ConversationHistoryIndexList;
 
   /**
    * Delete a history by ID
