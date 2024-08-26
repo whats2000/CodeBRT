@@ -11,12 +11,11 @@ import {
 } from 'antd';
 import { DeleteOutlined, EditOutlined, SaveOutlined } from '@ant-design/icons';
 import styled from 'styled-components';
+import { useDispatch, useSelector } from 'react-redux';
 
-import type {
-  ConversationHistory,
-  ConversationHistoryIndexList,
-} from '../../../../../types';
+import type { AppDispatch, RootState } from '../../../../redux';
 import { HistoryTags } from './HistoryTags';
+import { deleteConversationIndex } from '../../../../redux/slices/conversationIndexSlice';
 
 const StyledListItem = styled(List.Item)<{
   $active: boolean;
@@ -43,12 +42,6 @@ const EditableTitle = styled(Input.TextArea)`
 
 type HistoryListItemProps = {
   historyID: string;
-  conversationHistory: ConversationHistory;
-  histories: ConversationHistoryIndexList;
-  setHistories: React.Dispatch<
-    React.SetStateAction<ConversationHistoryIndexList>
-  >;
-  deleteHistory: (historyID: string) => void;
   switchHistory: (historyID: string) => void;
   editingHistoryID: string | null;
   titleInput: string;
@@ -60,10 +53,6 @@ type HistoryListItemProps = {
 
 export const HistoryListItem: React.FC<HistoryListItemProps> = ({
   historyID,
-  conversationHistory,
-  histories,
-  setHistories,
-  deleteHistory,
   switchHistory,
   editingHistoryID,
   titleInput,
@@ -73,6 +62,25 @@ export const HistoryListItem: React.FC<HistoryListItemProps> = ({
   showTags,
 }) => {
   const { token } = theme.useToken();
+
+  const dispatch = useDispatch<AppDispatch>();
+  const activeModelService = useSelector(
+    (state: RootState) => state.modelService.activeModelService,
+  );
+  const conversationHistory = useSelector(
+    (state: RootState) => state.conversation,
+  );
+  const { historyIndexes } = useSelector(
+    (state: RootState) => state.conversationIndex,
+  );
+
+  const deleteHistory = (historyID: string) => {
+    if (activeModelService === 'loading...') {
+      return;
+    }
+
+    dispatch(deleteConversationIndex(historyID));
+  };
 
   return (
     <StyledListItem
@@ -113,13 +121,13 @@ export const HistoryListItem: React.FC<HistoryListItemProps> = ({
         ) : (
           <Flex
             onDoubleClick={() =>
-              handleTitleDoubleClick(historyID, histories[historyID].title)
+              handleTitleDoubleClick(historyID, historyIndexes[historyID].title)
             }
             style={{ width: '100%' }}
             align={'center'}
           >
             <Typography.Text ellipsis>
-              {histories[historyID].title}
+              {historyIndexes[historyID].title}
             </Typography.Text>
             {historyID === conversationHistory.root && (
               <Button
@@ -128,7 +136,10 @@ export const HistoryListItem: React.FC<HistoryListItemProps> = ({
                 icon={<EditOutlined />}
                 onClick={(e) => {
                   e.stopPropagation();
-                  handleTitleDoubleClick(historyID, histories[historyID].title);
+                  handleTitleDoubleClick(
+                    historyID,
+                    historyIndexes[historyID].title,
+                  );
                 }}
               />
             )}
@@ -136,9 +147,8 @@ export const HistoryListItem: React.FC<HistoryListItemProps> = ({
         )}
         {showTags && (
           <HistoryTags
-            tags={histories[historyID].tags}
+            tags={historyIndexes[historyID].tags}
             historyID={historyID}
-            setHistoryIndexes={setHistories}
           />
         )}
       </Space>

@@ -9,11 +9,13 @@ import { differenceInDays, isBefore, isToday, isYesterday } from 'date-fns';
 import type { ConversationHistoryIndexList } from '../../../../types';
 import type { AppDispatch, RootState } from '../../../redux';
 import { WebviewContext } from '../../../WebviewContext';
-import {
-  setConversationHistory,
-  switchHistory,
-} from '../../../redux/slices/conversationSlice';
+import { switchHistory } from '../../../redux/slices/conversationSlice';
 import { HistoryListItem } from './HistorySidebar/HistoryListItem';
+import {
+  fetchAndSortConversationIndex,
+  setFilterTags,
+  updateHistoryTitle,
+} from '../../../redux/slices/conversationIndexSlice';
 
 const StyledDrawer = styled(Drawer)`
   & .ant-drawer-header {
@@ -59,91 +61,33 @@ export const HistorySidebar: React.FC<HistorySidebarProps> = ({
   const activeModelService = useSelector(
     (state: RootState) => state.modelService.activeModelService,
   );
+  const { historyIndexes, isLoading, filterTags, allTags } = useSelector(
+    (state: RootState) => state.conversationIndex,
+  );
 
-  const [historyIndexes, setHistoryIndexes] =
-    useState<ConversationHistoryIndexList>({});
-  const [isLoading, setIsLoading] = useState(true);
   const [editingHistoryID, setEditingHistoryID] = useState<string | null>(null);
   const [titleInput, setTitleInput] = useState('');
   const [showFilter, setShowFilter] = useState(false);
-  const [allTags, setAllTags] = useState<string[]>([]);
-  const [filterTags, setFilterTags] = useState<string[]>([]);
 
   const { token } = theme.useToken();
 
   useEffect(() => {
     if (isOpen) {
-      setIsLoading(true);
-
       if (activeModelService === 'loading...') {
         return;
       }
 
-      callApi('getHistoryIndexes')
-        .then((historyIndexes) => {
-          const sortedHistoriesArray = Object.keys(historyIndexes)
-            .map((key) => historyIndexes[key])
-            .sort((a, b) => b.update_time - a.update_time);
-
-          const sortedHistories = Object.fromEntries(
-            sortedHistoriesArray.map((history) => [history.id, history]),
-          );
-          setHistoryIndexes(sortedHistories);
-          setIsLoading(false);
-        })
-        .catch((error) => {
-          callApi(
-            'alertMessage',
-            `Failed to load histories: ${error}`,
-            'error',
-          ).catch(console.error);
-          setIsLoading(false);
-        });
+      dispatch(fetchAndSortConversationIndex());
     }
   }, [isOpen, activeModelService]);
 
-  useEffect(() => {
-    const tagsAvailable = Object.values(historyIndexes).reduce(
-      (acc: string[], history) => {
-        if (!history.tags) {
-          return acc;
-        }
-
-        return [...acc, ...history.tags.filter((tag) => !acc.includes(tag))];
-      },
-      [],
-    );
-
-    setAllTags(tagsAvailable);
-  }, [historyIndexes]);
-
   const handleSwitchHistory = (historyID: string) => {
-    dispatch(switchHistory(historyID));
-    onClose();
-  };
-
-  const deleteHistory = (historyID: string) => {
-    if (activeModelService === 'loading...') {
+    if (editingHistoryID || conversationHistory.root === historyID) {
       return;
     }
 
-    callApi('deleteHistory', historyID)
-      .then(async (newConversationHistory) => {
-        setHistoryIndexes((prevHistories) => {
-          const updatedHistories = { ...prevHistories };
-          delete updatedHistories[historyID];
-          return updatedHistories;
-        });
-
-        dispatch(setConversationHistory(await newConversationHistory));
-      })
-      .catch((error) =>
-        callApi(
-          'alertMessage',
-          `Failed to delete history: ${error}`,
-          'error',
-        ).catch(console.error),
-      );
+    dispatch(switchHistory(historyID));
+    onClose();
   };
 
   const handleTitleDoubleClick = (historyID: string, title: string) => {
@@ -162,13 +106,7 @@ export const HistorySidebar: React.FC<HistorySidebarProps> = ({
 
     callApi('updateHistoryTitleById', historyID, titleInput)
       .then(() => {
-        setHistoryIndexes((prevHistories) => ({
-          ...prevHistories,
-          [historyID]: {
-            ...prevHistories[historyID],
-            title: titleInput,
-          },
-        }));
+        dispatch(updateHistoryTitle({ historyID, title: titleInput }));
       })
       .catch((error) =>
         callApi(
@@ -204,10 +142,6 @@ export const HistorySidebar: React.FC<HistorySidebarProps> = ({
         )}
         <HistoryListItem
           historyID={historyID}
-          conversationHistory={conversationHistory}
-          histories={historyIndexes}
-          setHistories={setHistoryIndexes}
-          deleteHistory={deleteHistory}
           switchHistory={handleSwitchHistory}
           editingHistoryID={editingHistoryID}
           titleInput={titleInput}
@@ -307,7 +241,7 @@ export const HistorySidebar: React.FC<HistorySidebarProps> = ({
                     label: item,
                   }))}
                 placeholder={'Filter by tags'}
-                onChange={setFilterTags}
+                onChange={(newTags) => dispatch(setFilterTags(newTags))}
               />
             </div>
           )}
