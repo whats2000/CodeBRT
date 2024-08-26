@@ -138,7 +138,7 @@ export const HistoryListItem: React.FC<HistoryListItemProps> = ({
           <HistoryTags
             tags={histories[historyID].tags}
             historyID={historyID}
-            setHistories={setHistories}
+            setHistoryIndexes={setHistories}
           />
         )}
       </Space>

@@ -10,7 +10,7 @@ import { MODEL_SERVICE_CONSTANTS } from '../../../../../constants';
 type HistoryTagsProps = {
   tags?: string[];
   historyID: string;
-  setHistories: React.Dispatch<
+  setHistoryIndexes: React.Dispatch<
     React.SetStateAction<ConversationHistoryIndexList>
   >;
 };
@@ -18,7 +18,7 @@ type HistoryTagsProps = {
 export const HistoryTags: React.FC<HistoryTagsProps> = ({
   tags,
   historyID,
-  setHistories,
+  setHistoryIndexes,
 }) => {
   if (!tags) {
     return null;
@@ -34,7 +34,7 @@ export const HistoryTags: React.FC<HistoryTagsProps> = ({
   const handleTagClose = (historyID: string, tag: string) => {
     callApi('removeHistoryTag', historyID, tag)
       .then(() => {
-        setHistories((prevHistories) => {
+        setHistoryIndexes((prevHistories) => {
           const updatedHistories = { ...prevHistories };
 
           if (!updatedHistories[historyID].tags) {
@@ -71,13 +71,13 @@ export const HistoryTags: React.FC<HistoryTagsProps> = ({
     if (inputValue && !tags?.includes(inputValue)) {
       callApi('addHistoryTag', historyID, inputValue)
         .then(() => {
-          setHistories((prevHistories) => {
-            const updatedHistories = { ...prevHistories };
-            updatedHistories[historyID].tags = [
-              ...(updatedHistories[historyID].tags ?? []),
+          setHistoryIndexes((prevHistoryIndexes) => {
+            const updatedHistoryIndexes = { ...prevHistoryIndexes };
+            updatedHistoryIndexes[historyID].tags = [
+              ...(updatedHistoryIndexes[historyID].tags ?? []),
               inputValue,
             ];
-            return updatedHistories;
+            return updatedHistoryIndexes;
           });
         })
         .catch((error) =>
