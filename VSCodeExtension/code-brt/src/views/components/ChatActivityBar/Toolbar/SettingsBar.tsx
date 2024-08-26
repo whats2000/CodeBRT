@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useContext } from 'react';
 import styled from 'styled-components';
 import type { AggregationColor } from 'antd/es/color-picker/color';
+import type { CheckboxProps } from 'antd/es/checkbox';
 import {
   Drawer,
   Form,
@@ -11,6 +12,7 @@ import {
   Space,
   Tooltip,
   Typography,
+  Checkbox,
 } from 'antd';
 
 import {
@@ -65,6 +67,7 @@ export const SettingsBar: React.FC<SettingSidebarProps> = ({
     themePrimaryColor: '#1677ff',
     themeAlgorithm: 'defaultAlgorithm',
     themeBorderRadius: 4,
+    retainContextWhenHidden: false,
   });
   const [isLoading, setIsLoading] = useState(true);
 
@@ -149,6 +152,14 @@ export const SettingsBar: React.FC<SettingSidebarProps> = ({
         themeBorderRadius: 4,
       });
     });
+  };
+
+  const handleCheckboxChange: CheckboxProps['onChange'] = (e) => {
+    setPartialSettings((prev) => ({
+      ...prev,
+      retainContextWhenHidden: e.target.checked,
+    }));
+    saveSettings({ retainContextWhenHidden: e.target.checked });
   };
 
   const saveSettings = (updatedSettings: Partial<ExtensionSettings>) => {
@@ -263,6 +274,16 @@ export const SettingsBar: React.FC<SettingSidebarProps> = ({
                   onChange={handleBorderRadiusChange}
                   onBlur={handleBlurSave}
                 />
+              </FormGroup>
+            );
+          } else if (key === 'retainContextWhenHidden') {
+            return (
+              <FormGroup key={key} label={'Keep the loaded context'}>
+                <Checkbox checked={value} onChange={handleCheckboxChange}>
+                  <Typography.Text color={'secondary'}>
+                    Cost more RAM but faster loading
+                  </Typography.Text>
+                </Checkbox>
               </FormGroup>
             );
           }

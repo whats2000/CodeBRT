@@ -118,7 +118,20 @@ export const activate = async (ctx: vscode.ExtensionContext) => {
       return await fs.readFile(uris[0].fsPath, 'utf-8');
     },
     setSetting: async (key, value) => {
-      return settingsManager.set(key, value);
+      await settingsManager.set(key, value);
+
+      if (key === 'retainContextWhenHidden') {
+        vscode.window
+          .showInformationMessage(
+            'The setting will take effect after the extension is reloaded',
+            'Reload',
+          )
+          .then((selection) => {
+            if (selection === 'Reload') {
+              vscode.commands.executeCommand('workbench.action.reloadWindow');
+            }
+          });
+      }
     },
     getSetting: (key) => {
       return settingsManager.get(key);
@@ -328,7 +341,18 @@ export const activate = async (ctx: vscode.ExtensionContext) => {
     msg.type === 'request';
 
   const registerAndConnectView = async <V extends ViewKey>(key: V) => {
-    const view = await viewRegistration(ctx, key);
+    const webviewOptions: vscode.WebviewOptions = {
+      enableScripts: true,
+    };
+    const retainContextWhenHidden = settingsManager.get(
+      'retainContextWhenHidden',
+    );
+    const view = await viewRegistration(
+      ctx,
+      key,
+      webviewOptions,
+      retainContextWhenHidden,
+    );
     connectedViews[key] = view;
     const onMessage = async (msg: Record<string, unknown>) => {
       if (!isViewApiRequest(msg)) {

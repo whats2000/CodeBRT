@@ -223,13 +223,7 @@ const conversationIndexSlice = createSlice({
   },
 });
 
-export const {
-  setConversationHistoryIndex,
-  setAllTags,
-  setFilterTags,
-  updateHistoryTitle,
-  startLoading,
-  stopLoading,
-} = conversationIndexSlice.actions;
+export const { setFilterTags, updateHistoryTitle } =
+  conversationIndexSlice.actions;
 
 export const conversationIndexReducer = conversationIndexSlice.reducer;

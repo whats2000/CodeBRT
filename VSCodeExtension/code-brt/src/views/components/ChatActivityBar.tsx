@@ -11,6 +11,7 @@ import {
   addEntry,
   addTempAIResponseEntry,
   handleStreamResponse,
+  initLoadHistory,
   replaceTempEntry,
 } from '../redux/slices/conversationSlice';
 import { WebviewContext } from '../WebviewContext';
@@ -75,6 +76,12 @@ export const ChatActivityBar = () => {
   const tempIdRef = useRef<string | null>(null);
 
   useEffect(() => {
+    // Load the lasted used conversation history
+    dispatch(initLoadHistory()).then(() => {
+      scrollToBottom(false);
+    });
+
+    // For receiving stream response
     const handleStreamResponseEvent = (responseFromMessage: string) => {
       bufferRef.current += responseFromMessage;
 

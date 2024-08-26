@@ -301,6 +301,18 @@
             "xt256",
             "zenburn"
           ]
+        },
+        "code-brt.lastUsedHistoryID": {
+          "type": "string",
+          "default": "",
+          "description": "Last used history ID",
+          "markdownDescription": "The ID of the last used history."
+        },
+        "code-brt.lastUsedSystemPromptName": {
+          "type": "string",
+          "default": "",
+          "description": "Last used system prompt name",
+          "markdownDescription": "The name of the last used system prompt."
         }
       }
     }

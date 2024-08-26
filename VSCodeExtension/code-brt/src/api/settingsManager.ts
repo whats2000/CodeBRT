@@ -4,6 +4,7 @@ import type {
   ExtensionSettings,
   ExtensionSettingsCrossDevice,
   ExtensionSettingsLocal,
+  ExtensionSettingsWorkspace,
 } from '../types';
 
 export class SettingsManager {
@@ -67,6 +68,11 @@ export class SettingsManager {
       urlFetcher: { active: false },
     },
     systemPrompts: [],
+    retainContextWhenHidden: false,
+  };
+  private readonly defaultWorkspaceSettings: ExtensionSettingsWorkspace = {
+    lastUsedHistoryID: '',
+    lastUsedSystemPromptName: '',
   };
   private readonly defaultCrossDeviceSettings: ExtensionSettingsCrossDevice = {
     anthropicApiKey: '',
@@ -82,6 +88,7 @@ export class SettingsManager {
   };
   private readonly defaultSettings: ExtensionSettings = {
     ...this.defaultLocalSettings,
+    ...this.defaultWorkspaceSettings,
     ...this.defaultCrossDeviceSettings,
   };
   private readonly localSettings: ExtensionSettingsLocal;
@@ -154,9 +161,14 @@ export class SettingsManager {
   ): Promise<void> {
     // Check if the setting is local
     if (setting in this.defaultLocalSettings) {
-      this.localSettings[setting as keyof ExtensionSettingsLocal] =
-        value as any;
+      (this.localSettings as any)[setting] = value;
       await this.saveLocalSettings();
+    } else if (setting in this.defaultWorkspaceSettings) {
+      await this.workspaceConfig.update(
+        setting,
+        value,
+        vscode.ConfigurationTarget.Workspace,
+      );
     } else {
       await this.workspaceConfig.update(
         setting,

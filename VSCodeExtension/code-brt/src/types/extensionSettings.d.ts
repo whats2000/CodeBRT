@@ -79,7 +79,7 @@ export type CustomModelSettings = {
 };
 
 /**
- * Represents the settings for the extension which are stored locally.
+ * Represents the settings for the model services.
  * @property anthropicAvailableModels - The available models for the Anthropic API
  * @property geminiAvailableModels - The available models for the Gemini API
  * @property openaiAvailableModels - The available models for the OpenAI API
@@ -93,13 +93,8 @@ export type CustomModelSettings = {
  * @property lastUsedModelService - The last used model service
  * @property lastSelectedModel - The last selected model for each model service
  * @property customModels - A list of custom models
- * @property selectedTextToVoiceService - The selected text-to-voice service
- * @property selectedVoiceToTextService - The selected voice-to-text service
- * @property gptSoVitsClientHost - The API URL for the GPT-SoVits model
- * @property gptSoVitsAvailableReferenceVoices - The available reference voices for the GPT-SoVits API
- * @property gptSoVitsSelectedReferenceVoice - The selected reference voice for the GPT-SoVits API
  */
-export type ExtensionSettingsLocal = {
+export type ModelServiceSettings = {
   anthropicAvailableModels: string[];
   geminiAvailableModels: string[];
   openaiAvailableModels: string[];
@@ -115,17 +110,64 @@ export type ExtensionSettingsLocal = {
     [keyof in ModelServiceType]: string;
   };
   customModels: CustomModelSettings[];
+};
+
+/**
+ * Represents the settings for the voice services.
+ * @property selectedTextToVoiceService - The selected text-to-voice service
+ * @property selectedVoiceToTextService - The selected voice-to-text service
+ * @property gptSoVitsClientHost - The API URL for the GPT-SoVits model
+ * @property gptSoVitsAvailableReferenceVoices - The available reference voices for the GPT-SoVits API
+ * @property gptSoVitsSelectedReferenceVoice - The selected reference voice for the GPT-SoVits API
+ */
+export type VoiceServiceSettings = {
   selectedTextToVoiceService: TextToVoiceServiceType;
   selectedVoiceToTextService: VoiceToTextServiceType;
   gptSoVitsClientHost: string;
   gptSoVitsAvailableReferenceVoices: GptSoVitsVoiceSetting[];
   gptSoVitsSelectedReferenceVoice: string;
+};
+
+/**
+ * Represents the settings for the tool services.
+ * @property enableTools - The enabled tools
+ */
+export type ToolServiceSettings = {
   enableTools: {
     [key in ToolServiceType]: {
       active: boolean;
     };
   };
+};
+
+/**
+ * Other local settings that are not related to the services.
+ * @property systemPrompts - An array of system prompts
+ * @property retainContextWhenHidden - Indicates whether the context should be retained when the extension is hidden
+ */
+export type OtherLocalSettings = {
   systemPrompts: SystemPrompt[];
+  retainContextWhenHidden: boolean;
+};
+
+/**
+ * Represents the settings for the extension which are stored locally.
+ * @property systemPrompts - An array of system prompts
+ * @property retainContextWhenHidden - Indicates whether the context should be retained when the extension is hidden
+ */
+export type ExtensionSettingsLocal = ModelServiceSettings &
+  VoiceServiceSettings &
+  ToolServiceSettings &
+  OtherLocalSettings;
+
+/**
+ * Represents the settings for the extension which are stored in the workspace.
+ * @property lastUsedSystemPromptName - The name of the last used system prompt
+ * @property lastUsedHistoryID - The ID of the last used conversation history
+ */
+export type ExtensionSettingsWorkspace = {
+  lastUsedHistoryID: string;
+  lastUsedSystemPromptName: string;
 };
 
 /**
@@ -158,4 +200,5 @@ export type ExtensionSettingsCrossDevice = {
  * Represents the settings for the extension.
  */
 export type ExtensionSettings = ExtensionSettingsLocal &
+  ExtensionSettingsWorkspace &
   ExtensionSettingsCrossDevice;

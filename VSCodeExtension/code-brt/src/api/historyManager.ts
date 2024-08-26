@@ -43,7 +43,7 @@ export class HistoryManager implements IHistoryManager {
     }
 
     // Load the conversation history index
-    this.loadHistories().catch((error) =>
+    this.loadHistoryIndexes().catch((error) =>
       vscode.window.showErrorMessage('Failed to load histories: ' + error),
     );
   }
@@ -51,7 +51,7 @@ export class HistoryManager implements IHistoryManager {
   /**
    * Load the conversation history index from the index file
    */
-  private async loadHistories(): Promise<void> {
+  private async loadHistoryIndexes(): Promise<void> {
     if (!this.historyIndexFilePath) {
       return;
     }

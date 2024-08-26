@@ -29,6 +29,49 @@ const initialState: ConversationHistory & {
   isLoading: false,
 };
 
+export const initLoadHistory = createAsyncThunk<
+  void,
+  void,
+  {
+    state: RootState;
+    extra: {
+      callApi: CallAPI;
+    };
+  }
+>(
+  'conversation/initLoadHistory',
+  async (_args, { getState, dispatch, extra: { callApi } }) => {
+    const state = getState().conversation;
+    if (state.isLoading) {
+      return;
+    }
+
+    dispatch(startLoading());
+
+    try {
+      const lastUsedHistoryID = await callApi(
+        'getSetting',
+        'lastUsedHistoryID',
+      );
+      const history = await callApi('switchHistory', lastUsedHistoryID);
+
+      if (!history) {
+        dispatch(finishLoading());
+        return;
+      }
+
+      dispatch(setConversationHistory(history));
+      dispatch(finishLoading());
+    } catch (error) {
+      callApi(
+        'alertMessage',
+        `Failed to load conversation history: ${error}`,
+        'error',
+      ).catch(console.error);
+    }
+  },
+);
+
 export const switchHistory = createAsyncThunk<
   void,
   string,
@@ -46,18 +89,29 @@ export const switchHistory = createAsyncThunk<
       return;
     }
 
-    dispatch(startLoading());
-    const newHistory = await callApi('switchHistory', historyID).catch(
-      console.error,
-    );
+    try {
+      dispatch(startLoading());
+      const newHistory = await callApi('switchHistory', historyID);
 
-    if (!newHistory) {
+      if (!newHistory) {
+        dispatch(finishLoading());
+        return;
+      }
+
+      dispatch(setConversationHistory(newHistory));
+
+      // Save the last used history ID
+      await callApi('setSetting', 'lastUsedHistoryID', historyID);
+
       dispatch(finishLoading());
-      return;
+    } catch (error) {
+      callApi(
+        'alertMessage',
+        `Failed to switch conversation history: ${error}`,
+        'error',
+      ).catch(console.error);
+      dispatch(finishLoading());
     }
-
-    dispatch(setConversationHistory(newHistory));
-    dispatch(finishLoading());
   },
 );
 

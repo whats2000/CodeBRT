@@ -41,7 +41,7 @@ const StyledMessagesContainer = styled.div<{ $isLoading: boolean }>`
   border-bottom: 1px solid ${({ theme }) => theme.colorBorderSecondary};
   animation: ${(props) =>
       props.$isLoading ? fadeOutAnimation : fadeInAnimation}
-    0.5s ease-in-out;
+    0.25s ease-in-out;
 `;
 
 const MessageBubble = styled.div<{ $user: string }>`
