@@ -4,6 +4,7 @@ import type {
   ExtensionSettings,
   ExtensionSettingsCrossDevice,
   ExtensionSettingsLocal,
+  ModelServiceType,
 } from '../types';
 
 export class SettingsManager {
@@ -11,6 +12,8 @@ export class SettingsManager {
   private readonly context: vscode.ExtensionContext;
   private workspaceConfig: vscode.WorkspaceConfiguration;
   private readonly defaultLocalSettings: ExtensionSettingsLocal = {
+    lastUsedModelForManualCompletion: 'gemini' as ModelServiceType,
+
     anthropicAvailableModels: [
       'claude-3-5-sonnet-20240620',
       'claude-3-haiku-20240307',

@@ -30,6 +30,12 @@ import {
   OpenaiVoiceService,
   VisualStudioCodeBuiltInService,
 } from './services/voice';
+import { InlineCompletionProvider } from './services/manuallyCodeComplete/inlineCompletionItemProvider';
+import { supportedLanguages } from './services/manuallyCodeComplete/constants';
+import {
+  activateManuallyComplete,
+  deactivateManuallyComplete,
+} from './services/manuallyCodeComplete/manuallyCompletionProvider';
 
 export const activate = async (ctx: vscode.ExtensionContext) => {
   const connectedViews: Partial<Record<ViewKey, vscode.WebviewView>> = {};
@@ -78,6 +84,21 @@ export const activate = async (ctx: vscode.ExtensionContext) => {
       service: new OpenaiVoiceService(ctx, settingsManager),
     },
   };
+
+  // Activate manually complete functionality
+  const completionProvider = activateManuallyComplete(
+    ctx,
+    settingsManager,
+    models,
+  );
+
+  // Keep the inline completion provider registration
+  ctx.subscriptions.push(
+    vscode.languages.registerInlineCompletionItemProvider(
+      supportedLanguages,
+      new InlineCompletionProvider(completionProvider),
+    ),
+  );
 
   /**
    * Trigger an event on all connected views
@@ -366,5 +387,5 @@ export const activate = async (ctx: vscode.ExtensionContext) => {
 };
 
 export const deactivate = () => {
-  return;
+  deactivateManuallyComplete();
 };

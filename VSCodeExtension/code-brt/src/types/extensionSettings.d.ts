@@ -126,6 +126,7 @@ export type ExtensionSettingsLocal = {
     };
   };
   systemPrompts: SystemPrompt[];
+  lastUsedModelForManualCompletion: ModelServiceType;
 };
 
 /**
