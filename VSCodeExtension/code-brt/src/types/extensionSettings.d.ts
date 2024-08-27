@@ -162,12 +162,10 @@ export type ExtensionSettingsLocal = ModelServiceSettings &
 
 /**
  * Represents the settings for the extension which are stored in the workspace.
- * @property lastUsedSystemPrompt - The last used system prompt
  * @property lastUsedHistoryID - The ID of the last used conversation history
  */
 export type ExtensionSettingsWorkspace = {
   lastUsedHistoryID: string;
-  lastUsedSystemPrompt: string;
 };
 
 /**

@@ -35,7 +35,7 @@ export const activate = async (ctx: vscode.ExtensionContext) => {
   const connectedViews: Partial<Record<ViewKey, vscode.WebviewView>> = {};
   const settingsManager = SettingsManager.getInstance(ctx);
 
-  const historyManager = new HistoryManager(ctx, settingsManager);
+  const historyManager = new HistoryManager(ctx);
 
   const models: LoadedModelServices = {
     anthropic: {
