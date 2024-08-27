@@ -182,7 +182,7 @@ export const InputContainer = ({
       )}
       <UploadedImageContainer>
         <StyledUpload
-          fileList={fileList}
+          fileList={isProcessing ? [] : fileList}
           listType='picture-card'
           onRemove={handleRemove}
           onPreview={handlePreview}
