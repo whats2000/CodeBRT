@@ -88,6 +88,12 @@ export const ModelAdvanceSettingBar: React.FC<ModelAdvanceSettingsProps> = ({
         sanitizedSettings,
       );
       dispatch(setAdvanceSettings(sanitizedSettings));
+
+      await callApi(
+        'setSetting',
+        'lastUsedSystemPrompt',
+        sanitizedSettings.systemPrompt,
+      );
     } catch (err) {
       console.error('Failed to save settings:', err);
     }

@@ -12,14 +12,21 @@ import type {
   IHistoryManager,
   ModelServiceType,
 } from '../types';
+import { SettingsManager } from './settingsManager';
 
 export class HistoryManager implements IHistoryManager {
+  private readonly settingsManager: SettingsManager;
   private readonly historiesFolderPath: string;
   private readonly historyIndexFilePath: string | null;
-  private history: ConversationHistory = this.getDefaultConversationHistory();
+  private history: ConversationHistory;
   private historyIndex: { [key: string]: ConversationHistoryIndex } = {};
 
-  constructor(context: vscode.ExtensionContext) {
+  constructor(
+    context: vscode.ExtensionContext,
+    settingsManager: SettingsManager,
+  ) {
+    this.settingsManager = settingsManager;
+    this.history = this.getDefaultConversationHistory();
     const workspaceFolders = vscode.workspace.workspaceFolders;
     if (workspaceFolders) {
       const vscodePath = path.join(workspaceFolders[0].uri.fsPath, '.vscode');
@@ -73,6 +80,10 @@ export class HistoryManager implements IHistoryManager {
    * Get the default empty conversation history
    */
   private getDefaultConversationHistory(): ConversationHistory {
+    const lastUsedSystemPrompt = this.settingsManager.get(
+      'lastUsedSystemPrompt',
+    );
+
     return {
       root: uuidV4(),
       top: [],
@@ -80,7 +91,7 @@ export class HistoryManager implements IHistoryManager {
       create_time: Date.now(),
       update_time: Date.now(),
       advanceSettings: {
-        systemPrompt: 'You are a helpful assistant.',
+        systemPrompt: lastUsedSystemPrompt,
         maxTokens: undefined,
         temperature: undefined,
         topP: undefined,

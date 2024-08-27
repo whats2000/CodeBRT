@@ -72,7 +72,7 @@ export class SettingsManager {
   };
   private readonly defaultWorkspaceSettings: ExtensionSettingsWorkspace = {
     lastUsedHistoryID: '',
-    lastUsedSystemPromptName: '',
+    lastUsedSystemPrompt: 'You are a helpful assistant.',
   };
   private readonly defaultCrossDeviceSettings: ExtensionSettingsCrossDevice = {
     anthropicApiKey: '',
