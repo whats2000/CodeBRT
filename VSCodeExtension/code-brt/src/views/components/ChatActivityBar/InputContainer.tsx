@@ -216,7 +216,7 @@ export const InputContainer = ({
           onKeyDown={handleKeyDown}
           placeholder={innerWidth > 520 ? 'Paste images...' : 'Ask...'}
           disabled={isProcessing}
-          autoSize={{ minRows: 1, maxRows: 10 }}
+          autoSize={{ minRows: 1, maxRows: isProcessing ? 2 : 10 }}
           allowClear
         />
         <Flex vertical={true}>
