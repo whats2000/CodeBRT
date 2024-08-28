@@ -230,6 +230,9 @@ export const ChatActivityBar = () => {
     setIsProcessing(true);
     startScrollInterval();
 
+    // TODO: Support PDF Extractor at later version current only pass the images
+    files = files.filter((file: string) => !file.endsWith('.pdf'));
+
     const userEntry = await callApi(
       'addConversationEntry',
       parentId,
