@@ -395,8 +395,6 @@ export class AnthropicService extends AbstractLanguageModelService {
       } else {
         let responseText = '';
 
-        console.log(this.getEnabledTools());
-
         while (functionCallCount < MAX_FUNCTION_CALLS) {
           const streamResponse = anthropic.messages
             .stream({
