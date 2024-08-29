@@ -111,7 +111,11 @@ export class HistoryManager implements IHistoryManager {
    * Save a single conversation history by its ID
    */
   private async saveHistoryById(history: ConversationHistory): Promise<void> {
-    if (!this.historiesFolderPath) {
+    // Prevent saving the empty history
+    if (
+      !this.historiesFolderPath ||
+      Object.keys(history.entries).length === 0
+    ) {
       return;
     }
     try {
