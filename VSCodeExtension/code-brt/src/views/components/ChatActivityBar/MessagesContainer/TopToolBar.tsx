@@ -7,7 +7,6 @@ import {
   CopyOutlined,
   EditOutlined,
   LoadingOutlined,
-  PauseCircleOutlined,
   SoundOutlined,
 } from '@ant-design/icons';
 import styled from 'styled-components';
@@ -20,6 +19,7 @@ import type {
 } from '../../../../types';
 import type { RootState } from '../../../redux';
 import { updateCurrentEntry } from '../../../redux/slices/conversationSlice';
+import { CancelOutlined } from '../../../icons';
 
 const RespondCharacter = styled(Typography.Text)<{ $user: string }>`
   color: ${({ $user, theme }) =>
@@ -193,7 +193,7 @@ export const TopToolBar: React.FC<MessagesTopToolBarProps> = ({
               isStopAudio ? (
                 <LoadingOutlined spin={true} />
               ) : isAudioPlaying ? (
-                <PauseCircleOutlined />
+                <CancelOutlined />
               ) : (
                 <SoundOutlined />
               )

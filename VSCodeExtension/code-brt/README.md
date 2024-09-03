@@ -34,4 +34,7 @@ The architecture of the project is as follows:
 ## Contributing
 
 - [The Starter Framework For VSCode Extension](https://github.com/sfc-gh-tkojima/vscode-react-webviews) by [sfc-gh-tkojima](https://github.com/sfc-gh-tkojima)
-- Icon and logo from [SVG Repo](https://www.svgrepo.com/) under CC Attribution License
+- Icon and logo from [SVG Repo](https://www.svgrepo.com/)
+  - [Vscode2 Opened SVG Vector](https://www.svgrepo.com/svg/373400/vscode2-opened): MIT License
+  - [Indent SVG Vector](https://www.svgrepo.com/svg/532181/indent): CC Attribution License
+  - [Stop Circle SVG Vector](https://www.svgrepo.com/svg/361332/stop-circle): MIT License

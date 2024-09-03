@@ -58,11 +58,14 @@ export type ViewApi = {
    * Set the target setting of the extension.
    * @param key - The key of the setting to set.
    * @param value - The new value of the setting.
+   * @param needReload - Whether to reload the extension after setting the value.
+   * Default is false.
    * @returns A promise that resolves when the setting is updated.
    */
   setSetting: (
     key: keyof ExtensionSettings,
     value: ExtensionSettings[typeof key],
+    needReload?: boolean,
   ) => Promise<void>;
 
   /**

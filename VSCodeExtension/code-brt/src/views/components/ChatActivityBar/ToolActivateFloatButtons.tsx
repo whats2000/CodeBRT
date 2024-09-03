@@ -8,7 +8,7 @@ import {
 
 import type { ToolServiceType } from '../../../types';
 import { WebviewContext } from '../../WebviewContext';
-import { MagicWand } from '../../icons';
+import { MagicWandOutlined } from '../../icons';
 
 export interface ToolActivateFloatButtonsProps {
   floatButtonsXPosition: number;
@@ -56,7 +56,7 @@ export const ToolActivateFloatButtons: React.FC<
 
   return (
     <FloatButton.Group
-      icon={isLoading ? <LoadingOutlined /> : <MagicWand />}
+      icon={isLoading ? <LoadingOutlined /> : <MagicWandOutlined />}
       trigger='click'
       tooltip={'Activate Tools'}
       style={{ bottom: floatButtonBaseYPosition, left: floatButtonsXPosition }}

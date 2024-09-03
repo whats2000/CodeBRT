@@ -117,10 +117,10 @@ export const activate = async (ctx: vscode.ExtensionContext) => {
 
       return await fs.readFile(uris[0].fsPath, 'utf-8');
     },
-    setSetting: async (key, value) => {
+    setSetting: async (key, value, needReload = false) => {
       await settingsManager.set(key, value);
 
-      if (key === 'retainContextWhenHidden') {
+      if (needReload) {
         vscode.window
           .showInformationMessage(
             'The setting will take effect after the extension is reloaded',

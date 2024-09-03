@@ -163,15 +163,27 @@ export const SettingsBar: React.FC<SettingSidebarProps> = ({
   };
 
   const saveSettings = (updatedSettings: Partial<ExtensionSettings>) => {
-    Object.entries(updatedSettings).map(([key, value]) =>
-      callApi('setSetting', key as keyof ExtensionSettings, value).catch((e) =>
+    Object.entries(updatedSettings).map(([key, value]) => {
+      if (
+        updatedSettings[key as keyof ExtensionSettings] ===
+        partialSettings[key as keyof ExtensionSettings]
+      ) {
+        return;
+      }
+
+      callApi(
+        'setSetting',
+        key as keyof ExtensionSettings,
+        value,
+        key === 'retainContextWhenHidden',
+      ).catch((e) =>
         callApi(
           'alertMessage',
           `Failed to save settings: ${e.message}`,
           'error',
         ),
-      ),
-    );
+      );
+    });
   };
 
   const openModelServiceLink = (link: string) => {
