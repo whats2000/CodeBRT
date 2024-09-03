@@ -16,6 +16,7 @@ import { ToolService } from '../tools';
 
 export class OllamaService extends AbstractLanguageModelService {
   private runningModel = '';
+  private stopStreamFlag: boolean = false;
 
   constructor(
     context: vscode.ExtensionContext,
@@ -400,6 +401,10 @@ export class OllamaService extends AbstractLanguageModelService {
         let responseText = '';
 
         while (functionCallCount < MAX_FUNCTION_CALLS) {
+          if (this.stopStreamFlag) {
+            return responseText;
+          }
+
           functionCallFlag = false;
           functionCallBuffer = '';
 
@@ -414,6 +419,10 @@ export class OllamaService extends AbstractLanguageModelService {
           let functionCallResults: Message[] = [];
 
           for await (const chunk of streamResponse) {
+            if (this.stopStreamFlag) {
+              return responseText;
+            }
+
             // Check only the first chunk for function call indication
             if (isFirstChunk) {
               isFirstChunk = false;
@@ -501,6 +510,12 @@ export class OllamaService extends AbstractLanguageModelService {
         'Failed to connect to the language model service. ' +
         'Make sure the ollama service is running. Also, check the model has been downloaded.'
       );
+    } finally {
+      this.stopStreamFlag = false;
     }
+  }
+
+  public async stopResponse(): Promise<void> {
+    this.stopStreamFlag = true;
   }
 }

@@ -12,6 +12,8 @@ import { AbstractOpenaiLikeService } from './abstractOpenaiLikeService';
 import { MODEL_SERVICE_CONSTANTS } from '../../constants';
 
 export class OpenAIService extends AbstractOpenaiLikeService {
+  private stopStreamFlag: boolean = false;
+
   constructor(
     context: vscode.ExtensionContext,
     settingsManager: SettingsManager,
@@ -136,6 +138,10 @@ export class OpenAIService extends AbstractOpenaiLikeService {
         let responseText = '';
 
         while (functionCallCount < MAX_FUNCTION_CALLS) {
+          if (this.stopStreamFlag) {
+            return responseText;
+          }
+
           const streamResponse = await openai.chat.completions.create({
             model: this.currentModel,
             messages: conversationHistory,
@@ -151,6 +157,10 @@ export class OpenAIService extends AbstractOpenaiLikeService {
           updateStatus && updateStatus('');
 
           for await (const chunk of streamResponse) {
+            if (this.stopStreamFlag) {
+              return responseText;
+            }
+
             if (chunk.choices[0]?.finish_reason === 'tool_calls') {
               const toolCalls = completeToolCalls.map((call) => ({
                 id: call.id,
@@ -224,6 +234,12 @@ export class OpenAIService extends AbstractOpenaiLikeService {
           }
         });
       return 'Failed to connect to the language model service.';
+    } finally {
+      this.stopStreamFlag = false;
     }
+  }
+
+  public async stopResponse(): Promise<void> {
+    this.stopStreamFlag = true;
   }
 }

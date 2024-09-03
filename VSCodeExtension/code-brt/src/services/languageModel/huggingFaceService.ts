@@ -19,6 +19,8 @@ import { MODEL_SERVICE_CONSTANTS, toolsSchema } from '../../constants';
 import { ToolService } from '../tools';
 
 export class HuggingFaceService extends AbstractLanguageModelService {
+  private stopStreamFlag: boolean = false;
+
   constructor(
     context: vscode.ExtensionContext,
     settingsManager: SettingsManager,
@@ -275,6 +277,10 @@ export class HuggingFaceService extends AbstractLanguageModelService {
         let functionCallSuccess = false;
 
         while (functionCallCount < MAX_FUNCTION_CALLS) {
+          if (this.stopStreamFlag) {
+            return responseText;
+          }
+
           const streamResponse = huggerFace.chatCompletionStream({
             messages: conversationHistory,
             model: this.currentModel,
@@ -287,6 +293,10 @@ export class HuggingFaceService extends AbstractLanguageModelService {
           let isClearStatus = false;
 
           for await (const chunk of streamResponse) {
+            if (this.stopStreamFlag) {
+              return responseText;
+            }
+
             updateStatus && isClearStatus && updateStatus('');
             isClearStatus = true;
 
@@ -411,6 +421,12 @@ export class HuggingFaceService extends AbstractLanguageModelService {
           }
         });
       return 'Failed to connect to the language model service.';
+    } finally {
+      this.stopStreamFlag = false;
     }
+  }
+
+  public async stopResponse(): Promise<void> {
+    this.stopStreamFlag = true;
   }
 }

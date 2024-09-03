@@ -13,6 +13,8 @@ import { AbstractOpenaiLikeService } from './abstractOpenaiLikeService';
 import { HistoryManager, SettingsManager } from '../../api';
 
 export class GroqService extends AbstractOpenaiLikeService {
+  private stopStreamFlag: boolean = false;
+
   constructor(
     context: vscode.ExtensionContext,
     settingsManager: SettingsManager,
@@ -139,6 +141,10 @@ export class GroqService extends AbstractOpenaiLikeService {
         let responseText: string = '';
 
         while (functionCallCount < MAX_FUNCTION_CALLS) {
+          if (this.stopStreamFlag) {
+            return responseText;
+          }
+
           const streamResponse = await groq.chat.completions.create({
             messages: conversationHistory,
             model: this.currentModel,
@@ -154,6 +160,10 @@ export class GroqService extends AbstractOpenaiLikeService {
           updateStatus && updateStatus('');
 
           for await (const chunk of streamResponse) {
+            if (this.stopStreamFlag) {
+              return responseText;
+            }
+
             if (chunk.choices[0]?.finish_reason === 'tool_calls') {
               const functionCallResults = await this.handleFunctionCalls(
                 completeToolCalls,
@@ -221,6 +231,12 @@ export class GroqService extends AbstractOpenaiLikeService {
           }
         });
       return 'Failed to connect to the language model service.';
+    } finally {
+      this.stopStreamFlag = false;
     }
+  }
+
+  public async stopResponse(): Promise<void> {
+    this.stopStreamFlag = true;
   }
 }
