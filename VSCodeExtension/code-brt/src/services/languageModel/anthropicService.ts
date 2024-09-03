@@ -13,7 +13,10 @@ import type {
   ToolUseBlock,
   ToolResultBlockParam,
 } from '@anthropic-ai/sdk/src/resources';
-import type { MessageCreateParamsNonStreaming } from '@anthropic-ai/sdk/resources/messages';
+import type {
+  MessageCreateParamsNonStreaming,
+  MessageStream,
+} from '@anthropic-ai/sdk/resources/messages';
 import Anthropic from '@anthropic-ai/sdk';
 
 import type {
@@ -27,6 +30,8 @@ import { AbstractLanguageModelService } from './abstractLanguageModelService';
 import { ToolService } from '../tools';
 
 export class AnthropicService extends AbstractLanguageModelService {
+  private currentStreamResponse: MessageStream | undefined;
+
   constructor(
     context: vscode.ExtensionContext,
     settingsManager: SettingsManager,
@@ -396,7 +401,8 @@ export class AnthropicService extends AbstractLanguageModelService {
         let responseText = '';
 
         while (functionCallCount < MAX_FUNCTION_CALLS) {
-          const streamResponse = anthropic.messages
+          this.currentStreamResponse?.abort();
+          this.currentStreamResponse = anthropic.messages
             .stream({
               model: this.currentModel,
               system: systemPrompt,
@@ -413,7 +419,7 @@ export class AnthropicService extends AbstractLanguageModelService {
               responseText += partText;
             });
 
-          const finalMessage = await streamResponse.finalMessage();
+          const finalMessage = await this.currentStreamResponse.finalMessage();
 
           if (finalMessage.stop_reason !== 'tool_use') {
             return responseText;
@@ -457,6 +463,12 @@ export class AnthropicService extends AbstractLanguageModelService {
         });
 
       return 'Failed to connect to the language model service';
+    }
+  }
+
+  public async stopResponse(): Promise<void> {
+    if (this.currentStreamResponse) {
+      this.currentStreamResponse.abort();
     }
   }
 }

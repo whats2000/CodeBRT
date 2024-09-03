@@ -46,6 +46,8 @@ type GeminiModelsList = {
 };
 
 export class GeminiService extends AbstractLanguageModelService {
+  private stopStreamFlag = false;
+
   private readonly safetySettings = [
     {
       category: HarmCategory.HARM_CATEGORY_HARASSMENT,
@@ -391,6 +393,10 @@ export class GeminiService extends AbstractLanguageModelService {
         let responseText = '';
 
         while (functionCallCount < MAX_FUNCTION_CALLS) {
+          if (this.stopStreamFlag) {
+            return responseText;
+          }
+
           const result = await generativeModel
             .startChat({
               systemInstruction: systemInstruction,
@@ -405,6 +411,10 @@ export class GeminiService extends AbstractLanguageModelService {
           updateStatus && updateStatus('');
 
           for await (const item of result.stream) {
+            if (this.stopStreamFlag) {
+              return responseText;
+            }
+
             functionCalls = item.functionCalls();
             if (functionCalls) {
               const functionCallResults = await this.handleFunctionCalls(
@@ -450,6 +460,12 @@ export class GeminiService extends AbstractLanguageModelService {
           }
         });
       return 'Failed to connect to the language model service.';
+    } finally {
+      this.stopStreamFlag = false;
     }
+  }
+
+  public async stopResponse(): Promise<void> {
+    this.stopStreamFlag = true;
   }
 }

@@ -152,14 +152,14 @@ export const activate = async (ctx: vscode.ExtensionContext) => {
       }
     },
     getLanguageModelResponse: async (
-      modelType,
+      modelServiceType,
       query,
       images?,
       currentEntryID?,
       useStream?,
       showStatus?,
     ) => {
-      return await models[modelType].service.getResponse({
+      return await models[modelServiceType].service.getResponse({
         query,
         images,
         currentEntryID,
@@ -174,6 +174,9 @@ export const activate = async (ctx: vscode.ExtensionContext) => {
             }
           : undefined,
       });
+    },
+    stopLanguageModelResponse: (modelServiceType) => {
+      models[modelServiceType].service.stopResponse();
     },
     getCurrentHistory: () => {
       return historyManager.getCurrentHistory();
@@ -223,21 +226,23 @@ export const activate = async (ctx: vscode.ExtensionContext) => {
         modelServiceType,
       );
     },
-    getAvailableModels: (modelType) => {
-      if (modelType === 'custom') {
+    getAvailableModels: (modelServiceType) => {
+      if (modelServiceType === 'custom') {
         return settingsManager.get('customModels').map((model) => model.name);
       }
 
-      return settingsManager.get(`${modelType}AvailableModels`);
+      return settingsManager.get(`${modelServiceType}AvailableModels`);
     },
-    getCurrentModel: (modelType) => {
-      return settingsManager.get(`lastSelectedModel`)[modelType];
+    getCurrentModel: (modelServiceType) => {
+      return settingsManager.get(`lastSelectedModel`)[modelServiceType];
     },
-    setAvailableModels: (modelType, newAvailableModels) => {
+    setAvailableModels: (modelServiceType, newAvailableModels) => {
       settingsManager
-        .set(`${modelType}AvailableModels`, newAvailableModels)
+        .set(`${modelServiceType}AvailableModels`, newAvailableModels)
         .then(() => {
-          models[modelType].service.updateAvailableModels(newAvailableModels);
+          models[modelServiceType].service.updateAvailableModels(
+            newAvailableModels,
+          );
         });
     },
     setCustomModels: (newCustomModels) => {
@@ -247,11 +252,13 @@ export const activate = async (ctx: vscode.ExtensionContext) => {
         );
       });
     },
-    switchModel: (modelType, modelName) => {
-      models[modelType].service.switchModel(modelName);
+    switchModel: (modelServiceType, modelName) => {
+      models[modelServiceType].service.switchModel(modelName);
     },
-    getLatestAvailableModelNames: async (modelType) => {
-      return await models[modelType].service.getLatestAvailableModelNames();
+    getLatestAvailableModelNames: async (modelServiceType) => {
+      return await models[
+        modelServiceType
+      ].service.getLatestAvailableModelNames();
     },
     uploadFile: async (base64Data, originalFileName) => {
       return FileUtils.uploadFile(ctx, base64Data, originalFileName);

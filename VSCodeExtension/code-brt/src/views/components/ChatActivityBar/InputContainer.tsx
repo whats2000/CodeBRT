@@ -17,6 +17,7 @@ import {
   deleteFile,
   handleFilesUpload,
 } from '../../redux/slices/fileUploadSlice';
+import { CancelOutlined } from '../../icons';
 
 const StyledInputContainer = styled.div`
   display: flex;
@@ -60,6 +61,9 @@ export const InputContainer = ({
 
   const dispatch = useDispatch<AppDispatch>();
   const { uploadedFiles } = useSelector((state: RootState) => state.fileUpload);
+  const { activeModelService } = useSelector(
+    (state: RootState) => state.modelService,
+  );
 
   useClipboardFiles((files) => dispatch(handleFilesUpload(files)));
 
@@ -167,6 +171,16 @@ export const InputContainer = ({
     setPreviewOpen(true);
   };
 
+  const handleCancelResponse = () => {
+    if (activeModelService === 'loading...') {
+      return;
+    }
+
+    callApi('stopLanguageModelResponse', activeModelService).catch(
+      console.error,
+    );
+  };
+
   return (
     <StyledInputContainer ref={inputContainerRef}>
       {previewImage && (
@@ -220,8 +234,8 @@ export const InputContainer = ({
           allowClear
         />
         <Flex vertical={true}>
-          <Button onClick={sendMessage} disabled={isProcessing}>
-            {isProcessing ? <LoadingOutlined /> : <SendOutlined />}
+          <Button onClick={isProcessing ? handleCancelResponse : sendMessage}>
+            {isProcessing ? <CancelOutlined /> : <SendOutlined />}
           </Button>
           {inputMessage.length > 100 && (
             <Tag

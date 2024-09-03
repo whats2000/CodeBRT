@@ -15,6 +15,8 @@ import { ToolService } from '../tools';
 import { ChatRequest } from 'cohere-ai/api/client/requests/ChatRequest';
 
 export class CohereService extends AbstractLanguageModelService {
+  private stopStreamFlag: boolean = false;
+
   private readonly modelsWithoutTools = [
     'command',
     'command-light',
@@ -297,6 +299,10 @@ export class CohereService extends AbstractLanguageModelService {
         let responseText = '';
 
         while (functionCallCount < MAX_FUNCTION_CALLS) {
+          if (this.stopStreamFlag) {
+            return responseText;
+          }
+
           const streamResponse = await model.chatStream({
             model: this.currentModel,
             message: toolResults.length > 0 ? '' : query,
@@ -309,6 +315,10 @@ export class CohereService extends AbstractLanguageModelService {
           let functionCalls = null;
 
           for await (const item of streamResponse) {
+            if (this.stopStreamFlag) {
+              return responseText;
+            }
+
             if (item.eventType === 'stream-start') {
               updateStatus && updateStatus('');
             }
@@ -349,6 +359,12 @@ export class CohereService extends AbstractLanguageModelService {
           }
         });
       return 'Failed to connect to the language model service.';
+    } finally {
+      this.stopStreamFlag = false;
     }
+  }
+
+  public async stopResponse(): Promise<void> {
+    this.stopStreamFlag = true;
   }
 }
