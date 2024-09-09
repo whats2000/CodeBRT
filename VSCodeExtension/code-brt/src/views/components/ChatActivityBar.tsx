@@ -6,7 +6,7 @@ import { ControlOutlined } from '@ant-design/icons';
 import { useSelector, useDispatch } from 'react-redux';
 
 import { AppDispatch, RootState } from '../redux';
-import { INPUT_MESSAGE_KEY, UPLOADED_FILES_KEY } from '../../constants';
+import { UPLOADED_FILES_KEY } from '../../constants';
 import {
   addEntry,
   addTempAIResponseEntry,
@@ -43,9 +43,6 @@ export const ChatActivityBar = () => {
   const { callApi, addListener, removeListener } = useContext(WebviewContext);
   const { innerWidth } = useWindowSize();
 
-  const [inputMessage, setInputMessage] = useState(
-    localStorage.getItem(INPUT_MESSAGE_KEY) || '',
-  );
   const [isProcessing, setIsProcessing] = useState(false);
   const [floatButtonBaseYPosition, setFloatButtonBaseYPosition] = useState(60);
   const [floatButtonsXPosition, setFloatButtonsXPosition] = useState(0);
@@ -160,10 +157,6 @@ export const ChatActivityBar = () => {
   }, []);
 
   useEffect(() => {
-    localStorage.setItem(INPUT_MESSAGE_KEY, inputMessage);
-  }, [inputMessage]);
-
-  useEffect(() => {
     localStorage.setItem(UPLOADED_FILES_KEY, JSON.stringify(uploadedFiles));
   }, [uploadedFiles]);
 
@@ -219,7 +212,7 @@ export const ChatActivityBar = () => {
     parentId: string;
     files?: string[];
     isEdited?: boolean;
-  }) => {
+  }): Promise<void> => {
     if (
       isProcessing ||
       activeModelService === 'loading...' ||
@@ -274,7 +267,6 @@ export const ChatActivityBar = () => {
         dispatch(replaceTempEntry(aiEntry));
 
         if (!isEdited) {
-          setInputMessage('');
           dispatch(clearUploadedFiles());
         }
 
@@ -291,14 +283,6 @@ export const ChatActivityBar = () => {
         ).catch(console.error);
         setIsProcessing(false);
       });
-  };
-
-  const sendMessage = async () => {
-    await processMessage({
-      message: inputMessage,
-      parentId: conversationHistory.current,
-      files: uploadedFiles,
-    });
   };
 
   const handleEditUserMessageSave = async (
@@ -326,9 +310,7 @@ export const ChatActivityBar = () => {
         />
         <InputContainer
           inputContainerRef={inputContainerRef}
-          inputMessage={inputMessage}
-          setInputMessage={setInputMessage}
-          sendMessage={sendMessage}
+          processMessage={processMessage}
           isProcessing={isProcessing}
         />
       </Container>
