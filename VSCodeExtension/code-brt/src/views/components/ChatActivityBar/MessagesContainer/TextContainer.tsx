@@ -22,40 +22,38 @@ type MessageTextContainerProps = {
   toolStatus: string;
 };
 
-export const TextContainer = React.memo<MessageTextContainerProps>(
-  ({
-    entry,
-    conversationHistoryCurrent,
-    isProcessing,
-    hljsTheme,
-    setHljsTheme,
-    toolStatus,
-  }) => {
-    return (
-      <MessageText>
-        {entry.role === 'AI' &&
-        entry.id === conversationHistoryCurrent &&
-        isProcessing ? (
-          <>
-            <TypingAnimation
-              message={entry.message}
-              isProcessing={isProcessing}
-              hljsTheme={hljsTheme}
-              setHljsTheme={setHljsTheme}
-            />
-            {toolStatus !== '' && <ToolStatusBlock status={toolStatus} />}
-          </>
-        ) : (
-          <RendererCodeProvider
-            value={{
-              hljsTheme,
-              setHljsTheme,
-            }}
-          >
-            <ReactMarkdown components={RendererCode} children={entry.message} />
-          </RendererCodeProvider>
-        )}
-      </MessageText>
-    );
-  },
-);
+export const TextContainer: React.FC<MessageTextContainerProps> = ({
+  entry,
+  conversationHistoryCurrent,
+  isProcessing,
+  hljsTheme,
+  setHljsTheme,
+  toolStatus,
+}) => {
+  return (
+    <MessageText>
+      {entry.role === 'AI' &&
+      entry.id === conversationHistoryCurrent &&
+      isProcessing ? (
+        <>
+          <TypingAnimation
+            message={entry.message}
+            isProcessing={isProcessing}
+            hljsTheme={hljsTheme}
+            setHljsTheme={setHljsTheme}
+          />
+          {toolStatus !== '' && <ToolStatusBlock status={toolStatus} />}
+        </>
+      ) : (
+        <RendererCodeProvider
+          value={{
+            hljsTheme,
+            setHljsTheme,
+          }}
+        >
+          <ReactMarkdown components={RendererCode} children={entry.message} />
+        </RendererCodeProvider>
+      )}
+    </MessageText>
+  );
+};

@@ -49,8 +49,6 @@ export const ChatActivityBar = () => {
   const [isModelAdvanceSettingBarOpen, setIsModelAdvanceSettingBarOpen] =
     useState(false);
 
-  const messageEndRef = useRef<HTMLDivElement>(null);
-  const messagesContainerRef = useRef<HTMLDivElement>(null);
   const inputContainerRef = useRef<HTMLDivElement>(null);
 
   const dispatch = useDispatch<AppDispatch>();
@@ -69,14 +67,11 @@ export const ChatActivityBar = () => {
   const dropRef = useDragAndDrop((files) => dispatch(handleFilesUpload(files)));
   const bufferRef = useRef<string>('');
   const isProcessingRef = useRef<boolean>(false);
-  const processingIntervalRef = useRef<NodeJS.Timeout | null>(null);
   const tempIdRef = useRef<string | null>(null);
 
   useEffect(() => {
     // Load the lasted used conversation history
-    dispatch(initLoadHistory()).then(() => {
-      scrollToBottom(false);
-    });
+    dispatch(initLoadHistory());
 
     // For receiving stream response
     const handleStreamResponseEvent = (responseFromMessage: string) => {
@@ -164,44 +159,6 @@ export const ChatActivityBar = () => {
     tempIdRef.current = conversationHistory.tempId;
   }, [conversationHistory.tempId]);
 
-  const scrollToBottom = (smooth: boolean = true) => {
-    if (messagesContainerRef.current) {
-      if (smooth) {
-        messageEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-      } else {
-        messageEndRef.current?.scrollIntoView();
-      }
-    }
-  };
-
-  const isNearBottom = () => {
-    const threshold = 300;
-    if (!messagesContainerRef.current) return false;
-
-    const { scrollTop, scrollHeight, clientHeight } =
-      messagesContainerRef.current;
-    const position = scrollHeight - scrollTop - clientHeight;
-
-    return position < threshold;
-  };
-
-  const startScrollInterval = () => {
-    if (!processingIntervalRef.current) {
-      processingIntervalRef.current = setInterval(() => {
-        if (isNearBottom()) {
-          scrollToBottom(false);
-        }
-      }, 50);
-    }
-  };
-
-  const stopScrollInterval = () => {
-    if (processingIntervalRef.current) {
-      clearInterval(processingIntervalRef.current);
-      processingIntervalRef.current = null;
-    }
-  };
-
   const processMessage = async ({
     message,
     parentId,
@@ -221,7 +178,6 @@ export const ChatActivityBar = () => {
       return;
     }
     setIsProcessing(true);
-    startScrollInterval();
 
     // TODO: Support PDF Extractor at later version current only pass the images
     files = files.filter((file: string) => !file.endsWith('.pdf'));
@@ -250,7 +206,6 @@ export const ChatActivityBar = () => {
       .then(async (response) => {
         const responseText = await response;
         if (!tempIdRef.current) {
-          stopScrollInterval();
           setIsProcessing(false);
           return;
         }
@@ -271,9 +226,8 @@ export const ChatActivityBar = () => {
         }
 
         setTimeout(() => {
-          stopScrollInterval();
           setIsProcessing(false);
-        }, 500);
+        }, 1000);
       })
       .catch((error) => {
         callApi(
@@ -290,9 +244,7 @@ export const ChatActivityBar = () => {
       <Container ref={dropRef}>
         <Toolbar setTheme={setTheme} />
         <MessagesContainer
-          messagesContainerRef={messagesContainerRef}
           isProcessing={isProcessing}
-          messageEndRef={messageEndRef}
           processMessage={processMessage}
         />
         <InputContainer
