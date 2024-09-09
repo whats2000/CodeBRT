@@ -99,6 +99,7 @@ export const InputContainer = React.memo<InputContainerProps>(
         files: uploadedFiles,
       }).then(() => {
         setInputMessage('');
+        localStorage.setItem(INPUT_MESSAGE_KEY, '');
       });
     };
 

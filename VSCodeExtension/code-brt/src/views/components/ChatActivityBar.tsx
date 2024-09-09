@@ -285,19 +285,6 @@ export const ChatActivityBar = () => {
       });
   };
 
-  const handleEditUserMessageSave = async (
-    entryId: string,
-    editedMessage: string,
-  ) => {
-    const entry = conversationHistory.entries[entryId];
-    await processMessage({
-      message: editedMessage,
-      parentId: entry.parent ?? '',
-      files: entry.images,
-      isEdited: true,
-    });
-  };
-
   return (
     <ConfigProvider theme={theme}>
       <Container ref={dropRef}>
@@ -306,7 +293,7 @@ export const ChatActivityBar = () => {
           messagesContainerRef={messagesContainerRef}
           isProcessing={isProcessing}
           messageEndRef={messageEndRef}
-          handleEditUserMessageSave={handleEditUserMessageSave}
+          processMessage={processMessage}
         />
         <InputContainer
           inputContainerRef={inputContainerRef}

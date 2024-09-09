@@ -80,19 +80,23 @@ type MessagesContainerProps = {
   messagesContainerRef: React.RefObject<HTMLDivElement>;
   isProcessing: boolean;
   messageEndRef: React.RefObject<HTMLDivElement>;
-  handleEditUserMessageSave: (
-    entryId: string,
-    editedMessage: string,
-  ) => Promise<void>;
+  processMessage: ({
+    message,
+    parentId,
+    files,
+    isEdited,
+  }: {
+    message: string;
+    parentId: string;
+    files?: string[];
+    isEdited?: boolean;
+  }) => Promise<void>;
 };
 
 export const MessagesContainer = React.memo<MessagesContainerProps>(
-  ({
-    messagesContainerRef,
-    isProcessing,
-    messageEndRef,
-    handleEditUserMessageSave,
-  }) => {
+  ({ messagesContainerRef, isProcessing, messageEndRef, processMessage }) => {
+    console.log('MessagesContainer');
+
     const { callApi, addListener, removeListener } = useContext(WebviewContext);
 
     const [editingEntryId, setEditingEntryId] = useState<string | null>(null);
@@ -160,6 +164,19 @@ export const MessagesContainer = React.memo<MessagesContainerProps>(
         entry: null,
       });
     }, [conversationHistory.current]);
+
+    const handleEditUserMessageSave = async (
+      entryId: string,
+      editedMessage: string,
+    ) => {
+      const entry = conversationHistory.entries[entryId];
+      await processMessage({
+        message: editedMessage,
+        parentId: entry.parent ?? '',
+        files: entry.images,
+        isEdited: true,
+      });
+    };
 
     const handleUpdateStatus = (status: string) => {
       setToolStatus(status);
