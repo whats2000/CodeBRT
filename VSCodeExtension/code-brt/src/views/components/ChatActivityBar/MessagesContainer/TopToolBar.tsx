@@ -7,6 +7,7 @@ import {
   CopyOutlined,
   EditOutlined,
   LoadingOutlined,
+  RedoOutlined,
   SoundOutlined,
 } from '@ant-design/icons';
 import styled from 'styled-components';
@@ -40,6 +41,7 @@ type MessagesTopToolBarProps = {
   handleConvertTextToVoice: (text: string) => void;
   copied: Record<string, boolean>;
   handleCopy: (text: string, entryId: string) => void;
+  handleRedo: (entryId: string) => void;
   isProcessing: boolean;
 };
 
@@ -55,6 +57,7 @@ export const TopToolBar: React.FC<MessagesTopToolBarProps> = ({
   handleConvertTextToVoice,
   copied,
   handleCopy,
+  handleRedo,
   isProcessing,
 }) => {
   const { token } = theme.useToken();
@@ -203,6 +206,16 @@ export const TopToolBar: React.FC<MessagesTopToolBarProps> = ({
             disabled={isStopAudio}
           />
         </Tooltip>
+        {entry.role === 'AI' && (
+          <Button
+            icon={
+              isProcessing ? <LoadingOutlined spin={true} /> : <RedoOutlined />
+            }
+            type={'text'}
+            disabled={isProcessing}
+            onClick={() => handleRedo(entry.id)}
+          />
+        )}
         <Button
           icon={<EditOutlined />}
           type={'text'}

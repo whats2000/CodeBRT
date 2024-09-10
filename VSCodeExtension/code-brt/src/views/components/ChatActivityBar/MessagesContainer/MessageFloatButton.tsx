@@ -6,6 +6,7 @@ import {
   EllipsisOutlined,
   LoadingOutlined,
   PauseCircleOutlined,
+  RedoOutlined,
   SaveOutlined,
   SoundOutlined,
 } from '@ant-design/icons';
@@ -24,12 +25,14 @@ type MessageFloatButtonProps = {
   isAudioPlaying: boolean;
   isStopAudio: boolean;
   editingEntryId: string | null;
-  handleSaveEdit: (entryId: string) => void;
+  editingMessage: string;
   handleCancelEdit: () => void;
   handleEdit: (entryId: string, message: string) => void;
+  handleSaveEdit: (entryId: string, message: string) => void;
   handleConvertTextToVoice: (text: string) => void;
   copied: Record<string, boolean>;
   handleCopy: (text: string, entryId: string) => void;
+  handleRedo: (entryId: string) => void;
 };
 
 export const MessageFloatButton: React.FC<MessageFloatButtonProps> = ({
@@ -38,12 +41,14 @@ export const MessageFloatButton: React.FC<MessageFloatButtonProps> = ({
   isAudioPlaying,
   isStopAudio,
   editingEntryId,
+  editingMessage,
   handleSaveEdit,
   handleCancelEdit,
   handleEdit,
   handleConvertTextToVoice,
   copied,
   handleCopy,
+  handleRedo,
 }) => {
   if (!hoveredBubble.current || !hoveredBubble.entry) return null;
 
@@ -89,6 +94,14 @@ export const MessageFloatButton: React.FC<MessageFloatButtonProps> = ({
             }}
           />
           <FloatButton
+            icon={<RedoOutlined />}
+            onClick={() => {
+              if (!hoveredBubble.entry) return;
+
+              handleRedo(hoveredBubble.entry.id);
+            }}
+          />
+          <FloatButton
             icon={
               hoveredBubble.entry && copied[hoveredBubble.entry.id] ? (
                 <CopyFilled />
@@ -110,7 +123,7 @@ export const MessageFloatButton: React.FC<MessageFloatButtonProps> = ({
             onClick={() => {
               if (!hoveredBubble.entry) return;
 
-              handleSaveEdit(hoveredBubble.entry.id);
+              handleSaveEdit(hoveredBubble.entry.id, editingMessage);
             }}
           />
         </>

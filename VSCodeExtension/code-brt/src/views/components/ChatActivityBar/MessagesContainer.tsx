@@ -223,7 +223,7 @@ export const MessagesContainer = React.memo<MessagesContainerProps>(
       }, 0);
     };
 
-    const handleSaveEdit = async (entryId: string) => {
+    const handleSaveEdit = async (entryId: string, editedMessage: string) => {
       if (activeModelService === 'loading...') return;
 
       if (conversationHistory.entries[entryId].role === 'user') {
@@ -293,6 +293,17 @@ export const MessagesContainer = React.memo<MessagesContainerProps>(
         .catch((err) => console.error('Failed to copy text: ', err));
     };
 
+    // When click redo the AI message mean the user want to re-generate the AI response
+    // We simply remove the AI message and re-generate it by editing exactly and save the same user message
+    const handleRedo = (entryId: string) => {
+      const previousMessageId = conversationHistory.entries[entryId].parent;
+      if (!previousMessageId) return;
+      const previousMessage = conversationHistory.entries[previousMessageId];
+      handleSaveEdit(previousMessage.id, previousMessage.message).catch(
+        console.error,
+      );
+    };
+
     const renderMessage = (index: number) => {
       return (
         <MessageItem
@@ -316,6 +327,7 @@ export const MessagesContainer = React.memo<MessagesContainerProps>(
           isAudioPlaying={isAudioPlaying}
           isStopAudio={isStopAudio}
           handleConvertTextToVoice={handleConvertTextToVoice}
+          handleRedo={handleRedo}
         />
       );
     };
@@ -359,10 +371,12 @@ export const MessagesContainer = React.memo<MessagesContainerProps>(
             editingEntryId={editingEntryId}
             handleSaveEdit={handleSaveEdit}
             handleCancelEdit={handleCancelEdit}
+            editingMessage={editedMessage}
             handleEdit={handleEdit}
             handleConvertTextToVoice={handleConvertTextToVoice}
             copied={copied}
             handleCopy={handleCopy}
+            handleRedo={handleRedo}
           />
         )}
       </>

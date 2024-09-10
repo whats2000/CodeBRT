@@ -59,10 +59,11 @@ type MessageItemProps = {
     message: string,
   ) => Promise<void>;
   handleEdit: (entryId: string, message: string) => void;
-  handleSaveEdit: (entryId: string) => void;
+  handleSaveEdit: (entryId: string, message: string) => void;
   isAudioPlaying: boolean;
   isStopAudio: boolean;
   handleConvertTextToVoice: (text: string) => void;
+  handleRedo: (entryId: string) => void;
 };
 
 export const MessageItem = React.memo<MessageItemProps>(
@@ -86,6 +87,7 @@ export const MessageItem = React.memo<MessageItemProps>(
     isAudioPlaying,
     isStopAudio,
     handleConvertTextToVoice,
+    handleRedo,
   }) => {
     const token = theme.useToken();
     const entry = conversationHistoryEntries[index];
@@ -141,6 +143,7 @@ export const MessageItem = React.memo<MessageItemProps>(
             handleConvertTextToVoice={handleConvertTextToVoice}
             copied={copied}
             handleCopy={handleCopy}
+            handleRedo={handleRedo}
             isProcessing={isProcessing}
           />
 

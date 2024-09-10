@@ -24,7 +24,7 @@ type MessageEditContainerProps = {
   isProcessing: boolean;
   editedMessage: string;
   handleInput: (e: React.ChangeEvent<HTMLTextAreaElement>) => void;
-  handleSaveEdit: (entryId: string) => void;
+  handleSaveEdit: (entryId: string, message: string) => void;
   handleCancelEdit: () => void;
 };
 
@@ -48,7 +48,7 @@ export const TextEditContainer: React.FC<MessageEditContainerProps> = ({
         theme={token}
       />
       <Button
-        onClick={() => handleSaveEdit(entry.id)}
+        onClick={() => handleSaveEdit(entry.id, editedMessage)}
         style={{ width: '100%' }}
         disabled={isProcessing}
       >
