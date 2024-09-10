@@ -1,6 +1,6 @@
 import React, { useContext, useEffect, useRef, useState } from 'react';
 import styled, { keyframes } from 'styled-components';
-import { Spin, theme } from 'antd';
+import { Spin } from 'antd';
 import { useDispatch, useSelector } from 'react-redux';
 import { VirtuosoHandle } from 'react-virtuoso';
 import { Virtuoso } from 'react-virtuoso';
@@ -8,14 +8,12 @@ import * as hljs from 'react-syntax-highlighter/dist/cjs/styles/hljs';
 
 import type { ConversationEntry } from '../../../types';
 import type { RootState } from '../../redux';
-import { WebviewContext } from '../../WebviewContext';
-import { TopToolBar } from './MessagesContainer/TopToolBar';
-import { ImageContainer } from './MessagesContainer/ImageContainer';
-import { TextContainer } from './MessagesContainer/TextContainer';
-import { TextEditContainer } from './MessagesContainer/TextEditContainer';
-import { MessageFloatButton } from './MessagesContainer/MessageFloatButton';
-import { useWindowSize } from '../../hooks';
 import { updateEntryMessage } from '../../redux/slices/conversationSlice';
+import { WebviewContext } from '../../WebviewContext';
+import { useWindowSize } from '../../hooks';
+import { traverseHistory } from '../../utils';
+import { MessageFloatButton } from './MessagesContainer/MessageFloatButton';
+import { MessageItem } from './MessagesContainer/MessageItem';
 
 const fadeInAnimation = keyframes`
   from {
@@ -45,38 +43,6 @@ const StyledMessagesContainer = styled.div<{ $isLoading: boolean }>`
       props.$isLoading ? fadeOutAnimation : fadeInAnimation}
     0.25s ease-in-out;
 `;
-
-const MessageBubble = styled.div<{ $user: string }>`
-  display: flex;
-  flex-direction: column;
-  background-color: ${({ $user, theme }) =>
-    $user === 'user' ? theme.colorBgLayout : theme.colorBgElevated};
-  border-radius: 15px;
-  border: 1px solid ${({ theme }) => theme.colorBorder};
-  padding: 8px 15px;
-  margin: 10px 55px 10px 0;
-  color: ${({ theme }) => theme.colorText};
-  position: relative;
-`;
-
-const traverseHistory = (
-  entries: { [key: string]: ConversationEntry },
-  current: string,
-): ConversationEntry[] => {
-  const entryStack = [];
-  let currentEntry = entries[current];
-
-  while (currentEntry) {
-    entryStack.push(currentEntry);
-    if (currentEntry.parent) {
-      currentEntry = entries[currentEntry.parent];
-    } else {
-      break;
-    }
-  }
-
-  return entryStack.reverse();
-};
 
 type MessagesContainerProps = {
   isProcessing: boolean;
@@ -136,7 +102,6 @@ export const MessagesContainer = React.memo<MessagesContainerProps>(
       );
     }, [conversationHistory.entries, conversationHistory.current]);
 
-    const { token } = theme.useToken();
     const { innerWidth } = useWindowSize();
 
     useEffect(() => {
@@ -240,13 +205,6 @@ export const MessagesContainer = React.memo<MessagesContainerProps>(
       setToolStatus(status);
     };
 
-    const handleInput = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
-      const input = e.target;
-      setEditedMessage(input.value);
-      input.style.height = 'auto';
-      input.style.height = `${input.scrollHeight}px`;
-    };
-
     const handleEdit = (entryId: string, message: string) => {
       setEditingEntryId(entryId);
       setEditedMessage(message);
@@ -279,15 +237,6 @@ export const MessagesContainer = React.memo<MessagesContainerProps>(
 
     const handleCancelEdit = () => {
       setEditingEntryId(null);
-    };
-
-    const handleMouseEnter = (
-      e: React.MouseEvent<HTMLDivElement>,
-      entry: ConversationEntry,
-    ) => {
-      const rect = e.currentTarget.getBoundingClientRect();
-      setHoveredBubble({ current: e.currentTarget as HTMLDivElement, entry });
-      setShowFloatButtons(!(rect.height < 225 || rect.top > 72));
     };
 
     const setHljsTheme = (theme: keyof typeof hljs) => {
@@ -340,52 +289,29 @@ export const MessagesContainer = React.memo<MessagesContainerProps>(
     };
 
     const renderMessage = (index: number) => {
-      const entry = conversationHistoryEntries[index];
       return (
-        <MessageBubble
-          key={entry.id}
-          $user={entry.role}
-          theme={token}
-          onMouseEnter={(e) => handleMouseEnter(e, entry)}
-        >
-          <TopToolBar
-            modelType={activeModelService}
-            index={index}
-            conversationHistoryEntries={conversationHistoryEntries}
-            isAudioPlaying={isAudioPlaying}
-            isStopAudio={isStopAudio}
-            editingEntryId={editingEntryId}
-            handleCancelEdit={handleCancelEdit}
-            handleEdit={handleEdit}
-            handleConvertTextToVoice={handleConvertTextToVoice}
-            copied={copied}
-            handleCopy={handleCopy}
-            isProcessing={isProcessing}
-          />
-
-          {entry.id === editingEntryId ? (
-            <TextEditContainer
-              entry={entry}
-              isProcessing={isProcessing}
-              editedMessage={editedMessage}
-              handleInput={handleInput}
-              handleSaveEdit={handleSaveEdit}
-              handleCancelEdit={handleCancelEdit}
-            />
-          ) : (
-            <div>
-              <TextContainer
-                entry={entry}
-                conversationHistoryCurrent={conversationHistory.current}
-                isProcessing={isProcessing}
-                hljsTheme={partialSettings.hljsTheme}
-                setHljsTheme={setHljsTheme}
-                toolStatus={toolStatus}
-              />
-              <ImageContainer entry={entry} />
-            </div>
-          )}
-        </MessageBubble>
+        <MessageItem
+          index={index}
+          conversationHistoryEntries={conversationHistoryEntries}
+          isProcessing={isProcessing}
+          setHoveredBubble={setHoveredBubble}
+          setShowFloatButtons={setShowFloatButtons}
+          partialSettings={partialSettings}
+          setHljsTheme={setHljsTheme}
+          copied={copied}
+          handleCopy={handleCopy}
+          editingEntryId={editingEntryId}
+          setEditingEntryId={setEditingEntryId}
+          editedMessage={editedMessage}
+          setEditedMessage={setEditedMessage}
+          toolStatus={toolStatus}
+          handleEditUserMessageSave={handleEditUserMessageSave}
+          handleEdit={handleEdit}
+          handleSaveEdit={handleSaveEdit}
+          isAudioPlaying={isAudioPlaying}
+          isStopAudio={isStopAudio}
+          handleConvertTextToVoice={handleConvertTextToVoice}
+        />
       );
     };
 
