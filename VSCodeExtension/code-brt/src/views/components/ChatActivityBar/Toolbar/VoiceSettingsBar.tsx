@@ -335,6 +335,14 @@ export const VoiceSettingsBar: React.FC<VoiceSettingsBarProps> = ({
             GPT-SoVits Advance Settings
           </Button>
           <Divider />
+          <Button
+            type='primary'
+            ghost
+            onClick={onClose}
+            style={{ marginTop: 20, width: '100%' }}
+          >
+            Close and Save
+          </Button>
         </Form>
       </Drawer>
       <GptSoVitsSettingsBar

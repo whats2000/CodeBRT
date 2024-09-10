@@ -97,8 +97,8 @@ export const SettingsBar: React.FC<SettingSidebarProps> = ({
       setPartialSettings((prev) => ({ ...prev, [key]: event.target.value }));
     };
 
-  const handleBlurSave = () => {
-    saveSettings(partialSettings);
+  const handleBlurSave = (key: keyof Partial<ExtensionSettings>) => {
+    saveSettings({ [key]: partialSettings[key] });
   };
 
   const handleColorChange = (color: AggregationColor) => {
@@ -108,7 +108,6 @@ export const SettingsBar: React.FC<SettingSidebarProps> = ({
     }));
     setTheme({ primaryColor: color.toHexString() }).then(() => {
       saveSettings({
-        ...partialSettings,
         themePrimaryColor: color.toHexString(),
       });
     });
@@ -119,7 +118,7 @@ export const SettingsBar: React.FC<SettingSidebarProps> = ({
   ) => {
     setPartialSettings((prev) => ({ ...prev, themeAlgorithm: value }));
     setTheme({ algorithm: value }).then(() => {
-      saveSettings({ ...partialSettings, themeAlgorithm: value });
+      saveSettings({ themeAlgorithm: value });
     });
   };
 
@@ -129,7 +128,7 @@ export const SettingsBar: React.FC<SettingSidebarProps> = ({
     const value = parseInt(event.target.value);
     setPartialSettings((prev) => ({ ...prev, themeBorderRadius: value }));
     setTheme({ borderRadius: value }).then(() => {
-      saveSettings({ ...partialSettings, themeBorderRadius: value });
+      saveSettings({ themeBorderRadius: value });
     });
   };
 
@@ -146,7 +145,6 @@ export const SettingsBar: React.FC<SettingSidebarProps> = ({
       borderRadius: 4,
     }).then(() => {
       saveSettings({
-        ...partialSettings,
         themePrimaryColor: '#f1f1f1',
         themeAlgorithm: 'darkAlgorithm',
         themeBorderRadius: 4,
@@ -235,7 +233,9 @@ export const SettingsBar: React.FC<SettingSidebarProps> = ({
                   onChange={handleSettingChange(
                     key as keyof typeof partialSettings,
                   )}
-                  onBlur={handleBlurSave}
+                  onBlur={() =>
+                    handleBlurSave(key as keyof typeof partialSettings)
+                  }
                 />
               </FormGroup>
             );
@@ -277,7 +277,9 @@ export const SettingsBar: React.FC<SettingSidebarProps> = ({
                   type='number'
                   value={value}
                   onChange={handleBorderRadiusChange}
-                  onBlur={handleBlurSave}
+                  onBlur={() =>
+                    handleBlurSave(key as keyof typeof partialSettings)
+                  }
                 />
               </FormGroup>
             );
@@ -296,11 +298,20 @@ export const SettingsBar: React.FC<SettingSidebarProps> = ({
       </StyledForm>
       <Button
         type='primary'
+        danger={true}
         ghost={true}
         onClick={resetTheme}
         style={{ width: '100%' }}
       >
         Reset Theme
+      </Button>
+      <Button
+        type='primary'
+        ghost
+        onClick={onClose}
+        style={{ marginTop: 20, width: '100%' }}
+      >
+        Close and Save
       </Button>
     </Drawer>
   );
