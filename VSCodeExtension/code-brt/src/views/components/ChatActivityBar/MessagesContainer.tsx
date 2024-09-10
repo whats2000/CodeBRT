@@ -158,13 +158,18 @@ export const MessagesContainer = React.memo<MessagesContainerProps>(
       if (isAutoScroll && isProcessing) {
         scrollToBottom();
       }
-    }, [isProcessing, conversationHistoryEntries, isAutoScroll]);
+    }, [
+      isProcessing,
+      conversationHistoryEntries[conversationHistoryEntries.length - 1]
+        ?.message,
+      isAutoScroll,
+    ]);
 
     const scrollToBottom = () => {
       if (virtualListRef.current) {
         virtualListRef.current.scrollToIndex({
           index: 'LAST',
-          behavior: 'auto',
+          behavior: 'smooth',
           align: 'end',
         });
       }
@@ -332,11 +337,13 @@ export const MessagesContainer = React.memo<MessagesContainerProps>(
           ref={messagesContainerRef}
         >
           <Virtuoso
-            onScroll={handleUserScroll}
+            onWheel={handleUserScroll}
             ref={virtualListRef}
             totalCount={conversationHistoryEntries.length}
             itemContent={(index) => renderMessage(index)}
             initialTopMostItemIndex={conversationHistoryEntries.length - 1}
+            followOutput={'smooth'}
+            atBottomThreshold={100}
             atBottomStateChange={handleAtBottomStateChange}
           />
         </StyledMessagesContainer>

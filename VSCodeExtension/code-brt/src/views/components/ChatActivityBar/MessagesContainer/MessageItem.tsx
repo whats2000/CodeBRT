@@ -12,7 +12,17 @@ import { TextEditContainer } from './TextEditContainer';
 import { TextContainer } from './TextContainer';
 import { ImageContainer } from './ImageContainer';
 
-const MessageBubble = styled.div<{ $user: string; $theme: GlobalToken }>`
+const MessageBubbleWrapper = styled.div<{
+  $paddingBottom: boolean;
+}>`
+  padding: 10px 55px
+    ${({ $paddingBottom }) => ($paddingBottom ? '100px' : '10px')} 0;
+`;
+
+const MessageBubble = styled.div<{
+  $user: string;
+  $theme: GlobalToken;
+}>`
   display: flex;
   flex-direction: column;
   background-color: ${({ $user, $theme }) =>
@@ -20,7 +30,6 @@ const MessageBubble = styled.div<{ $user: string; $theme: GlobalToken }>`
   border-radius: 15px;
   border: 1px solid ${({ $theme }) => $theme.colorBorder};
   padding: 8px 15px;
-  margin: 10px 55px 10px 0;
   color: ${({ theme }) => theme.colorText};
   position: relative;
 `;
@@ -109,50 +118,56 @@ export const MessageItem = React.memo<MessageItemProps>(
     };
 
     return (
-      <MessageBubble
-        key={entry.id}
-        $user={entry.role}
-        $theme={token.token}
-        onMouseEnter={(e) => handleMouseEnter(e, entry)}
+      <MessageBubbleWrapper
+        $paddingBottom={
+          index === conversationHistoryEntries.length - 1 && isProcessing
+        }
       >
-        <TopToolBar
-          modelType={activeModelService}
-          index={index}
-          conversationHistoryEntries={conversationHistoryEntries}
-          isAudioPlaying={isAudioPlaying}
-          isStopAudio={isStopAudio}
-          editingEntryId={editingEntryId}
-          handleCancelEdit={handleCancelEdit}
-          handleEdit={handleEdit}
-          handleConvertTextToVoice={handleConvertTextToVoice}
-          copied={copied}
-          handleCopy={handleCopy}
-          isProcessing={isProcessing}
-        />
-
-        {entry.id === editingEntryId ? (
-          <TextEditContainer
-            entry={entry}
-            isProcessing={isProcessing}
-            editedMessage={editedMessage}
-            handleInput={handleInput}
-            handleSaveEdit={handleSaveEdit}
+        <MessageBubble
+          key={entry.id}
+          $user={entry.role}
+          $theme={token.token}
+          onMouseEnter={(e) => handleMouseEnter(e, entry)}
+        >
+          <TopToolBar
+            modelType={activeModelService}
+            index={index}
+            conversationHistoryEntries={conversationHistoryEntries}
+            isAudioPlaying={isAudioPlaying}
+            isStopAudio={isStopAudio}
+            editingEntryId={editingEntryId}
             handleCancelEdit={handleCancelEdit}
+            handleEdit={handleEdit}
+            handleConvertTextToVoice={handleConvertTextToVoice}
+            copied={copied}
+            handleCopy={handleCopy}
+            isProcessing={isProcessing}
           />
-        ) : (
-          <div>
-            <TextContainer
+
+          {entry.id === editingEntryId ? (
+            <TextEditContainer
               entry={entry}
-              conversationHistoryCurrent={conversationHistory.current}
               isProcessing={isProcessing}
-              hljsTheme={partialSettings.hljsTheme}
-              setHljsTheme={setHljsTheme}
-              toolStatus={toolStatus}
+              editedMessage={editedMessage}
+              handleInput={handleInput}
+              handleSaveEdit={handleSaveEdit}
+              handleCancelEdit={handleCancelEdit}
             />
-            <ImageContainer entry={entry} />
-          </div>
-        )}
-      </MessageBubble>
+          ) : (
+            <div>
+              <TextContainer
+                entry={entry}
+                conversationHistoryCurrent={conversationHistory.current}
+                isProcessing={isProcessing}
+                hljsTheme={partialSettings.hljsTheme}
+                setHljsTheme={setHljsTheme}
+                toolStatus={toolStatus}
+              />
+              <ImageContainer entry={entry} />
+            </div>
+          )}
+        </MessageBubble>
+      </MessageBubbleWrapper>
     );
   },
 );
