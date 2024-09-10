@@ -4,6 +4,11 @@ import { rootReducer } from './reducers';
 import { createApiMiddleware } from './middlewares';
 import type { ViewApi } from '../../types';
 
+/**
+ * Configure the app store
+ * @param callApi - The call API function
+ * @returns The store
+ */
 export const configureAppStore = (
   callApi: <K extends keyof ViewApi>(
     key: K,
