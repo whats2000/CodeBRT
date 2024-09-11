@@ -1,5 +1,6 @@
 import React, { useContext, useEffect, useRef, useState } from 'react';
 import styled, { keyframes } from 'styled-components';
+import { GlobalToken, theme } from 'antd';
 import { Spin } from 'antd';
 import { useDispatch, useSelector } from 'react-redux';
 import { VirtuosoHandle } from 'react-virtuoso';
@@ -33,12 +34,15 @@ const fadeOutAnimation = keyframes`
   }
 `;
 
-const StyledMessagesContainer = styled.div<{ $isLoading: boolean }>`
+const StyledMessagesContainer = styled.div<{
+  $isLoading: boolean;
+  $token: GlobalToken;
+}>`
   flex-grow: 1;
   overflow-y: auto;
   padding: 10px 0 10px 10px;
-  border-top: 1px solid ${({ theme }) => theme.colorBorderSecondary};
-  border-bottom: 1px solid ${({ theme }) => theme.colorBorderSecondary};
+  border-top: 1px solid ${({ $token }) => $token.colorBorderSecondary};
+  border-bottom: 1px solid ${({ $token }) => $token.colorBorderSecondary};
   animation: ${(props) =>
       props.$isLoading ? fadeOutAnimation : fadeInAnimation}
     0.25s ease-in-out;
@@ -62,6 +66,7 @@ type MessagesContainerProps = {
 export const MessagesContainer = React.memo<MessagesContainerProps>(
   ({ isProcessing, processMessage }) => {
     const { callApi, addListener, removeListener } = useContext(WebviewContext);
+    const token = theme.useToken().token;
 
     const [editingEntryId, setEditingEntryId] = useState<string | null>(null);
     const [editedMessage, setEditedMessage] = useState('');
@@ -347,6 +352,7 @@ export const MessagesContainer = React.memo<MessagesContainerProps>(
         <StyledMessagesContainer
           $isLoading={conversationHistory.isLoading}
           ref={messagesContainerRef}
+          $token={token}
         >
           <Virtuoso
             onWheel={handleUserScroll}

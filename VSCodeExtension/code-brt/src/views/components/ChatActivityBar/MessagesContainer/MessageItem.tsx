@@ -21,16 +21,16 @@ const MessageBubbleWrapper = styled.div<{
 
 const MessageBubble = styled.div<{
   $user: string;
-  $theme: GlobalToken;
+  $token: GlobalToken;
 }>`
   display: flex;
   flex-direction: column;
-  background-color: ${({ $user, $theme }) =>
-    $user === 'user' ? $theme.colorBgLayout : $theme.colorBgElevated};
+  background-color: ${({ $user, $token }) =>
+    $user === 'user' ? $token.colorBgLayout : $token.colorBgElevated};
   border-radius: 15px;
-  border: 1px solid ${({ $theme }) => $theme.colorBorder};
+  border: 1px solid ${({ $token }) => $token.colorBorder};
   padding: 8px 15px;
-  color: ${({ theme }) => theme.colorText};
+  color: ${({ $token }) => $token.colorText};
   position: relative;
 `;
 
@@ -128,7 +128,7 @@ export const MessageItem = React.memo<MessageItemProps>(
         <MessageBubble
           key={entry.id}
           $user={entry.role}
-          $theme={token.token}
+          $token={token.token}
           onMouseEnter={(e) => handleMouseEnter(e, entry)}
         >
           <TopToolBar

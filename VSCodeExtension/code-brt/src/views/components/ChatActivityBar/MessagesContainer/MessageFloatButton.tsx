@@ -52,6 +52,19 @@ export const MessageFloatButton: React.FC<MessageFloatButtonProps> = ({
 }) => {
   if (!hoveredBubble.current || !hoveredBubble.entry) return null;
 
+  const EditFloatButton = () => (
+    <FloatButton
+      icon={<EditOutlined />}
+      onClick={() => {
+        if (!hoveredBubble.entry) return;
+
+        editingEntryId === hoveredBubble.entry.id
+          ? handleCancelEdit()
+          : handleEdit(hoveredBubble.entry.id, hoveredBubble.entry.message);
+      }}
+    />
+  );
+
   return (
     <FloatButton.Group
       shape='circle'
@@ -65,16 +78,6 @@ export const MessageFloatButton: React.FC<MessageFloatButtonProps> = ({
       icon={<EllipsisOutlined />}
       trigger='hover'
     >
-      <FloatButton
-        icon={<EditOutlined />}
-        onClick={() => {
-          if (!hoveredBubble.entry) return;
-
-          editingEntryId === hoveredBubble.entry.id
-            ? handleCancelEdit()
-            : handleEdit(hoveredBubble.entry.id, hoveredBubble.entry.message);
-        }}
-      />
       {hoveredBubble.entry.id !== editingEntryId ? (
         <>
           <FloatButton
@@ -93,14 +96,17 @@ export const MessageFloatButton: React.FC<MessageFloatButtonProps> = ({
               handleConvertTextToVoice(hoveredBubble.entry.message);
             }}
           />
-          <FloatButton
-            icon={<RedoOutlined />}
-            onClick={() => {
-              if (!hoveredBubble.entry) return;
+          {hoveredBubble.entry?.role === 'AI' && (
+            <FloatButton
+              icon={<RedoOutlined />}
+              onClick={() => {
+                if (!hoveredBubble.entry) return;
 
-              handleRedo(hoveredBubble.entry.id);
-            }}
-          />
+                handleRedo(hoveredBubble.entry.id);
+              }}
+            />
+          )}
+          <EditFloatButton />
           <FloatButton
             icon={
               hoveredBubble.entry && copied[hoveredBubble.entry.id] ? (
@@ -118,6 +124,7 @@ export const MessageFloatButton: React.FC<MessageFloatButtonProps> = ({
         </>
       ) : (
         <>
+          <EditFloatButton />
           <FloatButton
             icon={<SaveOutlined />}
             onClick={() => {
