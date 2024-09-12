@@ -70,7 +70,7 @@ export const ModelAdvanceSettingBar: React.FC<ModelAdvanceSettingsProps> = ({
         ...advanceSettings,
       });
     } else {
-      handleSave().then();
+      void handleSave();
     }
   }, [isOpen]);
 

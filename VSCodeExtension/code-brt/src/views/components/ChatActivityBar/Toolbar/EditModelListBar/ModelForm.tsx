@@ -88,7 +88,7 @@ export const ModelForm: React.FC<ModelFormProps> = ({
 
   useEffect(() => {
     if (!isOpen) {
-      handleSave(modelsWithId.current).then();
+      void handleSave(modelsWithId.current);
     }
   }, [isOpen]);
 

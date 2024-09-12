@@ -29,7 +29,7 @@ export const ImageContainer: React.FC<ImageContainerProps> = ({ entry }) => {
       setImageUrls(urls);
     };
 
-    loadImageUrls().then();
+    void loadImageUrls();
   }, [entry.images, callApi]);
 
   return (

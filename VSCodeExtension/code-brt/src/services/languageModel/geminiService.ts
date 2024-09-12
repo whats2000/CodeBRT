@@ -100,11 +100,9 @@ export class GeminiService extends AbstractLanguageModelService {
     }
 
     if (advanceSettings.presencePenalty || advanceSettings.frequencyPenalty) {
-      vscode.window
-        .showWarningMessage(
-          'Presence and Frequency penalties are not supported by the Gemini API, so the settings will be ignored.',
-        )
-        .then();
+      void vscode.window.showWarningMessage(
+        'Presence and Frequency penalties are not supported by the Gemini API, so the settings will be ignored.',
+      );
     }
 
     return {
@@ -222,7 +220,7 @@ export class GeminiService extends AbstractLanguageModelService {
         },
       };
     } catch (error) {
-      vscode.window.showErrorMessage('Failed to read file: ' + error);
+      void vscode.window.showErrorMessage('Failed to read file: ' + error);
     }
   }
 

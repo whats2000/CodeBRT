@@ -69,11 +69,9 @@ export class AnthropicService extends AbstractLanguageModelService {
     }
 
     if (advanceSettings.presencePenalty || advanceSettings.frequencyPenalty) {
-      vscode.window
-        .showWarningMessage(
-          'Presence and frequency penalties are not supported by the Anthropic API, so the settings will be ignored.',
-        )
-        .then();
+      void vscode.window.showWarningMessage(
+        'Presence and frequency penalties are not supported by the Anthropic API, so the settings will be ignored.',
+      );
     }
 
     const generationConfig: Partial<MessageCreateParamsNonStreaming> = {};
@@ -191,7 +189,7 @@ export class AnthropicService extends AbstractLanguageModelService {
     });
 
     if (this.currentModel === '') {
-      vscode.window.showErrorMessage(
+      void vscode.window.showErrorMessage(
         'Make sure the model is selected before sending a message. Open the model selection dropdown and configure the model.',
       );
       return {
@@ -217,7 +215,7 @@ export class AnthropicService extends AbstractLanguageModelService {
     for (const image of images) {
       const fileType = path.extname(image).slice(1);
       if (!['jpeg', 'png', 'gif', 'webp'].includes(fileType)) {
-        vscode.window.showErrorMessage(
+        void vscode.window.showErrorMessage(
           `Unsupported image file type: ${fileType}`,
         );
 

@@ -49,7 +49,7 @@ export abstract class AbstractLanguageModelService
       this.settingsManager
         .set('lastSelectedModel', lastSelectedModel)
         .then(() => {
-          vscode.window.showErrorMessage(
+          void vscode.window.showErrorMessage(
             'No available models to switch to. Please configure the models first.',
           );
         });
@@ -62,12 +62,14 @@ export abstract class AbstractLanguageModelService
       this.settingsManager
         .set('lastSelectedModel', lastSelectedModel)
         .then(() => {
-          vscode.window
-            .showInformationMessage(`Switched to model: ${newModel}`)
-            .then();
+          void vscode.window.showInformationMessage(
+            `Switched to model: ${newModel}`,
+          );
         });
     } else {
-      vscode.window.showErrorMessage(`Model ${newModel} is not available.`);
+      void vscode.window.showErrorMessage(
+        `Model ${newModel} is not available.`,
+      );
     }
   }
 
@@ -75,11 +77,9 @@ export abstract class AbstractLanguageModelService
    * Stop current response
    */
   public async stopResponse(): Promise<void> {
-    vscode.window
-      .showInformationMessage(
-        'This feature is not supported by the current model.',
-      )
-      .then();
+    void vscode.window.showInformationMessage(
+      'This feature is not supported by the current model.',
+    );
   }
 
   /**
