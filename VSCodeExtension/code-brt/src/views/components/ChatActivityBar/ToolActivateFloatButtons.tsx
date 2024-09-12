@@ -24,8 +24,8 @@ export const ToolActivateFloatButtons: React.FC<
     enableTools: { [key in ToolServiceType]: { active: boolean } };
   }>({
     enableTools: {
-      webSearch: { active: false },
-      urlFetcher: { active: false },
+      webSearch: { active: true },
+      urlFetcher: { active: true },
     },
   });
   const [isLoading, setIsLoading] = useState(true);

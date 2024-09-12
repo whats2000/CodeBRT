@@ -222,7 +222,7 @@ export class GeminiService extends AbstractLanguageModelService {
         },
       };
     } catch (error) {
-      vscode.window.showErrorMessage('Failed to read file: ' + error).then();
+      vscode.window.showErrorMessage('Failed to read file: ' + error);
     }
   }
 

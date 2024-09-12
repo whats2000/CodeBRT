@@ -30,11 +30,9 @@ export abstract class AbstractLanguageModelService
    * Get the latest version of the language model service
    */
   public async getLatestAvailableModelNames(): Promise<string[]> {
-    vscode.window
-      .showErrorMessage(
-        'Current this model service does not support updating available models, Please update it manually.',
-      )
-      .then();
+    vscode.window.showErrorMessage(
+      'Current this model service does not support updating available models, Please update it manually.',
+    );
 
     return this.availableModelNames;
   }
@@ -51,11 +49,9 @@ export abstract class AbstractLanguageModelService
       this.settingsManager
         .set('lastSelectedModel', lastSelectedModel)
         .then(() => {
-          vscode.window
-            .showErrorMessage(
-              'No available models to switch to. Please configure the models first.',
-            )
-            .then();
+          vscode.window.showErrorMessage(
+            'No available models to switch to. Please configure the models first.',
+          );
         });
       return;
     }
@@ -71,9 +67,7 @@ export abstract class AbstractLanguageModelService
             .then();
         });
     } else {
-      vscode.window
-        .showErrorMessage(`Model ${newModel} is not available.`)
-        .then();
+      vscode.window.showErrorMessage(`Model ${newModel} is not available.`);
     }
   }
 

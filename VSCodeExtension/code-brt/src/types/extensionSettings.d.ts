@@ -176,6 +176,7 @@ export type ExtensionSettingsWorkspace = {
  * @property groqApiKey - The API key for the Groq model
  * @property huggingFaceApiKey - The API key for the Hugging Face model
  * @property openaiApiKey - The API key for the OpenAI model
+ * @property doubleEnterSendMessages - Indicates whether pressing Enter twice should send messages
  * @property themePrimaryColor - The primary color for the Ant Design theme
  * @property themeAlgorithm - The algorithm for the Ant Design theme in (defaultAlgorithm, darkAlgorithm, compactAlgorithm)
  * @property themeBorderRadius - The border radius for the Ant Design theme
@@ -188,6 +189,7 @@ export type ExtensionSettingsCrossDevice = {
   groqApiKey: string;
   huggingFaceApiKey: string;
   openaiApiKey: string;
+  doubleEnterSendMessages: boolean;
   themePrimaryColor: string;
   themeAlgorithm: 'defaultAlgorithm' | 'darkAlgorithm' | 'compactAlgorithm';
   themeBorderRadius: number;

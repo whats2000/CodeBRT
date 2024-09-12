@@ -51,6 +51,13 @@ describe('HistoryManager', () => {
 
     expect(newHistory).toBeDefined();
     expect(newHistory.root).toBeDefined();
+
+    // Before the first entry, the history should be empty
+    expect(historyManager.getHistoryIndexes()[newHistory.root]).toBeUndefined();
+
+    await historyManager.addConversationEntry(null, 'user', 'test message');
+
+    // After the first entry, the history should be available
     expect(historyManager.getHistoryIndexes()[newHistory.root]).toBeDefined();
 
     const filePath = path.join(historiesPath, `${newHistory.root}.json`);
@@ -61,11 +68,9 @@ describe('HistoryManager', () => {
 
   test('should add a new conversation entry', async () => {
     const newHistory = await historyManager.addNewConversationHistory();
-    const entryId = await historyManager.addConversationEntry(
-      null,
-      'user',
-      'test message',
-    );
+    const entryId = (
+      await historyManager.addConversationEntry(null, 'user', 'test message')
+    ).id;
 
     expect(entryId).toBeDefined();
     expect(
@@ -80,11 +85,9 @@ describe('HistoryManager', () => {
 
   test('should edit a conversation entry', async () => {
     const newHistory = await historyManager.addNewConversationHistory();
-    const entryId = await historyManager.addConversationEntry(
-      null,
-      'user',
-      'test message',
-    );
+    const entryId = (
+      await historyManager.addConversationEntry(null, 'user', 'test message')
+    ).id;
 
     await historyManager.editConversationEntry(entryId, 'updated message');
 
@@ -95,6 +98,7 @@ describe('HistoryManager', () => {
 
   test('should update the title of a conversation history', async () => {
     const newHistory = await historyManager.addNewConversationHistory();
+    await historyManager.addConversationEntry(null, 'user', 'test message');
     const newTitle = 'Updated Title';
     await historyManager.updateHistoryTitleById(newHistory.root, newTitle);
 
@@ -109,7 +113,9 @@ describe('HistoryManager', () => {
 
   test('should switch to a different conversation history', async () => {
     const newHistory1 = await historyManager.addNewConversationHistory();
+    await historyManager.addConversationEntry(null, 'user', 'test message');
     const newHistory2 = await historyManager.addNewConversationHistory();
+    await historyManager.addConversationEntry(null, 'user', 'test message');
 
     await historyManager.switchHistory(newHistory2.root);
     expect(historyManager.getHistoryBeforeEntry().root).toBe(newHistory2.root);

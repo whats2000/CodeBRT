@@ -191,11 +191,9 @@ export class AnthropicService extends AbstractLanguageModelService {
     });
 
     if (this.currentModel === '') {
-      vscode.window
-        .showErrorMessage(
-          'Make sure the model is selected before sending a message. Open the model selection dropdown and configure the model.',
-        )
-        .then();
+      vscode.window.showErrorMessage(
+        'Make sure the model is selected before sending a message. Open the model selection dropdown and configure the model.',
+      );
       return {
         anthropic: anthropic,
         conversationHistory: [],
@@ -219,9 +217,9 @@ export class AnthropicService extends AbstractLanguageModelService {
     for (const image of images) {
       const fileType = path.extname(image).slice(1);
       if (!['jpeg', 'png', 'gif', 'webp'].includes(fileType)) {
-        vscode.window
-          .showErrorMessage(`Unsupported image file type: ${fileType}`)
-          .then();
+        vscode.window.showErrorMessage(
+          `Unsupported image file type: ${fileType}`,
+        );
 
         return {
           anthropic,

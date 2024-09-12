@@ -1,3 +1,5 @@
+import type { Entries } from 'type-fest';
+
 import React, { useState, useEffect, useContext } from 'react';
 import styled from 'styled-components';
 import type { AggregationColor } from 'antd/es/color-picker/color';
@@ -15,7 +17,7 @@ import {
   Checkbox,
 } from 'antd';
 
-import {
+import type {
   ExtensionSettings,
   ModelServiceType,
   TextToVoiceServiceType,
@@ -67,6 +69,7 @@ export const SettingsBar: React.FC<SettingSidebarProps> = ({
     themePrimaryColor: '#1677ff',
     themeAlgorithm: 'defaultAlgorithm',
     themeBorderRadius: 4,
+    doubleEnterSendMessages: false,
     retainContextWhenHidden: false,
   });
   const [isLoading, setIsLoading] = useState(true);
@@ -160,6 +163,14 @@ export const SettingsBar: React.FC<SettingSidebarProps> = ({
     saveSettings({ retainContextWhenHidden: e.target.checked });
   };
 
+  const handleDoubleEnterChange: CheckboxProps['onChange'] = (e) => {
+    setPartialSettings((prev) => ({
+      ...prev,
+      doubleEnterSendMessages: e.target.checked,
+    }));
+    saveSettings({ doubleEnterSendMessages: e.target.checked });
+  };
+
   const saveSettings = (updatedSettings: Partial<ExtensionSettings>) => {
     Object.entries(updatedSettings).map(([key, value]) => {
       callApi(
@@ -196,7 +207,9 @@ export const SettingsBar: React.FC<SettingSidebarProps> = ({
         layout='vertical'
         onFinish={() => saveSettings(partialSettings)}
       >
-        {Object.entries(partialSettings).map(([key, value]) => {
+        {(
+          Object.entries(partialSettings) as Entries<Partial<ExtensionSettings>>
+        ).map(([key, value]) => {
           if (key.includes('ApiKey') || key.includes('ClientHost')) {
             const serviceKey = key
               .replace('ApiKey', '')
@@ -222,7 +235,7 @@ export const SettingsBar: React.FC<SettingSidebarProps> = ({
                           )
                         }
                       >
-                        Learn more
+                        Get API Key
                       </Typography.Link>
                     </Tooltip>
                   </Space>
@@ -230,12 +243,8 @@ export const SettingsBar: React.FC<SettingSidebarProps> = ({
               >
                 <Input.Password
                   value={(value as string) || ''}
-                  onChange={handleSettingChange(
-                    key as keyof typeof partialSettings,
-                  )}
-                  onBlur={() =>
-                    handleBlurSave(key as keyof typeof partialSettings)
-                  }
+                  onChange={handleSettingChange(key)}
+                  onBlur={() => handleBlurSave(key)}
                 />
               </FormGroup>
             );
@@ -277,10 +286,18 @@ export const SettingsBar: React.FC<SettingSidebarProps> = ({
                   type='number'
                   value={value}
                   onChange={handleBorderRadiusChange}
-                  onBlur={() =>
-                    handleBlurSave(key as keyof typeof partialSettings)
-                  }
+                  onBlur={() => handleBlurSave(key)}
                 />
+              </FormGroup>
+            );
+          } else if (key === 'doubleEnterSendMessages') {
+            return (
+              <FormGroup key={key} label={'Send messages with double enter'}>
+                <Checkbox checked={value} onChange={handleDoubleEnterChange}>
+                  <Typography.Text color={'secondary'}>
+                    Send messages with double enter
+                  </Typography.Text>
+                </Checkbox>
               </FormGroup>
             );
           } else if (key === 'retainContextWhenHidden') {

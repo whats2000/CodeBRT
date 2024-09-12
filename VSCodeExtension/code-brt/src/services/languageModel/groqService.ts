@@ -69,11 +69,9 @@ export class GroqService extends AbstractOpenaiLikeService {
 
   public async getResponse(options: GetResponseOptions): Promise<string> {
     if (this.currentModel === '') {
-      vscode.window
-        .showErrorMessage(
-          'Make sure the model is selected before sending a message. Open the model selection dropdown and configure the model.',
-        )
-        .then();
+      vscode.window.showErrorMessage(
+        'Make sure the model is selected before sending a message. Open the model selection dropdown and configure the model.',
+      );
       return 'Missing model configuration. Check the model selection dropdown.';
     }
 

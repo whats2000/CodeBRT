@@ -64,8 +64,8 @@ export class SettingsManager {
     gptSoVitsAvailableReferenceVoices: [],
     gptSoVitsSelectedReferenceVoice: '',
     enableTools: {
-      webSearch: { active: false },
-      urlFetcher: { active: false },
+      webSearch: { active: true },
+      urlFetcher: { active: true },
     },
     systemPrompts: [],
     retainContextWhenHidden: false,
@@ -80,6 +80,7 @@ export class SettingsManager {
     cohereApiKey: '',
     groqApiKey: '',
     huggingFaceApiKey: '',
+    doubleEnterSendMessages: false,
     themePrimaryColor: '#f0f0f0',
     themeAlgorithm: 'darkAlgorithm',
     themeBorderRadius: 4,

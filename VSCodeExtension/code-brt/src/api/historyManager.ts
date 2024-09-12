@@ -220,9 +220,7 @@ export class HistoryManager implements IHistoryManager {
 
     if (parentID) {
       if (!this.history.entries[parentID]) {
-        vscode.window
-          .showErrorMessage('Parent entry not found: ' + parentID)
-          .then();
+        vscode.window.showErrorMessage('Parent entry not found: ' + parentID);
         return newEntry;
       }
       this.history.entries[parentID].children.push(newID);
@@ -286,9 +284,7 @@ export class HistoryManager implements IHistoryManager {
         ),
       );
     } else {
-      vscode.window
-        .showErrorMessage('Entry not found: ' + entryID)
-        .then(() => console.error('Entry not found: ' + entryID));
+      vscode.window.showErrorMessage('Entry not found: ' + entryID);
     }
   }
 
@@ -305,7 +301,7 @@ export class HistoryManager implements IHistoryManager {
         ),
       );
     } else {
-      vscode.window.showErrorMessage('History not found: ' + historyID).then();
+      vscode.window.showErrorMessage('History not found: ' + historyID);
     }
   }
 
@@ -319,7 +315,7 @@ export class HistoryManager implements IHistoryManager {
       this.history = await this.loadHistoryById(historyID);
       return this.history;
     } else {
-      vscode.window.showErrorMessage('History not found: ' + historyID).then();
+      vscode.window.showErrorMessage('History not found: ' + historyID);
       return this.history;
     }
   }
@@ -348,7 +344,7 @@ export class HistoryManager implements IHistoryManager {
 
       return await this.addNewConversationHistory();
     } else {
-      vscode.window.showErrorMessage('History not found: ' + historyID).then();
+      vscode.window.showErrorMessage('History not found: ' + historyID);
       return this.history;
     }
   }
