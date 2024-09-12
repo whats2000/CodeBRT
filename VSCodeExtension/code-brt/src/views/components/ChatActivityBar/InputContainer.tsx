@@ -64,6 +64,7 @@ export const InputContainer = React.memo<InputContainerProps>(
     const [inputMessage, setInputMessage] = useState(
       localStorage.getItem(INPUT_MESSAGE_KEY) || '',
     );
+
     const fileInputRef = useRef<HTMLInputElement>(null);
 
     const dispatch = useDispatch<AppDispatch>();
@@ -106,7 +107,26 @@ export const InputContainer = React.memo<InputContainerProps>(
     const handleKeyDown = async (
       event: React.KeyboardEvent<HTMLTextAreaElement>,
     ) => {
+      if (isProcessing) {
+        return;
+      }
+
       if (event.key === 'Enter' && !event.shiftKey) {
+        const doubleEnterSendMessages = await callApi(
+          'getSetting',
+          'doubleEnterSendMessages',
+        );
+
+        if (!doubleEnterSendMessages) {
+          await callApi(
+            'alertMessage',
+            'Double press Enter is disabled. You can enable it in the settings.',
+            'info',
+          );
+          await sendMessage();
+          return;
+        }
+
         event.preventDefault();
         if (enterPressCount === 0) {
           setTimeout(resetEnterPressCount, 500);
