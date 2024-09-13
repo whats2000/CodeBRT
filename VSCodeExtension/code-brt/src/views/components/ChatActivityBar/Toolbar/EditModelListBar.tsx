@@ -7,6 +7,7 @@ import type { AppDispatch, RootState } from '../../../redux';
 import { ModelForm } from './EditModelListBar/ModelForm';
 import { CustomModelForm } from './EditModelListBar/CustomModelForm';
 import { updateAvailableModels } from '../../../redux/slices/modelServiceSlice';
+import { updateAndSaveSetting } from '../../../redux/slices/settingsSlice';
 
 type EditModelListBarProps = {
   isOpen: boolean;
@@ -34,19 +35,39 @@ export const EditModelListBar: React.FC<EditModelListBarProps> = ({
     if (activeModelService === 'loading...') return;
 
     if (isOpen) {
-      setCustomModels(settings.customModels);
-
       if (activeModelService !== 'custom') {
         setAvailableModels(settings[`${activeModelService}AvailableModels`]);
+      } else {
+        setCustomModels(settings.customModels);
       }
+      setIsLoading(false);
     }
   }, [isOpen, activeModelService]);
 
   const handleEditModelListSave = (newAvailableModels: string[]) => {
+    if (activeModelService === 'loading...') return;
+
     dispatch(
       updateAvailableModels({
         modelType: activeModelService,
         newAvailableModels,
+      }),
+    );
+
+    if (activeModelService === 'custom') {
+      dispatch(
+        updateAndSaveSetting({
+          key: 'customModels',
+          value: customModels,
+        }),
+      );
+      return;
+    }
+
+    dispatch(
+      updateAndSaveSetting({
+        key: `${activeModelService}AvailableModels`,
+        value: newAvailableModels,
       }),
     );
   };

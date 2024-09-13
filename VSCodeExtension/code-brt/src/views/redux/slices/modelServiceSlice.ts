@@ -154,7 +154,6 @@ export const updateAvailableModels = createAsyncThunk<
     if (
       state.activeModelService !== modelType ||
       state.isLoading ||
-      modelType === 'custom' ||
       modelType === 'loading...'
     ) {
       return;
