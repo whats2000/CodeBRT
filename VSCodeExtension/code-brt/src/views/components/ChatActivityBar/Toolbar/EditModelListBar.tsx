@@ -1,10 +1,9 @@
-import React, { useContext, useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Drawer } from 'antd';
 import { useDispatch, useSelector } from 'react-redux';
 
 import type { CustomModelSettings } from '../../../../types';
 import type { AppDispatch, RootState } from '../../../redux';
-import { WebviewContext } from '../../../WebviewContext';
 import { ModelForm } from './EditModelListBar/ModelForm';
 import { CustomModelForm } from './EditModelListBar/CustomModelForm';
 import { updateAvailableModels } from '../../../redux/slices/modelServiceSlice';
@@ -18,49 +17,27 @@ export const EditModelListBar: React.FC<EditModelListBarProps> = ({
   isOpen,
   onClose,
 }) => {
-  const { callApi } = useContext(WebviewContext);
   const [customModels, setCustomModels] = useState<CustomModelSettings[]>([]);
   const [availableModels, setAvailableModels] = useState<string[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
   const dispatch = useDispatch<AppDispatch>();
+
   const activeModelService = useSelector(
     (state: RootState) => state.modelService.activeModelService,
   );
+
+  const { settings } = useSelector((state: RootState) => state.settings);
 
   useEffect(() => {
     setIsLoading(true);
     if (activeModelService === 'loading...') return;
 
     if (isOpen) {
-      if (activeModelService === 'custom') {
-        callApi('getSettingByKey', 'customModels')
-          .then((models) => {
-            setCustomModels(models as CustomModelSettings[]);
-            setIsLoading(false);
-          })
-          .catch((error: any) => {
-            callApi(
-              'alertMessage',
-              `Failed to load custom models: ${error}`,
-              'error',
-            ).catch(console.error);
-            setIsLoading(false);
-          });
-      } else {
-        callApi('getAvailableModels', activeModelService)
-          .then((models: string[]) => {
-            setAvailableModels(models);
-            setIsLoading(false);
-          })
-          .catch((error: any) => {
-            callApi(
-              'alertMessage',
-              `Failed to load available models: ${error}`,
-              'error',
-            ).catch(console.error);
-            setIsLoading(false);
-          });
+      setCustomModels(settings.customModels);
+
+      if (activeModelService !== 'custom') {
+        setAvailableModels(settings[`${activeModelService}AvailableModels`]);
       }
     }
   }, [isOpen, activeModelService]);

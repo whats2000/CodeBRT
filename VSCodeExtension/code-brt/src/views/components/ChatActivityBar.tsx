@@ -25,10 +25,7 @@ import {
   handleFilesUpload,
   clearUploadedFiles,
 } from '../redux/slices/fileUploadSlice';
-import {
-  loadModelService,
-  startLoading,
-} from '../redux/slices/modelServiceSlice';
+import { initModelService } from '../redux/slices/modelServiceSlice';
 import { fetchSettings } from '../redux/slices/settingsSlice';
 
 const Container = styled(Content)`
@@ -53,6 +50,7 @@ export const ChatActivityBar = () => {
   const inputContainerRef = useRef<HTMLDivElement>(null);
 
   const dispatch = useDispatch<AppDispatch>();
+
   const conversationHistory = useSelector(
     (state: RootState) => state.conversation,
   );
@@ -72,10 +70,16 @@ export const ChatActivityBar = () => {
 
   useEffect(() => {
     // Load the settings
-    dispatch(fetchSettings());
-
-    // Load the lasted used conversation history
-    dispatch(initLoadHistory());
+    dispatch(fetchSettings())
+      .then(() => {
+        // Load the lasted used model service
+        dispatch(initModelService());
+      })
+      .then(() => {
+        // Load the lasted used conversation history
+        dispatch(initLoadHistory());
+      })
+      .catch(console.error);
 
     // For receiving stream response
     const handleStreamResponseEvent = (responseFromMessage: string) => {
@@ -130,30 +134,6 @@ export const ChatActivityBar = () => {
       }
     };
   }, [inputContainerRef]);
-
-  useEffect(() => {
-    const initModelService = async () => {
-      dispatch(startLoading());
-
-      try {
-        const lastUsedModelService = await callApi(
-          'getSettingByKey',
-          'lastUsedModelService',
-        );
-        if (lastUsedModelService) {
-          dispatch(loadModelService(lastUsedModelService));
-        }
-      } catch (error) {
-        callApi(
-          'alertMessage',
-          `Failed to clear conversation history: ${error}`,
-          'error',
-        ).catch(console.error);
-      }
-    };
-
-    initModelService().catch(console.error);
-  }, []);
 
   useEffect(() => {
     localStorage.setItem(UPLOADED_FILES_KEY, JSON.stringify(uploadedFiles));

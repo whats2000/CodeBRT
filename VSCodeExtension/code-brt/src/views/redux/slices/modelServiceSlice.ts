@@ -14,6 +14,39 @@ type ModelServiceState = {
   isLoading: boolean;
 };
 
+export const initModelService = createAsyncThunk<
+  void,
+  void,
+  {
+    state: RootState;
+    extra: {
+      callApi: CallAPI;
+    };
+  }
+>(
+  'modelService/initModelService',
+  async (_args, { dispatch, extra: { callApi } }) => {
+    dispatch(startLoading());
+
+    try {
+      const lastUsedModelService = await callApi(
+        'getSettingByKey',
+        'lastUsedModelService',
+      );
+
+      if (lastUsedModelService) {
+        dispatch(loadModelService(lastUsedModelService));
+      }
+    } catch (error) {
+      callApi(
+        'alertMessage',
+        `Failed to initialize model service: ${error}`,
+        'error',
+      ).catch(console.error);
+    }
+  },
+);
+
 export const loadModelService = createAsyncThunk<
   void,
   ModelServiceType,
