@@ -82,6 +82,35 @@ export const saveSettings = createAsyncThunk<
   },
 );
 
+// Update and save a single setting
+export const updateAndSaveSetting = createAsyncThunk<
+  void,
+  {
+    key: keyof ExtensionSettings;
+    value: ExtensionSettings[keyof ExtensionSettings];
+  },
+  {
+    state: RootState;
+    extra: {
+      callApi: CallAPI;
+    };
+  }
+>(
+  'settings/updateAndSaveSetting',
+  async ({ key, value }, { dispatch, extra: { callApi } }) => {
+    try {
+      dispatch(updateLocalSetting({ key, value }));
+      await callApi('setSettingByKey', key, value);
+
+      if (RELOAD_REQUIRED_SETTINGS.includes(key)) {
+        await callApi('alertReload', 'Some settings require a reload to apply');
+      }
+    } catch (error: any) {
+      throw new Error(`Failed to update setting: ${error.message}`);
+    }
+  },
+);
+
 // Create the settings slice
 const settingsSlice = createSlice({
   name: 'settings',

@@ -5,6 +5,7 @@ import { v4 as uuidV4 } from 'uuid';
 import type { ConversationEntry, ConversationHistory } from '../../../types';
 import type { CallAPI } from '../../WebviewContext';
 import type { RootState } from '../store';
+import { updateAndSaveSetting } from './settingsSlice';
 
 const initialState: ConversationHistory & {
   tempId: string | null;
@@ -101,7 +102,9 @@ export const switchHistory = createAsyncThunk<
       dispatch(setConversationHistory(newHistory));
 
       // Save the last used history ID
-      await callApi('setSettingByKey', 'lastUsedHistoryID', historyID);
+      dispatch(
+        updateAndSaveSetting({ key: 'lastUsedHistoryID', value: historyID }),
+      );
 
       dispatch(finishLoading());
     } catch (error) {

@@ -101,6 +101,11 @@ export const SettingsBar: React.FC<SettingSidebarProps> = ({
 
   // Save settings whenever the sidebar is closed
   const handleCloseAndSave = () => {
+    if (isLoading) {
+      onClose();
+      return;
+    }
+
     dispatch(saveSettings(settings));
     onClose();
   };

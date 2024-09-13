@@ -5,6 +5,7 @@ import { createSlice } from '@reduxjs/toolkit';
 import { RootState } from '../store';
 import type { ModelServiceType } from '../../../types';
 import type { CallAPI } from '../../WebviewContext';
+import { updateAndSaveSetting } from './settingsSlice';
 
 type ModelServiceState = {
   activeModelService: ModelServiceType | 'loading...';
@@ -44,10 +45,11 @@ export const loadModelService = createAsyncThunk<
       const selectedModel = await callApi('getCurrentModel', modelServiceType);
       dispatch(setSelectedModel(selectedModel));
 
-      await callApi(
-        'setSettingByKey',
-        'lastUsedModelService',
-        modelServiceType,
+      dispatch(
+        updateAndSaveSetting({
+          key: 'lastUsedModelService',
+          value: modelServiceType,
+        }),
       );
 
       dispatch(finishLoading());

@@ -1,8 +1,10 @@
-import React, { useState, useContext, useEffect } from 'react';
+import React, { useEffect } from 'react';
 import { Modal, Form, Input } from 'antd';
+import { useDispatch, useSelector } from 'react-redux';
 
 import type { SystemPrompt } from '../../../../types';
-import { WebviewContext } from '../../../WebviewContext';
+import type { AppDispatch, RootState } from '../../../redux';
+import { updateAndSaveSetting } from '../../../redux/slices/settingsSlice';
 
 interface SaveSystemPromptModalProps {
   open: boolean;
@@ -15,7 +17,6 @@ export const SaveSystemPromptModal: React.FC<SaveSystemPromptModalProps> = ({
   onClose,
   currentPromptContent,
 }) => {
-  const { callApi } = useContext(WebviewContext);
   const [form] = Form.useForm<{
     name: string;
     description: string;
@@ -23,19 +24,14 @@ export const SaveSystemPromptModal: React.FC<SaveSystemPromptModalProps> = ({
     tags: string[];
   }>();
 
-  const [partialSettings, setPartialSettings] = useState<{
-    systemPrompts: SystemPrompt[];
-  }>({
-    systemPrompts: [],
-  });
+  const dispatch = useDispatch<AppDispatch>();
+
+  const { settings, isLoading } = useSelector(
+    (state: RootState) => state.settings,
+  );
 
   useEffect(() => {
     if (open) {
-      callApi('getSettingByKey', 'systemPrompts').then(
-        (response: SystemPrompt[]) => {
-          setPartialSettings({ systemPrompts: response });
-        },
-      );
       form.setFieldsValue({
         name: '',
         description: '',
@@ -59,12 +55,13 @@ export const SaveSystemPromptModal: React.FC<SaveSystemPromptModalProps> = ({
           updatedAt: Date.now(),
         };
 
-        callApi('setSettingByKey', 'systemPrompts', [
-          ...partialSettings.systemPrompts,
-          newPrompt,
-        ]).then(() => {
-          onClose();
-        });
+        dispatch(
+          updateAndSaveSetting({
+            key: 'systemPrompts',
+            value: [...settings.systemPrompts, newPrompt],
+          }),
+        );
+        onClose();
       })
       .catch((error) => {
         console.error('Failed to save system prompt:', error);
@@ -79,6 +76,7 @@ export const SaveSystemPromptModal: React.FC<SaveSystemPromptModalProps> = ({
       onOk={handleSave}
       okText='Save'
       cancelText='Cancel'
+      loading={isLoading}
     >
       <Form form={form} layout='vertical'>
         <Form.Item

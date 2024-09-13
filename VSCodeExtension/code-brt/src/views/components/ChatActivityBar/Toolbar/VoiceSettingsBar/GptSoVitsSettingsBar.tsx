@@ -1,4 +1,4 @@
-import React, { useContext, useEffect, useState } from 'react';
+import React, { useContext, useState } from 'react';
 import {
   Button,
   Form,
@@ -23,41 +23,35 @@ import {
   verticalListSortingStrategy,
 } from '@dnd-kit/sortable';
 import { v4 as uuidV4 } from 'uuid';
+import { useDispatch, useSelector } from 'react-redux';
 
-import type {
-  ExtensionSettings,
-  GptSoVitsVoiceSetting,
-} from '../../../../../types';
+import type { GptSoVitsVoiceSetting } from '../../../../../types';
+import type { AppDispatch, RootState } from '../../../../redux';
 import { MODEL_SERVICE_CONSTANTS } from '../../../../../constants';
 import { WebviewContext } from '../../../../WebviewContext';
 import { GptSoVitsSettingsBarSortableItem } from './GptSoVitsSettingsBar/GptSoVitsSettingsBarSortableItem';
+import {
+  saveSettings,
+  updateLocalSetting,
+} from '../../../../redux/slices/settingsSlice';
 
 type GptSoVitsSettingsBarProps = {
   isOpen: boolean;
   onClose: () => void;
-  handleEditGptSoVitsSettingsSave: (
-    settings: Partial<ExtensionSettings>,
-  ) => void;
 };
 
 export const GptSoVitsSettingsBar: React.FC<GptSoVitsSettingsBarProps> = ({
   isOpen,
   onClose,
-  handleEditGptSoVitsSettingsSave,
 }) => {
   const { callApi } = useContext(WebviewContext);
 
-  const [partialSettings, setPartialSettings] = useState<{
-    gptSoVitsClientHost: string;
-    gptSoVitsAvailableReferenceVoices: GptSoVitsVoiceSetting[];
-    gptSoVitsSelectedReferenceVoice: string;
-  }>({
-    gptSoVitsClientHost: '',
-    gptSoVitsAvailableReferenceVoices: [],
-    gptSoVitsSelectedReferenceVoice: '',
-  });
+  const dispatch = useDispatch<AppDispatch>();
 
-  const [isLoading, setIsLoading] = useState(true);
+  const { settings, isLoading } = useSelector(
+    (state: RootState) => state.settings,
+  );
+
   const [activeKey, setActiveKey] = useState<string[]>([]);
 
   const sensors = useSensors(
@@ -68,69 +62,20 @@ export const GptSoVitsSettingsBar: React.FC<GptSoVitsSettingsBarProps> = ({
     }),
   );
 
-  useEffect(() => {
-    if (isOpen) {
-      setIsLoading(true);
-
-      const promises = Object.keys(partialSettings).map(async (key) => {
-        try {
-          const value = await callApi(
-            'getSettingByKey',
-            key as keyof typeof partialSettings,
-          );
-
-          if (key === 'gptSoVitsAvailableReferenceVoices') {
-            setPartialSettings((prev) => ({
-              ...prev,
-              gptSoVitsAvailableReferenceVoices:
-                value as GptSoVitsVoiceSetting[],
-            }));
-            return;
-          }
-
-          setPartialSettings((prev) => ({ ...prev, [key]: value }));
-        } catch (e) {
-          console.error(`Failed to fetch setting ${key}:`, e);
-        }
-      });
-
-      Promise.all(promises).finally(() => {
-        setIsLoading(false);
-      });
-    } else {
-      handleSave(partialSettings);
+  const onCloseAndSave = () => {
+    if (isLoading) {
+      onClose();
+      return;
     }
-  }, [isOpen]);
 
-  const handleSave = (settingsToSave: typeof partialSettings) => {
-    if (isLoading) return;
+    dispatch(saveSettings(settings));
 
-    setIsLoading(true);
-    handleEditGptSoVitsSettingsSave(settingsToSave);
+    callApi(
+      'switchGptSoVitsReferenceVoice',
+      settings.gptSoVitsSelectedReferenceVoice,
+    ).catch(console.error);
 
-    const promises = Object.entries(settingsToSave).map(([key, value]) => {
-      callApi(
-        'setSettingByKey',
-        key as keyof typeof partialSettings,
-        value,
-      ).catch((e) =>
-        callApi(
-          'alertMessage',
-          `Failed to save settings: ${e.message}`,
-          'error',
-        ),
-      );
-    });
-
-    Promise.all(promises).then(() => {
-      callApi('alertMessage', 'Settings saved successfully', 'info').catch(
-        console.error,
-      );
-      callApi(
-        'switchGptSoVitsReferenceVoice',
-        settingsToSave.gptSoVitsSelectedReferenceVoice,
-      ).catch(console.error);
-    });
+    onClose();
   };
 
   const handleVoiceChange = (
@@ -138,21 +83,28 @@ export const GptSoVitsSettingsBar: React.FC<GptSoVitsSettingsBarProps> = ({
     field: keyof GptSoVitsVoiceSetting,
     value: string,
   ) => {
-    const updatedVoices = partialSettings.gptSoVitsAvailableReferenceVoices.map(
+    const updatedVoices = settings.gptSoVitsAvailableReferenceVoices.map(
       (voice) => (voice.id === id ? { ...voice, [field]: value } : voice),
     );
-    setPartialSettings({
-      ...partialSettings,
-      gptSoVitsAvailableReferenceVoices: updatedVoices,
-      gptSoVitsSelectedReferenceVoice:
-        field === 'name' &&
-        partialSettings.gptSoVitsSelectedReferenceVoice ===
-          partialSettings.gptSoVitsAvailableReferenceVoices.find(
-            (voice) => voice.id === id,
-          )?.name
-          ? value
-          : partialSettings.gptSoVitsSelectedReferenceVoice,
-    });
+    dispatch(
+      updateLocalSetting({
+        key: 'gptSoVitsAvailableReferenceVoices',
+        value: updatedVoices,
+      }),
+    );
+    dispatch(
+      updateLocalSetting({
+        key: 'gptSoVitsSelectedReferenceVoice',
+        value:
+          field === 'name' &&
+          settings.gptSoVitsSelectedReferenceVoice ===
+            settings.gptSoVitsAvailableReferenceVoices.find(
+              (voice) => voice.id === id,
+            )?.name
+            ? value
+            : settings.gptSoVitsSelectedReferenceVoice,
+      }),
+    );
   };
 
   const handleAddVoice = () => {
@@ -164,46 +116,59 @@ export const GptSoVitsSettingsBar: React.FC<GptSoVitsSettingsBarProps> = ({
       promptLanguage: 'en' as GptSoVitsVoiceSetting['promptLanguage'],
     };
 
-    setPartialSettings((prev) => ({
-      ...prev,
-      gptSoVitsSelectedReferenceVoice:
-        prev.gptSoVitsSelectedReferenceVoice || newVoice.name,
-      gptSoVitsAvailableReferenceVoices: [
-        ...prev.gptSoVitsAvailableReferenceVoices,
-        newVoice,
-      ],
-    }));
+    dispatch(
+      updateLocalSetting({
+        key: 'gptSoVitsAvailableReferenceVoices',
+        value: [...settings.gptSoVitsAvailableReferenceVoices, newVoice],
+      }),
+    );
+    dispatch(
+      updateLocalSetting({
+        key: 'gptSoVitsSelectedReferenceVoice',
+        value: settings.gptSoVitsSelectedReferenceVoice || newVoice.name,
+      }),
+    );
   };
 
   const handleRemoveVoice = (id: string) => {
-    const updatedVoices =
-      partialSettings.gptSoVitsAvailableReferenceVoices.filter(
-        (voice) => voice.id !== id,
-      );
-    setPartialSettings({
-      ...partialSettings,
-      gptSoVitsAvailableReferenceVoices: updatedVoices,
-      gptSoVitsSelectedReferenceVoice:
-        partialSettings.gptSoVitsAvailableReferenceVoices.find(
-          (voice) => voice.id === id,
-        )?.name === partialSettings.gptSoVitsSelectedReferenceVoice
-          ? ''
-          : partialSettings.gptSoVitsSelectedReferenceVoice,
-    });
+    const updatedVoices = settings.gptSoVitsAvailableReferenceVoices.filter(
+      (voice) => voice.id !== id,
+    );
+    dispatch(
+      updateLocalSetting({
+        key: 'gptSoVitsAvailableReferenceVoices',
+        value: updatedVoices,
+      }),
+    );
+    dispatch(
+      updateLocalSetting({
+        key: 'gptSoVitsSelectedReferenceVoice',
+        value:
+          settings.gptSoVitsAvailableReferenceVoices.find(
+            (voice) => voice.id === id,
+          )?.name === settings.gptSoVitsSelectedReferenceVoice
+            ? ''
+            : settings.gptSoVitsSelectedReferenceVoice,
+      }),
+    );
   };
 
   const handleSelectedVoiceChange = (value: string) => {
-    setPartialSettings({
-      ...partialSettings,
-      gptSoVitsSelectedReferenceVoice: value,
-    });
+    dispatch(
+      updateLocalSetting({
+        key: 'gptSoVitsSelectedReferenceVoice',
+        value,
+      }),
+    );
   };
 
   const handleClientHostChange = (value: string) => {
-    setPartialSettings({
-      ...partialSettings,
-      gptSoVitsClientHost: value,
-    });
+    dispatch(
+      updateLocalSetting({
+        key: 'gptSoVitsClientHost',
+        value,
+      }),
+    );
   };
 
   const openLink = (link: string) => {
@@ -215,25 +180,25 @@ export const GptSoVitsSettingsBar: React.FC<GptSoVitsSettingsBarProps> = ({
 
     if (!over) return;
 
-    const activeIndex =
-      partialSettings.gptSoVitsAvailableReferenceVoices.findIndex(
-        (voice) => voice.id === active.id,
-      );
-    const overIndex =
-      partialSettings.gptSoVitsAvailableReferenceVoices.findIndex(
-        (voice) => voice.id === over.id,
-      );
+    const activeIndex = settings.gptSoVitsAvailableReferenceVoices.findIndex(
+      (voice) => voice.id === active.id,
+    );
+    const overIndex = settings.gptSoVitsAvailableReferenceVoices.findIndex(
+      (voice) => voice.id === over.id,
+    );
 
     if (activeIndex !== overIndex) {
       const updatedVoices = arrayMove(
-        partialSettings.gptSoVitsAvailableReferenceVoices,
+        settings.gptSoVitsAvailableReferenceVoices,
         activeIndex,
         overIndex,
       );
-      setPartialSettings({
-        ...partialSettings,
-        gptSoVitsAvailableReferenceVoices: updatedVoices,
-      });
+      dispatch(
+        updateLocalSetting({
+          key: 'gptSoVitsAvailableReferenceVoices',
+          value: updatedVoices,
+        }),
+      );
       setActiveKey([]);
     }
   };
@@ -243,7 +208,7 @@ export const GptSoVitsSettingsBar: React.FC<GptSoVitsSettingsBarProps> = ({
       title='GPT-SoVits Settings'
       placement='left'
       open={isOpen}
-      onClose={onClose}
+      onClose={onCloseAndSave}
       width={400}
       loading={isLoading}
     >
@@ -271,16 +236,16 @@ export const GptSoVitsSettingsBar: React.FC<GptSoVitsSettingsBarProps> = ({
           }
         >
           <Input.Password
-            value={partialSettings.gptSoVitsClientHost}
+            value={settings.gptSoVitsClientHost}
             onChange={(e) => handleClientHostChange(e.target.value)}
           />
         </Form.Item>
         <Form.Item label='Selected Reference Voice'>
           <Select
-            value={partialSettings.gptSoVitsSelectedReferenceVoice}
+            value={settings.gptSoVitsSelectedReferenceVoice}
             onChange={handleSelectedVoiceChange}
             placeholder='Select a reference voice'
-            options={partialSettings.gptSoVitsAvailableReferenceVoices.map(
+            options={settings.gptSoVitsAvailableReferenceVoices.map(
               (voice, index) => ({
                 key: `gpvSoVitsVoice-${index}`,
                 label: voice.name,
@@ -297,7 +262,7 @@ export const GptSoVitsSettingsBar: React.FC<GptSoVitsSettingsBarProps> = ({
               onDragEnd={handleDragEnd}
             >
               <SortableContext
-                items={partialSettings.gptSoVitsAvailableReferenceVoices.map(
+                items={settings.gptSoVitsAvailableReferenceVoices.map(
                   (voice) => {
                     return {
                       key: voice.id,
@@ -308,19 +273,17 @@ export const GptSoVitsSettingsBar: React.FC<GptSoVitsSettingsBarProps> = ({
                 )}
                 strategy={verticalListSortingStrategy}
               >
-                {partialSettings.gptSoVitsAvailableReferenceVoices.map(
-                  (voice) => (
-                    <GptSoVitsSettingsBarSortableItem
-                      key={voice.id}
-                      id={voice.id}
-                      voice={voice}
-                      onVoiceChange={handleVoiceChange}
-                      onRemoveVoice={handleRemoveVoice}
-                      activeKey={activeKey}
-                      setActiveKey={setActiveKey}
-                    />
-                  ),
-                )}
+                {settings.gptSoVitsAvailableReferenceVoices.map((voice) => (
+                  <GptSoVitsSettingsBarSortableItem
+                    key={voice.id}
+                    id={voice.id}
+                    voice={voice}
+                    onVoiceChange={handleVoiceChange}
+                    onRemoveVoice={handleRemoveVoice}
+                    activeKey={activeKey}
+                    setActiveKey={setActiveKey}
+                  />
+                ))}
               </SortableContext>
             </DndContext>
             <Button type='dashed' onClick={handleAddVoice} block>

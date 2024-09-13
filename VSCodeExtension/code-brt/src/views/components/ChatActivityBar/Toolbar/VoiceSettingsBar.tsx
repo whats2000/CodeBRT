@@ -1,4 +1,4 @@
-import React, { useContext, useEffect, useState } from 'react';
+import React, { useContext, useState } from 'react';
 import {
   Drawer,
   Form,
@@ -9,9 +9,9 @@ import {
   Tooltip,
   Space,
 } from 'antd';
+import { useDispatch, useSelector } from 'react-redux';
 
 import type {
-  ExtensionSettings,
   TextToVoiceServiceType,
   VoiceToTextServiceType,
 } from '../../../../types';
@@ -19,6 +19,8 @@ import { MODEL_SERVICE_CONSTANTS, PROJECT_LINK } from '../../../../constants';
 import { WebviewContext } from '../../../WebviewContext';
 import { GptSoVitsSettingsBar } from './VoiceSettingsBar/GptSoVitsSettingsBar';
 import { QuestionCircleFilled } from '@ant-design/icons';
+import type { AppDispatch, RootState } from '../../../redux';
+import { updateAndSaveSetting } from '../../../redux/slices/settingsSlice';
 
 interface VoiceSettingsBarProps {
   isOpen: boolean;
@@ -43,42 +45,14 @@ export const VoiceSettingsBar: React.FC<VoiceSettingsBarProps> = ({
     'openai',
     'visualStudioCodeBuiltIn',
   ];
-  const [partialSettings, setPartialSettings] = useState<
-    Partial<ExtensionSettings>
-  >({
-    selectedTextToVoiceService: 'not set',
-    selectedVoiceToTextService: 'not set',
-    gptSoVitsSelectedReferenceVoice: '',
-    gptSoVitsAvailableReferenceVoices: [],
-    openaiAvailableVoices: [],
-    openaiSelectedVoice: '',
-  });
+
+  const dispatch = useDispatch<AppDispatch>();
+
+  const { settings, isLoading } = useSelector(
+    (state: RootState) => state.settings,
+  );
+
   const [showMoreInfo, setShowMoreInfo] = useState(false);
-  const [isLoading, setIsLoading] = useState(true);
-
-  useEffect(() => {
-    if (isOpen) {
-      setIsLoading(true);
-
-      // Create an array of promises for the API calls
-      const promises = Object.keys(partialSettings).map(async (key) => {
-        try {
-          let value = await callApi(
-            'getSettingByKey',
-            key as keyof typeof partialSettings,
-          );
-          setPartialSettings((prev) => ({ ...prev, [key]: value }));
-        } catch (e) {
-          console.error(`Failed to fetch setting ${key}:`, e);
-        }
-      });
-
-      // Use Promise.all to wait for all API calls to complete
-      Promise.all(promises).then(() => {
-        setIsLoading(false);
-      });
-    }
-  }, [isOpen]);
 
   const handleServiceChange = (
     field:
@@ -86,28 +60,11 @@ export const VoiceSettingsBar: React.FC<VoiceSettingsBarProps> = ({
       | 'selectedVoiceToTextService'
       | 'gptSoVitsSelectedReferenceVoice'
       | 'openaiSelectedVoice',
-    value: (typeof partialSettings)[keyof typeof partialSettings],
+    value: (typeof settings)[keyof typeof settings],
   ) => {
     if (!value || isLoading) return;
 
-    const originalValue = partialSettings[field];
-
-    setPartialSettings({
-      ...partialSettings,
-      [field]: value,
-    });
-
-    callApi('setSettingByKey', field, value).catch((e) => {
-      callApi(
-        'alertMessage',
-        `Failed to save settings: ${e.message}`,
-        'error',
-      ).catch(console.error);
-      setPartialSettings({
-        ...partialSettings,
-        [field]: originalValue,
-      });
-    });
+    dispatch(updateAndSaveSetting({ key: field, value }));
 
     if (field !== 'gptSoVitsSelectedReferenceVoice') return;
 
@@ -124,15 +81,6 @@ export const VoiceSettingsBar: React.FC<VoiceSettingsBarProps> = ({
     callApi('openExternalLink', link).catch(console.error);
   };
 
-  const handleEditGptSoVitsSettingsSave = (
-    newSettings: Partial<ExtensionSettings>,
-  ) => {
-    setPartialSettings((prev) => ({
-      ...prev,
-      ...newSettings,
-    }));
-  };
-
   return (
     <>
       <Drawer
@@ -146,7 +94,7 @@ export const VoiceSettingsBar: React.FC<VoiceSettingsBarProps> = ({
         <Form layout='vertical'>
           <Form.Item label='Text To Voice Service'>
             <Select
-              value={partialSettings.selectedTextToVoiceService}
+              value={settings.selectedTextToVoiceService}
               onChange={(value) =>
                 handleServiceChange('selectedTextToVoiceService', value)
               }
@@ -164,7 +112,7 @@ export const VoiceSettingsBar: React.FC<VoiceSettingsBarProps> = ({
             label={
               <Space>
                 Voice To Text Service
-                {partialSettings.selectedVoiceToTextService !== 'not set' && (
+                {settings.selectedVoiceToTextService !== 'not set' && (
                   <Tooltip title='Click to show more information'>
                     <Typography.Link
                       type={'secondary'}
@@ -178,7 +126,7 @@ export const VoiceSettingsBar: React.FC<VoiceSettingsBarProps> = ({
             }
           >
             <Select
-              value={partialSettings.selectedVoiceToTextService}
+              value={settings.selectedVoiceToTextService}
               onChange={(value) =>
                 handleServiceChange('selectedVoiceToTextService', value)
               }
@@ -194,7 +142,7 @@ export const VoiceSettingsBar: React.FC<VoiceSettingsBarProps> = ({
           </Form.Item>
           {/* Additional Information */}
           {showMoreInfo &&
-            partialSettings.selectedVoiceToTextService ===
+            settings.selectedVoiceToTextService ===
               'visualStudioCodeBuiltIn' && (
               <Typography.Text type={'secondary'}>
                 {MODEL_SERVICE_CONSTANTS.visualStudioCodeBuiltIn.description}{' '}
@@ -216,7 +164,7 @@ export const VoiceSettingsBar: React.FC<VoiceSettingsBarProps> = ({
             )}
           {showMoreInfo &&
             ['groq', 'openai'].includes(
-              partialSettings.selectedVoiceToTextService ?? '',
+              settings.selectedVoiceToTextService ?? '',
             ) && (
               <Typography.Text type={'secondary'}>
                 Notice: This will require microphone access with{' '}
@@ -270,20 +218,18 @@ export const VoiceSettingsBar: React.FC<VoiceSettingsBarProps> = ({
             }
           >
             <Select
-              value={partialSettings.openaiSelectedVoice}
+              value={settings.openaiSelectedVoice}
               onChange={(value) =>
                 handleServiceChange('openaiSelectedVoice', value)
               }
               placeholder='Select a voice'
-              options={partialSettings.openaiAvailableVoices?.map(
-                (voice, index) => {
-                  return {
-                    key: `openaiVoice-${index}`,
-                    label: voice.charAt(0).toUpperCase() + voice.slice(1),
-                    value: voice,
-                  };
-                },
-              )}
+              options={settings.openaiAvailableVoices?.map((voice, index) => {
+                return {
+                  key: `openaiVoice-${index}`,
+                  label: voice.charAt(0).toUpperCase() + voice.slice(1),
+                  value: voice,
+                };
+              })}
             />
           </Form.Item>
           <Divider />
@@ -310,12 +256,12 @@ export const VoiceSettingsBar: React.FC<VoiceSettingsBarProps> = ({
             }
           >
             <Select
-              value={partialSettings.gptSoVitsSelectedReferenceVoice}
+              value={settings.gptSoVitsSelectedReferenceVoice}
               onChange={(value) =>
                 handleServiceChange('gptSoVitsSelectedReferenceVoice', value)
               }
               placeholder='Select a reference voice'
-              options={partialSettings.gptSoVitsAvailableReferenceVoices?.map(
+              options={settings.gptSoVitsAvailableReferenceVoices?.map(
                 (voice, index) => {
                   return {
                     key: `gptSoVitsVoice-${index}`,
@@ -348,7 +294,6 @@ export const VoiceSettingsBar: React.FC<VoiceSettingsBarProps> = ({
       <GptSoVitsSettingsBar
         isOpen={isGptSoVitsSettingsOpen}
         onClose={() => setIsGptSoVitsSettingsOpen(false)}
-        handleEditGptSoVitsSettingsSave={handleEditGptSoVitsSettingsSave}
       />
     </>
   );

@@ -4,6 +4,7 @@ import type { RootState } from '../store';
 import type { ConversationHistoryIndexList } from '../../../types';
 import type { CallAPI } from '../../WebviewContext';
 import { setConversationHistory } from './conversationSlice';
+import { updateAndSaveSetting } from './settingsSlice';
 
 type ConversationIndexState = {
   historyIndexes: ConversationHistoryIndexList;
@@ -86,6 +87,13 @@ export const deleteConversationIndex = createAsyncThunk<
         ),
       );
       dispatch(updateAllTags());
+
+      dispatch(
+        updateAndSaveSetting({
+          key: 'lastUsedHistoryID',
+          value: '',
+        }),
+      );
     } catch (error) {
       callApi(
         'alertMessage',

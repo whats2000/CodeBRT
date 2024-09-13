@@ -79,6 +79,8 @@ export const InputContainer = React.memo<InputContainerProps>(
       (state: RootState) => state.conversation,
     );
 
+    const { settings } = useSelector((state: RootState) => state.settings);
+
     useClipboardFiles((files) => dispatch(handleFilesUpload(files)));
 
     const { innerWidth } = useWindowSize();
@@ -112,17 +114,9 @@ export const InputContainer = React.memo<InputContainerProps>(
       }
 
       if (event.key === 'Enter' && !event.shiftKey) {
-        const doubleEnterSendMessages = await callApi(
-          'getSettingByKey',
-          'doubleEnterSendMessages',
-        );
+        const doubleEnterSendMessages = settings.doubleEnterSendMessages;
 
         if (!doubleEnterSendMessages) {
-          await callApi(
-            'alertMessage',
-            'Double press Enter is disabled. You can enable it in the settings.',
-            'info',
-          );
           await sendMessage();
           return;
         }

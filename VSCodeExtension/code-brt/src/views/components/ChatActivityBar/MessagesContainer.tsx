@@ -5,7 +5,6 @@ import { Spin } from 'antd';
 import { useDispatch, useSelector } from 'react-redux';
 import { VirtuosoHandle } from 'react-virtuoso';
 import { Virtuoso } from 'react-virtuoso';
-import * as hljs from 'react-syntax-highlighter/dist/cjs/styles/hljs';
 
 import type { ConversationEntry } from '../../../types';
 import type { RootState } from '../../redux';
@@ -73,9 +72,6 @@ export const MessagesContainer = React.memo<MessagesContainerProps>(
     const [isAudioPlaying, setIsAudioPlaying] = useState(false);
     const [isStopAudio, setIsStopAudio] = useState(false);
     const [copied, setCopied] = useState<Record<string, boolean>>({});
-    const [partialSettings, setPartialSettings] = useState<{
-      hljsTheme: keyof typeof hljs;
-    }>({ hljsTheme: 'darcula' });
     const [hoveredBubble, setHoveredBubble] = useState<{
       current: HTMLDivElement | null;
       entry: ConversationEntry | null;
@@ -98,7 +94,6 @@ export const MessagesContainer = React.memo<MessagesContainerProps>(
     const { activeModelService, isLoading } = useSelector(
       (state: RootState) => state.modelService,
     );
-
     const conversationHistoryEntries = React.useMemo(() => {
       if (!conversationHistory.entries) return [];
       return traverseHistory(
@@ -121,20 +116,6 @@ export const MessagesContainer = React.memo<MessagesContainerProps>(
       setShowFloatButtons(false);
       setFloatButtonsXPosition(innerWidth - 84);
     }, [innerWidth]);
-
-    useEffect(() => {
-      Object.keys(partialSettings).map(async (key) => {
-        try {
-          let value = await callApi(
-            'getSettingByKey',
-            key as keyof typeof partialSettings,
-          );
-          setPartialSettings((prev) => ({ ...prev, [key]: value }));
-        } catch (e) {
-          console.error(`Failed to fetch setting ${key}:`, e);
-        }
-      });
-    }, []);
 
     useEffect(() => {
       setHoveredBubble({
@@ -249,17 +230,6 @@ export const MessagesContainer = React.memo<MessagesContainerProps>(
       setEditingEntryId(null);
     };
 
-    const setHljsTheme = (theme: keyof typeof hljs) => {
-      setPartialSettings((prev) => ({ ...prev, hljsTheme: theme }));
-      callApi('setSettingByKey', 'hljsTheme', theme).catch((error) =>
-        callApi(
-          'alertMessage',
-          `Failed to set hljs theme: ${error}`,
-          'error',
-        ).catch(console.error),
-      );
-    };
-
     const handleConvertTextToVoice = (text: string) => {
       if (isAudioPlaying) {
         setIsStopAudio(true);
@@ -317,8 +287,6 @@ export const MessagesContainer = React.memo<MessagesContainerProps>(
           isProcessing={isProcessing}
           setHoveredBubble={setHoveredBubble}
           setShowFloatButtons={setShowFloatButtons}
-          partialSettings={partialSettings}
-          setHljsTheme={setHljsTheme}
           copied={copied}
           handleCopy={handleCopy}
           editingEntryId={editingEntryId}

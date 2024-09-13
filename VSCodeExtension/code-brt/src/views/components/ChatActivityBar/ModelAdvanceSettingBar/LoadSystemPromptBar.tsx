@@ -1,4 +1,4 @@
-import React, { useState, useContext, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import type { GlobalToken } from 'antd';
 import {
   List,
@@ -20,15 +20,17 @@ import {
   FilterOutlined,
 } from '@ant-design/icons';
 import styled from 'styled-components';
+import { useDispatch, useSelector } from 'react-redux';
 
 import type {
   ConversationModelAdvanceSettings,
   SystemPrompt,
   Tag as TagType,
 } from '../../../../types';
-import { WebviewContext } from '../../../WebviewContext';
+import type { AppDispatch, RootState } from 'src/views/redux';
 import { PromptTags } from './LoadSystemPromptModal/PromptTags';
 import { EditPromptForm } from './LoadSystemPromptModal/EditPromptForm';
+import { updateAndSaveSetting } from '../../../redux/slices/settingsSlice';
 
 const StyledDrawer = styled(Drawer)`
   & .ant-drawer-header {
@@ -67,7 +69,6 @@ export const LoadSystemPromptBar: React.FC<LoadSystemPromptBarProps> = ({
   onClose,
   setNewAdvanceSettings,
 }) => {
-  const { callApi } = useContext(WebviewContext);
   const { token } = theme.useToken();
 
   const [showFilter, setShowFilter] = useState(false);
@@ -78,37 +79,34 @@ export const LoadSystemPromptBar: React.FC<LoadSystemPromptBarProps> = ({
   const [filteredPrompts, setFilteredPrompts] = useState<SystemPrompt[]>([]);
   const [isEditPromptFormOpen, setIsEditPromptFormOpen] = useState(false);
   const [editPrompt, setEditPrompt] = useState<SystemPrompt | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
+
+  const dispatch = useDispatch<AppDispatch>();
+  const { settings, isLoading } = useSelector(
+    (state: RootState) => state.settings,
+  );
 
   // Centralized tag colors mapping
   const tagColors = useRef<{ [key: string]: string }>({});
 
   useEffect(() => {
     if (open) {
-      setIsLoading(true);
-      callApi('getSettingByKey', 'systemPrompts')
-        .then((response) => {
-          const promptsWithTags = response.map((prompt: SystemPrompt) => ({
-            ...prompt,
-            tags: Array.isArray(prompt.tags) ? prompt.tags : [],
-          }));
+      const promptsWithTags = settings.systemPrompts.map(
+        (prompt: SystemPrompt) => ({
+          ...prompt,
+          tags: Array.isArray(prompt.tags) ? prompt.tags : [],
+        }),
+      );
 
-          // Initialize tagColors ref with existing tags
-          promptsWithTags.forEach((prompt: SystemPrompt) => {
-            prompt.tags.forEach((tag) => {
-              if (!tagColors.current[tag.name]) {
-                tagColors.current[tag.name] = tag.color;
-              }
-            });
-          });
-
-          setSystemPrompts(promptsWithTags);
-          setIsLoading(false);
-        })
-        .catch((error) => {
-          console.error('Failed to get system prompts:', error);
-          setIsLoading(false);
+      // Initialize tagColors ref with existing tags
+      promptsWithTags.forEach((prompt: SystemPrompt) => {
+        prompt.tags.forEach((tag) => {
+          if (!tagColors.current[tag.name]) {
+            tagColors.current[tag.name] = tag.color;
+          }
         });
+      });
+
+      setSystemPrompts(promptsWithTags);
     }
   }, [open]);
 
@@ -150,10 +148,8 @@ export const LoadSystemPromptBar: React.FC<LoadSystemPromptBarProps> = ({
     const updatedPrompts = systemPrompts.filter((prompt) => prompt.id !== id);
     setSystemPrompts(updatedPrompts);
 
-    callApi('setSettingByKey', 'systemPrompts', updatedPrompts).catch(
-      (error) => {
-        console.error('Failed to delete system prompt:', error);
-      },
+    dispatch(
+      updateAndSaveSetting({ key: 'systemPrompts', value: updatedPrompts }),
     );
   };
 
@@ -163,11 +159,8 @@ export const LoadSystemPromptBar: React.FC<LoadSystemPromptBarProps> = ({
       return;
     }
 
-    // Save the updated system prompts when the drawer is closed
-    callApi('setSettingByKey', 'systemPrompts', systemPrompts).catch(
-      (error) => {
-        console.error('Failed to update system prompts:', error);
-      },
+    dispatch(
+      updateAndSaveSetting({ key: 'systemPrompts', value: systemPrompts }),
     );
 
     onClose();

@@ -2,11 +2,12 @@ import React from 'react';
 import type { GlobalToken } from 'antd';
 import { theme } from 'antd';
 import styled from 'styled-components';
-import { useSelector } from 'react-redux';
+import { useDispatch, useSelector } from 'react-redux';
 import * as hljs from 'react-syntax-highlighter/dist/cjs/styles/hljs';
 
 import type { ConversationEntry } from '../../../../types';
-import type { RootState } from '../../../redux';
+import type { AppDispatch, RootState } from '../../../redux';
+import { updateAndSaveSetting } from '../../../redux/slices/settingsSlice';
 import { TopToolBar } from './TopToolBar';
 import { TextEditContainer } from './TextEditContainer';
 import { TextContainer } from './TextContainer';
@@ -45,8 +46,6 @@ type MessageItemProps = {
     }>
   >;
   setShowFloatButtons: React.Dispatch<React.SetStateAction<boolean>>;
-  partialSettings: { hljsTheme: keyof typeof hljs };
-  setHljsTheme: (theme: keyof typeof hljs) => void;
   copied: { [key: string]: boolean };
   handleCopy: (text: string, entryId: string) => void;
   editingEntryId: string | null;
@@ -73,8 +72,6 @@ export const MessageItem = React.memo<MessageItemProps>(
     isProcessing,
     setHoveredBubble,
     setShowFloatButtons,
-    partialSettings,
-    setHljsTheme,
     copied,
     handleCopy,
     editingEntryId,
@@ -92,12 +89,20 @@ export const MessageItem = React.memo<MessageItemProps>(
     const token = theme.useToken();
     const entry = conversationHistoryEntries[index];
 
+    const dispatch = useDispatch<AppDispatch>();
     const { activeModelService } = useSelector(
       (rootState: RootState) => rootState.modelService,
     );
     const conversationHistory = useSelector(
       (rootState: RootState) => rootState.conversation,
     );
+    const { settings } = useSelector(
+      (rootState: RootState) => rootState.settings,
+    );
+
+    const setHljsTheme = (theme: keyof typeof hljs) => {
+      dispatch(updateAndSaveSetting({ key: 'hljsTheme', value: theme }));
+    };
 
     const handleMouseEnter = (
       e: React.MouseEvent<HTMLDivElement>,
@@ -162,7 +167,7 @@ export const MessageItem = React.memo<MessageItemProps>(
                 entry={entry}
                 conversationHistoryCurrent={conversationHistory.current}
                 isProcessing={isProcessing}
-                hljsTheme={partialSettings.hljsTheme}
+                hljsTheme={settings.hljsTheme}
                 setHljsTheme={setHljsTheme}
                 toolStatus={toolStatus}
               />
