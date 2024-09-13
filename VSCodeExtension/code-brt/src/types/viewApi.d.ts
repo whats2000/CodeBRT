@@ -58,14 +58,11 @@ export type ViewApi = {
    * Set the target setting of the extension.
    * @param key - The key of the setting to set.
    * @param value - The new value of the setting.
-   * @param needReload - Whether to reload the extension after setting the value.
-   * Default is false.
    * @returns A promise that resolves when the setting is updated.
    */
-  setSetting: (
+  setSettingByKey: (
     key: keyof ExtensionSettings,
     value: ExtensionSettings[typeof key],
-    needReload?: boolean,
   ) => Promise<void>;
 
   /**
@@ -73,7 +70,15 @@ export type ViewApi = {
    * @param key - The key of the setting to get.
    * @returns The value of the setting.
    */
-  getSetting: (key: keyof ExtensionSettings) => ExtensionSettings[typeof key];
+  getSettingByKey: (
+    key: keyof ExtensionSettings,
+  ) => ExtensionSettings[typeof key];
+
+  /**
+   * Get all settings of the extension.
+   * @returns The settings of the extension.
+   */
+  getAllSettings: () => Promise<ExtensionSettings>;
 
   /**
    * Show an alert message.
@@ -81,6 +86,11 @@ export type ViewApi = {
    * @param type - The type of the message in ["info", "warning", "error"]
    */
   alertMessage: (msg: string, type: 'info' | 'warning' | 'error') => void;
+
+  /**
+   * Tell use the action need to reload the extension.
+   */
+  alertReload: (msg?: string) => void;
 
   /**
    * Get the response for a query.

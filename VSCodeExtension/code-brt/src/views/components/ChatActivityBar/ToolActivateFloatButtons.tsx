@@ -32,7 +32,7 @@ export const ToolActivateFloatButtons: React.FC<
 
   useEffect(() => {
     setIsLoading(true);
-    callApi('getSetting', 'enableTools').then((value) => {
+    callApi('getSettingByKey', 'enableTools').then((value) => {
       setPartialSettings({ enableTools: value });
       setIsLoading(false);
     });
@@ -40,7 +40,7 @@ export const ToolActivateFloatButtons: React.FC<
 
   const handleSettingChange = (key: ToolServiceType) => {
     setIsLoading(true);
-    callApi('setSetting', 'enableTools', {
+    callApi('setSettingByKey', 'enableTools', {
       ...partialSettings.enableTools,
       [key]: { active: !partialSettings.enableTools[key].active },
     }).then(() => {

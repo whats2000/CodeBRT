@@ -23,18 +23,18 @@ export const useThemeConfig = (): [
     const fetchSettings = async () => {
       try {
         const color = (await callApi(
-          'getSetting',
+          'getSettingByKey',
           'themePrimaryColor',
         )) as string;
         setPrimaryColor(color || '#f0f0f0');
 
-        const algo = (await callApi('getSetting', 'themeAlgorithm')) as
+        const algo = (await callApi('getSettingByKey', 'themeAlgorithm')) as
           | 'defaultAlgorithm'
           | 'darkAlgorithm';
         setAlgorithm(algo || 'darkAlgorithm');
 
         const radius = (await callApi(
-          'getSetting',
+          'getSettingByKey',
           'themeBorderRadius',
         )) as number;
         setBorderRadius(radius !== undefined ? radius : 4);

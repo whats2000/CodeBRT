@@ -113,7 +113,7 @@ export const InputContainer = React.memo<InputContainerProps>(
 
       if (event.key === 'Enter' && !event.shiftKey) {
         const doubleEnterSendMessages = await callApi(
-          'getSetting',
+          'getSettingByKey',
           'doubleEnterSendMessages',
         );
 

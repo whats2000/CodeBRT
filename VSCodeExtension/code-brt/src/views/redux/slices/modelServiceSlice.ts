@@ -44,7 +44,11 @@ export const loadModelService = createAsyncThunk<
       const selectedModel = await callApi('getCurrentModel', modelServiceType);
       dispatch(setSelectedModel(selectedModel));
 
-      await callApi('setSetting', 'lastUsedModelService', modelServiceType);
+      await callApi(
+        'setSettingByKey',
+        'lastUsedModelService',
+        modelServiceType,
+      );
 
       dispatch(finishLoading());
     } catch (error) {

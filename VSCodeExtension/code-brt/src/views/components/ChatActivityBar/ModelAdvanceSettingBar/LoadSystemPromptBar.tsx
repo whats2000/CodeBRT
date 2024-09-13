@@ -86,7 +86,7 @@ export const LoadSystemPromptBar: React.FC<LoadSystemPromptBarProps> = ({
   useEffect(() => {
     if (open) {
       setIsLoading(true);
-      callApi('getSetting', 'systemPrompts')
+      callApi('getSettingByKey', 'systemPrompts')
         .then((response) => {
           const promptsWithTags = response.map((prompt: SystemPrompt) => ({
             ...prompt,
@@ -150,9 +150,11 @@ export const LoadSystemPromptBar: React.FC<LoadSystemPromptBarProps> = ({
     const updatedPrompts = systemPrompts.filter((prompt) => prompt.id !== id);
     setSystemPrompts(updatedPrompts);
 
-    callApi('setSetting', 'systemPrompts', updatedPrompts).catch((error) => {
-      console.error('Failed to delete system prompt:', error);
-    });
+    callApi('setSettingByKey', 'systemPrompts', updatedPrompts).catch(
+      (error) => {
+        console.error('Failed to delete system prompt:', error);
+      },
+    );
   };
 
   const handleDrawerClose = () => {
@@ -162,9 +164,11 @@ export const LoadSystemPromptBar: React.FC<LoadSystemPromptBarProps> = ({
     }
 
     // Save the updated system prompts when the drawer is closed
-    callApi('setSetting', 'systemPrompts', systemPrompts).catch((error) => {
-      console.error('Failed to update system prompts:', error);
-    });
+    callApi('setSettingByKey', 'systemPrompts', systemPrompts).catch(
+      (error) => {
+        console.error('Failed to update system prompts:', error);
+      },
+    );
 
     onClose();
   };

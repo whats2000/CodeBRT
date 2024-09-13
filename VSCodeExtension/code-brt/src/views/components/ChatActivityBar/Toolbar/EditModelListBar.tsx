@@ -34,7 +34,7 @@ export const EditModelListBar: React.FC<EditModelListBarProps> = ({
 
     if (isOpen) {
       if (activeModelService === 'custom') {
-        callApi('getSetting', 'customModels')
+        callApi('getSettingByKey', 'customModels')
           .then((models) => {
             setCustomModels(models as CustomModelSettings[]);
             setIsLoading(false);

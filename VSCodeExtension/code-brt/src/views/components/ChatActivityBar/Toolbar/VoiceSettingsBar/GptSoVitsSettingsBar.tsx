@@ -75,7 +75,7 @@ export const GptSoVitsSettingsBar: React.FC<GptSoVitsSettingsBarProps> = ({
       const promises = Object.keys(partialSettings).map(async (key) => {
         try {
           const value = await callApi(
-            'getSetting',
+            'getSettingByKey',
             key as keyof typeof partialSettings,
           );
 
@@ -109,13 +109,16 @@ export const GptSoVitsSettingsBar: React.FC<GptSoVitsSettingsBarProps> = ({
     handleEditGptSoVitsSettingsSave(settingsToSave);
 
     const promises = Object.entries(settingsToSave).map(([key, value]) => {
-      callApi('setSetting', key as keyof typeof partialSettings, value).catch(
-        (e) =>
-          callApi(
-            'alertMessage',
-            `Failed to save settings: ${e.message}`,
-            'error',
-          ),
+      callApi(
+        'setSettingByKey',
+        key as keyof typeof partialSettings,
+        value,
+      ).catch((e) =>
+        callApi(
+          'alertMessage',
+          `Failed to save settings: ${e.message}`,
+          'error',
+        ),
       );
     });
 

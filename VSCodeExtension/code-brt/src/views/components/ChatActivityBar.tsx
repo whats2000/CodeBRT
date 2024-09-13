@@ -29,6 +29,7 @@ import {
   loadModelService,
   startLoading,
 } from '../redux/slices/modelServiceSlice';
+import { fetchSettings } from '../redux/slices/settingsSlice';
 
 const Container = styled(Content)`
   display: flex;
@@ -70,6 +71,9 @@ export const ChatActivityBar = () => {
   const tempIdRef = useRef<string | null>(null);
 
   useEffect(() => {
+    // Load the settings
+    dispatch(fetchSettings());
+
     // Load the lasted used conversation history
     dispatch(initLoadHistory());
 
@@ -133,7 +137,7 @@ export const ChatActivityBar = () => {
 
       try {
         const lastUsedModelService = await callApi(
-          'getSetting',
+          'getSettingByKey',
           'lastUsedModelService',
         );
         if (lastUsedModelService) {

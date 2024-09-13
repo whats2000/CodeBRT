@@ -50,7 +50,7 @@ export const initLoadHistory = createAsyncThunk<
 
     try {
       const lastUsedHistoryID = await callApi(
-        'getSetting',
+        'getSettingByKey',
         'lastUsedHistoryID',
       );
       const history = await callApi('switchHistory', lastUsedHistoryID);
@@ -101,7 +101,7 @@ export const switchHistory = createAsyncThunk<
       dispatch(setConversationHistory(newHistory));
 
       // Save the last used history ID
-      await callApi('setSetting', 'lastUsedHistoryID', historyID);
+      await callApi('setSettingByKey', 'lastUsedHistoryID', historyID);
 
       dispatch(finishLoading());
     } catch (error) {

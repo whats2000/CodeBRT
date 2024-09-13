@@ -31,7 +31,7 @@ export const SaveSystemPromptModal: React.FC<SaveSystemPromptModalProps> = ({
 
   useEffect(() => {
     if (open) {
-      callApi('getSetting', 'systemPrompts').then(
+      callApi('getSettingByKey', 'systemPrompts').then(
         (response: SystemPrompt[]) => {
           setPartialSettings({ systemPrompts: response });
         },
@@ -59,7 +59,7 @@ export const SaveSystemPromptModal: React.FC<SaveSystemPromptModalProps> = ({
           updatedAt: Date.now(),
         };
 
-        callApi('setSetting', 'systemPrompts', [
+        callApi('setSettingByKey', 'systemPrompts', [
           ...partialSettings.systemPrompts,
           newPrompt,
         ]).then(() => {

@@ -126,7 +126,7 @@ export const MessagesContainer = React.memo<MessagesContainerProps>(
       Object.keys(partialSettings).map(async (key) => {
         try {
           let value = await callApi(
-            'getSetting',
+            'getSettingByKey',
             key as keyof typeof partialSettings,
           );
           setPartialSettings((prev) => ({ ...prev, [key]: value }));
@@ -251,7 +251,7 @@ export const MessagesContainer = React.memo<MessagesContainerProps>(
 
     const setHljsTheme = (theme: keyof typeof hljs) => {
       setPartialSettings((prev) => ({ ...prev, hljsTheme: theme }));
-      callApi('setSetting', 'hljsTheme', theme).catch((error) =>
+      callApi('setSettingByKey', 'hljsTheme', theme).catch((error) =>
         callApi(
           'alertMessage',
           `Failed to set hljs theme: ${error}`,

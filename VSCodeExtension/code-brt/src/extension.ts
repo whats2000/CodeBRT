@@ -117,24 +117,14 @@ export const activate = async (ctx: vscode.ExtensionContext) => {
 
       return await fs.readFile(uris[0].fsPath, 'utf-8');
     },
-    setSetting: async (key, value, needReload = false) => {
+    setSettingByKey: async (key, value) => {
       await settingsManager.set(key, value);
-
-      if (needReload) {
-        vscode.window
-          .showInformationMessage(
-            'The setting will take effect after the extension is reloaded',
-            'Reload',
-          )
-          .then((selection) => {
-            if (selection === 'Reload') {
-              vscode.commands.executeCommand('workbench.action.reloadWindow');
-            }
-          });
-      }
     },
-    getSetting: (key) => {
+    getSettingByKey: (key) => {
       return settingsManager.get(key);
+    },
+    getAllSettings: async () => {
+      return await settingsManager.getAllSettings();
     },
     alertMessage: (msg, type) => {
       switch (type) {
@@ -150,6 +140,19 @@ export const activate = async (ctx: vscode.ExtensionContext) => {
         default:
           vscode.window.showInformationMessage(msg);
       }
+    },
+    alertReload: (message) => {
+      vscode.window
+        .showInformationMessage(
+          message ??
+            'The setting will take effect after the extension is reloaded',
+          'Reload',
+        )
+        .then((selection) => {
+          if (selection === 'Reload') {
+            vscode.commands.executeCommand('workbench.action.reloadWindow');
+          }
+        });
     },
     getLanguageModelResponse: async (
       modelServiceType,

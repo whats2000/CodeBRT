@@ -64,7 +64,7 @@ export const VoiceSettingsBar: React.FC<VoiceSettingsBarProps> = ({
       const promises = Object.keys(partialSettings).map(async (key) => {
         try {
           let value = await callApi(
-            'getSetting',
+            'getSettingByKey',
             key as keyof typeof partialSettings,
           );
           setPartialSettings((prev) => ({ ...prev, [key]: value }));
@@ -97,7 +97,7 @@ export const VoiceSettingsBar: React.FC<VoiceSettingsBarProps> = ({
       [field]: value,
     });
 
-    callApi('setSetting', field, value).catch((e) => {
+    callApi('setSettingByKey', field, value).catch((e) => {
       callApi(
         'alertMessage',
         `Failed to save settings: ${e.message}`,
