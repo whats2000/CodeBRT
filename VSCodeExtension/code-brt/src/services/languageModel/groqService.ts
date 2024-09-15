@@ -231,6 +231,7 @@ export class GroqService extends AbstractOpenaiLikeService {
       return 'Failed to connect to the language model service.';
     } finally {
       this.stopStreamFlag = false;
+      updateStatus && updateStatus('');
     }
   }
 

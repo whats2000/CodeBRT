@@ -459,6 +459,8 @@ export class AnthropicService extends AbstractLanguageModelService {
         });
 
       return 'Failed to connect to the language model service';
+    } finally {
+      updateStatus && updateStatus('');
     }
   }
 

@@ -361,6 +361,7 @@ export class CohereService extends AbstractLanguageModelService {
       return 'Failed to connect to the language model service.';
     } finally {
       this.stopStreamFlag = false;
+      updateStatus && updateStatus('');
     }
   }
 

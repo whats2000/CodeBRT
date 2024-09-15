@@ -512,6 +512,7 @@ export class OllamaService extends AbstractLanguageModelService {
       );
     } finally {
       this.stopStreamFlag = false;
+      updateStatus && updateStatus('');
     }
   }
 
