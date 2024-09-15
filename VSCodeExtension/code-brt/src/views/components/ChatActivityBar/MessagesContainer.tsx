@@ -12,7 +12,6 @@ import { updateEntryMessage } from '../../redux/slices/conversationSlice';
 import { WebviewContext } from '../../WebviewContext';
 import { useWindowSize } from '../../hooks';
 import { traverseHistory } from '../../utils';
-import { MessageFloatButton } from './MessagesContainer/MessageFloatButton';
 import { MessageItem } from './MessagesContainer/MessageItem';
 
 const fadeInAnimation = keyframes`
@@ -68,7 +67,6 @@ export const MessagesContainer = React.memo<MessagesContainerProps>(
     const token = theme.useToken().token;
 
     const [editingEntryId, setEditingEntryId] = useState<string | null>(null);
-    const [editedMessage, setEditedMessage] = useState('');
     const [isAudioPlaying, setIsAudioPlaying] = useState(false);
     const [isStopAudio, setIsStopAudio] = useState(false);
     const [copied, setCopied] = useState<Record<string, boolean>>({});
@@ -196,9 +194,8 @@ export const MessagesContainer = React.memo<MessagesContainerProps>(
       setToolStatus(status);
     };
 
-    const handleEdit = (entryId: string, message: string) => {
+    const handleEdit = (entryId: string) => {
       setEditingEntryId(entryId);
-      setEditedMessage(message);
       setTimeout(() => {
         const input: HTMLTextAreaElement | null = document.querySelector(
           `#edit-input-${entryId}`,
@@ -223,10 +220,6 @@ export const MessagesContainer = React.memo<MessagesContainerProps>(
           })
           .catch((err) => console.error('Failed to save edited message:', err));
       }
-      setEditingEntryId(null);
-    };
-
-    const handleCancelEdit = () => {
       setEditingEntryId(null);
     };
 
@@ -268,7 +261,7 @@ export const MessagesContainer = React.memo<MessagesContainerProps>(
         .catch((err) => console.error('Failed to copy text: ', err));
     };
 
-    // When click redo the AI message mean the user want to re-generate the AI response
+    // When click redo the AI message mean the user want to re-generate the AI response,
     // We simply remove the AI message and re-generate it by editing exactly and save the same user message
     const handleRedo = (entryId: string) => {
       const previousMessageId = conversationHistory.entries[entryId].parent;
@@ -285,14 +278,13 @@ export const MessagesContainer = React.memo<MessagesContainerProps>(
           index={index}
           conversationHistoryEntries={conversationHistoryEntries}
           isProcessing={isProcessing}
+          hoveredBubble={hoveredBubble}
           setHoveredBubble={setHoveredBubble}
           setShowFloatButtons={setShowFloatButtons}
           copied={copied}
           handleCopy={handleCopy}
           editingEntryId={editingEntryId}
           setEditingEntryId={setEditingEntryId}
-          editedMessage={editedMessage}
-          setEditedMessage={setEditedMessage}
           toolStatus={toolStatus}
           handleEditUserMessageSave={handleEditUserMessageSave}
           handleEdit={handleEdit}
@@ -301,6 +293,8 @@ export const MessagesContainer = React.memo<MessagesContainerProps>(
           isStopAudio={isStopAudio}
           handleConvertTextToVoice={handleConvertTextToVoice}
           handleRedo={handleRedo}
+          floatButtonsXPosition={floatButtonsXPosition}
+          showFloatButtons={showFloatButtons}
         />
       );
     };
@@ -333,26 +327,6 @@ export const MessagesContainer = React.memo<MessagesContainerProps>(
             atBottomStateChange={handleAtBottomStateChange}
           />
         </StyledMessagesContainer>
-        {hoveredBubble && showFloatButtons && (
-          <MessageFloatButton
-            hoveredBubble={hoveredBubble}
-            floatButtonsPosition={{
-              xRight: floatButtonsXPosition,
-              yTop: innerWidth < 550 ? 115 : 75,
-            }}
-            isAudioPlaying={isAudioPlaying}
-            isStopAudio={isStopAudio}
-            editingEntryId={editingEntryId}
-            handleSaveEdit={handleSaveEdit}
-            handleCancelEdit={handleCancelEdit}
-            editingMessage={editedMessage}
-            handleEdit={handleEdit}
-            handleConvertTextToVoice={handleConvertTextToVoice}
-            copied={copied}
-            handleCopy={handleCopy}
-            handleRedo={handleRedo}
-          />
-        )}
       </>
     );
   },

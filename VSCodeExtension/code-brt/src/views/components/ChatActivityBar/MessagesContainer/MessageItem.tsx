@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import type { GlobalToken } from 'antd';
 import { theme } from 'antd';
 import styled from 'styled-components';
@@ -12,6 +12,7 @@ import { TopToolBar } from './TopToolBar';
 import { TextEditContainer } from './TextEditContainer';
 import { TextContainer } from './TextContainer';
 import { ImageContainer } from './ImageContainer';
+import { MessageFloatButton } from './MessageFloatButton';
 
 const MessageBubbleWrapper = styled.div<{
   $paddingBottom: boolean;
@@ -39,6 +40,10 @@ type MessageItemProps = {
   index: number;
   conversationHistoryEntries: ConversationEntry[];
   isProcessing: boolean;
+  hoveredBubble: {
+    current: HTMLDivElement | null;
+    entry: ConversationEntry | null;
+  };
   setHoveredBubble: React.Dispatch<
     React.SetStateAction<{
       current: HTMLDivElement | null;
@@ -50,19 +55,19 @@ type MessageItemProps = {
   handleCopy: (text: string, entryId: string) => void;
   editingEntryId: string | null;
   setEditingEntryId: React.Dispatch<React.SetStateAction<string | null>>;
-  editedMessage: string;
-  setEditedMessage: React.Dispatch<React.SetStateAction<string>>;
   toolStatus: string;
   handleEditUserMessageSave: (
     entryId: string,
     message: string,
   ) => Promise<void>;
-  handleEdit: (entryId: string, message: string) => void;
+  handleEdit: (entryId: string) => void;
   handleSaveEdit: (entryId: string, message: string) => void;
   isAudioPlaying: boolean;
   isStopAudio: boolean;
   handleConvertTextToVoice: (text: string) => void;
   handleRedo: (entryId: string) => void;
+  floatButtonsXPosition: number;
+  showFloatButtons: boolean;
 };
 
 export const MessageItem = React.memo<MessageItemProps>(
@@ -70,14 +75,13 @@ export const MessageItem = React.memo<MessageItemProps>(
     index,
     conversationHistoryEntries,
     isProcessing,
+    hoveredBubble,
     setHoveredBubble,
     setShowFloatButtons,
     copied,
     handleCopy,
     editingEntryId,
     setEditingEntryId,
-    editedMessage,
-    setEditedMessage,
     toolStatus,
     handleEdit,
     handleSaveEdit,
@@ -85,9 +89,13 @@ export const MessageItem = React.memo<MessageItemProps>(
     isStopAudio,
     handleConvertTextToVoice,
     handleRedo,
+    floatButtonsXPosition,
+    showFloatButtons,
   }) => {
     const token = theme.useToken();
     const entry = conversationHistoryEntries[index];
+
+    const [editedMessage, setEditedMessage] = useState(entry.message);
 
     const dispatch = useDispatch<AppDispatch>();
     const { activeModelService } = useSelector(
@@ -104,6 +112,10 @@ export const MessageItem = React.memo<MessageItemProps>(
       dispatch(updateAndSaveSetting({ key: 'hljsTheme', value: theme }));
     };
 
+    useEffect(() => {
+      setEditedMessage(entry.message);
+    }, [entry.id]);
+
     const handleMouseEnter = (
       e: React.MouseEvent<HTMLDivElement>,
       entry: ConversationEntry,
@@ -113,69 +125,84 @@ export const MessageItem = React.memo<MessageItemProps>(
       setShowFloatButtons(!(rect.height < 225 || rect.top > 72));
     };
 
-    const handleInput = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
-      const input = e.target;
-      setEditedMessage(input.value);
-      input.style.height = 'auto';
-      input.style.height = `${input.scrollHeight}px`;
-    };
-
     const handleCancelEdit = () => {
       setEditingEntryId(null);
     };
 
     return (
-      <MessageBubbleWrapper
-        $paddingBottom={
-          index === conversationHistoryEntries.length - 1 && isProcessing
-        }
-      >
-        <MessageBubble
-          key={entry.id}
-          $user={entry.role}
-          $token={token.token}
-          onMouseEnter={(e) => handleMouseEnter(e, entry)}
+      <>
+        <MessageBubbleWrapper
+          $paddingBottom={
+            index === conversationHistoryEntries.length - 1 && isProcessing
+          }
         >
-          <TopToolBar
-            modelType={activeModelService}
-            index={index}
-            conversationHistoryEntries={conversationHistoryEntries}
+          <MessageBubble
+            key={entry.id}
+            $user={entry.role}
+            $token={token.token}
+            onMouseEnter={(e) => handleMouseEnter(e, entry)}
+          >
+            <TopToolBar
+              modelType={activeModelService}
+              index={index}
+              conversationHistoryEntries={conversationHistoryEntries}
+              isAudioPlaying={isAudioPlaying}
+              isStopAudio={isStopAudio}
+              editingEntryId={editingEntryId}
+              handleCancelEdit={handleCancelEdit}
+              handleEdit={handleEdit}
+              handleConvertTextToVoice={handleConvertTextToVoice}
+              copied={copied}
+              handleCopy={handleCopy}
+              handleRedo={handleRedo}
+              isProcessing={isProcessing}
+            />
+
+            {entry.id === editingEntryId ? (
+              <TextEditContainer
+                entry={entry}
+                isProcessing={isProcessing}
+                editedMessage={editedMessage}
+                setEditedMessage={setEditedMessage}
+                handleSaveEdit={handleSaveEdit}
+                handleCancelEdit={handleCancelEdit}
+              />
+            ) : (
+              <div>
+                <TextContainer
+                  entry={entry}
+                  conversationHistoryCurrent={conversationHistory.current}
+                  isProcessing={isProcessing}
+                  hljsTheme={settings.hljsTheme}
+                  setHljsTheme={setHljsTheme}
+                  toolStatus={toolStatus}
+                />
+                <ImageContainer entry={entry} />
+              </div>
+            )}
+          </MessageBubble>
+        </MessageBubbleWrapper>
+        {hoveredBubble && showFloatButtons && (
+          <MessageFloatButton
+            hoveredBubble={hoveredBubble}
+            floatButtonsPosition={{
+              xRight: floatButtonsXPosition,
+              yTop: innerWidth < 550 ? 115 : 75,
+            }}
             isAudioPlaying={isAudioPlaying}
             isStopAudio={isStopAudio}
             editingEntryId={editingEntryId}
+            handleSaveEdit={handleSaveEdit}
             handleCancelEdit={handleCancelEdit}
+            editingMessage={editedMessage}
             handleEdit={handleEdit}
             handleConvertTextToVoice={handleConvertTextToVoice}
             copied={copied}
             handleCopy={handleCopy}
             handleRedo={handleRedo}
-            isProcessing={isProcessing}
           />
-
-          {entry.id === editingEntryId ? (
-            <TextEditContainer
-              entry={entry}
-              isProcessing={isProcessing}
-              editedMessage={editedMessage}
-              handleInput={handleInput}
-              handleSaveEdit={handleSaveEdit}
-              handleCancelEdit={handleCancelEdit}
-            />
-          ) : (
-            <div>
-              <TextContainer
-                entry={entry}
-                conversationHistoryCurrent={conversationHistory.current}
-                isProcessing={isProcessing}
-                hljsTheme={settings.hljsTheme}
-                setHljsTheme={setHljsTheme}
-                toolStatus={toolStatus}
-              />
-              <ImageContainer entry={entry} />
-            </div>
-          )}
-        </MessageBubble>
-      </MessageBubbleWrapper>
+        )}
+      </>
     );
   },
 );
