@@ -315,7 +315,6 @@ export class HistoryManager implements IHistoryManager {
       this.history = await this.loadHistoryById(historyID);
       return this.history;
     } else {
-      vscode.window.showErrorMessage('History not found: ' + historyID);
       return this.history;
     }
   }

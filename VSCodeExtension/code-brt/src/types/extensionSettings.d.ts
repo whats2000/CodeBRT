@@ -9,6 +9,14 @@ import {
 import { ToolServiceType } from './toolServicesType';
 
 /**
+ * Represents the available theme algorithms for the Ant Design theme.
+ */
+export type AvailableThemeAlgorithm =
+  | 'defaultAlgorithm'
+  | 'darkAlgorithm'
+  | 'compactAlgorithm';
+
+/**
  * A Tag object for categorizing System Prompts
  * @property color - The color associated with the tag
  * @property name - The name of the tag
@@ -191,7 +199,7 @@ export type ExtensionSettingsCrossDevice = {
   openaiApiKey: string;
   doubleEnterSendMessages: boolean;
   themePrimaryColor: string;
-  themeAlgorithm: 'defaultAlgorithm' | 'darkAlgorithm' | 'compactAlgorithm';
+  themeAlgorithm: AvailableThemeAlgorithm | AvailableThemeAlgorithm[];
   themeBorderRadius: number;
   hljsTheme: keyof typeof hljs;
 };

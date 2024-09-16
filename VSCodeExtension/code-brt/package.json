@@ -170,19 +170,27 @@
           "description": "Primary color for the theme"
         },
         "code-brt.themeAlgorithm": {
-          "type": "string",
-          "default": "darkAlgorithm",
+          "type": [
+            "array",
+            "string"
+          ],
+          "items": {
+            "type": "string",
+            "enum": [
+              "darkAlgorithm",
+              "defaultAlgorithm",
+              "compactAlgorithm"
+            ],
+            "enumDescriptions": [
+              "Dark algorithm",
+              "Light algorithm",
+              "Compact algorithm"
+            ]
+          },
+          "default": [
+            "darkAlgorithm"
+          ],
           "description": "Algorithm for the theme",
-          "enum": [
-            "darkAlgorithm",
-            "defaultAlgorithm",
-            "compactAlgorithm"
-          ],
-          "enumDescriptions": [
-            "Dark algorithm",
-            "Light algorithm",
-            "Compact algorithm"
-          ],
           "markdownDescription": "The algorithm to use for the theme. The `darkAlgorithm` is a dark theme with a dark background and light text. The `defaultAlgorithm` is a light theme with a light background and dark text. The `compactAlgorithm` is a compact theme with a dark background and light text.",
           "markdownEnumDescriptions": [
             "Dark algorithm",

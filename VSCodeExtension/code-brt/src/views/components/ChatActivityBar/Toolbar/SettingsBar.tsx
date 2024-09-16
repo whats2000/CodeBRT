@@ -77,11 +77,7 @@ type SettingSidebarProps = {
   onClose: () => void;
   setTheme: (newTheme: {
     primaryColor?: string | undefined;
-    algorithm?:
-      | 'defaultAlgorithm'
-      | 'darkAlgorithm'
-      | 'compactAlgorithm'
-      | undefined;
+    algorithm?: ExtensionSettings['themeAlgorithm'] | undefined;
     borderRadius?: number | undefined;
   }) => Promise<void>;
 };
@@ -128,7 +124,7 @@ export const SettingsBar: React.FC<SettingSidebarProps> = ({
   };
 
   const handleAlgorithmChange = (
-    value: 'darkAlgorithm' | 'defaultAlgorithm' | 'compactAlgorithm',
+    value: ExtensionSettings['themeAlgorithm'],
   ) => {
     setTheme({ algorithm: value }).then(() => {
       dispatch(updateLocalSetting({ key: 'themeAlgorithm', value }));
@@ -227,6 +223,7 @@ export const SettingsBar: React.FC<SettingSidebarProps> = ({
                 return (
                   <FormGroup key={key} label={'Theme Algorithm'}>
                     <Select
+                      mode='multiple'
                       value={
                         value as
                           | 'darkAlgorithm'
@@ -251,7 +248,7 @@ export const SettingsBar: React.FC<SettingSidebarProps> = ({
                           label: 'Compact',
                         },
                       ]}
-                    ></Select>
+                    />
                   </FormGroup>
                 );
               } else if (key === 'themeBorderRadius') {
