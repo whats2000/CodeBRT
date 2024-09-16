@@ -52,6 +52,7 @@ export const TextEditContainer: React.FC<MessageEditContainerProps> = ({
         value={editedMessage}
         onChange={handleInput}
         theme={token}
+        autoSize={true}
       />
       <Button
         onClick={() => handleSaveEdit(entry.id, editedMessage)}
