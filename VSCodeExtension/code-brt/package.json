@@ -3,7 +3,7 @@
   "private": true,
   "displayName": "CodeBRT",
   "description": "CodeBRT, a LLM/VLM framework for code assistant with multiple models.",
-  "version": "0.2.1",
+  "version": "0.2.2",
   "icon": "static/icon.ico",
   "engines": {
     "vscode": "^1.93.0",
@@ -11,9 +11,35 @@
     "npm": "~10.8.1"
   },
   "license": "LGPL-3.0-or-later",
-  "repository": "https://github.com/whats2000/code-brt",
-  "tags": [],
-  "categories": [],
+  "repository": "https://github.com/whats2000/CodeBRT",
+  "extensionKind": [
+    "ui",
+    "workspace"
+  ],
+  "bugs": {
+    "url": "https://github.com/whats2000/CodeBRT/issues"
+  },
+  "categories": [
+    "AI",
+    "Chat",
+    "Programming Languages",
+    "Productivity Tools",
+    "Code Assistant",
+    "Voice Assistant"
+  ],
+  "keywords": [
+    "copilot",
+    "chatgpt",
+    "github",
+    "claude",
+    "sonnet",
+    "codegpt",
+    "ai",
+    "llama",
+    "llm",
+    "openai",
+    "gemini"
+  ],
   "publisher": "whats2000",
   "main": "extension.js",
   "scripts": {
