@@ -142,14 +142,15 @@ export const addTagToConversation = createAsyncThunk<
       await callApi('addHistoryTag', historyID, tag);
 
       const { conversationIndex } = getState();
-      const updatedHistories = { ...conversationIndex.historyIndexes };
-      const history = updatedHistories[historyID];
+      const history = { ...conversationIndex.historyIndexes[historyID] };
+
       if (history) {
         history.tags = [...(history.tags || []), tag];
         dispatch(
-          conversationIndexSlice.actions.setConversationHistoryIndex(
-            updatedHistories,
-          ),
+          conversationIndexSlice.actions.modifyHistory({
+            historyID,
+            updatedHistory: history,
+          }),
         );
         dispatch(updateAllTags());
       }
@@ -178,14 +179,14 @@ export const removeTagFromConversation = createAsyncThunk<
       await callApi('removeHistoryTag', historyID, tag);
 
       const { conversationIndex } = getState();
-      const updatedHistories = { ...conversationIndex.historyIndexes };
-      const history = updatedHistories[historyID];
+      const history = { ...conversationIndex.historyIndexes[historyID] };
       if (history) {
         history.tags = (history.tags || []).filter((t) => t !== tag);
         dispatch(
-          conversationIndexSlice.actions.setConversationHistoryIndex(
-            updatedHistories,
-          ),
+          conversationIndexSlice.actions.modifyHistory({
+            historyID,
+            updatedHistory: history,
+          }),
         );
         dispatch(updateAllTags());
       }
@@ -221,6 +222,13 @@ const conversationIndexSlice = createSlice({
       if (state.historyIndexes[historyID]) {
         state.historyIndexes[historyID].title = title;
       }
+    },
+    modifyHistory(
+      state,
+      action: PayloadAction<{ historyID: string; updatedHistory: any }>,
+    ) {
+      const { historyID, updatedHistory } = action.payload;
+      state.historyIndexes[historyID] = updatedHistory;
     },
     startLoading(state) {
       state.isLoading = true;
