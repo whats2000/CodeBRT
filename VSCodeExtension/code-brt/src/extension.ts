@@ -1,4 +1,3 @@
-import fs from 'node:fs/promises';
 import * as vscode from 'vscode';
 
 import type {
@@ -30,6 +29,7 @@ import {
   OpenaiVoiceService,
   VisualStudioCodeBuiltInService,
 } from './services/voice';
+import { convertPdfToMarkdown } from './utils/pdfConverter';
 
 export const activate = async (ctx: vscode.ExtensionContext) => {
   const connectedViews: Partial<Record<ViewKey, vscode.WebviewView>> = {};
@@ -102,20 +102,8 @@ export const activate = async (ctx: vscode.ExtensionContext) => {
    * This uses for communication messages channel
    */
   const api: ViewApi = {
-    getFileContents: async () => {
-      const uris = await vscode.window.showOpenDialog({
-        canSelectFiles: true,
-        canSelectFolders: false,
-        canSelectMany: false,
-        openLabel: 'Select file',
-        title: 'Select file to read',
-      });
-
-      if (!uris?.length) {
-        return '';
-      }
-
-      return await fs.readFile(uris[0].fsPath, 'utf-8');
+    extractPdfText: async (filePath) => {
+      return await convertPdfToMarkdown(filePath);
     },
     setSettingByKey: async (key, value) => {
       await settingsManager.set(key, value);

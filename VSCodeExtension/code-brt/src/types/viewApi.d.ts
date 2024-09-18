@@ -50,9 +50,9 @@ export type ViewApiEvent<K extends keyof ViewEvents = keyof ViewEvents> = {
  */
 export type ViewApi = {
   /**
-   * Get the contents of the file.
+   * Get the contents of the pdf file.
    */
-  getFileContents: () => Promise<string>;
+  extractPdfText: (filePath: string) => Promise<string>;
 
   /**
    * Set the target setting of the extension.

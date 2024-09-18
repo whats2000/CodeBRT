@@ -16,9 +16,9 @@ export async function convertPdfToMarkdown(
     throw new Error(`File not found: ${pdfFilePath}`);
   }
 
-  const absolutePath = path.resolve(pdfFilePath);
   try {
-    return await pdf2md(absolutePath);
+    const pdfBuffer = fs.readFileSync(pdfFilePath);
+    return await pdf2md(pdfBuffer);
   } catch (error) {
     vscode.window.showErrorMessage(
       `Failed to convert PDF to Markdown: ${error}`,
