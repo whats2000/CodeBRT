@@ -107,6 +107,16 @@ export const WorkPanel = () => {
           Please upload a PDF file to extract text from it.
         </Typography.Text>
         <Typography.Text type={'warning'}>
+          Note: This feature currently have{' '}
+          <Typography.Link
+            href={'https://github.com/opengovsg/pdf2md/issues/76'}
+          >
+            known issues{' '}
+          </Typography.Link>
+          with the deployment, it will be fixed in the future. So test in
+          development environment.
+        </Typography.Text>
+        <Typography.Text type={'warning'}>
           Note: This feature is still in development and may not work as
           expected.
         </Typography.Text>
