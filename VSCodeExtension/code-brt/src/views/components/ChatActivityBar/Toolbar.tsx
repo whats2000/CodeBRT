@@ -11,7 +11,7 @@ import {
 import styled from 'styled-components';
 import { useDispatch, useSelector } from 'react-redux';
 
-import { ModelServiceType } from '../../../types';
+import { ExtensionSettings, ModelServiceType } from '../../../types';
 import type { AppDispatch, RootState } from '../../redux';
 import { setConversationHistory } from '../../redux/slices/conversationSlice';
 import {
@@ -38,13 +38,9 @@ const EditModelListButton = styled(Button)`
 
 type ToolbarProps = {
   setTheme: (newTheme: {
-    primaryColor?: string | undefined;
-    algorithm?:
-      | 'defaultAlgorithm'
-      | 'darkAlgorithm'
-      | 'compactAlgorithm'
-      | undefined;
-    borderRadius?: number | undefined;
+    primaryColor?: ExtensionSettings['themePrimaryColor'];
+    algorithm?: ExtensionSettings['themeAlgorithm'];
+    borderRadius?: ExtensionSettings['themeBorderRadius'];
   }) => Promise<void>;
 };
 

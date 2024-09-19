@@ -52,7 +52,7 @@
     "format": "prettier 'src/**/*.js' 'src/**/*.jsx' 'src/**/*.ts' 'src/**/*.tsx' './package.json' '.swcrc' './*.js' --no-error-on-unmatched-pattern --write"
   },
   "devDependencies": {
-    "@ant-design/icons": "^5.4.0",
+    "@ant-design/icons": "^5.5.1",
     "@anthropic-ai/sdk": "^0.27.3",
     "@babel/core": "^7.25.2",
     "@babel/preset-env": "^7.25.4",
@@ -83,7 +83,7 @@
     "axios": "^1.7.7",
     "babel-jest": "^29.7.0",
     "cheerio": "^1.0.0",
-    "cohere-ai": "^7.13.1",
+    "cohere-ai": "^7.13.2",
     "copy-webpack-plugin": "^12.0.2",
     "css-loader": "^7.1.2",
     "date-fns": "^4.1.0",
@@ -92,7 +92,7 @@
     "markdown-to-text": "^0.1.1",
     "node-mic": "^1.0.1",
     "ollama": "^0.5.9",
-    "openai": "^4.62.0",
+    "openai": "^4.62.1",
     "prettier": "3.3.3",
     "prettier-plugin-organize-imports": "^4.0.0",
     "promise-deferred": "^2.0.4",

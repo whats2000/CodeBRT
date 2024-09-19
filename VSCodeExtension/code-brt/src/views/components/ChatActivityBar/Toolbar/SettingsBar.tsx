@@ -76,9 +76,9 @@ type SettingSidebarProps = {
   isOpen: boolean;
   onClose: () => void;
   setTheme: (newTheme: {
-    primaryColor?: string | undefined;
-    algorithm?: ExtensionSettings['themeAlgorithm'] | undefined;
-    borderRadius?: number | undefined;
+    primaryColor?: ExtensionSettings['themePrimaryColor'];
+    algorithm?: ExtensionSettings['themeAlgorithm'];
+    borderRadius?: ExtensionSettings['themeBorderRadius'];
   }) => Promise<void>;
 };
 
