@@ -43,6 +43,8 @@ export const initModelService = createAsyncThunk<
         `Failed to initialize model service: ${error}`,
         'error',
       ).catch(console.error);
+    } finally {
+      dispatch(finishLoading());
     }
   },
 );
@@ -84,14 +86,13 @@ export const loadModelService = createAsyncThunk<
           value: modelServiceType,
         }),
       );
-
-      dispatch(finishLoading());
     } catch (error) {
       callApi(
         'alertMessage',
         `Failed to load model service data: ${error}`,
         'error',
       ).catch(console.error);
+    } finally {
       dispatch(finishLoading());
     }
   },
@@ -123,13 +124,13 @@ export const swapModel = createAsyncThunk<
     try {
       await callApi('switchModel', state.activeModelService, model);
       dispatch(setSelectedModel(model));
-      dispatch(finishLoading());
     } catch (error) {
       callApi(
         'alertMessage',
         `Failed to switch model: ${error}`,
         'error',
       ).catch(console.error);
+    } finally {
       dispatch(finishLoading());
     }
   },
