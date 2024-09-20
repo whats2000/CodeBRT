@@ -11,6 +11,7 @@ const sidebars: SidebarsConfig = {
         "docs/getting-started/installation",
         "docs/getting-started/overview",
         "docs/getting-started/configuration",
+        "docs/getting-started/quickstart",
       ],
     },
     {
