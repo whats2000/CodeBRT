@@ -72,7 +72,7 @@ module.exports = (env, { mode }) => {
     ].filter(Boolean),
     devtool: isDev ? 'inline-cheap-module-source-map' : false,
     infrastructureLogging: {
-      level: 'log', // enables logging required for problem matchers
+      level: isDev ? 'log' : 'warn',
     },
   };
 };

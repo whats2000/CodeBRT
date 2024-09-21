@@ -10,12 +10,15 @@ import Groq from 'groq-sdk';
 import type { GetResponseOptions } from '../../types';
 import { MODEL_SERVICE_CONSTANTS } from '../../constants';
 import { AbstractOpenaiLikeService } from './abstractOpenaiLikeService';
-import { SettingsManager } from '../../api';
+import { HistoryManager, SettingsManager } from '../../api';
 
 export class GroqService extends AbstractOpenaiLikeService {
+  private stopStreamFlag: boolean = false;
+
   constructor(
     context: vscode.ExtensionContext,
     settingsManager: SettingsManager,
+    historyManager: HistoryManager,
   ) {
     const availableModelNames = settingsManager.get('groqAvailableModels');
     const defaultModelName = settingsManager.get('lastSelectedModel').groq;
@@ -23,27 +26,11 @@ export class GroqService extends AbstractOpenaiLikeService {
     super(
       'groq',
       context,
-      'groqConversationHistory.json',
       settingsManager,
+      historyManager,
       defaultModelName,
       availableModelNames,
     );
-    // Initialize and load conversation history
-    this.initialize().catch((error) =>
-      vscode.window.showErrorMessage(
-        'Failed to initialize Groq Service History: ' + error,
-      ),
-    );
-  }
-
-  private async initialize() {
-    try {
-      await this.loadHistories();
-    } catch (error) {
-      vscode.window.showErrorMessage(
-        'Failed to initialize Groq Service: ' + error,
-      );
-    }
   }
 
   public async getLatestAvailableModelNames(): Promise<string[]> {
@@ -82,11 +69,9 @@ export class GroqService extends AbstractOpenaiLikeService {
 
   public async getResponse(options: GetResponseOptions): Promise<string> {
     if (this.currentModel === '') {
-      vscode.window
-        .showErrorMessage(
-          'Make sure the model is selected before sending a message. Open the model selection dropdown and configure the model.',
-        )
-        .then();
+      vscode.window.showErrorMessage(
+        'Make sure the model is selected before sending a message. Open the model selection dropdown and configure the model.',
+      );
       return 'Missing model configuration. Check the model selection dropdown.';
     }
 
@@ -104,12 +89,21 @@ export class GroqService extends AbstractOpenaiLikeService {
     });
 
     const conversationHistory = await this.conversationHistoryToContent(
-      this.getHistoryBeforeEntry(currentEntryID).entries,
+      this.historyManager.getHistoryBeforeEntry(currentEntryID).entries,
       query,
     );
 
     let functionCallCount = 0;
     const MAX_FUNCTION_CALLS = 5;
+
+    const { systemPrompt, generationConfig } = this.getAdvanceSettings();
+
+    if (systemPrompt) {
+      conversationHistory.unshift({
+        role: 'system',
+        content: systemPrompt,
+      });
+    }
 
     try {
       if (!sendStreamResponse) {
@@ -117,9 +111,9 @@ export class GroqService extends AbstractOpenaiLikeService {
           const response = await groq.chat.completions.create({
             messages: conversationHistory,
             model: this.currentModel,
-            tools: this.tools,
+            tools: this.getEnabledTools(),
             stream: false,
-            ...this.generationConfig,
+            ...generationConfig,
           } as ChatCompletionCreateParamsNonStreaming);
 
           if (!response.choices[0]?.message.tool_calls) {
@@ -145,12 +139,16 @@ export class GroqService extends AbstractOpenaiLikeService {
         let responseText: string = '';
 
         while (functionCallCount < MAX_FUNCTION_CALLS) {
+          if (this.stopStreamFlag) {
+            return responseText;
+          }
+
           const streamResponse = await groq.chat.completions.create({
             messages: conversationHistory,
             model: this.currentModel,
             stream: true,
-            tools: this.tools,
-            ...this.generationConfig,
+            tools: this.getEnabledTools(),
+            ...generationConfig,
           } as ChatCompletionCreateParamsStreaming);
 
           const completeToolCalls: (ChatCompletionMessageToolCall & {
@@ -160,6 +158,10 @@ export class GroqService extends AbstractOpenaiLikeService {
           updateStatus && updateStatus('');
 
           for await (const chunk of streamResponse) {
+            if (this.stopStreamFlag) {
+              return responseText;
+            }
+
             if (chunk.choices[0]?.finish_reason === 'tool_calls') {
               const functionCallResults = await this.handleFunctionCalls(
                 completeToolCalls,
@@ -227,6 +229,13 @@ export class GroqService extends AbstractOpenaiLikeService {
           }
         });
       return 'Failed to connect to the language model service.';
+    } finally {
+      this.stopStreamFlag = false;
+      updateStatus && updateStatus('');
     }
+  }
+
+  public async stopResponse(): Promise<void> {
+    this.stopStreamFlag = true;
   }
 }

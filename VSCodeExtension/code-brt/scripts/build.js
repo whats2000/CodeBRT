@@ -12,17 +12,11 @@ const isTag =
 const name = packageJson.name;
 const version = isTag ? packageJson.version : `${packageJson.version}+${hash}`;
 
-vsce
-  .createVSIX({
-    cwd: path.resolve(process.cwd(), 'dist'),
-    packagePath: path.resolve(
-      process.cwd(),
-      'build',
-      `${name}-${version}.vsix`,
-    ),
-    preRelease: false,
-    baseContentUrl: 'https://none',
-    baseImagesUrl: 'https://none',
-    allowMissingRepository: true,
-  })
-  .then();
+void vsce.createVSIX({
+  cwd: path.resolve(process.cwd(), 'dist'),
+  packagePath: path.resolve(process.cwd(), 'build', `${name}-${version}.vsix`),
+  preRelease: false,
+  baseContentUrl: 'https://none',
+  baseImagesUrl: 'https://none',
+  allowMissingRepository: true,
+});

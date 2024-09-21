@@ -32,8 +32,9 @@ jobs:
         working-directory: VSCodeExtension/code-brt
 
       - name: Build project
-        run: npm run build:ci
-        working-directory: VSCodeExtension/code-brt
+        run: |
+          cd VSCodeExtension/code-brt
+          npm run build:ci
 
       - name: Locate VSIX file
         id: locate-vsix

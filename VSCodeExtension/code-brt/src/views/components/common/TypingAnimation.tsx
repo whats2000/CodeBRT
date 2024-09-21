@@ -7,7 +7,6 @@ import { RendererCode, RendererCodeProvider } from './RenderCode';
 type TypingAnimationProps = {
   message: string;
   isProcessing: boolean;
-  scrollToBottom: (smooth: boolean) => void;
   hljsTheme: keyof typeof hljs;
   setHljsTheme: (theme: keyof typeof hljs) => void;
 };
@@ -15,7 +14,6 @@ type TypingAnimationProps = {
 export const TypingAnimation: React.FC<TypingAnimationProps> = ({
   message,
   isProcessing,
-  scrollToBottom,
   hljsTheme,
   setHljsTheme,
 }) => {
@@ -41,12 +39,6 @@ export const TypingAnimation: React.FC<TypingAnimationProps> = ({
       return () => clearTimeout(timer);
     }
   }, [displayedMessage, message, isProcessing]);
-
-  useEffect(() => {
-    if (displayedMessage.length === message.length) {
-      scrollToBottom(false);
-    }
-  }, [displayedMessage, message, scrollToBottom]);
 
   return (
     <RendererCodeProvider value={{ hljsTheme, setHljsTheme }}>

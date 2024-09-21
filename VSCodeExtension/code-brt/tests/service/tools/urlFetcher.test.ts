@@ -13,7 +13,8 @@ describe('urlFetcherTool', () => {
   it('should fetch and process content from URL correctly', async () => {
     const url = 'https://example.com';
     const mockUpdateStatus = jest.fn();
-    const mockResponseData = '<html><body>Example Content</body></html>';
+    const mockResponseData =
+      '<html lang="en"><body>Example Content</body></html>';
     const mockVisibleText = 'Example Content';
 
     (axios.create as jest.Mock).mockReturnValue({
@@ -48,7 +49,7 @@ describe('urlFetcherTool', () => {
     const url = 'https://example.com';
     const mockUpdateStatus = jest.fn();
     const mockResponseData =
-      '<html><body>' + 'A'.repeat(7000) + '</body></html>';
+      '<html lang="en"><body>' + 'A'.repeat(7000) + '</body></html>';
     const mockVisibleText = 'A'.repeat(7000);
 
     (axios.create as jest.Mock).mockReturnValue({
