@@ -69,7 +69,7 @@ Once installed, CodeBRT can be accessed within Visual Studio Code. The key funct
 - **Chat with the AI**: Use the chat panel to interact with the AI for code-related conversations.
 - **Voice Commands**: Activate voice features by issuing voice commands.
 
-For a quick start guide, refer to the [Quick Start](https://whats2000.github.io/CodeBRTdocs/getting-started/overview)
+For a quick start guide, refer to the [Quick Start](https://whats2000.github.io/CodeBRT/docs/getting-started/overview)
 section of the documentation.
 
 Additionally, external plugins are available to extend the project’s capabilities. Explore the available
