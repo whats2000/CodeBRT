@@ -23,8 +23,8 @@ type MessageEditContainerProps = {
   entry: ConversationEntry;
   isProcessing: boolean;
   editedMessage: string;
-  handleInput: (e: React.ChangeEvent<HTMLTextAreaElement>) => void;
-  handleSaveEdit: (entryId: string) => void;
+  setEditedMessage: React.Dispatch<React.SetStateAction<string>>;
+  handleSaveEdit: (entryId: string, message: string) => void;
   handleCancelEdit: () => void;
 };
 
@@ -32,11 +32,18 @@ export const TextEditContainer: React.FC<MessageEditContainerProps> = ({
   entry,
   isProcessing,
   editedMessage,
-  handleInput,
+  setEditedMessage,
   handleSaveEdit,
   handleCancelEdit,
 }) => {
   const token = theme.useToken();
+
+  const handleInput = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    const input = e.target;
+    setEditedMessage(input.value);
+    input.style.height = 'auto';
+    input.style.height = `${input.scrollHeight}px`;
+  };
 
   return (
     <Space direction={'vertical'}>
@@ -44,11 +51,11 @@ export const TextEditContainer: React.FC<MessageEditContainerProps> = ({
         id={`edit-input-${entry.id}`}
         value={editedMessage}
         onChange={handleInput}
-        autoFocus
         theme={token}
+        autoSize={true}
       />
       <Button
-        onClick={() => handleSaveEdit(entry.id)}
+        onClick={() => handleSaveEdit(entry.id, editedMessage)}
         style={{ width: '100%' }}
         disabled={isProcessing}
       >

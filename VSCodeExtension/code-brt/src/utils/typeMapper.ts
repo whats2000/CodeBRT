@@ -1,4 +1,4 @@
-import { FunctionDeclarationSchemaType } from '@google/generative-ai';
+import { SchemaType } from '@google/generative-ai';
 
 export const mapTypeToPythonFormat = (type: string): string => {
   switch (type) {
@@ -13,17 +13,15 @@ export const mapTypeToPythonFormat = (type: string): string => {
   }
 };
 
-export const mapFunctionDeclarationSchemaType = (
-  type: string,
-): FunctionDeclarationSchemaType => {
+export const mapFunctionDeclarationSchemaType = (type: string): SchemaType => {
   switch (type) {
     case 'string':
-      return FunctionDeclarationSchemaType.STRING;
+      return SchemaType.STRING;
     case 'number':
-      return FunctionDeclarationSchemaType.NUMBER;
+      return SchemaType.NUMBER;
     case 'boolean':
-      return FunctionDeclarationSchemaType.BOOLEAN;
+      return SchemaType.BOOLEAN;
     default:
-      return FunctionDeclarationSchemaType.STRING;
+      return SchemaType.STRING;
   }
 };

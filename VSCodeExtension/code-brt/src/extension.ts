@@ -1,4 +1,3 @@
-import fs from 'node:fs/promises';
 import * as vscode from 'vscode';
 
 import type {
@@ -13,7 +12,7 @@ import type {
 } from './types';
 import { FileUtils } from './utils';
 import { ViewKey } from './views';
-import { viewRegistration, SettingsManager } from './api';
+import { viewRegistration, SettingsManager, HistoryManager } from './api';
 import {
   AnthropicService,
   CohereService,
@@ -30,35 +29,38 @@ import {
   OpenaiVoiceService,
   VisualStudioCodeBuiltInService,
 } from './services/voice';
+import { convertPdfToMarkdown } from './utils/pdfConverter';
 
 export const activate = async (ctx: vscode.ExtensionContext) => {
   const connectedViews: Partial<Record<ViewKey, vscode.WebviewView>> = {};
   const settingsManager = SettingsManager.getInstance(ctx);
 
+  const historyManager = new HistoryManager(ctx);
+
   const models: LoadedModelServices = {
     anthropic: {
-      service: new AnthropicService(ctx, settingsManager),
+      service: new AnthropicService(ctx, settingsManager, historyManager),
     },
     gemini: {
-      service: new GeminiService(ctx, settingsManager),
+      service: new GeminiService(ctx, settingsManager, historyManager),
     },
     cohere: {
-      service: new CohereService(ctx, settingsManager),
+      service: new CohereService(ctx, settingsManager, historyManager),
     },
     openai: {
-      service: new OpenAIService(ctx, settingsManager),
+      service: new OpenAIService(ctx, settingsManager, historyManager),
     },
     groq: {
-      service: new GroqService(ctx, settingsManager),
+      service: new GroqService(ctx, settingsManager, historyManager),
     },
     huggingFace: {
-      service: new HuggingFaceService(ctx, settingsManager),
+      service: new HuggingFaceService(ctx, settingsManager, historyManager),
     },
     ollama: {
-      service: new OllamaService(ctx, settingsManager),
+      service: new OllamaService(ctx, settingsManager, historyManager),
     },
     custom: {
-      service: new CustomApiService(ctx, settingsManager),
+      service: new CustomApiService(ctx, settingsManager, historyManager),
     },
   };
 
@@ -100,26 +102,17 @@ export const activate = async (ctx: vscode.ExtensionContext) => {
    * This uses for communication messages channel
    */
   const api: ViewApi = {
-    getFileContents: async () => {
-      const uris = await vscode.window.showOpenDialog({
-        canSelectFiles: true,
-        canSelectFolders: false,
-        canSelectMany: false,
-        openLabel: 'Select file',
-        title: 'Select file to read',
-      });
-
-      if (!uris?.length) {
-        return '';
-      }
-
-      return await fs.readFile(uris[0].fsPath, 'utf-8');
+    extractPdfText: async (filePath) => {
+      return await convertPdfToMarkdown(filePath);
     },
-    setSetting: async (key, value) => {
-      return settingsManager.set(key, value);
+    setSettingByKey: async (key, value) => {
+      await settingsManager.set(key, value);
     },
-    getSetting: (key) => {
+    getSettingByKey: (key) => {
       return settingsManager.get(key);
+    },
+    getAllSettings: async () => {
+      return await settingsManager.getAllSettings();
     },
     alertMessage: (msg, type) => {
       switch (type) {
@@ -136,15 +129,28 @@ export const activate = async (ctx: vscode.ExtensionContext) => {
           vscode.window.showInformationMessage(msg);
       }
     },
+    alertReload: (message) => {
+      vscode.window
+        .showInformationMessage(
+          message ??
+            'The setting will take effect after the extension is reloaded',
+          'Reload',
+        )
+        .then((selection) => {
+          if (selection === 'Reload') {
+            vscode.commands.executeCommand('workbench.action.reloadWindow');
+          }
+        });
+    },
     getLanguageModelResponse: async (
-      modelType,
+      modelServiceType,
       query,
       images?,
       currentEntryID?,
       useStream?,
       showStatus?,
     ) => {
-      return await models[modelType].service.getResponse({
+      return await models[modelServiceType].service.getResponse({
         query,
         images,
         currentEntryID,
@@ -160,53 +166,74 @@ export const activate = async (ctx: vscode.ExtensionContext) => {
           : undefined,
       });
     },
-    getLanguageModelConversationHistory: (modelType) => {
-      return models[modelType].service.getConversationHistory();
+    stopLanguageModelResponse: (modelServiceType) => {
+      models[modelServiceType].service.stopResponse();
     },
-    addNewConversationHistory: (modelType) => {
-      return models[modelType].service.addNewConversationHistory();
+    getCurrentHistory: () => {
+      return historyManager.getCurrentHistory();
     },
-    editLanguageModelConversationHistory: (modelType, entryID, newMessage) => {
-      models[modelType].service.editConversationEntry(entryID, newMessage);
+    addNewConversationHistory: async () => {
+      return await historyManager.addNewConversationHistory();
+    },
+    editLanguageModelConversationHistory: (entryID, newMessage) => {
+      historyManager.editConversationEntry(entryID, newMessage);
+    },
+    getHistoryIndexes: () => {
+      return historyManager.getHistoryIndexes();
+    },
+    switchHistory: (historyID) => {
+      return historyManager.switchHistory(historyID);
+    },
+    deleteHistory: async (historyID) => {
+      return await historyManager.deleteHistory(historyID);
+    },
+    updateHistoryTitleById: (historyID, title) => {
+      historyManager.updateHistoryTitleById(historyID, title);
+    },
+    addHistoryTag: (historyID, tag) => {
+      historyManager.addTagToHistory(historyID, tag);
+    },
+    removeHistoryTag: (historyID, tag) => {
+      historyManager.removeTagFromHistory(historyID, tag);
+    },
+    updateHistoryModelAdvanceSettings: (historyID, advanceSettings) => {
+      historyManager.updateHistoryModelAdvanceSettings(
+        historyID,
+        advanceSettings,
+      );
     },
     addConversationEntry: async (
-      modelType,
       parentID,
       sender,
       message,
       images?,
+      modelServiceType?,
     ) => {
-      return models[modelType].service.addConversationEntry(
+      return await historyManager.addConversationEntry(
         parentID,
         sender,
         message,
         images,
+        modelServiceType,
       );
     },
-    getHistories: (modelType) => {
-      return models[modelType].service.getHistories();
-    },
-    switchHistory: (modelType, historyID) => {
-      models[modelType].service.switchHistory(historyID);
-    },
-    deleteHistory: (modelType, historyID) => {
-      return models[modelType].service.deleteHistory(historyID);
-    },
-    getAvailableModels: (modelType) => {
-      if (modelType === 'custom') {
+    getAvailableModels: (modelServiceType) => {
+      if (modelServiceType === 'custom') {
         return settingsManager.get('customModels').map((model) => model.name);
       }
 
-      return settingsManager.get(`${modelType}AvailableModels`);
+      return settingsManager.get(`${modelServiceType}AvailableModels`);
     },
-    getCurrentModel: (modelType) => {
-      return settingsManager.get(`lastSelectedModel`)[modelType];
+    getCurrentModel: (modelServiceType) => {
+      return settingsManager.get(`lastSelectedModel`)[modelServiceType];
     },
-    setAvailableModels: (modelType, newAvailableModels) => {
+    setAvailableModels: (modelServiceType, newAvailableModels) => {
       settingsManager
-        .set(`${modelType}AvailableModels`, newAvailableModels)
+        .set(`${modelServiceType}AvailableModels`, newAvailableModels)
         .then(() => {
-          models[modelType].service.updateAvailableModels(newAvailableModels);
+          models[modelServiceType].service.updateAvailableModels(
+            newAvailableModels,
+          );
         });
     },
     setCustomModels: (newCustomModels) => {
@@ -216,19 +243,18 @@ export const activate = async (ctx: vscode.ExtensionContext) => {
         );
       });
     },
-    switchModel: (modelType, modelName) => {
-      models[modelType].service.switchModel(modelName);
+    switchModel: (modelServiceType, modelName) => {
+      models[modelServiceType].service.switchModel(modelName);
     },
-    updateHistoryTitleById: (modelType, historyID, title) => {
-      models[modelType].service.updateHistoryTitleById(historyID, title);
+    getLatestAvailableModelNames: async (modelServiceType) => {
+      return await models[
+        modelServiceType
+      ].service.getLatestAvailableModelNames();
     },
-    getLatestAvailableModelNames: async (modelType) => {
-      return await models[modelType].service.getLatestAvailableModelNames();
+    uploadFile: async (base64Data, originalFileName) => {
+      return FileUtils.uploadFile(ctx, base64Data, originalFileName);
     },
-    uploadImage: async (base64Data) => {
-      return FileUtils.uploadFile(ctx, base64Data);
-    },
-    deleteImage: FileUtils.deleteFile,
+    deleteFile: FileUtils.deleteFile,
     getWebviewUri: async (absolutePath: string) => {
       return await FileUtils.getWebviewUri(ctx, connectedViews, absolutePath);
     },
@@ -313,7 +339,18 @@ export const activate = async (ctx: vscode.ExtensionContext) => {
     msg.type === 'request';
 
   const registerAndConnectView = async <V extends ViewKey>(key: V) => {
-    const view = await viewRegistration(ctx, key);
+    const webviewOptions: vscode.WebviewOptions = {
+      enableScripts: true,
+    };
+    const retainContextWhenHidden = settingsManager.get(
+      'retainContextWhenHidden',
+    );
+    const view = await viewRegistration(
+      ctx,
+      key,
+      webviewOptions,
+      retainContextWhenHidden,
+    );
     connectedViews[key] = view;
     const onMessage = async (msg: Record<string, unknown>) => {
       if (!isViewApiRequest(msg)) {

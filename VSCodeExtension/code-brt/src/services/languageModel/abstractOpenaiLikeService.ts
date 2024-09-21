@@ -14,29 +14,65 @@ import type {
 import { toolsSchema } from '../../constants';
 import { AbstractLanguageModelService } from './abstractLanguageModelService';
 import { ToolService } from '../tools';
+import vscode from 'vscode';
 
 export abstract class AbstractOpenaiLikeService extends AbstractLanguageModelService {
-  protected readonly generationConfig: Partial<ChatCompletionCreateParamsBaseOpenaiLike> =
-    {
-      temperature: 0.7,
-      max_tokens: 4096,
-      top_p: 1,
-      stop: null,
-    };
+  protected getAdvanceSettings(): {
+    systemPrompt: string | undefined;
+    generationConfig: Partial<ChatCompletionCreateParamsBaseOpenaiLike>;
+  } {
+    const advanceSettings =
+      this.historyManager.getCurrentHistory().advanceSettings;
 
-  protected tools: ChatCompletionToolOpenaiLike[] = Object.keys(
-    toolsSchema,
-  ).map((toolKey) => {
-    const tool = toolsSchema[toolKey as ToolServiceType];
+    if (!advanceSettings) {
+      return {
+        systemPrompt: undefined,
+        generationConfig: {},
+      };
+    }
+
+    if (advanceSettings.topK) {
+      void vscode.window.showWarningMessage(
+        'Top-k sampling is not supported by the OpenAI or Groq APIs, so the setting will be ignored.',
+      );
+    }
+
     return {
-      type: 'function',
-      function: {
-        name: tool.name,
-        description: tool.description,
-        parameters: tool.inputSchema,
+      systemPrompt:
+        advanceSettings.systemPrompt.length > 0
+          ? advanceSettings.systemPrompt
+          : undefined,
+      generationConfig: {
+        max_tokens: advanceSettings.maxTokens,
+        temperature: advanceSettings.temperature,
+        top_p: advanceSettings.topP,
+        presence_penalty: advanceSettings.presencePenalty,
+        frequency_penalty: advanceSettings.frequencyPenalty,
       },
     };
-  });
+  }
+
+  protected getEnabledTools(): ChatCompletionToolOpenaiLike[] | undefined {
+    const enabledTools = this.settingsManager.get('enableTools');
+    const tools: ChatCompletionToolOpenaiLike[] = [];
+
+    for (const [key, tool] of Object.entries(toolsSchema)) {
+      if (!enabledTools[key as ToolServiceType].active) {
+        continue;
+      }
+
+      tools.push({
+        type: 'function',
+        function: {
+          name: tool.name,
+          description: tool.description,
+          parameters: tool.inputSchema,
+        },
+      });
+    }
+
+    return tools.length > 0 ? tools : undefined;
+  }
 
   private fileToGenerativePart(
     filePath: string,
@@ -109,7 +145,7 @@ export abstract class AbstractOpenaiLikeService extends AbstractLanguageModelSer
     images?: string[],
   ): Promise<ChatCompletionMessageParamOpenaiLike[]> {
     const result: ChatCompletionMessageParamOpenaiLike[] = [];
-    let currentEntry = entries[this.history.current];
+    let currentEntry = entries[this.historyManager.getCurrentHistory().current];
 
     while (currentEntry) {
       const messageParam: ChatCompletionMessageParamOpenaiLike =

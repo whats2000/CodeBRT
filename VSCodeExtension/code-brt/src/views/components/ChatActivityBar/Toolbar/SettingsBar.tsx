@@ -1,6 +1,7 @@
-import React, { useState, useEffect, useContext } from 'react';
+import React, { useContext } from 'react';
 import styled from 'styled-components';
-import type { Color } from 'antd/es/color-picker/color';
+import type { AggregationColor } from 'antd/es/color-picker/color';
+import type { CheckboxProps } from 'antd/es/checkbox';
 import {
   Drawer,
   Form,
@@ -11,16 +12,28 @@ import {
   Space,
   Tooltip,
   Typography,
+  Checkbox,
+  Divider,
+  Alert,
 } from 'antd';
+import { useDispatch, useSelector } from 'react-redux';
 
-import {
+import type {
   ExtensionSettings,
   ModelServiceType,
   TextToVoiceServiceType,
   VoiceToTextServiceType,
 } from '../../../../types';
-import { MODEL_SERVICE_CONSTANTS } from '../../../../constants';
+import {
+  DEFAULT_CROSS_DEVICE_SETTINGS,
+  MODEL_SERVICE_CONSTANTS,
+} from '../../../../constants';
 import { WebviewContext } from '../../../WebviewContext';
+import type { AppDispatch, RootState } from '../../../redux';
+import {
+  saveSettings,
+  updateLocalSetting,
+} from '../../../redux/slices/settingsSlice';
 
 const StyledForm = styled(Form)`
   display: flex;
@@ -31,17 +44,41 @@ const FormGroup = styled(Form.Item)`
   margin-bottom: 15px;
 `;
 
+// Define the desired order of settings
+const SETTINGS_GROUPS: { title: string; keys: (keyof ExtensionSettings)[] }[] =
+  [
+    {
+      title: 'API Key Settings',
+      keys: [
+        'anthropicApiKey',
+        'openaiApiKey',
+        'geminiApiKey',
+        'cohereApiKey',
+        'groqApiKey',
+        'huggingFaceApiKey',
+      ],
+    },
+    {
+      title: 'Host Server Settings',
+      keys: ['ollamaClientHost', 'gptSoVitsClientHost'],
+    },
+    {
+      title: 'Theme and Customize',
+      keys: ['themePrimaryColor', 'themeAlgorithm', 'themeBorderRadius'],
+    },
+    {
+      title: 'Other Settings',
+      keys: ['doubleEnterSendMessages', 'retainContextWhenHidden'],
+    },
+  ];
+
 type SettingSidebarProps = {
   isOpen: boolean;
   onClose: () => void;
   setTheme: (newTheme: {
-    primaryColor?: string | undefined;
-    algorithm?:
-      | 'defaultAlgorithm'
-      | 'darkAlgorithm'
-      | 'compactAlgorithm'
-      | undefined;
-    borderRadius?: number | undefined;
+    primaryColor?: ExtensionSettings['themePrimaryColor'];
+    algorithm?: ExtensionSettings['themeAlgorithm'];
+    borderRadius?: ExtensionSettings['themeBorderRadius'];
   }) => Promise<void>;
 };
 
@@ -51,72 +88,46 @@ export const SettingsBar: React.FC<SettingSidebarProps> = ({
   setTheme,
 }) => {
   const { callApi } = useContext(WebviewContext);
-  const [partialSettings, setPartialSettings] = useState<
-    Partial<ExtensionSettings>
-  >({
-    anthropicApiKey: '',
-    groqApiKey: '',
-    geminiApiKey: '',
-    openaiApiKey: '',
-    cohereApiKey: '',
-    huggingFaceApiKey: '',
-    ollamaClientHost: '',
-    gptSoVitsClientHost: '',
-    themePrimaryColor: '#1677ff',
-    themeAlgorithm: 'defaultAlgorithm',
-    themeBorderRadius: 4,
-  });
-  const [isLoading, setIsLoading] = useState(true);
 
-  useEffect(() => {
-    if (!isOpen) {
+  const dispatch = useDispatch<AppDispatch>();
+
+  const { isLoading, settings, needsReload } = useSelector(
+    (state: RootState) => state.settings,
+  );
+
+  // Save settings whenever the sidebar is closed
+  const handleCloseAndSave = () => {
+    if (isLoading) {
+      onClose();
       return;
     }
-    setIsLoading(true);
-    const promises = Object.keys(partialSettings).map(async (key) => {
-      try {
-        const value = await callApi(
-          'getSetting',
-          key as keyof typeof partialSettings,
-        );
-        setPartialSettings((prev) => ({ ...prev, [key]: value }));
-      } catch (e) {
-        console.error(`Failed to fetch setting ${key}:`, e);
-      }
-    });
-    Promise.all(promises).finally(() => {
-      setIsLoading(false);
-    });
-  }, [isOpen]);
 
-  const handleSettingChange =
-    (key: keyof Partial<ExtensionSettings>) => (event: any) => {
-      setPartialSettings((prev) => ({ ...prev, [key]: event.target.value }));
-    };
-
-  const handleBlurSave = () => {
-    saveSettings(partialSettings);
+    dispatch(saveSettings(settings));
+    onClose();
   };
 
-  const handleColorChange = (color: Color) => {
-    setPartialSettings((prev) => ({
-      ...prev,
-      themePrimaryColor: color.toHexString(),
-    }));
-    setTheme({ primaryColor: color.toHexString() }).then(() => {
-      saveSettings({
-        ...partialSettings,
-        themePrimaryColor: color.toHexString(),
-      });
+  // Handle changes to settings that don't require immediate effect
+  const handleSettingChange =
+    (key: keyof ExtensionSettings) => (event: any) => {
+      const value = event.target.value;
+      dispatch(updateLocalSetting({ key, value }));
+    };
+
+  // Immediate application of display style changes
+  const handleColorChange = (color: AggregationColor) => {
+    const newColor = color.toHexString();
+    setTheme({ primaryColor: newColor }).then(() => {
+      dispatch(
+        updateLocalSetting({ key: 'themePrimaryColor', value: newColor }),
+      );
     });
   };
 
   const handleAlgorithmChange = (
-    value: 'darkAlgorithm' | 'defaultAlgorithm' | 'compactAlgorithm',
+    value: ExtensionSettings['themeAlgorithm'],
   ) => {
-    setPartialSettings((prev) => ({ ...prev, themeAlgorithm: value }));
     setTheme({ algorithm: value }).then(() => {
-      saveSettings({ ...partialSettings, themeAlgorithm: value });
+      dispatch(updateLocalSetting({ key: 'themeAlgorithm', value }));
     });
   };
 
@@ -124,44 +135,45 @@ export const SettingsBar: React.FC<SettingSidebarProps> = ({
     event: React.ChangeEvent<HTMLInputElement>,
   ) => {
     const value = parseInt(event.target.value);
-    setPartialSettings((prev) => ({ ...prev, themeBorderRadius: value }));
     setTheme({ borderRadius: value }).then(() => {
-      saveSettings({ ...partialSettings, themeBorderRadius: value });
+      dispatch(updateLocalSetting({ key: 'themeBorderRadius', value }));
     });
   };
 
   const resetTheme = () => {
-    setPartialSettings((prev) => ({
-      ...prev,
-      themePrimaryColor: '#f1f1f1',
-      themeAlgorithm: 'darkAlgorithm',
-      themeBorderRadius: 4,
-    }));
-    setTheme({
-      primaryColor: '#f1f1f1',
-      algorithm: 'darkAlgorithm',
-      borderRadius: 4,
-    }).then(() => {
-      saveSettings({
-        ...partialSettings,
-        themePrimaryColor: '#f1f1f1',
-        themeAlgorithm: 'darkAlgorithm',
-        themeBorderRadius: 4,
-      });
+    const defaultTheme = {
+      primaryColor: DEFAULT_CROSS_DEVICE_SETTINGS.themePrimaryColor,
+      algorithm: DEFAULT_CROSS_DEVICE_SETTINGS.themeAlgorithm,
+      borderRadius: DEFAULT_CROSS_DEVICE_SETTINGS.themeBorderRadius,
+    };
+    setTheme(defaultTheme).then(() => {
+      dispatch(
+        updateLocalSetting({
+          key: 'themePrimaryColor',
+          value: defaultTheme.primaryColor,
+        }),
+      );
+      dispatch(
+        updateLocalSetting({
+          key: 'themeAlgorithm',
+          value: defaultTheme.algorithm,
+        }),
+      );
+      dispatch(
+        updateLocalSetting({
+          key: 'themeBorderRadius',
+          value: defaultTheme.borderRadius,
+        }),
+      );
     });
   };
 
-  const saveSettings = (updatedSettings: Partial<ExtensionSettings>) => {
-    Object.entries(updatedSettings).map(([key, value]) =>
-      callApi('setSetting', key as keyof ExtensionSettings, value).catch((e) =>
-        callApi(
-          'alertMessage',
-          `Failed to save settings: ${e.message}`,
-          'error',
-        ),
-      ),
-    );
-  };
+  const handleCheckboxChange =
+    (key: keyof ExtensionSettings): CheckboxProps['onChange'] =>
+    (e) => {
+      const value = e.target.checked;
+      dispatch(updateLocalSetting({ key, value }));
+    };
 
   const openModelServiceLink = (link: string) => {
     callApi('openExternalLink', link)
@@ -173,108 +185,186 @@ export const SettingsBar: React.FC<SettingSidebarProps> = ({
     <Drawer
       title='Settings Bar'
       open={isOpen}
-      onClose={onClose}
+      onClose={handleCloseAndSave}
       placement='left'
       width={400}
       loading={isLoading}
     >
-      <StyledForm
-        layout='vertical'
-        onFinish={() => saveSettings(partialSettings)}
-      >
-        {Object.entries(partialSettings).map(([key, value]) => {
-          if (key.includes('ApiKey') || key.includes('ClientHost')) {
-            const serviceKey = key
-              .replace('ApiKey', '')
-              .replace('ClientHost', '') as Exclude<
-              | ModelServiceType
-              | TextToVoiceServiceType
-              | VoiceToTextServiceType,
-              'not set'
-            >;
+      {needsReload && (
+        <Alert
+          message='Some settings require a reload to take effect'
+          type='warning'
+          showIcon
+          style={{ marginBottom: 10 }}
+        />
+      )}
+      <StyledForm layout='vertical'>
+        {SETTINGS_GROUPS.map((group) => (
+          <div key={group.title}>
+            <Divider orientation={'left'} orientationMargin={0}>
+              <Typography.Text type='secondary'>{group.title}</Typography.Text>
+            </Divider>
+            {group.keys.map((key) => {
+              const value = settings[key];
 
-            return (
-              <FormGroup
-                key={key}
-                label={
-                  <Space>
-                    <span>{MODEL_SERVICE_CONSTANTS[serviceKey].name}</span>
-                    <Tooltip title='Find out more about API keys and client hosts'>
-                      <Typography.Link
-                        type={'secondary'}
-                        onClick={() =>
-                          openModelServiceLink(
-                            MODEL_SERVICE_CONSTANTS[serviceKey].apiLink,
-                          )
-                        }
-                      >
-                        Learn more
-                      </Typography.Link>
-                    </Tooltip>
-                  </Space>
-                }
-              >
-                <Input.Password
-                  value={(value as string) || ''}
-                  onChange={handleSettingChange(
-                    key as keyof typeof partialSettings,
-                  )}
-                  onBlur={handleBlurSave}
-                />
-              </FormGroup>
-            );
-          } else if (key === 'themePrimaryColor') {
-            return (
-              <FormGroup key={key} label={'Theme Primary Color'}>
-                <ColorPicker
-                  format='hex'
-                  value={value as string}
-                  onChangeComplete={handleColorChange}
-                  showText={(color) => color.toHexString()}
-                />
-              </FormGroup>
-            );
-          } else if (key === 'themeAlgorithm') {
-            return (
-              <FormGroup key={key} label={'Theme Algorithm'}>
-                <Select
-                  value={
-                    value as
-                      | 'darkAlgorithm'
-                      | 'defaultAlgorithm'
-                      | 'compactAlgorithm'
-                  }
-                  onChange={handleAlgorithmChange}
-                >
-                  <Select.Option value='defaultAlgorithm'>Light</Select.Option>
-                  <Select.Option value='darkAlgorithm'>Dark</Select.Option>
-                  <Select.Option value='compactAlgorithm'>
-                    Compact
-                  </Select.Option>
-                </Select>
-              </FormGroup>
-            );
-          } else if (key === 'themeBorderRadius') {
-            return (
-              <FormGroup key={key} label={'Theme Border Radius'}>
-                <Input
-                  type='number'
-                  value={value}
-                  onChange={handleBorderRadiusChange}
-                  onBlur={handleBlurSave}
-                />
-              </FormGroup>
-            );
-          }
-        })}
+              // Render the form controls based on the key
+              if (key === 'themePrimaryColor') {
+                return (
+                  <FormGroup key={key} label={'Theme Primary Color'}>
+                    <ColorPicker
+                      format='hex'
+                      defaultValue={value}
+                      onChangeComplete={handleColorChange}
+                      showText={(color) => color.toHexString()}
+                    />
+                  </FormGroup>
+                );
+              } else if (key === 'themeAlgorithm') {
+                return (
+                  <FormGroup key={key} label={'Theme Algorithm'}>
+                    <Select
+                      mode='multiple'
+                      value={
+                        value as
+                          | 'darkAlgorithm'
+                          | 'defaultAlgorithm'
+                          | 'compactAlgorithm'
+                      }
+                      onChange={handleAlgorithmChange}
+                      options={[
+                        {
+                          key: 'defaultAlgorithm',
+                          value: 'defaultAlgorithm',
+                          label: 'Light',
+                        },
+                        {
+                          key: 'darkAlgorithm',
+                          value: 'darkAlgorithm',
+                          label: 'Dark',
+                        },
+                        {
+                          key: 'compactAlgorithm',
+                          value: 'compactAlgorithm',
+                          label: 'Compact',
+                        },
+                      ]}
+                    />
+                  </FormGroup>
+                );
+              } else if (key === 'themeBorderRadius') {
+                return (
+                  <FormGroup key={key} label={'Theme Border Radius'}>
+                    <Input
+                      type='number'
+                      value={value}
+                      onChange={handleBorderRadiusChange}
+                    />
+                  </FormGroup>
+                );
+              } else if (
+                key === 'doubleEnterSendMessages' ||
+                key === 'retainContextWhenHidden'
+              ) {
+                const label =
+                  key === 'doubleEnterSendMessages'
+                    ? 'Send messages with double enter'
+                    : 'Keep the loaded context';
+                const description =
+                  key === 'doubleEnterSendMessages'
+                    ? 'Send messages with double enter'
+                    : 'Costs more RAM but allows faster loading';
+
+                return (
+                  <FormGroup key={key} label={label}>
+                    <Checkbox
+                      checked={value}
+                      onChange={handleCheckboxChange(key)}
+                    >
+                      <Typography.Text type='secondary'>
+                        {description}
+                      </Typography.Text>
+                    </Checkbox>
+                  </FormGroup>
+                );
+              } else if (key.includes('ApiKey') || key.includes('ClientHost')) {
+                const serviceKey = key
+                  .replace('ApiKey', '')
+                  .replace('ClientHost', '') as Exclude<
+                  | ModelServiceType
+                  | TextToVoiceServiceType
+                  | VoiceToTextServiceType,
+                  'not set'
+                >;
+                return (
+                  <FormGroup
+                    key={key}
+                    label={
+                      <Space>
+                        <span>
+                          {MODEL_SERVICE_CONSTANTS[serviceKey]?.name || key}
+                        </span>
+                        {MODEL_SERVICE_CONSTANTS[serviceKey]?.apiLink && (
+                          <Tooltip
+                            title={
+                              key.includes('ApiKey')
+                                ? 'Link to the API key page'
+                                : 'Link to the download page'
+                            }
+                          >
+                            <Typography.Link
+                              type={'secondary'}
+                              onClick={() =>
+                                openModelServiceLink(
+                                  MODEL_SERVICE_CONSTANTS[serviceKey].apiLink,
+                                )
+                              }
+                            >
+                              {key.includes('ApiKey')
+                                ? 'Get API Key'
+                                : 'Learn More'}
+                            </Typography.Link>
+                          </Tooltip>
+                        )}
+                      </Space>
+                    }
+                  >
+                    <Input.Password
+                      value={(value as string) || ''}
+                      onChange={handleSettingChange(key)}
+                    />
+                  </FormGroup>
+                );
+              } else {
+                // Default rendering for other settings
+                return (
+                  <FormGroup key={key} label={key}>
+                    <Input
+                      value={(value as string) || ''}
+                      onChange={handleSettingChange(key)}
+                    />
+                  </FormGroup>
+                );
+              }
+            })}
+          </div>
+        ))}
       </StyledForm>
       <Button
         type='primary'
+        danger={true}
         ghost={true}
         onClick={resetTheme}
         style={{ width: '100%' }}
       >
         Reset Theme
+      </Button>
+      <Button
+        type='primary'
+        ghost
+        onClick={handleCloseAndSave}
+        style={{ marginTop: 20, width: '100%' }}
+      >
+        Close and Save
       </Button>
     </Drawer>
   );

@@ -7,16 +7,20 @@ import {
   CopyOutlined,
   EditOutlined,
   LoadingOutlined,
-  PauseCircleOutlined,
+  RedoOutlined,
   SoundOutlined,
 } from '@ant-design/icons';
 import styled from 'styled-components';
+import { useDispatch, useSelector } from 'react-redux';
 
 import type {
   ConversationEntry,
   ConversationHistory,
   ModelServiceType,
 } from '../../../../types';
+import type { RootState } from '../../../redux';
+import { updateCurrentEntry } from '../../../redux/slices/conversationSlice';
+import { CancelOutlined } from '../../../icons';
 
 const RespondCharacter = styled(Typography.Text)<{ $user: string }>`
   color: ${({ $user, theme }) =>
@@ -27,10 +31,6 @@ const RespondCharacter = styled(Typography.Text)<{ $user: string }>`
 
 type MessagesTopToolBarProps = {
   modelType: ModelServiceType | 'loading...';
-  conversationHistory: ConversationHistory;
-  setConversationHistory: React.Dispatch<
-    React.SetStateAction<ConversationHistory>
-  >;
   index: number;
   conversationHistoryEntries: ConversationEntry[];
   isAudioPlaying: boolean;
@@ -41,13 +41,12 @@ type MessagesTopToolBarProps = {
   handleConvertTextToVoice: (text: string) => void;
   copied: Record<string, boolean>;
   handleCopy: (text: string, entryId: string) => void;
+  handleRedo: (entryId: string) => void;
   isProcessing: boolean;
 };
 
 export const TopToolBar: React.FC<MessagesTopToolBarProps> = ({
   modelType,
-  conversationHistory,
-  setConversationHistory,
   index,
   conversationHistoryEntries,
   isAudioPlaying,
@@ -58,9 +57,15 @@ export const TopToolBar: React.FC<MessagesTopToolBarProps> = ({
   handleConvertTextToVoice,
   copied,
   handleCopy,
+  handleRedo,
   isProcessing,
 }) => {
   const { token } = theme.useToken();
+
+  const dispatch = useDispatch();
+  const conversationHistory = useSelector(
+    (state: RootState) => state.conversation,
+  );
 
   const entry = conversationHistoryEntries[index];
   const top = conversationHistory.top;
@@ -98,11 +103,7 @@ export const TopToolBar: React.FC<MessagesTopToolBarProps> = ({
       while (nextEntry.children.length > 0) {
         nextEntry = conversationHistory.entries[nextEntry.children[0]];
       }
-
-      setConversationHistory((prevMessages) => ({
-        ...prevMessages,
-        current: nextEntry.id,
-      }));
+      dispatch(updateCurrentEntry(nextEntry.id));
     }
   };
 
@@ -129,11 +130,7 @@ export const TopToolBar: React.FC<MessagesTopToolBarProps> = ({
       while (nextEntry?.children?.length > 0) {
         nextEntry = history.entries[nextEntry.children[0]];
       }
-
-      setConversationHistory((prevMessages) => ({
-        ...prevMessages,
-        current: nextEntry.id,
-      }));
+      dispatch(updateCurrentEntry(nextEntry.id));
     }
   };
 
@@ -144,7 +141,7 @@ export const TopToolBar: React.FC<MessagesTopToolBarProps> = ({
           ? modelType.charAt(0).toUpperCase() + modelType.slice(1)
           : 'You'}
       </RespondCharacter>
-      <Flex gap={1}>
+      <Flex gap={1} wrap={true} justify={'flex-end'}>
         {parent && siblingCount > 1 && (
           <>
             <Button
@@ -199,7 +196,7 @@ export const TopToolBar: React.FC<MessagesTopToolBarProps> = ({
               isStopAudio ? (
                 <LoadingOutlined spin={true} />
               ) : isAudioPlaying ? (
-                <PauseCircleOutlined />
+                <CancelOutlined />
               ) : (
                 <SoundOutlined />
               )
@@ -209,6 +206,16 @@ export const TopToolBar: React.FC<MessagesTopToolBarProps> = ({
             disabled={isStopAudio}
           />
         </Tooltip>
+        {entry.role === 'AI' && (
+          <Button
+            icon={
+              isProcessing ? <LoadingOutlined spin={true} /> : <RedoOutlined />
+            }
+            type={'text'}
+            disabled={isProcessing}
+            onClick={() => handleRedo(entry.id)}
+          />
+        )}
         <Button
           icon={<EditOutlined />}
           type={'text'}

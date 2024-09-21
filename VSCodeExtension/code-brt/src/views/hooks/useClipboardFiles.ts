@@ -1,6 +1,6 @@
 import { useEffect } from 'react';
 
-export const useClipboardImage = (onPaste: (files: FileList) => void) => {
+export const useClipboardFiles = (onPaste: (files: FileList) => void) => {
   useEffect(() => {
     const handlePaste = (event: ClipboardEvent) => {
       if (event.clipboardData) {
@@ -8,7 +8,23 @@ export const useClipboardImage = (onPaste: (files: FileList) => void) => {
         const files: File[] = [];
 
         for (let i = 0; i < items.length; i++) {
-          if (items[i].type.indexOf('image') !== -1) {
+          // png, jpeg, jpg, gif, webp support only
+          if (
+            [
+              'image/png',
+              'image/jpeg',
+              'image/jpg',
+              'image/gif',
+              'image/webp',
+            ].includes(items[i].type)
+          ) {
+            const blob = items[i].getAsFile();
+            if (blob) {
+              files.push(blob);
+            }
+          }
+
+          if (items[i].type === 'application/pdf') {
             const blob = items[i].getAsFile();
             if (blob) {
               files.push(blob);

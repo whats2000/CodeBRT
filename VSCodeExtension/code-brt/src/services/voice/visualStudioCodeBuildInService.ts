@@ -33,7 +33,7 @@ export class VisualStudioCodeBuiltInService extends AbstractVoiceService {
 
   private checkInactivity(): void {
     if (Date.now() > this.closingTime) {
-      this.stopVoiceToText().then();
+      void this.stopVoiceToText();
     }
   }
 

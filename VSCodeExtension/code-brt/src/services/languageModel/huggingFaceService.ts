@@ -14,30 +14,17 @@ import type {
   ToolServiceType,
 } from '../../types';
 import { AbstractLanguageModelService } from './abstractLanguageModelService';
-import { SettingsManager } from '../../api';
+import { HistoryManager, SettingsManager } from '../../api';
 import { MODEL_SERVICE_CONSTANTS, toolsSchema } from '../../constants';
 import { ToolService } from '../tools';
 
 export class HuggingFaceService extends AbstractLanguageModelService {
-  private readonly generationConfig: Partial<ChatCompletionInput> = {};
-
-  private readonly tools: ChatCompletionInputTool[] = Object.keys(
-    toolsSchema,
-  ).map((toolKey) => {
-    const tool = toolsSchema[toolKey as ToolServiceType];
-    return {
-      type: 'function',
-      function: {
-        name: tool.name,
-        description: tool.description,
-        arguments: tool.inputSchema,
-      },
-    };
-  });
+  private stopStreamFlag: boolean = false;
 
   constructor(
     context: vscode.ExtensionContext,
     settingsManager: SettingsManager,
+    historyManager: HistoryManager,
   ) {
     const availableModelNames = settingsManager.get(
       'huggingFaceAvailableModels',
@@ -48,28 +35,62 @@ export class HuggingFaceService extends AbstractLanguageModelService {
     super(
       'huggingFace',
       context,
-      'huggingFaceConversationHistory.json',
       settingsManager,
+      historyManager,
       defaultModelName,
       availableModelNames,
     );
-
-    // Initialize and load conversation history
-    this.initialize().catch((error) =>
-      vscode.window.showErrorMessage(
-        'Failed to initialize Hugging Face Service: ' + error,
-      ),
-    );
   }
 
-  private async initialize() {
-    try {
-      await this.loadHistories();
-    } catch (error) {
-      vscode.window.showErrorMessage(
-        'Failed to initialize Hugging Face Service: ' + error,
-      );
+  private getAdvanceSettings(): {
+    systemPrompt: string | undefined;
+    generationConfig: Partial<ChatCompletionInput>;
+  } {
+    const advanceSettings =
+      this.historyManager.getCurrentHistory().advanceSettings;
+
+    if (!advanceSettings) {
+      return {
+        systemPrompt: undefined,
+        generationConfig: {},
+      };
     }
+
+    return {
+      systemPrompt:
+        advanceSettings.systemPrompt.length > 0
+          ? advanceSettings.systemPrompt
+          : undefined,
+      generationConfig: {
+        max_tokens: advanceSettings.maxTokens,
+        temperature: advanceSettings.temperature,
+        top_p: advanceSettings.topP,
+        presence_penalty: advanceSettings.presencePenalty,
+        frequency_penalty: advanceSettings.frequencyPenalty,
+      },
+    };
+  }
+
+  private getEnabledTools(): ChatCompletionInputTool[] | undefined {
+    const enabledTools = this.settingsManager.get('enableTools');
+    const tools: ChatCompletionInputTool[] = [];
+
+    for (const [key, tool] of Object.entries(toolsSchema)) {
+      if (!enabledTools[key as ToolServiceType].active) {
+        continue;
+      }
+
+      tools.push({
+        type: 'function',
+        function: {
+          name: tool.name,
+          description: tool.description,
+          arguments: tool.inputSchema,
+        },
+      });
+    }
+
+    return tools.length > 0 ? tools : undefined;
   }
 
   private conversationHistoryToContent(
@@ -77,7 +98,7 @@ export class HuggingFaceService extends AbstractLanguageModelService {
     query: string,
   ): ChatCompletionInputMessage[] {
     const result: ChatCompletionInputMessage[] = [];
-    let currentEntry = entries[this.history.current];
+    let currentEntry = entries[this.historyManager.getCurrentHistory().current];
 
     while (currentEntry) {
       result.unshift({
@@ -128,7 +149,7 @@ export class HuggingFaceService extends AbstractLanguageModelService {
             'Failed to find tool with name: ' +
             functionCall.function.name +
             '. \n\n The tool available are: \n' +
-            JSON.stringify(this.tools),
+            JSON.stringify(this.getEnabledTools(), null, 2),
         });
         success = false;
         continue;
@@ -184,12 +205,21 @@ export class HuggingFaceService extends AbstractLanguageModelService {
     );
 
     const conversationHistory = this.conversationHistoryToContent(
-      this.getHistoryBeforeEntry(currentEntryID).entries,
+      this.historyManager.getHistoryBeforeEntry(currentEntryID).entries,
       query,
     );
 
     let functionCallCount = 0;
     const MAX_FUNCTION_CALLS = 5;
+
+    const { systemPrompt, generationConfig } = this.getAdvanceSettings();
+
+    if (systemPrompt) {
+      conversationHistory.unshift({
+        role: 'system',
+        content: systemPrompt,
+      });
+    }
 
     try {
       if (!sendStreamResponse) {
@@ -202,7 +232,7 @@ export class HuggingFaceService extends AbstractLanguageModelService {
             messages: conversationHistory,
             model: this.currentModel,
             stream: false,
-            ...this.generationConfig,
+            ...generationConfig,
           })
         ).choices[0]?.message?.content!;
 
@@ -247,18 +277,26 @@ export class HuggingFaceService extends AbstractLanguageModelService {
         let functionCallSuccess = false;
 
         while (functionCallCount < MAX_FUNCTION_CALLS) {
+          if (this.stopStreamFlag) {
+            return responseText;
+          }
+
           const streamResponse = huggerFace.chatCompletionStream({
             messages: conversationHistory,
             model: this.currentModel,
-            tools: functionCallSuccess ? undefined : this.tools,
+            tools: functionCallSuccess ? undefined : this.getEnabledTools(),
             stream: true,
-            ...this.generationConfig,
+            ...generationConfig,
           });
 
           let completeToolCallsString: string = '';
           let isClearStatus = false;
 
           for await (const chunk of streamResponse) {
+            if (this.stopStreamFlag) {
+              return responseText;
+            }
+
             updateStatus && isClearStatus && updateStatus('');
             isClearStatus = true;
 
@@ -383,6 +421,13 @@ export class HuggingFaceService extends AbstractLanguageModelService {
           }
         });
       return 'Failed to connect to the language model service.';
+    } finally {
+      this.stopStreamFlag = false;
+      updateStatus && updateStatus('');
     }
+  }
+
+  public async stopResponse(): Promise<void> {
+    this.stopStreamFlag = true;
   }
 }

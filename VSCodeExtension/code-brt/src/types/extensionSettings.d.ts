@@ -6,6 +6,47 @@ import {
   TextToVoiceServiceType,
   VoiceToTextServiceType,
 } from './voiceServiceType';
+import { ToolServiceType } from './toolServicesType';
+
+/**
+ * Represents the available theme algorithms for the Ant Design theme.
+ */
+export type AvailableThemeAlgorithm =
+  | 'defaultAlgorithm'
+  | 'darkAlgorithm'
+  | 'compactAlgorithm';
+
+/**
+ * A Tag object for categorizing System Prompts
+ * @property color - The color associated with the tag
+ * @property name - The name of the tag
+ * @property description - A brief description of the tag
+ */
+export type Tag = {
+  color: string;
+  name: string;
+  description: string;
+};
+
+/**
+ * A System Prompt object for storing prompt details
+ * @property id - A unique identifier for the system prompt
+ * @property name - The name of the system prompt
+ * @property description - A brief description of the system prompt
+ * @property content - The actual prompt content
+ * @property tags - An array of tags associated with the system prompt
+ * @property createdAt - The timestamp when the prompt was created
+ * @property updatedAt - The timestamp when the prompt was last updated
+ */
+export type SystemPrompt = {
+  id: string;
+  name: string;
+  description: string;
+  content: string;
+  tags: Tag[];
+  createdAt: number;
+  updatedAt: number;
+};
 
 /**
  * Represents the settings for a reference voice for the GPT-SoVits API.
@@ -46,7 +87,7 @@ export type CustomModelSettings = {
 };
 
 /**
- * Represents the settings for the extension which are stored locally.
+ * Represents the settings for the model services.
  * @property anthropicAvailableModels - The available models for the Anthropic API
  * @property geminiAvailableModels - The available models for the Gemini API
  * @property openaiAvailableModels - The available models for the OpenAI API
@@ -57,16 +98,11 @@ export type CustomModelSettings = {
  * @property huggingFaceAvailableModels - The available models for the Hugging Face API
  * @property ollamaClientHost - The host URL for the Ollama client
  * @property ollamaAvailableModels - The available models for the Ollama API
- * @property lastUsedModel - The last used model
+ * @property lastUsedModelService - The last used model service
  * @property lastSelectedModel - The last selected model for each model service
  * @property customModels - A list of custom models
- * @property selectedTextToVoiceService - The selected text-to-voice service
- * @property selectedVoiceToTextService - The selected voice-to-text service
- * @property gptSoVitsClientHost - The API URL for the GPT-SoVits model
- * @property gptSoVitsAvailableReferenceVoices - The available reference voices for the GPT-SoVits API
- * @property gptSoVitsSelectedReferenceVoice - The selected reference voice for the GPT-SoVits API
  */
-export type ExtensionSettingsLocal = {
+export type ModelServiceSettings = {
   anthropicAvailableModels: string[];
   geminiAvailableModels: string[];
   openaiAvailableModels: string[];
@@ -77,16 +113,67 @@ export type ExtensionSettingsLocal = {
   huggingFaceAvailableModels: string[];
   ollamaClientHost: string;
   ollamaAvailableModels: string[];
-  lastUsedModel: ModelServiceType;
+  lastUsedModelService: ModelServiceType;
   lastSelectedModel: {
     [keyof in ModelServiceType]: string;
   };
   customModels: CustomModelSettings[];
+};
+
+/**
+ * Represents the settings for the voice services.
+ * @property selectedTextToVoiceService - The selected text-to-voice service
+ * @property selectedVoiceToTextService - The selected voice-to-text service
+ * @property gptSoVitsClientHost - The API URL for the GPT-SoVits model
+ * @property gptSoVitsAvailableReferenceVoices - The available reference voices for the GPT-SoVits API
+ * @property gptSoVitsSelectedReferenceVoice - The selected reference voice for the GPT-SoVits API
+ */
+export type VoiceServiceSettings = {
   selectedTextToVoiceService: TextToVoiceServiceType;
   selectedVoiceToTextService: VoiceToTextServiceType;
   gptSoVitsClientHost: string;
   gptSoVitsAvailableReferenceVoices: GptSoVitsVoiceSetting[];
   gptSoVitsSelectedReferenceVoice: string;
+};
+
+/**
+ * Represents the settings for the tool services.
+ * @property enableTools - The enabled tools
+ */
+export type ToolServiceSettings = {
+  enableTools: {
+    [key in ToolServiceType]: {
+      active: boolean;
+    };
+  };
+};
+
+/**
+ * Other local settings that are not related to the services.
+ * @property systemPrompts - An array of system prompts
+ * @property retainContextWhenHidden - Indicates whether the context should be retained when the extension is hidden
+ */
+export type OtherLocalSettings = {
+  systemPrompts: SystemPrompt[];
+  retainContextWhenHidden: boolean;
+};
+
+/**
+ * Represents the settings for the extension which are stored locally.
+ * @property systemPrompts - An array of system prompts
+ * @property retainContextWhenHidden - Indicates whether the context should be retained when the extension is hidden
+ */
+export type ExtensionSettingsLocal = ModelServiceSettings &
+  VoiceServiceSettings &
+  ToolServiceSettings &
+  OtherLocalSettings;
+
+/**
+ * Represents the settings for the extension which are stored in the workspace.
+ * @property lastUsedHistoryID - The ID of the last used conversation history
+ */
+export type ExtensionSettingsWorkspace = {
+  lastUsedHistoryID: string;
 };
 
 /**
@@ -97,6 +184,7 @@ export type ExtensionSettingsLocal = {
  * @property groqApiKey - The API key for the Groq model
  * @property huggingFaceApiKey - The API key for the Hugging Face model
  * @property openaiApiKey - The API key for the OpenAI model
+ * @property doubleEnterSendMessages - Indicates whether pressing Enter twice should send messages
  * @property themePrimaryColor - The primary color for the Ant Design theme
  * @property themeAlgorithm - The algorithm for the Ant Design theme in (defaultAlgorithm, darkAlgorithm, compactAlgorithm)
  * @property themeBorderRadius - The border radius for the Ant Design theme
@@ -109,8 +197,9 @@ export type ExtensionSettingsCrossDevice = {
   groqApiKey: string;
   huggingFaceApiKey: string;
   openaiApiKey: string;
+  doubleEnterSendMessages: boolean;
   themePrimaryColor: string;
-  themeAlgorithm: 'defaultAlgorithm' | 'darkAlgorithm' | 'compactAlgorithm';
+  themeAlgorithm: AvailableThemeAlgorithm | AvailableThemeAlgorithm[];
   themeBorderRadius: number;
   hljsTheme: keyof typeof hljs;
 };
@@ -119,4 +208,5 @@ export type ExtensionSettingsCrossDevice = {
  * Represents the settings for the extension.
  */
 export type ExtensionSettings = ExtensionSettingsLocal &
+  ExtensionSettingsWorkspace &
   ExtensionSettingsCrossDevice;

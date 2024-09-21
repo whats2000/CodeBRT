@@ -119,9 +119,10 @@ export class GptSoVitsApiService extends AbstractVoiceService {
       return;
     }
 
-    this.settingsManager
-      .set('gptSoVitsSelectedReferenceVoice', voiceName)
-      .then();
+    await this.settingsManager.set(
+      'gptSoVitsSelectedReferenceVoice',
+      voiceName,
+    );
     this.updateSettings(selectedVoice);
 
     vscode.window.showInformationMessage(`Voice switched to ${voiceName}`);
