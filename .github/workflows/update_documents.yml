@@ -13,10 +13,12 @@ jobs:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
+
       - uses: actions/setup-node@v4
         with:
           node-version: 18
-          cache: yarn
+          cache: 'yarn'
+          cache-dependency-path: Documents/yarn.lock
 
       - name: Install dependencies
         working-directory: Documents
@@ -34,7 +36,6 @@ jobs:
   deploy:
     name: Deploy to GitHub Pages
     needs: build
-    if: github.event.pull_request.merged == true && github.event.pull_request.head.ref == 'Readme-File'
     permissions:
       pages: write
       id-token: write
