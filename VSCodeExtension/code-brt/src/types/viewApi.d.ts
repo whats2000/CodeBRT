@@ -311,6 +311,12 @@ export type ViewApi = {
    * @param extensionId - The extension ID to open the marketplace page for.
    */
   openExtensionMarketplace: (extensionId: string) => Promise<void>;
+
+  getOllamaAutoComplete: (
+    document: vscode.TextDocument,
+
+    position: vscode.Position,
+  ) => Promise<{ text: string; description: string }[]>;
 };
 
 /**

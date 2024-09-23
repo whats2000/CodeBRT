@@ -1,0 +1,160 @@
+# Autocomplete System Documentation
+
+## 1. 文件功能和依賴性
+
+### 1.1 CacheManager.ts
+- **功能**：管理自動完成上下文的緩存。
+- **依賴**：
+  - `lru-cache`：用於實現緩存機制。
+  - `crypto`：用於生成緩存鍵。
+- **主要方法**：
+  - `generateCacheKey`：生成唯一的緩存鍵。
+  - `get`：從緩存中獲取值。
+  - `set`：將值存入緩存。
+
+### 1.2 CodeAnalyzer.ts
+- **功能**：分析代碼結構，提取 AST 和符號信息。
+- **依賴**：
+  - `LanguageDetector`：檢測文件語言。
+  - `ParserFactory`：獲取適當的語言解析器。
+- **主要方法**：
+  - `getAst`：獲取代碼的抽象語法樹。
+  - `getInfoAtCursor`：獲取光標位置的代碼信息。
+  - `getEnclosingFunction`：獲取包含當前位置的函數。
+  - `getVariablesInScope`：獲取作用域內的變量。
+
+### 1.3 CodebaseIndexer.ts
+- **功能**：索引整個代碼庫，支持快速搜索和檢索。
+- **依賴**：
+  - `fs/promises`：文件系統操作。
+  - `ParserFactory`：獲取適當的語言解析器。
+- **主要方法**：
+  - `indexCodebase`：索引整個代碼庫。
+  - `search`：搜索代碼庫。
+  - `getRelevantSnippets`：獲取相關代碼片段。
+
+### 1.4 ContextCollector.ts
+- **功能**：收集自動完成所需的上下文信息。
+- **依賴**：
+  - `CacheManager`：緩存上下文信息。
+  - `ContextGenerator`：生成上下文信息。
+  - `ParserFactory`：獲取適當的語言解析器。
+- **主要方法**：
+  - `collectContext`：收集並返回自動完成上下文。
+
+### 1.5 ContextGenerator.ts
+- **功能**：生成詳細的自動完成上下文。
+- **依賴**：
+  - `RecentEditsManager`：獲取最近的編輯信息。
+  - `CodeAnalyzer`：分析代碼結構。
+  - `CodebaseIndexer`：檢索相關代碼片段。
+  - `ImportAnalyzer`：分析導入信息。
+  - `SimilarityMatcher`：查找相似代碼。
+  - `LanguageDetector`：檢測語言。
+  - `SnippetRanker`：對代碼片段進行排序。
+- **主要方法**：
+  - `generateContext`：生成完整的自動完成上下文。
+  - `performDataFlowAnalysis`：執行數據流分析。
+
+### 1.6 SimilarityMatcher.ts
+- **功能**：查找相似的代碼片段。
+- **依賴**：無外部依賴。
+- **主要方法**：
+  - `findSimilarCode`：在代碼庫中查找相似代碼。
+  - `slidingWindowMatch`：使用滑動窗口技術匹配相似代碼。
+
+### 1.7 ImportAnalyzer.ts
+- **功能**：分析文件中的導入語句。
+- **依賴**：
+  - `LanguageDetector`：檢測文件語言。
+  - `ParserFactory`：獲取適當的語言解析器。
+- **主要方法**：
+  - `analyzeFile`：分析文件中的導入語句。
+  - `resolveImportPath`：解析導入路徑。
+
+### 1.8 LanguageDetector.ts
+- **功能**：檢測文件的編程語言。
+- **依賴**：無外部依賴。
+- **主要方法**：
+  - `detectLanguage`：根據文件擴展名檢測語言。
+  - `detectLanguageFromContent`：根據文件內容檢測語言。
+
+### 1.9 ParserFactory.ts
+- **功能**：根據文件類型創建適當的語言解析器。
+- **依賴**：各種語言特定的解析器（如 CParser, JavaScriptParser 等）。
+- **主要方法**：
+  - `getParser`：根據文件擴展名獲取適當的解析器。
+
+### 1.10 RecentEditsManager.ts
+- **功能**：管理最近的代碼編輯記錄。
+- **依賴**：無外部依賴。
+- **主要方法**：
+  - `addEdit`：添加新的編輯記錄。
+  - `getRecentEdits`：獲取最近的編輯記錄。
+  - `getRecentEditsAroundPosition`：獲取特定位置附近的編輯記錄。
+
+### 1.11 SnippetRanker.ts
+- **功能**：對代碼片段進行排序。
+- **依賴**：無外部依賴。
+- **主要方法**：
+  - `rankSnippets`：根據相關性對代碼片段進行排序。
+  - `fillPromptWithSnippets`：選擇最相關的代碼片段填充提示。
+
+### 1.12 types.ts
+- **功能**：定義系統中使用的各種類型和接口。
+- **依賴**：無外部依賴。
+- **主要內容**：
+  - 定義了 `Position`, `Range`, `Symbol`, `AstNode` 等基本類型。
+  - 定義了 `AutocompleteContext`, `ImportInfo`, `Edit` 等複雜類型。
+  - 提供了一些輔助函數，如 `isPositionInRange`。
+
+## 2. 整個項目的工作流程
+
+1. **初始化**：
+   - 創建 `LanguageDetector`, `ParserFactory`, `CodebaseIndexer`, `CacheManager` 等核心組件。
+   - `CodebaseIndexer` 對整個項目代碼庫進行索引。
+
+2. **用戶觸發自動完成**：
+   - `ContextCollector` 被調用來收集當前編輯位置的上下文信息。
+
+3. **上下文收集**：
+   - `ContextCollector` 首先檢查 `CacheManager` 是否有緩存的上下文。
+   - 如果沒有緩存，則調用 `ContextGenerator` 生成新的上下文。
+
+4. **上下文生成**：
+   - `LanguageDetector` 確定當前文件的編程語言。
+   - `ParserFactory` 創建適當的語言解析器。
+   - `CodeAnalyzer` 分析當前文件的代碼結構，提取 AST 和符號信息。
+   - `ImportAnalyzer` 分析文件中的導入語句。
+   - `RecentEditsManager` 提供最近的編輯信息。
+   - `CodebaseIndexer` 提供相關的代碼片段。
+   - `SimilarityMatcher` 查找相似的代碼。
+
+5. **代碼片段排序**：
+   - `SnippetRanker` 對找到的代碼片段進行排序，選擇最相關的片段。
+
+6. **生成自動完成建議**：
+   - 基於收集到的上下文信息，生成自動完成建議。
+
+7. **緩存結果**：
+   - `CacheManager` 將生成的上下文信息緩存，以便快速響應後續請求。
+
+8. **返回結果**：
+   - 將自動完成建議返回給用戶界面顯示。
+
+9. **持續更新**：
+   - 當用戶編輯代碼時，`RecentEditsManager` 記錄這些變化。
+   - `CodebaseIndexer` 可能會定期更新索引以反映最新的代碼狀態。
+
+
+
+將context丟給LLM需要做的工作：
+1.為每個LLM撰寫一個provider
+2.可能需要根據不同的LLM提供不同的prompt
+3.允許使用者選擇不同的provider, 並且可以在不同的provider之間切換
+4.或許可以寫一個provider的管理器,用於管理不同的provider
+5.需要寫一個自動延遲的機制，以便於在用戶停止輸入時再進行自動完成
+
+
+
+

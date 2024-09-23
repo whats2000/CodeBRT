@@ -30,6 +30,18 @@ import {
   VisualStudioCodeBuiltInService,
 } from './services/voice';
 import { convertPdfToMarkdown } from './utils/pdfConverter';
+import { OllamaAutoCompleteService } from './services/autoComplete/OllamaAutoCompleteService';
+import { ContextCollector } from './services/autoComplete/ContextCollector';
+import {
+  CodeAnalyzer,
+  CodebaseIndexer,
+  ImportAnalyzer,
+  LanguageDetector,
+  RecentEditsManager,
+  SimilarityMatcher,
+  SnippetRanker,
+  ParserFactory,
+} from './services/autoComplete/index';
 
 export const activate = async (ctx: vscode.ExtensionContext) => {
   const connectedViews: Partial<Record<ViewKey, vscode.WebviewView>> = {};
@@ -79,6 +91,27 @@ export const activate = async (ctx: vscode.ExtensionContext) => {
     },
   };
 
+  const languageDetector = new LanguageDetector();
+  const importAnalyzer = new ImportAnalyzer(languageDetector);
+
+  const contextCollector = new ContextCollector(
+    100,
+    5000,
+    new RecentEditsManager(),
+    new CodeAnalyzer(languageDetector),
+    new CodebaseIndexer(vscode.workspace.rootPath || '', ParserFactory),
+    importAnalyzer,
+    new SimilarityMatcher([]),
+    languageDetector,
+    new SnippetRanker(),
+  );
+
+  // Initialize OllamaAutoCompleteService
+  const ollamaAutoCompleteService = new OllamaAutoCompleteService(
+    settingsManager,
+    contextCollector,
+  );
+
   /**
    * Trigger an event on all connected views
    * @param key - The event key
@@ -102,6 +135,16 @@ export const activate = async (ctx: vscode.ExtensionContext) => {
    * This uses for communication messages channel
    */
   const api: ViewApi = {
+    getOllamaAutoComplete: async (document, position) => {
+      const suggestions = await ollamaAutoCompleteService.getCompletions(
+        document,
+        position,
+      );
+      return suggestions.map((suggestion) => ({
+        text: suggestion.text,
+        description: suggestion.description || '',
+      }));
+    },
     extractPdfText: async (filePath) => {
       return await convertPdfToMarkdown(filePath);
     },
@@ -384,6 +427,65 @@ export const activate = async (ctx: vscode.ExtensionContext) => {
   });
   registerAndConnectView('workPanel').catch((e) => {
     console.error(e);
+  });
+
+  // Register the completion provider for Ollama autocomplete
+  const completionProvider = vscode.languages.registerCompletionItemProvider(
+    { scheme: 'file', language: '*' },
+    {
+      async provideCompletionItems(
+        document: vscode.TextDocument,
+        position: vscode.Position,
+      ) {
+        try {
+          const suggestions = await api.getOllamaAutoComplete(
+            document,
+            position,
+          );
+
+          return suggestions.map((suggestion) => {
+            const item = new vscode.CompletionItem(
+              suggestion.text,
+              vscode.CompletionItemKind.Snippet,
+            );
+            item.detail = suggestion.description;
+            return item;
+          });
+        } catch (error) {
+          console.error('Error getting Ollama completion:', error);
+          return [];
+        }
+      },
+    },
+  );
+
+  ctx.subscriptions.push(completionProvider);
+
+  // Register command to switch Ollama model for code completion
+  const switchModelCommand = vscode.commands.registerCommand(
+    'extension.switchOllamaCodeCompletionModel',
+    async () => {
+      const models = await ollamaAutoCompleteService.getAvailableModels();
+      const selectedModel = await vscode.window.showQuickPick(models, {
+        placeHolder: 'Select a model for code completion',
+      });
+      if (selectedModel) {
+        await ollamaAutoCompleteService.switchModel(selectedModel);
+        vscode.window.showInformationMessage(
+          `Switched code completion model to ${selectedModel}`,
+        );
+      }
+    },
+  );
+
+  ctx.subscriptions.push(switchModelCommand);
+
+  // Listen for configuration changes
+  vscode.workspace.onDidChangeConfiguration((event) => {
+    if (event.affectsConfiguration('code-brt.ollamaClientHost')) {
+      const newHost = settingsManager.get('ollamaClientHost');
+      ollamaAutoCompleteService.updateClientHost(newHost);
+    }
   });
 };
 
