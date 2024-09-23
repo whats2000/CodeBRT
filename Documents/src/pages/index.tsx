@@ -21,7 +21,7 @@ function HomepageHeader() {
             className="button button--secondary button--lg"
             to="/docs/introduction"
           >
-            CodeBRT Introduction - 5min ⏱️
+            CodeBRT Introduction - 30s ⏱️
           </Link>
         </div>
       </div>

@@ -1,4 +1,4 @@
-# Configuration Guide for Model Service API Key
+# Configuration
 
 This guide provides instructions on how to configure the **Model Service API Key** for the CodeBRT extension. You will learn how to access the settings, input your API key for various model services, and save your configuration.
 
@@ -41,7 +41,7 @@ To configure the API key, follow these steps:
    - Click on the **gear button** on the chat board.
    - A dropdown menu will appear; select **General Settings** from this menu to open the configuration panel.
 
-   ![General Settings Dropdown](./img/general-settings-dropdown.png)
+   ![](/img/getting-started/configuration/settings-dropdown.png)
 
 ---
 
@@ -54,7 +54,7 @@ CodeBRT supports multiple model services, allowing you to choose which service t
 
 2. Next to the input field for the **Model Service API Key**, you’ll find a helpful link to guide you on where to obtain the API key for the selected service.
 
-   ![API Key Field with Help Link](./img/api-key-field-help-link.png)
+   ![](/img/getting-started/configuration/api-key-field-help-link.png)
 
 3. Click the link and follow the steps to generate an API key from the service provider’s website.
 
@@ -81,7 +81,7 @@ CodeBRT supports multiple model services, allowing you to choose which service t
 CodeBRT also supports voice functionality, which requires additional configuration.
 
 You can find the settings and documentation for configuring the voice service in the following file:
-- **[Voice Service Configuration Guide](docs/features/voice-service/configuration.md)**
+- **[Voice Service Configuration Guide](/docs/features/voice-service/configuration.md)**
 
 This guide will provide details on how to set up the voice service and manage its settings.
 

@@ -9,16 +9,9 @@ const sidebars: SidebarsConfig = {
       collapsed: true,
       items: [
         "docs/getting-started/installation",
-        "docs/getting-started/overview",
         "docs/getting-started/configuration",
-        "docs/getting-started/quickstart",
+        "docs/getting-started/overview",
       ],
-    },
-    {
-      type: "category",
-      label: "FAQ",
-      collapsed: true,
-      items: ["docs/faq/faq"],
     },
     {
       type: "category",
@@ -30,7 +23,10 @@ const sidebars: SidebarsConfig = {
           type: "category",
           label: "Voice Service",
           collapsed: true,
-          items: ["docs/features/voice-service/voice-service"],
+          items: [
+            "docs/features/voice-service/configuration",
+            "docs/features/voice-service/overview",
+          ],
         },
         {
           type: "category",
@@ -51,6 +47,12 @@ const sidebars: SidebarsConfig = {
           items: ["docs/features/automated-tasks/automated-tasks"],
         },
       ],
+    },
+    {
+      type: "category",
+      label: "FAQ",
+      collapsed: true,
+      items: ["docs/faq/faq"],
     },
     {
       type: "category",

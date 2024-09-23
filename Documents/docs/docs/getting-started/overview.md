@@ -1,4 +1,4 @@
-# Overview of Basic Usage
+# Overview
 
 Before we begin, ensure that all [installation](./installation.md) and [configuration](./configuration.md) steps are completed correctly.
 
@@ -7,10 +7,10 @@ Before we begin, ensure that all [installation](./installation.md) and [configur
 To start using CodeBRT:
 
 1. Click the **extension button** on the left sidebar to open the CodeBRT dialog.
-   ![Extension Button](./img/extension-button.png)
+   ![Extension Button](/img/getting-started/overview/extension-button.png)
 
 2. To access general settings, click the **gear button** in the upper-right corner of the dialog.
-   ![Settings Button](./img/setting-button.png)
+   ![Settings Button](/img/getting-started/overview/setting-button.png)
 
 In the settings, you can configure API keys, themes, and voice settings, which are essential for fully utilizing CodeBRT.
 
@@ -26,9 +26,9 @@ For instructions on how to configure the API key for different model services, r
 
 Additionally, you can customize the interface's appearance by adjusting the **Theme Primary Color**, **Theme Algorithm**, and **Theme Border Radius** according to your preference.
 
-![API Key Setting](./img/apikey-setting.png)
+![API Key Setting](/img/getting-started/overview/apikey-setting.png)
 
-![Theme Setting](./img/theme-setting.png)
+![Theme Setting](/img/getting-started/overview/theme-setting.png)
 
 > **Note:** The **Theme Algorithm** setting allows you to choose between different color themes for the chat interface, this is automatically adjusted based on the selected primary color.
 
@@ -38,9 +38,9 @@ The **Voice Settings** allow you to configure the Text-to-Speech (TTS) and Speec
 
 If you're using OpenAI's voice options, ensure you have the OpenAI API key configured. If not, you can opt for the **GPT-SoVits** service for voice processing.
 
-For more details on configuring the voice service, please refer to the [Voice Service Configuration Guide](./docs/features/voice-service/configuration.md).
+For more details on configuring the voice service, please refer to the [Voice Service Configuration Guide](/docs/features/voice-service/configuration.md).
 
-![Voice Setting](./img/voice-setting.png)
+![Voice Setting](/img/getting-started/overview/voice-setting.png)
 
 ---
 
@@ -53,14 +53,14 @@ You can select from multiple **model services** such as Gemini, OpenAI, Ollama, 
 1. **Service Selection**: Choose the model service you want to use from the dropdown.
 
 2. **Model Selection**: Once a service is selected, choose from the available models, or customize your own model list to fit your needs.
-   ![Language Model Selection](./img/language-model-selection.png)
+   ![Language Model Selection](/img/getting-started/overview/language-model-selection.png)
 
 ### Sending a Message
 
 1. Use the input box at the bottom of the chat window to type your message.
 
 2. After typing, press the **send button** on the right or press **Enter** to submit your message.
-   ![Input Area](./img/input.png)
+   ![Input Area](/img/getting-started/overview/input.png)
 
 ### Uploading Files and Voice Input
 
@@ -80,7 +80,7 @@ You can view and manage your previous conversations in the **chat history**:
 
 > ***Note: Chat history is saved only when the workspace is open.***
 
-![Chat History](./img/chat-history.png)
+![Chat History](/img/getting-started/overview/chat-history.png)
 
 ---
 
@@ -96,7 +96,7 @@ Within the chatbox, you can perform the following actions:
 
 4. **Regenerate**: If you want a new response to a query, click the **regenerate button** to prompt the model to produce a new output.
 
-![ChatBox](./img/chatbox.png)
+![ChatBox](/img/getting-started/overview/chatbox.png)
 
 ---
 
@@ -109,15 +109,15 @@ In the **Model Advanced Settings**, you can fine-tune the way models respond to 
 By default, the system prompt is set to: **"You are a helpful assistant."**  
 You can modify this to tailor responses to your needs. The system will save any modifications automatically when you close the settings window.
 
-![System Prompt](./img/system-prompt.png)
+![System Prompt](/img/getting-started/overview/system-prompt.png)
 
 ### Prompt List
 
 - Save custom prompts to the **Prompt List**. You can assign each prompt a name, description, and content for easier reuse.
 - Use the **Prompt Filter** to quickly find prompts by custom tags or model types.
 
-![Prompt List](./img/prompt-list.png)
-![Prompt Filter](./img/prompt-filter.png)
+![Prompt List](/img/getting-started/overview/prompt-list.png)
+![Prompt Filter](/img/getting-started/overview/prompt-filter.png)
 
 ---
 
