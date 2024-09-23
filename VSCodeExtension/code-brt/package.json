@@ -70,6 +70,7 @@
     "@types/async-lock": "^1.4.2",
     "@types/cheerio": "^0.22.35",
     "@types/jest": "^29.5.13",
+    "@types/lodash": "^4.17.7",
     "@types/node": "^22.5.5",
     "@types/promise-deferred": "^2.0.5",
     "@types/react": "^18.3.7",

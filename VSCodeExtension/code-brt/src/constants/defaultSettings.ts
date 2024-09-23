@@ -56,6 +56,7 @@ export const DEFAULT_LOCAL_SETTINGS: ExtensionSettingsLocal = {
   },
   systemPrompts: [],
   retainContextWhenHidden: false,
+  lastUsedModelForManualCompletion: 'gemini',
 };
 export const DEFAULT_WORKSPACE_SETTINGS: ExtensionSettingsWorkspace = {
   lastUsedHistoryID: '',

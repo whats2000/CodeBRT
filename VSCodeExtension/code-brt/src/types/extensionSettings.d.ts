@@ -118,6 +118,7 @@ export type ModelServiceSettings = {
     [keyof in ModelServiceType]: string;
   };
   customModels: CustomModelSettings[];
+  lastUsedModelForManualCompletion: ModelServiceType;
 };
 
 /**

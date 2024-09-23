@@ -1,5 +1,3 @@
-import * as vscode from 'vscode';
-
 import type {
   ExtensionSettingsLocal,
   ExtensionSettingsCrossDevice,
@@ -16,7 +14,6 @@ export class ManuallyCompleteService implements IManuallyCompleteService {
   private readonly modelServices: LoadedModelServices;
 
   constructor(
-    context: vscode.ExtensionContext,
     settingsManager: SettingsManager,
     modelServices: LoadedModelServices,
   ) {
@@ -34,7 +31,10 @@ export class ManuallyCompleteService implements IManuallyCompleteService {
   private updateLastUsedModelForManualCompletion(
     modelType: ModelServiceType,
   ): void {
-    this.settingsManager.set('lastUsedModelForManualCompletion', modelType);
+    void this.settingsManager.set(
+      'lastUsedModelForManualCompletion',
+      modelType,
+    );
   }
 
   private getAvailableModelsForType(modelType: ModelServiceType): string[] {

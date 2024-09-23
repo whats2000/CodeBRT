@@ -29,13 +29,13 @@ import {
   OpenaiVoiceService,
   VisualStudioCodeBuiltInService,
 } from './services/voice';
-import { convertPdfToMarkdown } from './utils/pdfConverter';
-import { InlineCompletionProvider } from './services/manuallyCodeComplete/inlineCompletionItemProvider';
-import { supportedLanguages } from './services/manuallyCodeComplete/constants';
 import {
   activateManuallyComplete,
   deactivateManuallyComplete,
-} from './services/manuallyCodeComplete/manuallyCompletionProvider';
+  InlineCompletionProvider,
+  supportedLanguages,
+} from './services/manuallyCodeComplete';
+import { convertPdfToMarkdown } from './utils/pdfConverter';
 
 export const activate = async (ctx: vscode.ExtensionContext) => {
   const connectedViews: Partial<Record<ViewKey, vscode.WebviewView>> = {};

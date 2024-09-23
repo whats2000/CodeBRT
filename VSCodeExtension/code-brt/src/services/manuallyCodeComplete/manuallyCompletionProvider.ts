@@ -14,7 +14,6 @@ export class ManuallyCompletionProvider
   implements vscode.CompletionItemProvider
 {
   constructor(
-    private ctx: vscode.ExtensionContext,
     private settingsManager: SettingsManager,
     private models: LoadedModelServices,
   ) {}
@@ -97,8 +96,9 @@ export class ManuallyCompletionProvider
   async provideCompletionItems(
     document: vscode.TextDocument,
     position: vscode.Position,
-    token: vscode.CancellationToken,
-    ctx: vscode.CompletionContext,
+    // TODO: Add support for completion context
+    _token: vscode.CancellationToken,
+    _ctx: vscode.CompletionContext,
   ): Promise<vscode.CompletionItem[] | vscode.CompletionList> {
     try {
       const prefixLines = document
@@ -190,7 +190,7 @@ export class ManuallyCompletionProvider
         vscode.CompletionItemKind.Snippet,
       );
       completionItem.insertText = snippet;
-      completionItem.detail = `Suggested by ${this.settingsManager.get('lastUsedModel')}`;
+      completionItem.detail = `Suggested by ${this.settingsManager.get('lastUsedModelService')}`;
 
       if (
         languageInfo.endOfLine.length > 0 &&
@@ -226,7 +226,6 @@ export function activateManuallyComplete(
   extensionContext = ctx;
 
   const completionProvider = new ManuallyCompletionProvider(
-    ctx,
     settingsManager,
     models,
   );
