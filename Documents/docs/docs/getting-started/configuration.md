@@ -37,11 +37,14 @@ To configure the API key, follow these steps:
 
 2. **Open the chat board** on the left-hand side of VSCode (this is where CodeBRT's functionality lives).
 
-3. If your device has a smaller screen and you do not immediately see the configuration button:
-   - Click on the **gear button** on the chat board.
-   - A dropdown menu will appear; select **General Settings** from this menu to open the configuration panel.
+3. Click on the **gear button** on the chat board.
+4. A dropdown menu will appear; select **General Settings** from this menu to open the configuration panel.
 
    ![](/img/getting-started/configuration/settings-dropdown.png)
+
+   :::note
+   If your device has a smaller screen and you do not immediately see the configuration button, please expand the panel!
+   :::
 
 ---
 
@@ -50,7 +53,9 @@ To configure the API key, follow these steps:
 CodeBRT supports multiple model services, allowing you to choose which service to connect to. Each service requires its own API key for authentication.
 
 1. In the **General Settings** panel, locate the input field for the specific model service you want to configure.
-   > **Note:** For new users, we recommend starting with the "Gemini" from Google which is free to use.
+   :::tip
+   For new users, we recommend starting with the "Gemini" from Google which is free to use.
+   :::
 
 2. Next to the input field for the **Model Service API Key**, you’ll find a helpful link to guide you on where to obtain the API key for the selected service.
 
@@ -66,13 +71,17 @@ CodeBRT supports multiple model services, allowing you to choose which service t
    - Click **Generate New API Key**.
    - Copy the generated API key to your clipboard.
 
-   > **Note:** Ensure your API key is kept secure and not shared publicly.
+   :::note
+   Ensure your API key is kept secure and not shared publicly.
+   :::
 
 4. After you have the API key, return to the CodeBRT configuration panel and paste the API key into the correct input field corresponding to the model service you selected.
 
 5. Once you have entered the API key, close the configuration panel to automatically save the changes.
 
-> **Important:** Double-check that the key is correctly entered and there are no extra spaces before or after the key.
+:::note
+Double-check that the key is correctly entered and there are no extra spaces before or after the key.
+:::
 
 ---
 

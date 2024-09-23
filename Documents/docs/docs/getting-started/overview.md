@@ -30,7 +30,9 @@ Additionally, you can customize the interface's appearance by adjusting the **Th
 
 ![Theme Setting](/img/getting-started/overview/theme-setting.png)
 
-> **Note:** The **Theme Algorithm** setting allows you to choose between different color themes for the chat interface, this is automatically adjusted based on the selected primary color.
+:::tip
+The **Theme Algorithm** setting allows you to choose between different color themes for the chat interface, this is automatically adjusted based on the selected primary color.
+:::
 
 ### Voice Settings
 
@@ -78,7 +80,9 @@ You can view and manage your previous conversations in the **chat history**:
 - Remove unnecessary chat pages with a single click.
 - All chats will be saved as long as the workspace is open.
 
-> ***Note: Chat history is saved only when the workspace is open.***
+:::note
+Chat history is saved only when the workspace is open.
+:::
 
 ![Chat History](/img/getting-started/overview/chat-history.png)
 
@@ -121,16 +125,20 @@ You can modify this to tailor responses to your needs. The system will save any 
 
 ---
 
-## Web Search & URL Fetcher
+## Tools
+
+CodeBRT offers several additional tools to enhance your experience, you can toggle these features on or off in the settings:
 
 1. **Web Search**: CodeBRT allows models to perform web searches to retrieve real-time data from the internet.
 
 2. **URL Fetcher**: Input a URL, and CodeBRT will fetch relevant information for the model to analyze.
 
+![Tools Toggle](/img/getting-started/overview/tools-toggle.png)
+
 ---
 
 ## Conclusion
 
-This overview covers the basic steps to start using CodeBRT effectively. For more detailed information on each feature, please refer to the individual guides available in the **Features/** section.
+This overview covers the basic steps to start using CodeBRT effectively. For more detailed information on each feature, please refer to the individual guides available in the [Features](/docs/features/overview.md) section.
 
 Explore the full potential of CodeBRT by diving into specific features, such as advanced prompt configurations, web search capabilities, and voice services.
