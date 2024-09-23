@@ -1,14 +1,16 @@
-import React, { useContext, useEffect, useState } from 'react';
+import React from 'react';
 import { FloatButton } from 'antd';
 import {
   FileSearchOutlined,
   GlobalOutlined,
   LoadingOutlined,
 } from '@ant-design/icons';
+import { useDispatch, useSelector } from 'react-redux';
 
 import type { ToolServiceType } from '../../../types';
-import { WebviewContext } from '../../WebviewContext';
-import { MagicWand } from '../../icons';
+import type { AppDispatch, RootState } from '../../redux';
+import { MagicWandOutlined } from '../../icons';
+import { updateAndSaveSetting } from '../../redux/slices/settingsSlice';
 
 export interface ToolActivateFloatButtonsProps {
   floatButtonsXPosition: number;
@@ -18,45 +20,27 @@ export interface ToolActivateFloatButtonsProps {
 export const ToolActivateFloatButtons: React.FC<
   ToolActivateFloatButtonsProps
 > = ({ floatButtonsXPosition, floatButtonBaseYPosition }) => {
-  const { callApi } = useContext(WebviewContext);
+  const dispatch = useDispatch<AppDispatch>();
 
-  const [partialSettings, setPartialSettings] = useState<{
-    enableTools: { [key in ToolServiceType]: { active: boolean } };
-  }>({
-    enableTools: {
-      webSearch: { active: false },
-      urlFetcher: { active: false },
-    },
-  });
-  const [isLoading, setIsLoading] = useState(true);
-
-  useEffect(() => {
-    setIsLoading(true);
-    callApi('getSetting', 'enableTools').then((value) => {
-      setPartialSettings({ enableTools: value });
-      setIsLoading(false);
-    });
-  }, []);
+  const { isLoading, settings } = useSelector(
+    (state: RootState) => state.settings,
+  );
 
   const handleSettingChange = (key: ToolServiceType) => {
-    setIsLoading(true);
-    callApi('setSetting', 'enableTools', {
-      ...partialSettings.enableTools,
-      [key]: { active: !partialSettings.enableTools[key].active },
-    }).then(() => {
-      setPartialSettings((prev) => ({
-        enableTools: {
-          ...prev.enableTools,
-          [key]: { active: !prev.enableTools[key].active },
+    dispatch(
+      updateAndSaveSetting({
+        key: 'enableTools',
+        value: {
+          ...settings.enableTools,
+          [key]: { active: !settings.enableTools[key].active },
         },
-      }));
-      setIsLoading(false);
-    });
+      }),
+    );
   };
 
   return (
     <FloatButton.Group
-      icon={isLoading ? <LoadingOutlined /> : <MagicWand />}
+      icon={isLoading ? <LoadingOutlined /> : <MagicWandOutlined />}
       trigger='click'
       tooltip={'Activate Tools'}
       style={{ bottom: floatButtonBaseYPosition, left: floatButtonsXPosition }}
@@ -64,25 +48,21 @@ export const ToolActivateFloatButtons: React.FC<
       <FloatButton
         icon={<GlobalOutlined />}
         tooltip={
-          partialSettings.enableTools.webSearch.active
+          settings.enableTools.webSearch.active
             ? 'Disable Web Search'
             : 'Enable Web Search'
         }
-        type={
-          partialSettings.enableTools.webSearch.active ? 'primary' : 'default'
-        }
+        type={settings.enableTools.webSearch.active ? 'primary' : 'default'}
         onClick={() => handleSettingChange('webSearch')}
       />
       <FloatButton
         icon={<FileSearchOutlined />}
         tooltip={
-          partialSettings.enableTools.urlFetcher.active
+          settings.enableTools.urlFetcher.active
             ? 'Disable URL Fetcher'
             : 'Enable URL Fetcher'
         }
-        type={
-          partialSettings.enableTools.urlFetcher.active ? 'primary' : 'default'
-        }
+        type={settings.enableTools.urlFetcher.active ? 'primary' : 'default'}
         onClick={() => handleSettingChange('urlFetcher')}
       />
     </FloatButton.Group>

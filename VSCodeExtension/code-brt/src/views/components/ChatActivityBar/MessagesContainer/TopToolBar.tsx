@@ -7,7 +7,7 @@ import {
   CopyOutlined,
   EditOutlined,
   LoadingOutlined,
-  PauseCircleOutlined,
+  RedoOutlined,
   SoundOutlined,
 } from '@ant-design/icons';
 import styled from 'styled-components';
@@ -20,6 +20,7 @@ import type {
 } from '../../../../types';
 import type { RootState } from '../../../redux';
 import { updateCurrentEntry } from '../../../redux/slices/conversationSlice';
+import { CancelOutlined } from '../../../icons';
 
 const RespondCharacter = styled(Typography.Text)<{ $user: string }>`
   color: ${({ $user, theme }) =>
@@ -40,6 +41,7 @@ type MessagesTopToolBarProps = {
   handleConvertTextToVoice: (text: string) => void;
   copied: Record<string, boolean>;
   handleCopy: (text: string, entryId: string) => void;
+  handleRedo: (entryId: string) => void;
   isProcessing: boolean;
 };
 
@@ -55,6 +57,7 @@ export const TopToolBar: React.FC<MessagesTopToolBarProps> = ({
   handleConvertTextToVoice,
   copied,
   handleCopy,
+  handleRedo,
   isProcessing,
 }) => {
   const { token } = theme.useToken();
@@ -193,7 +196,7 @@ export const TopToolBar: React.FC<MessagesTopToolBarProps> = ({
               isStopAudio ? (
                 <LoadingOutlined spin={true} />
               ) : isAudioPlaying ? (
-                <PauseCircleOutlined />
+                <CancelOutlined />
               ) : (
                 <SoundOutlined />
               )
@@ -203,6 +206,16 @@ export const TopToolBar: React.FC<MessagesTopToolBarProps> = ({
             disabled={isStopAudio}
           />
         </Tooltip>
+        {entry.role === 'AI' && (
+          <Button
+            icon={
+              isProcessing ? <LoadingOutlined spin={true} /> : <RedoOutlined />
+            }
+            type={'text'}
+            disabled={isProcessing}
+            onClick={() => handleRedo(entry.id)}
+          />
+        )}
         <Button
           icon={<EditOutlined />}
           type={'text'}

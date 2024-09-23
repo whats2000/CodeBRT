@@ -77,7 +77,11 @@ export const webSearchTool: ToolServicesApi['webSearch'] = async ({
             : visibleText;
         allResults.push({ title, url: link, snippet: truncatedText });
       } catch (error) {
-        allResults.push({ title, url: link, snippet: '' });
+        allResults.push({
+          title,
+          url: link,
+          snippet: 'This page does not allow web scraping.',
+        });
       }
     }
   } catch (error) {

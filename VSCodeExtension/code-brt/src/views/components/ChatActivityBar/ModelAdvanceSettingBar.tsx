@@ -24,7 +24,7 @@ import type { RootState } from '../../redux';
 import { WebviewContext } from '../../WebviewContext';
 import { MODEL_ADVANCE_SETTINGS } from '../../../constants';
 import { SaveSystemPromptModal } from './ModelAdvanceSettingBar/SaveSystemPromptModal';
-import { LoadSystemPromptModal } from './ModelAdvanceSettingBar/LoadSystemPromptModal';
+import { LoadSystemPromptBar } from './ModelAdvanceSettingBar/LoadSystemPromptBar';
 import { setAdvanceSettings } from '../../redux/slices/conversationSlice';
 
 const DEFAULT_ADVANCE_SETTINGS: ConversationModelAdvanceSettings = {
@@ -70,7 +70,7 @@ export const ModelAdvanceSettingBar: React.FC<ModelAdvanceSettingsProps> = ({
         ...advanceSettings,
       });
     } else {
-      handleSave().then();
+      void handleSave();
     }
   }, [isOpen]);
 
@@ -263,7 +263,7 @@ export const ModelAdvanceSettingBar: React.FC<ModelAdvanceSettingsProps> = ({
         onClose={() => setSavePromptOpen(false)}
         currentPromptContent={newAdvanceSettings.systemPrompt}
       />
-      <LoadSystemPromptModal
+      <LoadSystemPromptBar
         open={loadPromptOpen}
         onClose={() => setLoadPromptOpen(false)}
         setNewAdvanceSettings={setNewAdvanceSettings}

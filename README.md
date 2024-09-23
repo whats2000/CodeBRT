@@ -1,68 +1,158 @@
 # CodeBRT
 
-CodeBRT is an AI program generation plugin for VSCode. It helps you quickly generate code through AI, thus improving development efficiency.
+## Overview
 
-## Preview
+**Version**: 0.2.5
 
-![](Files/img/review.png)
+**Status**: _Under Development_  
+⚠️ This project is currently in the Beta phase. Some features are still being developed, and you may encounter bugs or
+incomplete functionalities.
 
-## Installation Instructions
+**CodeBRT** is an AI-powered assistant designed to help users with code-related tasks, from writing and analyzing code
+to managing scheduling tasks. The project is free, open-source, and accessible for everyone.
 
-### 1. Download Node.js
+### Key Features
 
-Please ensure you have installed Node.js version 20.0 or above. You can download and install it from the [Node.js official website](https://nodejs.org/).
+- **Code Conversation Chat**: Interact with the AI to discuss and understand code.
+- **Code Scheduling Tasks**: Manage and automate coding tasks.
+- **Code Completion**: Get code suggestions and completions.
+- **Code Analysis**: Analyze code for improvements, errors, or optimizations.
+- **Code Formatting**: Automatically format code to adhere to best practices.
+- **Voice Assistant**: Hands-free interaction through voice commands and responses.
+- **Image Analysis**: Analyze and understand images for tasks related to code and more.
 
-### 2. Clone the Project
+The project utilizes the **VSCode Extension API** along with various **Language Model APIs**.
 
-Clone this repository to your local machine:
+## Table of Contents
 
-```sh
-git clone https://github.com/whats2000/repo-code-assistant.git
-```
-### 3. Install Dependencies
-Enter the project directory and install the necessary dependencies:
+- [Overview](#overview)
+- [Installation](#installation)
+- [Usage](#usage)
+- [Roadmap](#roadmap)
+- [Contributing](#contributing)
+- [Suggestions or Bugs](#suggestions-or-bugs)
+- [References](#references)
 
-```sh
-cd repo-code-assistant/VSCodeExtension/repo-code-assistant
-npm install
-```
+## Installation
 
-### 4. Run in VSCode
-Open VSCode, select File > Open Folder, and then choose the repo-code-assistant/VSCodeExtension/repo-code-assistant folder. Then open the Run and Debug panel in VSCode, and click the green Run button to run the extension.
+To install and start using CodeBRT, follow these steps:
 
-## Usage Instructions
+- For Use the **VSCode Extension**:
+    1. Download the latest release from
+       the [Marketplace](https://marketplace.visualstudio.com/items?itemName=whats2000.code-brt).
+    2. Install the extension in Visual Studio Code.
 
-1. Start the extension: In VSCode, click the extension button to open the extension dialog.
-   ![](Files/img/tutorial_extension_icon.png)
-2. Choose the appropriate language model: Select the authorized or locally deployed model.
-   ![](Files/img/tutorial_model_choose.png)
-3. Enter API: Open the setting bar and enter the API.
-   ![](Files/img/tutorial_input_api.png)
+- For **Local Development**:
+    1. Clone the repository to your local machine.
+       ```shell
+       git clone https://github.com/whats2000/CodeBRT.git
+       ```
+    2. For main extension:
+        - Open the `VSCodeExtension/code-brt` folder in VSCode.
+          ```shell
+          cd VSCodeExtension/code-brt
+          ```
+        - Install the dependencies by running `npm install` in the terminal.
+          ```shell
+          npm install
+          ```
+    3. Run the extension in VSCode.
+        - Open the folder `VSCodeExtension/code-brt` in VSCode.
+        - Run the extension at `Run and Debug` panel in VSCode.
 
+**Note:** The documentation is still under construction, and features may not be fully documented.
 
-## Features
-- **Quick Code Generation**：Generate code snippets through AI, reducing manual coding time.
-- **Intelligent Suggestions**：Provide intelligent code suggestions based on the current code context.
-- **Multi-language Support**：Support multiple programming languages, including but not limited to JavaScript, Python, Java, etc.
-- **Automatic Formatting and Coding Standards**：Automatically format code to maintain consistent coding style and standards.
-- **Automatic Project Structure Generation**：Create new program projects and generate directory structures based on user requirements.
-- **Composite Model Generation**：Provide an IDE that integrates language model services.
-- **Automatic Generation of Comments, Tests, and Functions**：Generate comments, test cases, and functions based on user needs.
-- **Integrated AI Responses**：Integrate and score responses from multiple AI models.
-- **Image and Voice Features**：Provide TTV & VTT services and Vision analysis functions.
-- **Cross-file Program Generation and Tracking**：Automatically complete and track tasks and progress management from generating project structures to writing and integrating code by the agent.
-- **Code Generation Result Comparison**：Compare the code before and after AI generation, making it easy for users to evaluate the generated code.
+## Usage
 
-## Contribution Guidelines
+Once installed, CodeBRT can be accessed within Visual Studio Code. The key functionalities include:
 
-<!--We welcome everyone to contribute to this project. Please read [CONTRIBUTING.md](CONTRIBUTING.md) to understand the detailed process and guidelines. 
--->
+- **Chat with the AI**: Use the chat panel to interact with the AI for code-related conversations.
+- **Voice Commands**: Activate voice features by issuing voice commands.
 
-## Support
+For a quick start guide, refer to the [Quick Start](https://whats2000.github.io/CodeBRT/docs/introduction)
+section of the documentation.
 
-If you encounter any issues during use, please submit them on the [Issues](https://github.com/whats2000/repo-code-assistant/issues) page, and we will address them as soon as possible.
+Additionally, external plugins are available to extend the project’s capabilities. Explore the available
+plugins [here](https://github.com/whats2000/CodeBRT/tree/main/ExternalPlugIn).
 
-## License
+## Roadmap
 
-<!--This project uses the [MIT License](LICENSE). -->
+Here’s an outline of the upcoming features and improvements for CodeBRT:
+
+### Version 0.1
+
+- [x] Initial project setup
+- [x] VSCode API integration
+- [x] Language model API integration
+- [x] Basic Code Conversation Chat
+
+### Version 0.2
+
+- [x] History customization (tagging and sorting)
+- [x] Custom system instructions
+- [x] Full voice input and output features
+- [x] Open-source GPT-SoVits text-to-voice integration
+
+### Version 0.3 (Upcoming)
+
+- [x] Optimized history rendering
+- [x] Redux for better state management
+- [ ] In-editor chat for code generation
+- [ ] Tab auto-completion
+- [ ] Code integrator to compose code snippets
+
+### Version 0.4 (Upcoming)
+
+- [ ] Tool Calling Feature
+    - [x] Web Search
+    - [x] URL Fetch
+    - [ ] PDF Extraction
+    - [ ] Image Generation
+    - [ ] Code Interpreter
+- [ ] Task Scheduling
+- [ ] Auto task scheduling and completion
+- [ ] Auto-debugging
+- [ ] Local advanced data analysis
+
+### Version 1.0 (Stable Release)
+
+- [ ] Smart localization support (multi-language `.json` generator)
+- [ ] Code-document pairing generation
+- [ ] Code utility test generation
+- [ ] Code style analysis
+- [ ] Improved features from earlier versions
+
+## Contributing
+
+We welcome contributions! Whether you're fixing bugs, adding features, or improving documentation, your help is
+appreciated.
+
+To contribute:
+
+1. Fork the repository on GitHub.
+2. Create a new feature branch.
+3. Make your changes and submit a pull request.
+
+For more information, please visit the [GitHub Repository](https://github.com/whats2000/CodeBRT).
+
+## Suggestions or Bugs
+
+If you have any suggestions, feature requests, or bug reports, please submit them in
+the [Issues section](https://github.com/whats2000/CodeBRT/issues) of the GitHub repository. We value your feedback and
+aim to improve the project based on community input.
+
+## References
+
+CodeBRT is built on various open-source tools and frameworks. Special thanks to the following:
+
+- [The Starter Framework For VSCode Extension](https://github.com/sfc-gh-tkojima/vscode-react-webviews)
+  by [sfc-gh-tkojima](https://github.com/sfc-gh-tkojima)
+- Icons and logos from [SVG Repo](https://www.svgrepo.com/):
+    - [Vscode2 Opened SVG Vector](https://www.svgrepo.com/svg/373400/vscode2-opened) (MIT License)
+    - [Indent SVG Vector](https://www.svgrepo.com/svg/532181/indent) (CC Attribution License)
+    - [Stop Circle SVG Vector](https://www.svgrepo.com/svg/361332/stop-circle) (MIT License)
+
+---
+
+**License**: [GNU GENERAL PUBLIC](https://github.com/whats2000/CodeBRT/blob/main/LICENSE.md)
 

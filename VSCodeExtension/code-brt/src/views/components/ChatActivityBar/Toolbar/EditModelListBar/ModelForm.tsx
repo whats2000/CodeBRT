@@ -57,10 +57,10 @@ export const ModelForm: React.FC<ModelFormProps> = ({
     }),
   );
 
-  const handleSave = (modelsToSave: ModelWithId[]) => {
+  const handleSave = async (modelsToSave: ModelWithId[]) => {
     if (activeModelService === 'loading...' || isLoading) return;
 
-    callApi(
+    await callApi(
       'setAvailableModels',
       activeModelService,
       modelsToSave.map((model) => model.name).filter((model) => model !== ''),
@@ -71,13 +71,11 @@ export const ModelForm: React.FC<ModelFormProps> = ({
           'Available models saved successfully',
           'info',
         ).catch(console.error);
-        setTimeout(() => {
-          handleEditModelListSave(
-            modelsToSave
-              .map((model) => model.name)
-              .filter((model) => model !== ''),
-          );
-        }, 200);
+        handleEditModelListSave(
+          modelsToSave
+            .map((model) => model.name)
+            .filter((model) => model !== ''),
+        );
       })
       .catch((error) => {
         callApi(
@@ -90,7 +88,7 @@ export const ModelForm: React.FC<ModelFormProps> = ({
 
   useEffect(() => {
     if (!isOpen) {
-      handleSave(modelsWithId.current);
+      void handleSave(modelsWithId.current);
     }
   }, [isOpen]);
 

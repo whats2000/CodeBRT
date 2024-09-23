@@ -1,7 +1,6 @@
 import fs from 'node:fs/promises';
 import vscode from 'vscode';
 import path from 'node:path';
-import { v4 as uuidV4 } from 'uuid';
 
 import { ViewKey } from '../views';
 
@@ -9,11 +8,13 @@ export abstract class FileUtils {
   /**
    * Upload a file.
    * @param ctx - The extension context.
-   * @param base64Data - Data Url format string.
+   * @param base64Data - Data URL format string.
+   * @param originalName - The original name of the file being uploaded.
    */
   static async uploadFile(
     ctx: vscode.ExtensionContext,
     base64Data: string,
+    originalName: string,
   ): Promise<string> {
     const matches = base64Data.match(/^data:([A-Za-z-+/]+);base64,(.+)$/);
 
@@ -33,18 +34,46 @@ export abstract class FileUtils {
     }
 
     const buffer = Buffer.from(data, 'base64');
-    const fileName = path.join(
-      mediaDir,
-      `${uuidV4()}.${mimeType.split('/')[1]}`,
-    );
+    let fileName = originalName;
+    let extension = path.extname(fileName);
 
-    try {
-      await fs.writeFile(fileName, buffer);
-    } catch (error) {
-      throw new Error('Failed to write image file: ' + error);
+    // Ensure extension matches the MIME type
+    if (!extension) {
+      extension = `.${mimeType.split('/')[1]}`;
+      fileName += extension;
     }
 
-    return fileName;
+    let fullPath = path.join(mediaDir, fileName);
+    let counter = 1;
+
+    // Check if a file with the same name already exists
+    while (await this.fileExists(fullPath)) {
+      fileName = `${path.basename(originalName, extension)}(${counter})${extension}`;
+      fullPath = path.join(mediaDir, fileName);
+      counter++;
+    }
+
+    try {
+      await fs.writeFile(fullPath, buffer);
+    } catch (error) {
+      throw new Error('Failed to write file: ' + error);
+    }
+
+    return fullPath;
+  }
+
+  /**
+   * Check if a file exists.
+   * @param filePath - The path to the file.
+   * @returns {Promise<boolean>}
+   */
+  static async fileExists(filePath: string): Promise<boolean> {
+    try {
+      await fs.access(filePath);
+      return true;
+    } catch {
+      return false;
+    }
   }
 
   /**

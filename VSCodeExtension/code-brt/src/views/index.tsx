@@ -1,13 +1,12 @@
 import React from 'react';
 import { createRoot } from 'react-dom/client';
-import { Provider } from 'react-redux';
-import { store } from './redux';
 
 import { WebviewApi, WithWebviewContext } from './WebviewContext';
 import { ChatActivityBar } from './components/ChatActivityBar';
 import { WorkPanel } from './components/WorkPanel';
 
 const resetCss = require('antd/dist/reset.css').default.toString();
+const katexCss = require('katex/dist/katex.min.css').default.toString();
 
 /**
  * Views that can be connected to the extension
@@ -40,16 +39,14 @@ export function render<V extends ViewKey>(
 
   // Append styles to the document head
   const styleElement = document.createElement('style');
-  styleElement.innerHTML = `${resetCss}`;
+  styleElement.innerHTML = `${resetCss}\n${katexCss}`;
   document.head.appendChild(styleElement);
 
   const root = createRoot(container);
 
   root.render(
     <WithWebviewContext vscodeApi={vscodeApi}>
-      <Provider store={store}>
-        <Component />
-      </Provider>
+      <Component />
     </WithWebviewContext>,
   );
 }

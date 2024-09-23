@@ -3,17 +3,43 @@
   "private": true,
   "displayName": "CodeBRT",
   "description": "CodeBRT, a LLM/VLM framework for code assistant with multiple models.",
-  "version": "0.2.0",
+  "version": "0.2.5",
   "icon": "static/icon.ico",
   "engines": {
-    "vscode": "^1.92.0",
+    "vscode": "^1.93.0",
     "node": "~v20.16.0",
     "npm": "~10.8.1"
   },
   "license": "LGPL-3.0-or-later",
-  "repository": "https://github.com/whats2000/code-brt",
-  "tags": [],
-  "categories": [],
+  "repository": "https://github.com/whats2000/CodeBRT",
+  "extensionKind": [
+    "ui",
+    "workspace"
+  ],
+  "bugs": {
+    "url": "https://github.com/whats2000/CodeBRT/issues"
+  },
+  "categories": [
+    "AI",
+    "Chat",
+    "Programming Languages",
+    "Education",
+    "Machine Learning",
+    "Snippets"
+  ],
+  "keywords": [
+    "copilot",
+    "chatgpt",
+    "github",
+    "claude",
+    "sonnet",
+    "codegpt",
+    "ai",
+    "llama",
+    "llm",
+    "openai",
+    "gemini"
+  ],
   "publisher": "whats2000",
   "main": "extension.js",
   "scripts": {
@@ -26,48 +52,48 @@
     "format": "prettier 'src/**/*.js' 'src/**/*.jsx' 'src/**/*.ts' 'src/**/*.tsx' './package.json' '.swcrc' './*.js' --no-error-on-unmatched-pattern --write"
   },
   "devDependencies": {
-    "@ant-design/icons": "^5.4.0",
-    "@anthropic-ai/sdk": "^0.26.1",
+    "@ant-design/icons": "^5.5.1",
+    "@anthropic-ai/sdk": "^0.27.3",
     "@babel/core": "^7.25.2",
-    "@babel/preset-env": "^7.25.3",
+    "@babel/preset-env": "^7.25.4",
     "@babel/preset-typescript": "^7.24.7",
     "@dnd-kit/core": "^6.1.0",
     "@dnd-kit/sortable": "^8.0.0",
-    "@google/generative-ai": "^0.17.0",
+    "@google/generative-ai": "^0.19.0",
     "@huggingface/inference": "^2.8.0",
+    "@opendocsg/pdf2md": "^0.1.31",
     "@pmmmwh/react-refresh-webpack-plugin": "^0.5.15",
     "@reduxjs/toolkit": "^2.2.7",
     "@swc/cli": "^0.4.0",
-    "@swc/core": "^1.7.11",
+    "@swc/core": "^1.7.26",
     "@swc/jest": "^0.2.36",
     "@types/async-lock": "^1.4.2",
     "@types/cheerio": "^0.22.35",
-    "@types/jest": "^29.5.12",
-    "@types/lodash": "^4.17.7",
-    "@types/node": "^22.4.0",
+    "@types/jest": "^29.5.13",
+    "@types/node": "^22.5.5",
     "@types/promise-deferred": "^2.0.5",
-    "@types/react": "^18.3.3",
+    "@types/react": "^18.3.7",
     "@types/react-dom": "^18.3.0",
     "@types/react-syntax-highlighter": "^15.5.13",
     "@types/uuid": "^10.0.0",
-    "@types/vscode": "^1.92.0",
-    "@vscode/vsce": "^3.0.0",
-    "antd": "^5.20.1",
+    "@types/vscode": "^1.93.0",
+    "@vscode/vsce": "^3.1.0",
+    "antd": "^5.20.6",
     "async-lock": "^1.4.1",
-    "axios": "^1.7.4",
+    "axios": "^1.7.7",
     "babel-jest": "^29.7.0",
     "cheerio": "^1.0.0",
-    "cohere-ai": "^7.12.0",
+    "cohere-ai": "^7.13.2",
     "copy-webpack-plugin": "^12.0.2",
     "css-loader": "^7.1.2",
-    "date-fns": "^3.6.0",
-    "groq-sdk": "^0.5.0",
+    "date-fns": "^4.1.0",
+    "groq-sdk": "^0.7.0",
     "jest": "^29.7.0",
     "lodash": "^4.17.21",
     "markdown-to-text": "^0.1.1",
     "node-mic": "^1.0.1",
-    "ollama": "^0.5.8",
-    "openai": "^4.56.0",
+    "ollama": "^0.5.9",
+    "openai": "^4.62.1",
     "prettier": "3.3.3",
     "prettier-plugin-organize-imports": "^4.0.0",
     "promise-deferred": "^2.0.4",
@@ -78,17 +104,21 @@
     "react-redux": "^9.1.2",
     "react-refresh": "^0.14.2",
     "react-syntax-highlighter": "^15.5.0",
+    "react-virtuoso": "^4.10.4",
+    "rehype-katex": "^7.0.1",
+    "remark-gfm": "^4.0.0",
+    "remark-math": "^6.0.0",
     "simple-text-tokenizer": "^1.0.1",
-    "styled-components": "^6.1.12",
+    "styled-components": "^6.1.13",
     "swc-loader": "^0.2.6",
     "terminate": "^2.8.0",
-    "ts-jest": "^29.2.4",
+    "ts-jest": "^29.2.5",
     "ts-node": "^10.9.2",
-    "typescript": "^5.5.4",
+    "typescript": "^5.6.2",
     "uuid": "^10.0.0",
-    "webpack": "^5.93.0",
+    "webpack": "^5.94.0",
     "webpack-cli": "^5.1.4",
-    "webpack-dev-server": "^5.0.4"
+    "webpack-dev-server": "^5.1.0"
   },
   "activationEvents": [],
   "contributes": {
@@ -175,19 +205,27 @@
           "description": "Primary color for the theme"
         },
         "code-brt.themeAlgorithm": {
-          "type": "string",
-          "default": "darkAlgorithm",
+          "type": [
+            "array",
+            "string"
+          ],
+          "items": {
+            "type": "string",
+            "enum": [
+              "darkAlgorithm",
+              "defaultAlgorithm",
+              "compactAlgorithm"
+            ],
+            "enumDescriptions": [
+              "Dark algorithm",
+              "Light algorithm",
+              "Compact algorithm"
+            ]
+          },
+          "default": [
+            "darkAlgorithm"
+          ],
           "description": "Algorithm for the theme",
-          "enum": [
-            "darkAlgorithm",
-            "defaultAlgorithm",
-            "compactAlgorithm"
-          ],
-          "enumDescriptions": [
-            "Dark algorithm",
-            "Light algorithm",
-            "Compact algorithm"
-          ],
           "markdownDescription": "The algorithm to use for the theme. The `darkAlgorithm` is a dark theme with a dark background and light text. The `defaultAlgorithm` is a light theme with a light background and dark text. The `compactAlgorithm` is a compact theme with a dark background and light text.",
           "markdownEnumDescriptions": [
             "Dark algorithm",
@@ -201,11 +239,7 @@
           "description": "Border radius for the theme",
           "markdownDescription": "The border radius for the theme. The default value is 4.",
           "minimum": 0,
-          "maximum": 100,
-          "markdownEnumDescriptions": [
-            "0",
-            "100"
-          ]
+          "maximum": 100
         },
         "code-brt.hljsTheme": {
           "type": "string",
@@ -311,6 +345,18 @@
             "xt256",
             "zenburn"
           ]
+        },
+        "code-brt.lastUsedHistoryID": {
+          "type": "string",
+          "default": "",
+          "description": "Last used history ID",
+          "markdownDescription": "The ID of the last used history."
+        },
+        "code-brt.doubleEnterSendMessages": {
+          "type": "boolean",
+          "default": false,
+          "description": "Double enter to send messages for preventing accidental sending",
+          "markdownDescription": "Whether to use double enter to send messages for preventing accidental sending."
         }
       }
     }

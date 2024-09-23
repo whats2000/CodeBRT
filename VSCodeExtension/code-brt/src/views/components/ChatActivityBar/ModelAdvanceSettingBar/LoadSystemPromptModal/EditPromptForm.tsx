@@ -16,7 +16,11 @@ export const EditPromptForm: React.FC<EditPromptFormProps> = ({
   onClose,
   onSave,
 }) => {
-  const [form] = Form.useForm();
+  const [form] = Form.useForm<{
+    name: string;
+    description: string;
+    content: string;
+  }>();
 
   useEffect(() => {
     if (open && prompt) {

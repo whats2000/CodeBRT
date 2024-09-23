@@ -1,9 +1,16 @@
-import { createSlice, PayloadAction } from '@reduxjs/toolkit';
+import { createAsyncThunk, PayloadAction } from '@reduxjs/toolkit';
+import { createSlice } from '@reduxjs/toolkit';
 import { v4 as uuidV4 } from 'uuid';
 
 import type { ConversationEntry, ConversationHistory } from '../../../types';
+import type { CallAPI } from '../../WebviewContext';
+import type { RootState } from '../store';
+import { updateAndSaveSetting } from './settingsSlice';
 
-const initialState: ConversationHistory & { tempId: string | null } = {
+const initialState: ConversationHistory & {
+  tempId: string | null;
+  isLoading: boolean;
+} = {
   create_time: 0,
   update_time: 0,
   root: '',
@@ -20,14 +27,109 @@ const initialState: ConversationHistory & { tempId: string | null } = {
   },
   entries: {},
   tempId: null,
+  isLoading: false,
 };
+
+export const initLoadHistory = createAsyncThunk<
+  void,
+  void,
+  {
+    state: RootState;
+    extra: {
+      callApi: CallAPI;
+    };
+  }
+>(
+  'conversation/initLoadHistory',
+  async (_args, { getState, dispatch, extra: { callApi } }) => {
+    const state = getState().conversation;
+    if (state.isLoading) {
+      return;
+    }
+
+    dispatch(startLoading());
+
+    try {
+      const lastUsedHistoryID = await callApi(
+        'getSettingByKey',
+        'lastUsedHistoryID',
+      );
+      const history = await callApi('switchHistory', lastUsedHistoryID);
+
+      if (!history) {
+        dispatch(finishLoading());
+        return;
+      }
+
+      dispatch(setConversationHistory(history));
+      dispatch(finishLoading());
+    } catch (error) {
+      callApi(
+        'alertMessage',
+        `Failed to load conversation history: ${error}`,
+        'error',
+      ).catch(console.error);
+    }
+  },
+);
+
+export const switchHistory = createAsyncThunk<
+  void,
+  string,
+  {
+    state: RootState;
+    extra: {
+      callApi: CallAPI;
+    };
+  }
+>(
+  'conversation/switchHistory',
+  async (historyID, { getState, dispatch, extra: { callApi } }) => {
+    const state = getState().conversation;
+    if (state.isLoading || state.root === historyID) {
+      return;
+    }
+
+    try {
+      dispatch(startLoading());
+      const newHistory = await callApi('switchHistory', historyID);
+
+      if (!newHistory) {
+        dispatch(finishLoading());
+        return;
+      }
+
+      dispatch(setConversationHistory(newHistory));
+
+      // Save the last used history ID
+      dispatch(
+        updateAndSaveSetting({ key: 'lastUsedHistoryID', value: historyID }),
+      );
+
+      dispatch(finishLoading());
+    } catch (error) {
+      callApi(
+        'alertMessage',
+        `Failed to switch conversation history: ${error}`,
+        'error',
+      ).catch(console.error);
+      dispatch(finishLoading());
+    }
+  },
+);
 
 const conversationSlice = createSlice({
   name: 'conversation',
   initialState,
   reducers: {
+    startLoading(state) {
+      state.isLoading = true;
+    },
+    finishLoading(state) {
+      state.isLoading = false;
+    },
     setConversationHistory(_state, action: PayloadAction<ConversationHistory>) {
-      return { ...action.payload, tempId: null };
+      return { ...action.payload, tempId: null, isLoading: false };
     },
     handleStreamResponse(state, action: PayloadAction<string>) {
       const { tempId, entries } = state;
@@ -105,6 +207,8 @@ const conversationSlice = createSlice({
 });
 
 export const {
+  startLoading,
+  finishLoading,
   setConversationHistory,
   handleStreamResponse,
   addEntry,

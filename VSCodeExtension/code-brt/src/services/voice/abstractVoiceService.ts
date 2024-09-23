@@ -118,7 +118,7 @@ export abstract class AbstractVoiceService implements VoiceService {
       const voicePath = await this.saveVoice(response as Uint8Array);
 
       this.voicePlaybackQueue.push(voicePath);
-      this.processVoicePlaybackQueue().then();
+      void this.processVoicePlaybackQueue();
     }
 
     this.isTextToVoiceProcessing = false;
@@ -173,11 +173,9 @@ export abstract class AbstractVoiceService implements VoiceService {
   protected sendTextToVoiceRequest(
     _text: string,
   ): Promise<Uint8Array | undefined> {
-    vscode.window
-      .showErrorMessage(
-        'The sendRequest method is not implemented, how did you get here?',
-      )
-      .then();
+    void vscode.window.showErrorMessage(
+      'The sendRequest method is not implemented, how did you get here?',
+    );
 
     return Promise.resolve(undefined);
   }
@@ -188,11 +186,9 @@ export abstract class AbstractVoiceService implements VoiceService {
    * @protected
    */
   protected sendVoiceToTextRequest(_filePath: string): Promise<string> {
-    vscode.window
-      .showErrorMessage(
-        'The sendRequest method is not implemented, how did you get here?',
-      )
-      .then();
+    void vscode.window.showErrorMessage(
+      'The sendRequest method is not implemented, how did you get here?',
+    );
 
     return Promise.resolve('');
   }
@@ -282,6 +278,6 @@ export abstract class AbstractVoiceService implements VoiceService {
    * Stops the voice recording and clears the queues.
    */
   public async stopVoiceToText(): Promise<void> {
-    this.audioRecorder.stop().then();
+    void this.audioRecorder.stop();
   }
 }

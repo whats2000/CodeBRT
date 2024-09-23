@@ -1,4 +1,4 @@
-import React, { useState, useContext, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import type { GlobalToken } from 'antd';
 import {
   List,
@@ -20,15 +20,17 @@ import {
   FilterOutlined,
 } from '@ant-design/icons';
 import styled from 'styled-components';
+import { useDispatch, useSelector } from 'react-redux';
 
 import type {
   ConversationModelAdvanceSettings,
   SystemPrompt,
   Tag as TagType,
 } from '../../../../types';
-import { WebviewContext } from '../../../WebviewContext';
+import type { AppDispatch, RootState } from 'src/views/redux';
 import { PromptTags } from './LoadSystemPromptModal/PromptTags';
 import { EditPromptForm } from './LoadSystemPromptModal/EditPromptForm';
+import { updateAndSaveSetting } from '../../../redux/slices/settingsSlice';
 
 const StyledDrawer = styled(Drawer)`
   & .ant-drawer-header {
@@ -54,7 +56,7 @@ const StyledListItem = styled(List.Item)<{
   }
 `;
 
-type LoadSystemPromptModalProps = {
+type LoadSystemPromptBarProps = {
   open: boolean;
   onClose: () => void;
   setNewAdvanceSettings: React.Dispatch<
@@ -62,15 +64,14 @@ type LoadSystemPromptModalProps = {
   >;
 };
 
-export const LoadSystemPromptModal: React.FC<LoadSystemPromptModalProps> = ({
+export const LoadSystemPromptBar: React.FC<LoadSystemPromptBarProps> = ({
   open,
   onClose,
   setNewAdvanceSettings,
 }) => {
-  const { callApi } = useContext(WebviewContext);
   const { token } = theme.useToken();
 
-  const [showTags, setShowTags] = useState(false);
+  const [showFilter, setShowFilter] = useState(false);
   const [allTags, setAllTags] = useState<string[]>([]);
   const [filterTags, setFilterTags] = useState<string[]>([]);
   const [filterName, setFilterName] = useState<string>(''); // State for name filter
@@ -78,37 +79,34 @@ export const LoadSystemPromptModal: React.FC<LoadSystemPromptModalProps> = ({
   const [filteredPrompts, setFilteredPrompts] = useState<SystemPrompt[]>([]);
   const [isEditPromptFormOpen, setIsEditPromptFormOpen] = useState(false);
   const [editPrompt, setEditPrompt] = useState<SystemPrompt | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
+
+  const dispatch = useDispatch<AppDispatch>();
+  const { settings, isLoading } = useSelector(
+    (state: RootState) => state.settings,
+  );
 
   // Centralized tag colors mapping
   const tagColors = useRef<{ [key: string]: string }>({});
 
   useEffect(() => {
     if (open) {
-      setIsLoading(true);
-      callApi('getSetting', 'systemPrompts')
-        .then((response) => {
-          const promptsWithTags = response.map((prompt: SystemPrompt) => ({
-            ...prompt,
-            tags: Array.isArray(prompt.tags) ? prompt.tags : [],
-          }));
+      const promptsWithTags = settings.systemPrompts.map(
+        (prompt: SystemPrompt) => ({
+          ...prompt,
+          tags: Array.isArray(prompt.tags) ? prompt.tags : [],
+        }),
+      );
 
-          // Initialize tagColors ref with existing tags
-          promptsWithTags.forEach((prompt: SystemPrompt) => {
-            prompt.tags.forEach((tag) => {
-              if (!tagColors.current[tag.name]) {
-                tagColors.current[tag.name] = tag.color;
-              }
-            });
-          });
-
-          setSystemPrompts(promptsWithTags);
-          setIsLoading(false);
-        })
-        .catch((error) => {
-          console.error('Failed to get system prompts:', error);
-          setIsLoading(false);
+      // Initialize tagColors ref with existing tags
+      promptsWithTags.forEach((prompt: SystemPrompt) => {
+        prompt.tags.forEach((tag) => {
+          if (!tagColors.current[tag.name]) {
+            tagColors.current[tag.name] = tag.color;
+          }
         });
+      });
+
+      setSystemPrompts(promptsWithTags);
     }
   }, [open]);
 
@@ -150,9 +148,9 @@ export const LoadSystemPromptModal: React.FC<LoadSystemPromptModalProps> = ({
     const updatedPrompts = systemPrompts.filter((prompt) => prompt.id !== id);
     setSystemPrompts(updatedPrompts);
 
-    callApi('setSetting', 'systemPrompts', updatedPrompts).catch((error) => {
-      console.error('Failed to delete system prompt:', error);
-    });
+    dispatch(
+      updateAndSaveSetting({ key: 'systemPrompts', value: updatedPrompts }),
+    );
   };
 
   const handleDrawerClose = () => {
@@ -161,10 +159,9 @@ export const LoadSystemPromptModal: React.FC<LoadSystemPromptModalProps> = ({
       return;
     }
 
-    // Save the updated system prompts when the drawer is closed
-    callApi('setSetting', 'systemPrompts', systemPrompts).catch((error) => {
-      console.error('Failed to update system prompts:', error);
-    });
+    dispatch(
+      updateAndSaveSetting({ key: 'systemPrompts', value: systemPrompts }),
+    );
 
     onClose();
   };
@@ -215,11 +212,14 @@ export const LoadSystemPromptModal: React.FC<LoadSystemPromptModalProps> = ({
         title={
           <Flex justify={'space-between'} align={'center'}>
             <Typography.Text>Load System Prompt</Typography.Text>
-            <Tooltip title='Show Tags'>
+            <Tooltip
+              title={showFilter ? 'Hide Filters' : 'Show Filters'}
+              placement={'left'}
+            >
               <Button
-                type={showTags ? 'primary' : 'default'}
+                type={showFilter ? 'primary' : 'default'}
                 icon={<FilterOutlined />}
-                onClick={() => setShowTags((prev) => !prev)}
+                onClick={() => setShowFilter((prev) => !prev)}
               />
             </Tooltip>
           </Flex>
@@ -229,7 +229,7 @@ export const LoadSystemPromptModal: React.FC<LoadSystemPromptModalProps> = ({
         placement={'right'}
         loading={isLoading}
       >
-        {showTags && (
+        {showFilter && (
           <div style={{ padding: 16 }}>
             <AutoComplete
               style={{ width: '100%', marginBottom: 16 }}
@@ -259,7 +259,7 @@ export const LoadSystemPromptModal: React.FC<LoadSystemPromptModalProps> = ({
           </div>
         )}
         <List
-          dataSource={filteredPrompts}
+          dataSource={showFilter ? filteredPrompts : systemPrompts}
           renderItem={(item) => (
             <StyledListItem
               $token={token}
@@ -303,7 +303,7 @@ export const LoadSystemPromptModal: React.FC<LoadSystemPromptModalProps> = ({
                     <Typography.Text>{item.name}</Typography.Text>
                   </Popover>
                 </div>
-                {showTags && (
+                {showFilter && (
                   <PromptTags
                     id={item.id}
                     tags={item.tags}

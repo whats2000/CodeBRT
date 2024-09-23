@@ -5,13 +5,13 @@ import { ConfigProvider, FloatButton, Tooltip } from 'antd';
 import { ControlOutlined } from '@ant-design/icons';
 import { useSelector, useDispatch } from 'react-redux';
 
-import type { ModelServiceType } from '../../types';
-import { RootState, store } from '../redux';
-import { INPUT_MESSAGE_KEY, UPLOADED_IMAGES_KEY } from '../../constants';
+import { AppDispatch, RootState } from '../redux';
+import { UPLOADED_FILES_KEY } from '../../constants';
 import {
   addEntry,
   addTempAIResponseEntry,
   handleStreamResponse,
+  initLoadHistory,
   replaceTempEntry,
 } from '../redux/slices/conversationSlice';
 import { WebviewContext } from '../WebviewContext';
@@ -21,6 +21,12 @@ import { InputContainer } from './ChatActivityBar/InputContainer';
 import { MessagesContainer } from './ChatActivityBar/MessagesContainer';
 import { ToolActivateFloatButtons } from './ChatActivityBar/ToolActivateFloatButtons';
 import { ModelAdvanceSettingBar } from './ChatActivityBar/ModelAdvanceSettingBar';
+import {
+  handleFilesUpload,
+  clearUploadedFiles,
+} from '../redux/slices/fileUploadSlice';
+import { initModelService } from '../redux/slices/modelServiceSlice';
+import { fetchSettings } from '../redux/slices/settingsSlice';
 
 const Container = styled(Content)`
   display: flex;
@@ -35,39 +41,47 @@ export const ChatActivityBar = () => {
   const { callApi, addListener, removeListener } = useContext(WebviewContext);
   const { innerWidth } = useWindowSize();
 
-  const [inputMessage, setInputMessage] = useState(
-    localStorage.getItem(INPUT_MESSAGE_KEY) || '',
-  );
   const [isProcessing, setIsProcessing] = useState(false);
-  const [activeModelService, setActiveModelService] = useState<
-    ModelServiceType | 'loading...'
-  >('loading...');
-  const [uploadedImages, setUploadedImages] = useState<string[]>(
-    JSON.parse(localStorage.getItem(UPLOADED_IMAGES_KEY) || '[]'),
-  );
-  const [isActiveModelLoading, setIsActiveModelLoading] = useState(false);
   const [floatButtonBaseYPosition, setFloatButtonBaseYPosition] = useState(60);
   const [floatButtonsXPosition, setFloatButtonsXPosition] = useState(0);
   const [isModelAdvanceSettingBarOpen, setIsModelAdvanceSettingBarOpen] =
     useState(false);
 
-  const messageEndRef = useRef<HTMLDivElement>(null);
-  const messagesContainerRef = useRef<HTMLDivElement>(null);
   const inputContainerRef = useRef<HTMLDivElement>(null);
 
-  const dispatch = useDispatch();
+  const dispatch = useDispatch<AppDispatch>();
+
   const conversationHistory = useSelector(
     (state: RootState) => state.conversation,
+  );
+  const { activeModelService } = useSelector(
+    (state: RootState) => state.modelService,
+  );
+  const uploadedFiles = useSelector(
+    (state: RootState) => state.fileUpload.uploadedFiles,
   );
 
   const [theme, setTheme] = useThemeConfig();
 
-  const dropRef = useDragAndDrop((files) => handleImageUpload(files));
+  const dropRef = useDragAndDrop((files) => dispatch(handleFilesUpload(files)));
   const bufferRef = useRef<string>('');
   const isProcessingRef = useRef<boolean>(false);
-  const processingIntervalRef = useRef<NodeJS.Timeout | null>(null);
+  const tempIdRef = useRef<string | null>(null);
 
   useEffect(() => {
+    // Load the settings
+    dispatch(fetchSettings())
+      .then(() => {
+        // Load the lasted used model service
+        dispatch(initModelService());
+      })
+      .then(() => {
+        // Load the lasted used conversation history
+        dispatch(initLoadHistory());
+      })
+      .catch(console.error);
+
+    // For receiving stream response
     const handleStreamResponseEvent = (responseFromMessage: string) => {
       bufferRef.current += responseFromMessage;
 
@@ -122,94 +136,24 @@ export const ChatActivityBar = () => {
   }, [inputContainerRef]);
 
   useEffect(() => {
-    setIsActiveModelLoading(true);
-    // Load the last used model
-    callApi('getSetting', 'lastUsedModel')
-      .then((lastUsedModel) => {
-        if (lastUsedModel) {
-          setActiveModelService(lastUsedModel as ModelServiceType);
-        }
-        setIsActiveModelLoading(false);
-      })
-      .catch((error) => {
-        callApi(
-          'alertMessage',
-          `Failed to get last used model: ${error}`,
-          'error',
-        ).catch(console.error);
-        setIsActiveModelLoading(false);
-      });
-  }, []);
+    localStorage.setItem(UPLOADED_FILES_KEY, JSON.stringify(uploadedFiles));
+  }, [uploadedFiles]);
 
   useEffect(() => {
-    if (activeModelService === 'loading...') return;
-
-    callApi('setSetting', 'lastUsedModel', activeModelService).catch((error) =>
-      callApi(
-        'alertMessage',
-        `Failed to save last used model: ${error}`,
-        'error',
-      ).catch(console.error),
-    );
-  }, [activeModelService]);
-
-  useEffect(() => {
-    localStorage.setItem(INPUT_MESSAGE_KEY, inputMessage);
-  }, [inputMessage]);
-
-  useEffect(() => {
-    localStorage.setItem(UPLOADED_IMAGES_KEY, JSON.stringify(uploadedImages));
-  }, [uploadedImages]);
-
-  const scrollToBottom = (smooth: boolean = true) => {
-    if (messagesContainerRef.current) {
-      if (smooth) {
-        messageEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-      } else {
-        messageEndRef.current?.scrollIntoView();
-      }
-    }
-  };
-
-  const isNearBottom = () => {
-    const threshold = 300;
-    if (!messagesContainerRef.current) return false;
-
-    const { scrollTop, scrollHeight, clientHeight } =
-      messagesContainerRef.current;
-    const position = scrollHeight - scrollTop - clientHeight;
-
-    return position < threshold;
-  };
-
-  const startScrollInterval = () => {
-    if (!processingIntervalRef.current) {
-      processingIntervalRef.current = setInterval(() => {
-        if (isNearBottom()) {
-          scrollToBottom(false);
-        }
-      }, 50);
-    }
-  };
-
-  const stopScrollInterval = () => {
-    if (processingIntervalRef.current) {
-      clearInterval(processingIntervalRef.current);
-      processingIntervalRef.current = null;
-    }
-  };
+    tempIdRef.current = conversationHistory.tempId;
+  }, [conversationHistory.tempId]);
 
   const processMessage = async ({
     message,
     parentId,
-    images = [],
+    files = [],
     isEdited = false,
   }: {
     message: string;
     parentId: string;
-    images?: string[];
+    files?: string[];
     isEdited?: boolean;
-  }) => {
+  }): Promise<void> => {
     if (
       isProcessing ||
       activeModelService === 'loading...' ||
@@ -218,14 +162,16 @@ export const ChatActivityBar = () => {
       return;
     }
     setIsProcessing(true);
-    startScrollInterval();
+
+    // TODO: Support PDF Extractor at later version current only pass the images
+    files = files.filter((file: string) => !file.endsWith('.pdf'));
 
     const userEntry = await callApi(
       'addConversationEntry',
       parentId,
       'user',
       message,
-      images,
+      files,
       activeModelService,
     );
 
@@ -236,16 +182,15 @@ export const ChatActivityBar = () => {
       'getLanguageModelResponse',
       activeModelService,
       message,
-      images.length > 0 ? images : undefined,
+      files.length > 0 ? files : undefined,
       isEdited ? userEntry.id : undefined,
       true,
       true,
     )
       .then(async (response) => {
         const responseText = await response;
-        if (!store.getState().conversation?.tempId) {
+        if (!tempIdRef.current) {
           setIsProcessing(false);
-          stopScrollInterval();
           return;
         }
 
@@ -261,15 +206,11 @@ export const ChatActivityBar = () => {
         dispatch(replaceTempEntry(aiEntry));
 
         if (!isEdited) {
-          setInputMessage('');
-          setUploadedImages([]);
+          dispatch(clearUploadedFiles());
         }
-
-        stopScrollInterval();
 
         setTimeout(() => {
           setIsProcessing(false);
-          scrollToBottom(true);
         }, 1000);
       })
       .catch((error) => {
@@ -282,82 +223,18 @@ export const ChatActivityBar = () => {
       });
   };
 
-  const sendMessage = async () => {
-    await processMessage({
-      message: inputMessage,
-      parentId: conversationHistory.current,
-      images: uploadedImages,
-    });
-  };
-
-  const handleEditUserMessageSave = async (
-    entryId: string,
-    editedMessage: string,
-  ) => {
-    const entry = conversationHistory.entries[entryId];
-    await processMessage({
-      message: editedMessage,
-      parentId: entry.parent ?? '',
-      images: entry.images,
-      isEdited: true,
-    });
-  };
-
-  const handleImageUpload = (files: FileList | null) => {
-    if (!(files && files.length > 0)) {
-      return;
-    }
-
-    const fileArray = Array.from(files);
-    fileArray.map((file) => {
-      const reader = new FileReader();
-      reader.readAsDataURL(file);
-      reader.onload = async () => {
-        if (reader.result) {
-          const fileName = await callApi(
-            'uploadImage',
-            reader.result as string,
-          );
-
-          setUploadedImages((prevImages) => [...prevImages, fileName]);
-        }
-      };
-    });
-  };
-
-  const handleImageRemove = async (imagePath: string) => {
-    await callApi('deleteImage', imagePath);
-    setUploadedImages((prev) => prev.filter((path) => path !== imagePath));
-  };
-
   return (
     <ConfigProvider theme={theme}>
       <Container ref={dropRef}>
-        <Toolbar
-          activeModelService={activeModelService}
-          isActiveModelLoading={isActiveModelLoading}
-          setIsActiveModelLoading={setIsActiveModelLoading}
-          setActiveModelService={setActiveModelService}
-          setTheme={setTheme}
-        />
+        <Toolbar setTheme={setTheme} />
         <MessagesContainer
-          modelType={activeModelService}
-          isActiveModelLoading={isActiveModelLoading}
-          messagesContainerRef={messagesContainerRef}
           isProcessing={isProcessing}
-          scrollToBottom={scrollToBottom}
-          messageEndRef={messageEndRef}
-          handleEditUserMessageSave={handleEditUserMessageSave}
+          processMessage={processMessage}
         />
         <InputContainer
           inputContainerRef={inputContainerRef}
-          uploadedImages={uploadedImages}
-          handleImageUpload={handleImageUpload}
-          inputMessage={inputMessage}
-          setInputMessage={setInputMessage}
-          sendMessage={sendMessage}
+          processMessage={processMessage}
           isProcessing={isProcessing}
-          handleImageRemove={handleImageRemove}
         />
       </Container>
       <Tooltip title={'Model Advance Settings'} placement={'left'}>

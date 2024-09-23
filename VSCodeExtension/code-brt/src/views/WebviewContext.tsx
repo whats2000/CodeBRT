@@ -10,6 +10,8 @@ import type {
   ViewApiResponse,
   ViewEvents,
 } from '../types';
+import { Provider } from 'react-redux';
+import { configureAppStore } from './redux';
 
 /**
  * Type definitions for context values of the Webview.
@@ -32,7 +34,7 @@ export type WebviewApi = ReturnType<typeof acquireVsCodeApi>;
  * @param params - Parameters to be passed to the API method.
  * @returns A Promise containing the result of the API call.
  */
-type CallAPI = <K extends keyof ViewApi>(
+export type CallAPI = <K extends keyof ViewApi>(
   key: K,
   ...params: Parameters<ViewApi[K]>
 ) => Promise<ReturnType<ViewApi[K]>>;
@@ -145,9 +147,13 @@ export const WithWebviewContext = ({
   vscodeApi: WebviewApi;
   children: React.ReactNode;
 }) => {
+  const store = configureAppStore(
+    webviewContextValue(vscodeApi.postMessage).callApi,
+  );
+
   return (
     <WebviewContext.Provider value={webviewContextValue(vscodeApi.postMessage)}>
-      {children}
+      <Provider store={store}>{children}</Provider>
     </WebviewContext.Provider>
   );
 };

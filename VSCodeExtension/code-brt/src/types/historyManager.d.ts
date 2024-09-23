@@ -61,13 +61,13 @@ export type IHistoryManager = {
    * Switch the current history by ID
    * @param historyID The history ID
    */
-  switchHistory(historyID: string): Promise<void>;
+  switchHistory(historyID: string): Promise<ConversationHistory>;
 
   /**
    * Get the histories index
    * @returns The history index
    */
-  getHistories(): ConversationHistoryIndexList;
+  getHistoryIndexes(): ConversationHistoryIndexList;
 
   /**
    * Delete a history by ID

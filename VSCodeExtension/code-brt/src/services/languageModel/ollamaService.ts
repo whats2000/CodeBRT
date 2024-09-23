@@ -16,6 +16,7 @@ import { ToolService } from '../tools';
 
 export class OllamaService extends AbstractLanguageModelService {
   private runningModel = '';
+  private stopStreamFlag: boolean = false;
 
   constructor(
     context: vscode.ExtensionContext,
@@ -209,6 +210,32 @@ export class OllamaService extends AbstractLanguageModelService {
     return { client, conversationHistory, model };
   }
 
+  private convertContentToToolCall(responseText: string): ToolCall | undefined {
+    try {
+      // Parse the JSON string to an object
+      const parsed = JSON.parse(responseText);
+
+      // Ensure the parsed object has the required structure
+      if (parsed && parsed.name && parsed.parameters) {
+        return {
+          function: {
+            name: parsed.name,
+            arguments: parsed.parameters,
+          },
+        };
+      } else {
+        return {
+          function: {
+            name: 'Unknown Tool Format',
+            arguments: {},
+          },
+        };
+      }
+    } catch (error) {
+      console.error('Failed to convert content to tool call:', error);
+    }
+  }
+
   private handleFunctionCalls = async (
     functionCalls: ToolCall[],
     updateStatus?: (status: string) => void,
@@ -295,8 +322,8 @@ export class OllamaService extends AbstractLanguageModelService {
       return 'Missing model configuration. Check the model selection dropdown.';
     }
 
-    const { query, images, sendStreamResponse, currentEntryID } = options;
-
+    const { query, images, sendStreamResponse, currentEntryID, updateStatus } =
+      options;
     const { client, conversationHistory, model } = await this.initModel(
       query,
       currentEntryID,
@@ -309,11 +336,14 @@ export class OllamaService extends AbstractLanguageModelService {
 
     let functionCallCount = 0;
     const MAX_FUNCTION_CALLS = 5;
+    let functionCallFlag = false;
+    let functionCallBuffer = '';
+    let isFirstChunk = true;
 
     const { systemPrompt, generationConfig } = this.getAdvanceSettings();
 
     if (systemPrompt) {
-      conversationHistory.push({
+      conversationHistory.unshift({
         role: 'system',
         content: systemPrompt,
       });
@@ -322,6 +352,9 @@ export class OllamaService extends AbstractLanguageModelService {
     try {
       if (!sendStreamResponse) {
         while (functionCallCount < MAX_FUNCTION_CALLS) {
+          functionCallFlag = false;
+          functionCallBuffer = '';
+
           const response = await client.chat({
             model,
             messages: conversationHistory,
@@ -329,31 +362,52 @@ export class OllamaService extends AbstractLanguageModelService {
             options: generationConfig,
           });
 
-          if (
-            !response.message.tool_calls ||
-            response.message.tool_calls.length === 0
-          ) {
-            return response.message.content;
+          // Check if the first chunk indicates a function call
+          if (response.message.content.trim().startsWith('{"name": ')) {
+            functionCallFlag = true;
           }
 
-          const functionCallResults = await this.handleFunctionCalls(
-            response.message.tool_calls,
-          );
+          if (
+            functionCallFlag ||
+            (response.message.tool_calls &&
+              response.message.tool_calls.length > 0)
+          ) {
+            const toolCall = this.convertContentToToolCall(
+              response.message.content,
+            );
 
-          conversationHistory.push({
-            role: 'assistant',
-            content: response.message.content,
-            tool_calls: response.message.tool_calls,
-          });
-          conversationHistory.push(...functionCallResults);
+            if (!toolCall) {
+              return response.message.content;
+            }
 
-          functionCallCount++;
+            const functionCallResults = await this.handleFunctionCalls(
+              [toolCall],
+              updateStatus,
+            );
+            conversationHistory.push({
+              role: 'assistant',
+              content: response.message.content,
+              tool_calls: [toolCall],
+            });
+            conversationHistory.push(...functionCallResults);
+
+            functionCallCount++;
+          } else {
+            return response.message.content;
+          }
         }
         return 'Max function call limit reached.';
       } else {
         let responseText = '';
 
         while (functionCallCount < MAX_FUNCTION_CALLS) {
+          if (this.stopStreamFlag) {
+            return responseText;
+          }
+
+          functionCallFlag = false;
+          functionCallBuffer = '';
+
           const streamResponse = await client.chat({
             model,
             messages: conversationHistory,
@@ -365,32 +419,72 @@ export class OllamaService extends AbstractLanguageModelService {
           let functionCallResults: Message[] = [];
 
           for await (const chunk of streamResponse) {
-            if (
-              chunk.message.tool_calls &&
-              chunk.message.tool_calls.length > 0
-            ) {
-              functionCallResults = await this.handleFunctionCalls(
-                chunk.message.tool_calls,
-                sendStreamResponse,
-              );
-
-              conversationHistory.push({
-                role: 'assistant',
-                content: chunk.message.content,
-                tool_calls: chunk.message.tool_calls,
-              });
-              conversationHistory.push(...functionCallResults);
-              break;
-            } else {
-              const partText = chunk.message.content;
-              sendStreamResponse(partText);
-              responseText += partText;
+            if (this.stopStreamFlag) {
+              return responseText;
             }
-          }
 
-          if (functionCallResults.length === 0) {
+            // Check only the first chunk for function call indication
+            if (isFirstChunk) {
+              isFirstChunk = false;
+              if (chunk.message.content.trim().startsWith('{')) {
+                functionCallFlag = true;
+              }
+            }
+
+            if (functionCallFlag) {
+              functionCallBuffer += chunk.message.content;
+              continue;
+            }
+
+            // if (
+            //   functionCallFlag ||
+            //   (chunk.message.tool_calls && chunk.message.tool_calls.length > 0)
+            // ) {
+            //   functionCallResults = await this.handleFunctionCalls(
+            //     chunk.message.tool_calls || [JSON.parse(chunk.message.content)],
+            //     updateStatus,
+            //   );
+            //
+            //   conversationHistory.push({
+            //     role: 'assistant',
+            //     content: chunk.message.content,
+            //     tool_calls: chunk.message.tool_calls,
+            //   });
+            //   conversationHistory.push(...functionCallResults);
+            //   break;
+            // }
+
+            const partText = chunk.message.content;
+            sendStreamResponse(partText);
+            responseText += partText;
+          }
+          // if (functionCallResults.length === 0) {
+          //   return responseText;
+          // }
+
+          if (!functionCallFlag) {
             return responseText;
           }
+
+          const toolCall: ToolCall | undefined =
+            this.convertContentToToolCall(functionCallBuffer);
+
+          if (!toolCall) {
+            return functionCallBuffer;
+          }
+
+          functionCallResults = await this.handleFunctionCalls(
+            [toolCall],
+            updateStatus,
+          );
+
+          conversationHistory.push({
+            role: 'assistant',
+            content: functionCallBuffer,
+            tool_calls: [toolCall],
+          });
+
+          conversationHistory.push(...functionCallResults);
           functionCallCount++;
         }
         return responseText;
@@ -416,6 +510,13 @@ export class OllamaService extends AbstractLanguageModelService {
         'Failed to connect to the language model service. ' +
         'Make sure the ollama service is running. Also, check the model has been downloaded.'
       );
+    } finally {
+      this.stopStreamFlag = false;
+      updateStatus && updateStatus('');
     }
+  }
+
+  public async stopResponse(): Promise<void> {
+    this.stopStreamFlag = true;
   }
 }

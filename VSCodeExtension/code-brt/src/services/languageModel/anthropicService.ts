@@ -13,7 +13,10 @@ import type {
   ToolUseBlock,
   ToolResultBlockParam,
 } from '@anthropic-ai/sdk/src/resources';
-import type { MessageCreateParamsNonStreaming } from '@anthropic-ai/sdk/resources/messages';
+import type {
+  MessageCreateParamsNonStreaming,
+  MessageStream,
+} from '@anthropic-ai/sdk/resources/messages';
 import Anthropic from '@anthropic-ai/sdk';
 
 import type {
@@ -27,6 +30,8 @@ import { AbstractLanguageModelService } from './abstractLanguageModelService';
 import { ToolService } from '../tools';
 
 export class AnthropicService extends AbstractLanguageModelService {
+  private currentStreamResponse: MessageStream | undefined;
+
   constructor(
     context: vscode.ExtensionContext,
     settingsManager: SettingsManager,
@@ -64,11 +69,9 @@ export class AnthropicService extends AbstractLanguageModelService {
     }
 
     if (advanceSettings.presencePenalty || advanceSettings.frequencyPenalty) {
-      vscode.window
-        .showWarningMessage(
-          'Presence and frequency penalties are not supported by the Anthropic API, so the settings will be ignored.',
-        )
-        .then();
+      void vscode.window.showWarningMessage(
+        'Presence and frequency penalties are not supported by the Anthropic API, so the settings will be ignored.',
+      );
     }
 
     const generationConfig: Partial<MessageCreateParamsNonStreaming> = {};
@@ -186,11 +189,9 @@ export class AnthropicService extends AbstractLanguageModelService {
     });
 
     if (this.currentModel === '') {
-      vscode.window
-        .showErrorMessage(
-          'Make sure the model is selected before sending a message. Open the model selection dropdown and configure the model.',
-        )
-        .then();
+      void vscode.window.showErrorMessage(
+        'Make sure the model is selected before sending a message. Open the model selection dropdown and configure the model.',
+      );
       return {
         anthropic: anthropic,
         conversationHistory: [],
@@ -214,9 +215,9 @@ export class AnthropicService extends AbstractLanguageModelService {
     for (const image of images) {
       const fileType = path.extname(image).slice(1);
       if (!['jpeg', 'png', 'gif', 'webp'].includes(fileType)) {
-        vscode.window
-          .showErrorMessage(`Unsupported image file type: ${fileType}`)
-          .then();
+        void vscode.window.showErrorMessage(
+          `Unsupported image file type: ${fileType}`,
+        );
 
         return {
           anthropic,
@@ -395,10 +396,9 @@ export class AnthropicService extends AbstractLanguageModelService {
       } else {
         let responseText = '';
 
-        console.log(this.getEnabledTools());
-
         while (functionCallCount < MAX_FUNCTION_CALLS) {
-          const streamResponse = anthropic.messages
+          this.currentStreamResponse?.abort();
+          this.currentStreamResponse = anthropic.messages
             .stream({
               model: this.currentModel,
               system: systemPrompt,
@@ -415,7 +415,7 @@ export class AnthropicService extends AbstractLanguageModelService {
               responseText += partText;
             });
 
-          const finalMessage = await streamResponse.finalMessage();
+          const finalMessage = await this.currentStreamResponse.finalMessage();
 
           if (finalMessage.stop_reason !== 'tool_use') {
             return responseText;
@@ -459,6 +459,14 @@ export class AnthropicService extends AbstractLanguageModelService {
         });
 
       return 'Failed to connect to the language model service';
+    } finally {
+      updateStatus && updateStatus('');
+    }
+  }
+
+  public async stopResponse(): Promise<void> {
+    if (this.currentStreamResponse) {
+      this.currentStreamResponse.abort();
     }
   }
 }

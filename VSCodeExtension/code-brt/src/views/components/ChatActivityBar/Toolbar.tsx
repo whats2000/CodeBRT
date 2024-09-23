@@ -9,10 +9,15 @@ import {
   AudioOutlined,
 } from '@ant-design/icons';
 import styled from 'styled-components';
-import { useDispatch } from 'react-redux';
+import { useDispatch, useSelector } from 'react-redux';
 
-import { ModelServiceType } from '../../../types';
+import { ExtensionSettings, ModelServiceType } from '../../../types';
+import type { AppDispatch, RootState } from '../../redux';
 import { setConversationHistory } from '../../redux/slices/conversationSlice';
+import {
+  loadModelService,
+  swapModel,
+} from '../../redux/slices/modelServiceSlice';
 import { WebviewContext } from '../../WebviewContext';
 import { EditModelListBar } from './Toolbar/EditModelListBar';
 import { HistorySidebar } from './Toolbar/HistorySidebar';
@@ -32,30 +37,14 @@ const EditModelListButton = styled(Button)`
 `;
 
 type ToolbarProps = {
-  activeModelService: ModelServiceType | 'loading...';
-  setActiveModelService: React.Dispatch<
-    React.SetStateAction<ModelServiceType | 'loading...'>
-  >;
-  isActiveModelLoading: boolean;
-  setIsActiveModelLoading: React.Dispatch<React.SetStateAction<boolean>>;
   setTheme: (newTheme: {
-    primaryColor?: string | undefined;
-    algorithm?:
-      | 'defaultAlgorithm'
-      | 'darkAlgorithm'
-      | 'compactAlgorithm'
-      | undefined;
-    borderRadius?: number | undefined;
+    primaryColor?: ExtensionSettings['themePrimaryColor'];
+    algorithm?: ExtensionSettings['themeAlgorithm'];
+    borderRadius?: ExtensionSettings['themeBorderRadius'];
   }) => Promise<void>;
 };
 
-export const Toolbar: React.FC<ToolbarProps> = ({
-  activeModelService,
-  setActiveModelService,
-  isActiveModelLoading,
-  setIsActiveModelLoading,
-  setTheme,
-}) => {
+export const Toolbar: React.FC<ToolbarProps> = ({ setTheme }) => {
   const { callApi } = useContext(WebviewContext);
   const modelServices: ModelServiceType[] = [
     'anthropic',
@@ -68,47 +57,24 @@ export const Toolbar: React.FC<ToolbarProps> = ({
     'custom',
   ];
 
-  const [availableModels, setAvailableModels] = useState<string[]>([]);
-  const [selectedModel, setSelectedModel] = useState<string>('');
   const [isHistorySidebarOpen, setIsHistorySidebarOpen] = useState(false);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [isVoiceSettingsOpen, setIsVoiceSettingsOpen] = useState(false);
   const [isSelectModelOpen, setIsSelectModelOpen] = useState(false);
   const [isEditModelListOpen, setIsEditModelListOpen] = useState(false);
 
-  const dispatch = useDispatch();
+  const dispatch = useDispatch<AppDispatch>();
+  const { activeModelService, availableModels, selectedModel, isLoading } =
+    useSelector((state: RootState) => state.modelService);
 
   const { innerWidth } = useWindowSize();
 
   useEffect(() => {
-    setIsActiveModelLoading(true);
-    if (activeModelService === 'loading...') {
+    if (activeModelService === 'loading...' || isLoading) {
       return;
     }
 
-    callApi('getAvailableModels', activeModelService)
-      .then((models: string[]) => {
-        setAvailableModels(models);
-        setIsActiveModelLoading(false);
-      })
-      .catch((error) => {
-        callApi(
-          'alertMessage',
-          `Failed to load available models: ${error}`,
-          'error',
-        ).catch(console.error);
-        setIsActiveModelLoading(false);
-      });
-
-    callApi('getCurrentModel', activeModelService)
-      .then((model: string) => setSelectedModel(model))
-      .catch((error) =>
-        callApi(
-          'alertMessage',
-          `Failed to load current model: ${error}`,
-          'error',
-        ).catch(console.error),
-      );
+    dispatch(loadModelService(activeModelService));
   }, [activeModelService]);
 
   const createNewChat = () => {
@@ -125,29 +91,14 @@ export const Toolbar: React.FC<ToolbarProps> = ({
   };
 
   const handleModelServiceChange = (value: ModelServiceType | 'loading...') => {
-    setIsActiveModelLoading(true);
-
-    if (value === 'loading...') {
+    if (value === 'loading...' || value === activeModelService || isLoading) {
       return;
     }
-
-    setActiveModelService(value);
+    dispatch(loadModelService(value));
   };
 
   const handleModelChange = (value: string) => {
-    setSelectedModel(value);
-
-    if (activeModelService === 'loading...') {
-      return;
-    }
-
-    callApi('switchModel', activeModelService, value).catch((error) =>
-      callApi(
-        'alertMessage',
-        `Failed to switch model: ${error}`,
-        'error',
-      ).catch(console.error),
-    );
+    dispatch(swapModel(value));
   };
 
   const toggleHistorySidebar = () => {
@@ -159,36 +110,6 @@ export const Toolbar: React.FC<ToolbarProps> = ({
 
   const openEditModelList = () => {
     setIsEditModelListOpen(true);
-  };
-
-  const handleEditModelListSave = (newAvailableModels: string[]) => {
-    if (activeModelService === 'loading...') return;
-
-    setAvailableModels(newAvailableModels);
-
-    if (newAvailableModels.length === 0) {
-      setSelectedModel('');
-      callApi('switchModel', activeModelService, '').catch((error) =>
-        callApi(
-          'alertMessage',
-          `Failed to switch model: ${error}`,
-          'error',
-        ).catch(console.error),
-      );
-      return;
-    }
-
-    if (!newAvailableModels.includes(selectedModel)) {
-      callApi('switchModel', activeModelService, newAvailableModels[0])
-        .then(() => setSelectedModel(newAvailableModels[0]))
-        .catch((error) =>
-          callApi(
-            'alertMessage',
-            `Failed to switch model: ${error}`,
-            'error',
-          ).catch(console.error),
-        );
-    }
   };
 
   const settingMenuItems: MenuProps['items'] = [
@@ -274,10 +195,10 @@ export const Toolbar: React.FC<ToolbarProps> = ({
         placement='right'
         open={isSelectModelOpen}
         onClose={() => setIsSelectModelOpen(false)}
-        loading={isActiveModelLoading}
+        loading={isLoading}
       >
         <Select
-          value={isActiveModelLoading ? 'Loading...' : selectedModel}
+          value={isLoading ? 'Loading...' : selectedModel}
           onChange={handleModelChange}
           style={{ width: '100%' }}
           options={modelOptions}
@@ -293,19 +214,19 @@ export const Toolbar: React.FC<ToolbarProps> = ({
               style={{
                 width: innerWidth < 550 ? 200 : 125,
               }}
-              loading={isActiveModelLoading}
+              loading={isLoading}
               options={modelServiceOptions}
             />
           </Flex>
           <Select
             showSearch
-            value={isActiveModelLoading ? 'Loading...' : selectedModel}
+            value={isLoading ? 'Loading...' : selectedModel}
             onChange={handleModelChange}
             style={{
               width: innerWidth < 550 ? 200 : '100%',
               minWidth: 150,
             }}
-            loading={isActiveModelLoading}
+            loading={isLoading}
             options={modelOptions}
           />
         </Space>
@@ -326,7 +247,6 @@ export const Toolbar: React.FC<ToolbarProps> = ({
       <HistorySidebar
         isOpen={isHistorySidebarOpen}
         onClose={toggleHistorySidebar}
-        activeModelService={activeModelService}
       />
       <SettingsBar
         isOpen={isSettingsOpen}
@@ -340,8 +260,6 @@ export const Toolbar: React.FC<ToolbarProps> = ({
       <EditModelListBar
         isOpen={isEditModelListOpen}
         onClose={() => setIsEditModelListOpen(false)}
-        activeModelService={activeModelService}
-        handleEditModelListSave={handleEditModelListSave}
       />
     </>
   );

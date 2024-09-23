@@ -2,100 +2,29 @@ import * as vscode from 'vscode';
 
 import type {
   ExtensionSettings,
-  ExtensionSettingsCrossDevice,
   ExtensionSettingsLocal,
-  ModelServiceType,
+  ISettingsManager,
 } from '../types';
+import {
+  DEFAULT_CROSS_DEVICE_SETTINGS,
+  DEFAULT_LOCAL_SETTINGS,
+  DEFAULT_SETTINGS,
+  DEFAULT_WORKSPACE_SETTINGS,
+} from '../constants';
 
-export class SettingsManager {
+export class SettingsManager implements ISettingsManager {
   private static instance: SettingsManager;
   private readonly context: vscode.ExtensionContext;
   private workspaceConfig: vscode.WorkspaceConfiguration;
-  private readonly defaultLocalSettings: ExtensionSettingsLocal = {
-    lastUsedModelForManualCompletion: 'gemini' as ModelServiceType,
-
-    anthropicAvailableModels: [
-      'claude-3-5-sonnet-20240620',
-      'claude-3-haiku-20240307',
-      'claude-3-opus-20240229',
-      'claude-3-sonnet-20240229',
-    ],
-    openaiAvailableModels: [
-      'gpt-4o-mini',
-      'gpt-4o',
-      'gpt-4-turbo',
-      'gpt-4',
-      'gpt-3.5-turbo',
-    ],
-    openaiAvailableVoices: [
-      'nova',
-      'alloy',
-      'echo',
-      'fable',
-      'onyx',
-      'shimmer',
-    ],
-    openaiSelectedVoice: 'nova',
-    geminiAvailableModels: ['gemini-1.5-pro-latest', 'gemini-1.5-flash-latest'],
-    cohereAvailableModels: ['command', 'command-r', 'command-r-plus'],
-    groqAvailableModels: [
-      'llama3-70b-8192',
-      'llama3-8b-8192',
-      'mixtral-8x7b-32768',
-      'gemma-7b-it',
-      'gemma2-9b-it',
-    ],
-    huggingFaceAvailableModels: ['HuggingFaceH4/zephyr-7b-beta'],
-    ollamaClientHost: 'http://127.0.0.1:11434',
-    ollamaAvailableModels: ['Auto Detect'],
-    lastUsedModel: 'gemini',
-    lastSelectedModel: {
-      gemini: 'gemini-1.5-pro-latest',
-      anthropic: 'claude-3-5-sonnet-20240620',
-      openai: 'gpt-3.5-turbo',
-      cohere: 'command',
-      groq: 'llama3-70b-8192',
-      huggingFace: 'HuggingFaceH4/zephyr-7b-beta',
-      ollama: 'Auto Detect',
-      custom: '',
-    },
-    customModels: [],
-    selectedVoiceToTextService: 'not set',
-    selectedTextToVoiceService: 'not set',
-    gptSoVitsClientHost: 'http://127.0.0.1:9880/',
-    gptSoVitsAvailableReferenceVoices: [],
-    gptSoVitsSelectedReferenceVoice: '',
-    enableTools: {
-      webSearch: { active: false },
-      urlFetcher: { active: false },
-    },
-    systemPrompts: [],
-  };
-  private readonly defaultCrossDeviceSettings: ExtensionSettingsCrossDevice = {
-    anthropicApiKey: '',
-    openaiApiKey: '',
-    geminiApiKey: '',
-    cohereApiKey: '',
-    groqApiKey: '',
-    huggingFaceApiKey: '',
-    themePrimaryColor: '#f0f0f0',
-    themeAlgorithm: 'darkAlgorithm',
-    themeBorderRadius: 4,
-    hljsTheme: 'darcula',
-  };
-  private readonly defaultSettings: ExtensionSettings = {
-    ...this.defaultLocalSettings,
-    ...this.defaultCrossDeviceSettings,
-  };
   private readonly localSettings: ExtensionSettingsLocal;
 
   private constructor(context: vscode.ExtensionContext) {
     this.context = context;
     const storedSettings = context.globalState.get<ExtensionSettingsLocal>(
       'localSettings',
-      this.defaultLocalSettings,
+      DEFAULT_LOCAL_SETTINGS,
     );
-    this.localSettings = { ...this.defaultLocalSettings, ...storedSettings };
+    this.localSettings = { ...DEFAULT_LOCAL_SETTINGS, ...storedSettings };
     this.workspaceConfig = vscode.workspace.getConfiguration('code-brt');
 
     vscode.workspace.onDidChangeConfiguration(
@@ -131,6 +60,26 @@ export class SettingsManager {
   }
 
   /**
+   * Get all settings in the extension settings
+   */
+  public async getAllSettings(): Promise<ExtensionSettings> {
+    const allKeys: Array<keyof ExtensionSettings> = Object.keys(
+      DEFAULT_SETTINGS,
+    ) as Array<keyof ExtensionSettings>;
+
+    const settings: ExtensionSettings = { ...DEFAULT_SETTINGS };
+
+    for (const key of allKeys) {
+      (settings as any)[key] = this.get(key);
+    }
+
+    return {
+      ...settings,
+      ...this.localSettings,
+    };
+  }
+
+  /**
    * Get a setting in the extension settings
    * @param setting - The setting to get must be a key of ExtensionSettings
    */
@@ -138,12 +87,12 @@ export class SettingsManager {
     setting: T,
   ): ExtensionSettings[T] {
     // Check if the setting is local
-    if (setting in this.defaultLocalSettings) {
+    if (setting in DEFAULT_LOCAL_SETTINGS) {
       return this.localSettings[
         setting as keyof ExtensionSettingsLocal
       ] as ExtensionSettings[T];
     }
-    return this.workspaceConfig.get(setting) ?? this.defaultSettings[setting];
+    return this.workspaceConfig.get(setting) ?? DEFAULT_SETTINGS[setting];
   }
 
   /**
@@ -156,16 +105,23 @@ export class SettingsManager {
     value: ExtensionSettings[T],
   ): Promise<void> {
     // Check if the setting is local
-    if (setting in this.defaultLocalSettings) {
-      this.localSettings[setting as keyof ExtensionSettingsLocal] =
-        value as any;
+    if (setting in DEFAULT_LOCAL_SETTINGS) {
+      (this.localSettings as any)[setting] = value;
       await this.saveLocalSettings();
-    } else {
+    } else if (setting in DEFAULT_WORKSPACE_SETTINGS) {
+      await this.workspaceConfig.update(
+        setting,
+        value,
+        vscode.ConfigurationTarget.Workspace,
+      );
+    } else if (setting in DEFAULT_CROSS_DEVICE_SETTINGS) {
       await this.workspaceConfig.update(
         setting,
         value,
         vscode.ConfigurationTarget.Global,
       );
+    } else {
+      throw new Error(`Unknown setting: ${setting}`);
     }
   }
 }

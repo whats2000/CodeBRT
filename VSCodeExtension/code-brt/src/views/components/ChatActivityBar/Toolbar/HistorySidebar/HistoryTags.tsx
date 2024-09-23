@@ -1,59 +1,39 @@
-import React, { useContext, useRef, useState } from 'react';
+import React, { useRef, useState } from 'react';
 import { Input, InputRef, Space, Tag, theme } from 'antd';
 import { TweenOneGroup } from 'rc-tween-one';
 import { PlusOutlined } from '@ant-design/icons';
+import { useDispatch } from 'react-redux';
 
-import type { ConversationHistoryIndexList } from '../../../../../types';
-import { WebviewContext } from '../../../../WebviewContext';
+import type { AppDispatch } from '../../../../redux';
 import { MODEL_SERVICE_CONSTANTS } from '../../../../../constants';
+import {
+  addTagToConversation,
+  removeTagFromConversation,
+} from '../../../../redux/slices/conversationIndexSlice';
 
 type HistoryTagsProps = {
   tags?: string[];
   historyID: string;
-  setHistories: React.Dispatch<
-    React.SetStateAction<ConversationHistoryIndexList>
-  >;
 };
 
 export const HistoryTags: React.FC<HistoryTagsProps> = ({
   tags,
   historyID,
-  setHistories,
 }) => {
   if (!tags) {
     return null;
   }
 
-  const { callApi } = useContext(WebviewContext);
   const { token } = theme.useToken();
+
+  const dispatch = useDispatch<AppDispatch>();
 
   const [inputVisible, setInputVisible] = useState(false);
   const [inputValue, setInputValue] = useState('');
   const inputRef = useRef<InputRef>(null);
 
   const handleTagClose = (historyID: string, tag: string) => {
-    callApi('removeHistoryTag', historyID, tag)
-      .then(() => {
-        setHistories((prevHistories) => {
-          const updatedHistories = { ...prevHistories };
-
-          if (!updatedHistories[historyID].tags) {
-            return updatedHistories;
-          }
-
-          updatedHistories[historyID].tags = updatedHistories[
-            historyID
-          ].tags.filter((t) => t !== tag);
-          return updatedHistories;
-        });
-      })
-      .catch((error) =>
-        callApi(
-          'alertMessage',
-          `Failed to remove tag: ${error}`,
-          'error',
-        ).catch(console.error),
-      );
+    dispatch(removeTagFromConversation({ historyID, tag }));
   };
 
   const showInput = () => {
@@ -69,22 +49,7 @@ export const HistoryTags: React.FC<HistoryTagsProps> = ({
 
   const handleInputConfirm = (historyID: string) => {
     if (inputValue && !tags?.includes(inputValue)) {
-      callApi('addHistoryTag', historyID, inputValue)
-        .then(() => {
-          setHistories((prevHistories) => {
-            const updatedHistories = { ...prevHistories };
-            updatedHistories[historyID].tags = [
-              ...(updatedHistories[historyID].tags ?? []),
-              inputValue,
-            ];
-            return updatedHistories;
-          });
-        })
-        .catch((error) =>
-          callApi('alertMessage', `Failed to add tag: ${error}`, 'error').catch(
-            console.error,
-          ),
-        );
+      dispatch(addTagToConversation({ historyID, tag: inputValue }));
     }
     setInputVisible(false);
     setInputValue('');

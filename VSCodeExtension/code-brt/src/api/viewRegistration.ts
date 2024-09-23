@@ -37,6 +37,7 @@ const createView = async <V extends ViewKey>(
   ctx: vscode.ExtensionContext,
   viewId: V,
   options?: vscode.WebviewOptions,
+  retainContextWhenHidden = false,
 ): Promise<vscode.WebviewView> => {
   return await new Promise((resolve, reject) => {
     let dispose: vscode.Disposable;
@@ -54,7 +55,11 @@ const createView = async <V extends ViewKey>(
           }
         },
       };
-      dispose = vscode.window.registerWebviewViewProvider(viewId, provider);
+      dispose = vscode.window.registerWebviewViewProvider(viewId, provider, {
+        webviewOptions: {
+          retainContextWhenHidden,
+        },
+      });
       ctx.subscriptions.push(dispose);
     } catch (err: unknown) {
       reject(err);
@@ -111,8 +116,10 @@ const setViewHtml = <V extends ViewKey>(
 export const viewRegistration = async <V extends ViewKey>(
   ctx: vscode.ExtensionContext,
   viewId: V,
+  options?: vscode.WebviewOptions,
+  retainContextWhenHidden = false,
 ) => {
-  const view = await createView(ctx, viewId, { enableScripts: true });
+  const view = await createView(ctx, viewId, options, retainContextWhenHidden);
   setViewHtml(ctx, viewId, view.webview);
   return view;
 };

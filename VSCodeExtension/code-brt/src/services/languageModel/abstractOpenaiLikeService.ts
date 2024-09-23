@@ -32,11 +32,9 @@ export abstract class AbstractOpenaiLikeService extends AbstractLanguageModelSer
     }
 
     if (advanceSettings.topK) {
-      vscode.window
-        .showWarningMessage(
-          'Top-k sampling is not supported by the OpenAI or Groq APIs, so the setting will be ignored.',
-        )
-        .then();
+      void vscode.window.showWarningMessage(
+        'Top-k sampling is not supported by the OpenAI or Groq APIs, so the setting will be ignored.',
+      );
     }
 
     return {
