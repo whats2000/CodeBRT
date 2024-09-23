@@ -69,7 +69,7 @@ const config: Config = {
           label: "Documentation",
         },
         {
-          href: "https://github.com/whats2000/CodeBRT/Documents",
+          href: "https://github.com/whats2000/CodeBRT/",
           label: "GitHub",
           position: "right",
         },
