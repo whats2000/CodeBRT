@@ -37,11 +37,14 @@ To configure the API key, follow these steps:
 
 2. **Open the chat board** on the left-hand side of VSCode (this is where CodeBRT's functionality lives).
 
-3. If your device has a smaller screen and you do not immediately see the configuration button:
-   - Click on the **gear button** on the chat board.
-   - A dropdown menu will appear; select **General Settings** from this menu to open the configuration panel.
+3. Click on the **gear button** on the chat board.
+4. A dropdown menu will appear; select **General Settings** from this menu to open the configuration panel.
 
    ![](/img/getting-started/configuration/settings-dropdown.png)
+
+   :::note
+   If your device has a smaller screen and you do not immediately see the configuration button, please expand the panel!
+   :::
 
 ---
 

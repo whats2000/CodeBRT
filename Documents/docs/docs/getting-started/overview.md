@@ -135,8 +135,6 @@ CodeBRT offers several additional tools to enhance your experience, you can togg
 
 ![Tools Toggle](/img/getting-started/overview/tools-toggle.png)
 
-![Enabled Tools](/img/getting-started/overview/enabled-tools.png)
-
 ---
 
 ## Conclusion
