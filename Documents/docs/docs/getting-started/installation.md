@@ -24,4 +24,6 @@ To install and start using CodeBRT, follow these steps:
 
    ![CodeBRT Icon](/img/getting-started/installation/codebrt-sidebar-icon.png)
 
-> ***Ensure your version of CodeBRT is the latest version for optimal performance.***
+:::info
+Ensure your version of CodeBRT is the latest version for optimal performance.
+:::

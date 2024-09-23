@@ -50,7 +50,9 @@ To configure the API key, follow these steps:
 CodeBRT supports multiple model services, allowing you to choose which service to connect to. Each service requires its own API key for authentication.
 
 1. In the **General Settings** panel, locate the input field for the specific model service you want to configure.
-   > **Note:** For new users, we recommend starting with the "Gemini" from Google which is free to use.
+   :::tip
+   For new users, we recommend starting with the "Gemini" from Google which is free to use.
+   :::
 
 2. Next to the input field for the **Model Service API Key**, you’ll find a helpful link to guide you on where to obtain the API key for the selected service.
 
@@ -66,13 +68,17 @@ CodeBRT supports multiple model services, allowing you to choose which service t
    - Click **Generate New API Key**.
    - Copy the generated API key to your clipboard.
 
-   > **Note:** Ensure your API key is kept secure and not shared publicly.
+   :::note
+   Ensure your API key is kept secure and not shared publicly.
+   :::
 
 4. After you have the API key, return to the CodeBRT configuration panel and paste the API key into the correct input field corresponding to the model service you selected.
 
 5. Once you have entered the API key, close the configuration panel to automatically save the changes.
 
-> **Important:** Double-check that the key is correctly entered and there are no extra spaces before or after the key.
+:::note
+Double-check that the key is correctly entered and there are no extra spaces before or after the key.
+:::
 
 ---
 
