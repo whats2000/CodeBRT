@@ -30,11 +30,15 @@ export class OllamaAutoCompleteService {
 
     const prompt = this.constructPrompt(context);
 
+    console.log('Prompt sent to Ollama:', prompt);
+    console.log('Context collected:', context);
+    console.log('Prompt sent to Ollama:', prompt);
     try {
       const response = await this.ollamaClient.generate({
         model: this.currentModel,
         prompt: prompt,
       });
+      console.log('Raw response from Ollama:', response.response);
 
       return this.parseCompletions(response.response);
     } catch (error) {
@@ -72,6 +76,7 @@ Based on this context, please provide 3-5 autocomplete suggestions to continue t
   }
 
   private parseCompletions(response: string): AutocompleteSuggestion[] {
+    console.log('Response from Ollama:', response);
     const lines = response.split('\n');
     return lines
       .filter((line) => line.startsWith('suggestion:'))

@@ -14,15 +14,26 @@ module.exports = (env, { mode }) => {
     },
     output: {
       path: path.resolve(__dirname, 'dist'),
-      filename: '[name].js',
+      filename: 'extension.js',
       chunkFormat: 'commonjs',
-      libraryTarget: 'commonjs',
+      libraryTarget: 'commonjs2',
       devtoolModuleFilenameTemplate: '[resource-path]',
     },
     externalsType: 'node-commonjs',
     externals: {
       vs: 'vs',
       vscode: 'commonjs vscode',
+      'tree-sitter': 'commonjs tree-sitter',
+      'tree-sitter-c-sharp': 'commonjs tree-sitter-c-sharp',
+      'tree-sitter-c': 'commonjs tree-sitter-c',
+      'tree-sitter-cpp': 'commonjs tree-sitter-cpp',
+      'tree-sitter-javascript': 'commonjs tree-sitter-javascript',
+      'tree-sitter-python': 'commonjs tree-sitter-python',
+      'tree-sitter-typescript': 'commonjs tree-sitter-typescript',
+      'tree-sitter-ruby': 'commonjs tree-sitter-ruby',
+      bindings: 'commonjs bindings',
+      'node-gyp-build': 'commonjs node-gyp-build',
+      'detect-libc': 'commonjs detect-libc',
     },
     resolve: {
       roots: [__dirname],
@@ -43,6 +54,11 @@ module.exports = (env, { mode }) => {
         {
           test: /\.css$/,
           use: ['css-loader'],
+        },
+        {
+          // Handle native modules
+          test: /\.node$/,
+          use: 'node-loader',
         },
       ],
     },

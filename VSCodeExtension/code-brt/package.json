@@ -120,6 +120,7 @@
     "styled-components": "^6.1.13",
     "swc-loader": "^0.2.6",
     "terminate": "^2.8.0",
+    "tree-sitter": "^0.21.1",
     "tree-sitter-c": "^0.23.1",
     "tree-sitter-c-sharp": "^0.23.0",
     "tree-sitter-cpp": "^0.23.1",
@@ -134,11 +135,17 @@
     "uuid": "^10.0.0",
     "webpack": "^5.94.0",
     "webpack-cli": "^5.1.4",
-    "webpack-dev-server": "^5.1.0"
+    "webpack-dev-server": "^5.1.0",
+    "webpack-node-externals": "^3.0.0"
   },
   "activationEvents": [],
   "contributes": {
-    "commands": [],
+    "commands": [
+      {
+        "command": "extension.switchOllamaCodeCompletionModel",
+        "title": "Switch Ollama Autocomplete Model"
+      }
+    ],
     "viewsContainers": {
       "activitybar": [
         {
