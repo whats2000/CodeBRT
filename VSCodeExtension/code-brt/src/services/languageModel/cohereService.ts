@@ -205,6 +205,19 @@ export class CohereService extends AbstractLanguageModelService {
     let toolResults: ToolResult[] = [];
     let functionCallCount = 0;
     const MAX_FUNCTION_CALLS = 5;
+
+    // List of models that should not use tools
+    const modelsWithoutTools = [
+      'command',
+      'command-light',
+      'c4ai-aya-23-35b',
+      'command-light-nightly',
+      'c4ai-aya-23-8b',
+    ];
+
+    // Determine whether the current model should use tools
+    const shouldUseTools = !modelsWithoutTools.includes(this.currentModel);
+
     try {
       if (!sendStreamResponse) {
         while (functionCallCount < MAX_FUNCTION_CALLS) {
@@ -212,7 +225,7 @@ export class CohereService extends AbstractLanguageModelService {
             model: this.currentModel,
             message: toolResults.length > 0 ? '' : query,
             chatHistory: conversationHistory,
-            tools: this.currentModel !== 'command' ? this.tools : undefined,
+            tools: shouldUseTools ? this.tools : undefined,
             toolResults: toolResults.length > 0 ? toolResults : undefined,
           });
 
@@ -238,7 +251,7 @@ export class CohereService extends AbstractLanguageModelService {
             model: this.currentModel,
             message: toolResults.length > 0 ? '' : query,
             chatHistory: conversationHistory,
-            tools: this.currentModel !== 'command' ? this.tools : undefined,
+            tools: shouldUseTools ? this.tools : undefined,
             toolResults: toolResults.length > 0 ? toolResults : undefined,
           });
 
