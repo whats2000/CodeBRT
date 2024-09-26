@@ -62,6 +62,16 @@ export class SettingsManager {
     gptSoVitsClientHost: 'http://127.0.0.1:9880/',
     gptSoVitsAvailableReferenceVoices: [],
     gptSoVitsSelectedReferenceVoice: '',
+    codeFixerLastSelectedModel: {
+      gemini: 'gemini-1.5-pro-latest',
+      anthropic: 'claude-3-5-sonnet-20240620',
+      openai: 'gpt-3.5-turbo',
+      cohere: 'command',
+      groq: 'llama3-70b-8192',
+      huggingFace: 'HuggingFaceH4/zephyr-7b-beta',
+      ollama: 'Auto Detect',
+      custom: '',
+    },
   };
   private readonly defaultCrossDeviceSettings: ExtensionSettingsCrossDevice = {
     anthropicApiKey: '',

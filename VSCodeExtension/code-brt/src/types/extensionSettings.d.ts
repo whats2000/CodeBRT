@@ -2,6 +2,7 @@ import type * as hljs from 'react-syntax-highlighter/dist/cjs/styles/hljs';
 import { SpeechCreateParams } from 'openai/resources/audio';
 
 import { ModelServiceType } from './modelServiceType';
+import {CodeFixerModelServiceType} from './codeFixerModelServiceType';
 import {
   TextToVoiceServiceType,
   VoiceToTextServiceType,
@@ -87,6 +88,9 @@ export type ExtensionSettingsLocal = {
   gptSoVitsClientHost: string;
   gptSoVitsAvailableReferenceVoices: GptSoVitsVoiceSetting[];
   gptSoVitsSelectedReferenceVoice: string;
+  codeFixerLastSelectedModel: {
+    [keyof in CodeFixerModelServiceType]: string;
+  };
 };
 
 /**

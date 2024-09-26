@@ -1,3 +1,5 @@
+export * from './codeFixerService';
+export * from './codeFixerModelServiceType';
 export * from './conversationHistory';
 export * from './extensionSettings';
 export * from './historyManager';
