@@ -1,19 +1,12 @@
+// InlineCompletionProvider.ts
 import * as vscode from 'vscode';
-import { debounce } from 'lodash';
 
 import { ManuallyCompletionProvider } from './manuallyCompletionProvider';
 
 export class InlineCompletionProvider
   implements vscode.InlineCompletionItemProvider
 {
-  private readonly DEBOUNCE_DELAY = 300;
-
   constructor(private completionProvider: ManuallyCompletionProvider) {}
-
-  private debouncedProvideInlineCompletionItems = debounce(
-    this.actualProvideInlineCompletionItems.bind(this),
-    this.DEBOUNCE_DELAY,
-  );
 
   async provideInlineCompletionItems(
     document: vscode.TextDocument,
@@ -23,14 +16,17 @@ export class InlineCompletionProvider
   ): Promise<
     vscode.InlineCompletionItem[] | vscode.InlineCompletionList | null
   > {
-    return (
-      this.debouncedProvideInlineCompletionItems(
+    if (context.triggerKind === vscode.InlineCompletionTriggerKind.Invoke) {
+      return await this.actualProvideInlineCompletionItems(
         document,
         position,
         context,
         token,
-      ) || null
-    );
+      );
+    } else {
+      // 对于自动触发，返回 null，不提供补全
+      return null;
+    }
   }
 
   private async actualProvideInlineCompletionItems(

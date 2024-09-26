@@ -100,6 +100,12 @@ export const activate = async (ctx: vscode.ExtensionContext) => {
     ),
   );
 
+  ctx.subscriptions.push(
+    vscode.commands.registerCommand('extension.triggerInlineCompletion', () => {
+      vscode.commands.executeCommand('editor.action.inlineSuggest.trigger');
+    }),
+  );
+
   /**
    * Trigger an event on all connected views
    * @param key - The event key

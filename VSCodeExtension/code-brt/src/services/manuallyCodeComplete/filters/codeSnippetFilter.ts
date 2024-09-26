@@ -15,6 +15,10 @@ export function filterCodeSnippets(
   console.log('Language ID:', languageId);
 
   const languageInfo: ManuallyCompleteLanguageInfo = Constants[languageId];
+  if (!languageInfo) {
+    console.warn(`Language info not found for ${languageId}`);
+    return [response]; // 如果找不到語言信息，返回原始回應
+  }
   console.log('Language Info:', languageInfo);
 
   try {

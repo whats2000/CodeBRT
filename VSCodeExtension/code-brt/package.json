@@ -70,8 +70,8 @@
     "@types/async-lock": "^1.4.2",
     "@types/cheerio": "^0.22.35",
     "@types/jest": "^29.5.13",
-    "@types/lodash": "^4.17.7",
-    "@types/node": "^22.7.2",
+    "@types/lodash": "^4.17.9",
+    "@types/node": "^22.5.5",
     "@types/promise-deferred": "^2.0.5",
     "@types/react": "^18.3.9",
     "@types/react-dom": "^18.3.0",
@@ -126,6 +126,18 @@
       {
         "command": "extension.switchAutocompleteModel",
         "title": "Switch Autocomplete Model"
+      },
+      {
+        "command": "extension.triggerInlineCompletion",
+        "title": "Trigger Inline Completion"
+      }
+    ],
+    "keybindings": [
+      {
+        "command": "extension.triggerInlineCompletion",
+        "key": "ctrl+shift+x",
+        "mac": "cmd+shift+space",
+        "when": "editorTextFocus"
       }
     ],
     "viewsContainers": {

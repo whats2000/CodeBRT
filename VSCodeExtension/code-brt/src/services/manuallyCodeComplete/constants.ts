@@ -129,6 +129,7 @@ export const YAML: ManuallyCompleteLanguageInfo = {
   ],
 };
 
+//Markdown
 export const Markdown: ManuallyCompleteLanguageInfo = {
   topLevelKeywords: [],
   singleLineComment: '',
