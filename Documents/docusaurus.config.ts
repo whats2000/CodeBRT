@@ -42,7 +42,7 @@ const config: Config = {
   ],
 
   themeConfig: {
-    image: "img/docusaurus-social-card.jpg",
+    image: "img/codebrt-social-card.png",
     metadata: [
       {
         name: "description",
