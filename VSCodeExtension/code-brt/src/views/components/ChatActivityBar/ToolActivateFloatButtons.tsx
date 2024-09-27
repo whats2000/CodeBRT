@@ -13,13 +13,12 @@ import { MagicWandOutlined } from '../../icons';
 import { updateAndSaveSetting } from '../../redux/slices/settingsSlice';
 
 export interface ToolActivateFloatButtonsProps {
-  floatButtonsXPosition: number;
   floatButtonBaseYPosition: number;
 }
 
 export const ToolActivateFloatButtons: React.FC<
   ToolActivateFloatButtonsProps
-> = ({ floatButtonsXPosition, floatButtonBaseYPosition }) => {
+> = ({ floatButtonBaseYPosition }) => {
   const dispatch = useDispatch<AppDispatch>();
 
   const { isLoading, settings } = useSelector(
@@ -43,7 +42,10 @@ export const ToolActivateFloatButtons: React.FC<
       icon={isLoading ? <LoadingOutlined /> : <MagicWandOutlined />}
       trigger='click'
       tooltip={'Activate Tools'}
-      style={{ bottom: floatButtonBaseYPosition, left: floatButtonsXPosition }}
+      style={{
+        bottom: floatButtonBaseYPosition,
+        insetInlineEnd: 40,
+      }}
     >
       <FloatButton
         icon={<GlobalOutlined />}
