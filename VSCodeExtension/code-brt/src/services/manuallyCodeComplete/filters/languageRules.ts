@@ -6,7 +6,7 @@ export function filterByLanguageRules(
 ): string[] {
   if (!languageInfo || !languageInfo.topLevelKeywords) {
     console.warn('Invalid language info provided');
-    return snippets; // 如果沒有有效的語言信息，返回原始片段
+    return snippets;
   }
   return snippets.filter((snippet) => {
     const lines = snippet.split('\n');

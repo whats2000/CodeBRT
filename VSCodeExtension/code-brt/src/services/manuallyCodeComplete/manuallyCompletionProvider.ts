@@ -6,9 +6,11 @@ import type {
   ExtendedGetResponseOptions,
   ManuallyCompleteLanguageInfo,
 } from '../../types';
-import { Constants, supportedLanguages } from './constants';
+import { Constants } from './constants';
 import { SettingsManager } from '../../api';
 import { filterCodeSnippets } from './filters';
+
+let extensionContext: vscode.ExtensionContext;
 
 export class ManuallyCompletionProvider
   implements vscode.CompletionItemProvider
@@ -101,7 +103,6 @@ export class ManuallyCompletionProvider
   async provideCompletionItems(
     document: vscode.TextDocument,
     position: vscode.Position,
-    //TODO
     token: vscode.CancellationToken,
     context: vscode.CompletionContext,
   ): Promise<vscode.CompletionItem[] | vscode.CompletionList> {
@@ -215,8 +216,8 @@ export class ManuallyCompletionProvider
     };
   }> {
     return new Promise((resolve) => {
-      const totalTimeoutMs = 60000; // 30 seconds total timeout
-      const requestTimeoutMs = 50000; // 20 seconds request timeout
+      const totalTimeoutMs = 60000; // 60 seconds total timeout
+      const requestTimeoutMs = 50000; // 50 seconds request timeout
       let timeoutId: NodeJS.Timeout;
 
       const startTime = Date.now();
@@ -323,14 +324,20 @@ export class ManuallyCompletionProvider
 
     return snippets
       .map((snippet, index) => {
-        const uniqueContent = this.removeOverlap(prefix, snippet);
-        if (!uniqueContent) return null; // 如果沒有新內容，返回 null
+        const { uniqueContent, shouldStartNewLine } =
+          this.removeOverlapAndCheckNewLine(prefix, snippet);
+        if (!uniqueContent) return null;
 
         const completionItem = new vscode.CompletionItem(
           uniqueContent,
           vscode.CompletionItemKind.Snippet,
         );
-        completionItem.insertText = uniqueContent;
+
+        // If the completion should start on a new line, add a newline character at the beginning
+        completionItem.insertText = shouldStartNewLine
+          ? '\n' + uniqueContent
+          : uniqueContent;
+
         completionItem.detail = `Suggested by ${this.settingsManager.get('lastUsedModelForManualCompletion')}`;
 
         const languageInfo = this.getLanguageInfo(languageId);
@@ -344,7 +351,7 @@ export class ManuallyCompletionProvider
         if (
           context.triggerKind === vscode.CompletionTriggerKind.TriggerCharacter
         ) {
-          completionItem.sortText = `0${index}`; // 使觸發字符觸發的補全項排在前面
+          completionItem.sortText = `0${index}`;
         } else {
           completionItem.sortText = `1${index}`;
         }
@@ -354,25 +361,20 @@ export class ManuallyCompletionProvider
   }
 
   private removeLanguageIdentifier(completion: string): string {
-    // 移除開頭的獨立語言標識符
     let cleaned = completion.replace(
       /^(typescript|javascript|python|java|cpp|csharp|go|rust|swift)\s*\n/i,
       '',
     );
 
-    // 移除嵌入在代碼開始處的語言標識符
     cleaned = cleaned.replace(
       /^(typescript|javascript|python|java|cpp|csharp|go|rust|swift)\\n/i,
       '',
     );
 
-    // 移除可能包裹在代碼塊中的語言標識符
     cleaned = cleaned.replace(/^```[a-z]*\s*\n/i, '').replace(/\n```$/i, '');
 
-    // 移除每行開頭的反斜杠和 n
     cleaned = cleaned.replace(/^\\n|\\n/gm, '\n');
 
-    // 移除行首的語言標識符（如果存在）
     cleaned = cleaned.replace(
       /^(typescript|javascript|python|java|cpp|csharp|go|rust|swift):/i,
       '',
@@ -381,7 +383,10 @@ export class ManuallyCompletionProvider
     return cleaned.trim();
   }
 
-  private removeOverlap(prefix: string, suggestion: string): string | null {
+  private removeOverlapAndCheckNewLine(
+    prefix: string,
+    suggestion: string,
+  ): { uniqueContent: string | null; shouldStartNewLine: boolean } {
     const prefixLines = prefix.trim().split('\n');
     const suggestionLines = suggestion.trim().split('\n');
 
@@ -397,10 +402,42 @@ export class ManuallyCompletionProvider
     }
 
     if (diffIndex === suggestionLines.length) {
-      return null; // 如果建議完全包含在前綴中，返回 null
+      return { uniqueContent: null, shouldStartNewLine: false };
     }
 
-    return suggestionLines.slice(diffIndex).join('\n');
+    const uniqueContent = suggestionLines.slice(diffIndex).join('\n');
+
+    // Check if the unique content should start on a new line
+    const shouldStartNewLine = this.shouldStartNewLine(
+      prefixLines[prefixLines.length - 1],
+      suggestionLines[diffIndex],
+    );
+
+    return { uniqueContent, shouldStartNewLine };
+  }
+
+  private shouldStartNewLine(
+    lastPrefixLine: string,
+    firstSuggestionLine: string,
+  ): boolean {
+    // Check if the last prefix line is a complete statement or block
+    const isCompleteStatement = /[;{}]\s*$/.test(lastPrefixLine.trim());
+
+    // Check if the first suggestion line starts a new block or statement
+    const startsNewBlock =
+      /^[{\s]*$/.test(firstSuggestionLine.trim()) ||
+      /^\s*(if|for|while|switch|function|class)/.test(
+        firstSuggestionLine.trim(),
+      );
+
+    // Check indentation difference
+    const prefixMatch = lastPrefixLine.match(/^\s*/);
+    const prefixIndent = prefixMatch ? prefixMatch[0].length : 0;
+    const suggestionMatch = firstSuggestionLine.match(/^\s*/);
+    const suggestionIndent = suggestionMatch ? suggestionMatch[0].length : 0;
+    const indentationChanged = Math.abs(suggestionIndent - prefixIndent) >= 2; // 假设 tab 大小为 2
+
+    return isCompleteStatement || startsNewBlock || indentationChanged;
   }
 
   public switchModelType(modelType: ModelServiceType): void {
@@ -417,9 +454,70 @@ export class ManuallyCompletionProvider
   public getAvailableModelTypes(): ModelServiceType[] {
     return Object.keys(this.models) as ModelServiceType[];
   }
-}
 
-let extensionContext: vscode.ExtensionContext;
+  async getCustomPromptCompletion(
+    modelType: ModelServiceType,
+    prompt: string,
+    languageId: string,
+    token: vscode.CancellationToken,
+  ): Promise<string | null> {
+    try {
+      console.log('Custom prompt completion requested for:', modelType);
+      console.log('Prompt:', prompt);
+      console.log('Language ID:', languageId);
+
+      const languageInfo = this.getLanguageInfo(languageId);
+      const options: ExtendedGetResponseOptions = { query: prompt };
+
+      if (languageInfo.useMultiline) {
+        const useMultiline = languageInfo.useMultiline({
+          prefix: '',
+          suffix: '',
+        });
+        options.multiline = useMultiline;
+      }
+
+      if (token.isCancellationRequested) {
+        console.log('Operation cancelled before sending request.');
+        return null;
+      }
+
+      const responsePromise =
+        this.models[modelType].service.getResponse(options);
+
+      const response = await Promise.race([
+        responsePromise,
+        new Promise<string>((_, reject) => {
+          token.onCancellationRequested(() => {
+            reject(new Error('Operation cancelled'));
+          });
+        }),
+      ]);
+
+      console.log('Raw response:', response);
+
+      if (token.isCancellationRequested) {
+        console.log('Operation cancelled after receiving response.');
+        return null;
+      }
+
+      const cleanedResponse = this.cleanCompletionResult(response);
+      console.log('Cleaned response:', cleanedResponse);
+
+      const snippets = filterCodeSnippets(cleanedResponse, languageId);
+      console.log('Filtered snippets:', snippets);
+
+      return snippets.length > 0 ? snippets[0] : null;
+    } catch (error) {
+      if (error instanceof Error && error.message === 'Operation cancelled') {
+        console.log('Operation was cancelled during getResponse.');
+        return null;
+      }
+      console.error('Error in getCustomPromptCompletion:', error);
+      throw error;
+    }
+  }
+}
 
 export function activateManuallyComplete(
   ctx: vscode.ExtensionContext,
@@ -431,14 +529,6 @@ export function activateManuallyComplete(
   const completionProvider = new ManuallyCompletionProvider(
     settingsManager,
     models,
-  );
-
-  ctx.subscriptions.push(
-    vscode.languages.registerCompletionItemProvider(
-      supportedLanguages,
-      completionProvider,
-      '.',
-    ),
   );
 
   ctx.subscriptions.push(

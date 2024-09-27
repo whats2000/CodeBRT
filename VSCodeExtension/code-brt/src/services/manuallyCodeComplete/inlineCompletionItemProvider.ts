@@ -24,7 +24,6 @@ export class InlineCompletionProvider
         token,
       );
     } else {
-      // 对于自动触发，返回 null，不提供补全
       return null;
     }
   }

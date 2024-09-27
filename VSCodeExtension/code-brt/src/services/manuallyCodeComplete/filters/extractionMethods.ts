@@ -12,29 +12,42 @@ export function extractCodeBetweenTags(response: string): string[] {
 
 export function filterByIndentation(response: string): string[] {
   const lines = response.split('\n');
-  const indentedLines = lines.filter((line) => {
+  let inMultiLineComment = false;
+  const filteredLines = lines.filter((line) => {
     const trimmed = line.trim();
+
+    if (
+      trimmed.startsWith('/*') ||
+      trimmed.startsWith('"""') ||
+      trimmed.startsWith("'''")
+    ) {
+      inMultiLineComment = true;
+    }
+    if (
+      trimmed.endsWith('*/') ||
+      trimmed.endsWith('"""') ||
+      trimmed.endsWith("'''")
+    ) {
+      inMultiLineComment = false;
+      return false;
+    }
+
+    if (inMultiLineComment) {
+      return false;
+    }
+
     return (
-      trimmed.length > 0 && (line.startsWith('  ') || line.startsWith('\t'))
+      trimmed.length > 0 &&
+      !trimmed.startsWith('//') &&
+      !trimmed.startsWith('#') &&
+      !trimmed.startsWith('*') &&
+      !/^\d+\./.test(trimmed)
     );
   });
 
-  if (indentedLines.length > lines.length / 3) {
-    return [indentedLines.join('\n')];
+  if (filteredLines.length > lines.length / 3) {
+    return [filteredLines.join('\n')];
   } else {
-    return [
-      lines
-        .filter((line) => {
-          const trimmed = line.trim();
-          return (
-            trimmed.length > 0 &&
-            !trimmed.startsWith('//') &&
-            !trimmed.startsWith('#') &&
-            !trimmed.startsWith('*') &&
-            !/^\d+\./.test(trimmed)
-          );
-        })
-        .join('\n'),
-    ];
+    return [lines.filter((line) => line.trim().length > 0).join('\n')];
   }
 }
