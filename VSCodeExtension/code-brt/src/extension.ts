@@ -1,5 +1,6 @@
 import fs from 'node:fs/promises';
 import * as vscode from 'vscode';
+import * as jsdiff from 'diff';
 
 import type {
   LoadedModelServices,
@@ -31,11 +32,19 @@ import {
   VisualStudioCodeBuiltInService,
 } from './services/voice';
 
+import { GeminiCodeFixerService } from './services/codeFixer/geminiCodeFixerService';
+
+import * as Commands from './diff/commands';
+
 export const activate = async (ctx: vscode.ExtensionContext) => {
   const connectedViews: Partial<Record<ViewKey, vscode.WebviewView>> = {};
   const settingsManager = SettingsManager.getInstance(ctx);
-
   const historyManager = new HistoryManager(ctx);
+
+  const geminiCodeFixerService = new GeminiCodeFixerService(
+    ctx,
+    settingsManager,
+  );
 
   const models: LoadedModelServices = {
     anthropic: {
@@ -77,6 +86,70 @@ export const activate = async (ctx: vscode.ExtensionContext) => {
     openai: {
       service: new OpenaiVoiceService(ctx, settingsManager),
     },
+  };
+
+  let addedDecorationType: vscode.TextEditorDecorationType;
+  let removedDecorationType: vscode.TextEditorDecorationType;
+
+  // 初始化裝飾類型
+  addedDecorationType = vscode.window.createTextEditorDecorationType({
+    isWholeLine: true,
+    backgroundColor: 'rgba(144,238,144,0.5)', // 綠色背景（新增）
+  });
+
+  removedDecorationType = vscode.window.createTextEditorDecorationType({
+    isWholeLine: true,
+    backgroundColor: 'rgba(255,99,71,0.5)', // 紅色背景（刪除）
+  });
+
+  interface Modification {
+    startLine: number; // 修改的開始行號
+    endLine: number; // 修改的結束行號
+    content: string; // 要插入的內容，如果是刪除操作則為空字串
+  }
+  // 顯示程式碼差異的 API
+  const showDiffInEditor = async (modifications: Modification[]) => {
+    const editor = vscode.window.activeTextEditor;
+    if (!editor) {
+      vscode.window.showErrorMessage('未能找到編輯器');
+      return;
+    }
+
+    const addedRanges: vscode.DecorationOptions[] = [];
+    const removedRanges: vscode.DecorationOptions[] = [];
+
+    modifications.forEach((modification) => {
+      const startLine = modification.startLine - 1; // 調整行號到 0-based
+      const endLine = modification.endLine - 1;
+
+      if (modification.content) {
+        // 新增或替換的部分
+        const startPos = new vscode.Position(startLine, 0);
+        const endPos = editor.document.lineAt(endLine).range.end;
+        addedRanges.push({ range: new vscode.Range(startPos, endPos) });
+      } else {
+        // 刪除的部分
+        const startPos = new vscode.Position(startLine, 0);
+        const endPos = editor.document.lineAt(endLine).range.end;
+        removedRanges.push({ range: new vscode.Range(startPos, endPos) });
+      }
+    });
+
+    // 應用裝飾
+    editor.setDecorations(addedDecorationType, addedRanges);
+    editor.setDecorations(removedDecorationType, removedRanges);
+  };
+
+  // 清除裝飾的 API
+  const clearDecorations = () => {
+    const editor = vscode.window.activeTextEditor;
+    if (!editor) {
+      vscode.window.showErrorMessage('未能找到編輯器');
+      return;
+    }
+    // 清除裝飾
+    editor.setDecorations(addedDecorationType, []);
+    editor.setDecorations(removedDecorationType, []);
   };
 
   /**
@@ -311,6 +384,35 @@ export const activate = async (ctx: vscode.ExtensionContext) => {
         extensionId,
       );
     },
+    insertCode: async (code: string) => {
+      const editor = vscode.window.activeTextEditor;
+      if (!editor) {
+        vscode.window.showErrorMessage('Failed to find editor');
+        return;
+      }
+
+      await editor.edit((editBuilder) => {
+        const position = editor.selection.active;
+        editBuilder.insert(position, code);
+      });
+    },
+    // 獲取當前編輯器的程式碼
+    getCurrentEditorCode: async () => {
+      const editor = vscode.window.activeTextEditor;
+      if (!editor) {
+        vscode.window.showErrorMessage('未能找到編輯器');
+        return '';
+      }
+      return editor.document.getText();
+    },
+    // 呼叫 CodeFixerService 來比較程式碼
+    fixCode: async (options) => {
+      const response = await geminiCodeFixerService.getResponse(options);
+      return response;
+    },
+
+    showDiffInEditor, // 顯示差異 API
+    clearDecorations, // 清除裝飾 API
   };
 
   const isViewApiRequest = <K extends keyof ViewApi>(
@@ -350,12 +452,27 @@ export const activate = async (ctx: vscode.ExtensionContext) => {
 
     view.webview.onDidReceiveMessage(onMessage);
   };
-
   registerAndConnectView('chatActivityBar').catch((e) => {
     console.error(e);
   });
   registerAndConnectView('workPanel').catch((e) => {
     console.error(e);
+  });
+  vscode.commands.registerCommand('diff.file', Commands.file);
+
+  // 當檔案內容變更時自動清除裝飾
+  vscode.workspace.onDidChangeTextDocument((event) => {
+    const editor = vscode.window.activeTextEditor;
+    if (editor && event.document === editor.document) {
+      vscode.commands.executeCommand('extension.clearDecorations');
+    }
+  });
+
+  // 當切換編輯器時自動清除裝飾
+  vscode.window.onDidChangeActiveTextEditor((editor) => {
+    if (editor) {
+      vscode.commands.executeCommand('extension.clearDecorations');
+    }
   });
 };
 

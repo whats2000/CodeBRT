@@ -277,6 +277,12 @@ export type ViewApi = {
    * @param extensionId - The extension ID to open the marketplace page for.
    */
   openExtensionMarketplace: (extensionId: string) => Promise<void>;
+
+  insertCode: (code: string) => Promise<void>;
+  showDiffInEditor: (modifications: Modification[]) => Promise<void>;
+  getCurrentEditorCode: () => void;
+  clearDecorations: () => void;
+  fixCode: (options) => void;
 };
 
 /**

@@ -6,6 +6,7 @@ import { BgColorsOutlined } from '@ant-design/icons';
 import styled from 'styled-components';
 
 import { CopyButton } from './CopyButton';
+import InsertButton from './InsertCode';
 
 const CodeContainer = styled.div<{ $dynamicStyle: React.CSSProperties }>`
   border-radius: 4px !important;
@@ -78,6 +79,7 @@ export const RendererCode: { [nodeType: string]: React.ElementType } = {
     const [showSetting, setShowSetting] = useState(false);
     const { hljsTheme, setHljsTheme } = useContext(RendererCodeContext);
     const match = /language-(\w+)/.exec(className || '');
+    const generatedCode = String(children).replace(/\n$/, '');
 
     const hljsStyle = hljs[hljsTheme];
 
@@ -133,6 +135,7 @@ export const RendererCode: { [nodeType: string]: React.ElementType } = {
               />
             )}
             <CopyButton copied={copied} handleCopy={handleCopy} />
+            <InsertButton code={generatedCode} />
           </Flex>
         </CodeInfoContainer>
         <CodeBlock

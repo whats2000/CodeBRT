@@ -86,7 +86,12 @@
   },
   "activationEvents": [],
   "contributes": {
-    "commands": [],
+    "commands": [
+      {
+        "command": "diff.file",
+        "title": "CodeBRT: ShowDiff"
+      }
+    ],
     "viewsContainers": {
       "activitybar": [
         {
@@ -300,6 +305,54 @@
             "xt256",
             "zenburn"
           ]
+        },
+        "diff.exclude": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "An array of globs to exclude",
+          "default": null
+        },
+        "diff.ignore": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "An array of names for .gitignore-like files to use",
+          "default": [
+            ".gitignore"
+          ]
+        },
+        "diff.include": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "An array of globs to include",
+          "default": [
+            "**/*"
+          ]
+        },
+        "diff.showUntitledFiles": {
+          "type": "boolean",
+          "description": "Whether to show untitled files in the selector or not",
+          "default": true
+        },
+        "diff.showOpenFiles": {
+          "type": "boolean",
+          "description": "Whether to show open files at the top of the selector or not",
+          "default": true
+        },
+        "diff.showFoundFiles": {
+          "type": "boolean",
+          "description": "Whether to show other found files in the selector or not",
+          "default": true
+        },
+        "diff.showFoundRelativeFiles": {
+          "type": "boolean",
+          "description": "Whether to show other found files, using relative paths, in the selector or not",
+          "default": false
         }
       }
     }
@@ -312,8 +365,10 @@
     "@langchain/google-genai": "^0.1.0",
     "@types/react-syntax-highlighter": "^15.5.13",
     "axios": "^1.7.3",
+    "code-brt": "file:",
     "cohere-ai": "^7.11.2",
     "css-loader": "^7.1.2",
+    "diff": "^7.0.0",
     "groq-sdk": "^0.5.0",
     "langchain": "^0.2.20",
     "markdown-to-text": "^0.1.1",
@@ -324,6 +379,10 @@
     "react-syntax-highlighter": "^15.5.0",
     "simple-text-tokenizer": "^1.0.1",
     "styled-components": "^6.1.12",
-    "terminate": "^2.8.0"
+    "terminate": "^2.8.0",
+    "tiny-readdir-glob-gitignore": "^2.0.5",
+    "vscode-diff": "^2.1.1",
+    "vscode-extras": "^1.8.1",
+    "zeptoid": "^1.0.1"
   }
 }
