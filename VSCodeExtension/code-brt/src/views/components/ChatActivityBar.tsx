@@ -1,7 +1,7 @@
 import { useContext, useState, useEffect, useRef } from 'react';
 import styled from 'styled-components';
 import { Content } from 'antd/es/layout/layout';
-import { ConfigProvider, FloatButton, Tooltip } from 'antd';
+import { ConfigProvider, FloatButton } from 'antd';
 import { ControlOutlined } from '@ant-design/icons';
 import { useSelector, useDispatch } from 'react-redux';
 
@@ -15,7 +15,7 @@ import {
   replaceTempEntry,
 } from '../redux/slices/conversationSlice';
 import { WebviewContext } from '../WebviewContext';
-import { useDragAndDrop, useThemeConfig, useWindowSize } from '../hooks';
+import { useDragAndDrop, useThemeConfig } from '../hooks';
 import { Toolbar } from './ChatActivityBar/Toolbar';
 import { InputContainer } from './ChatActivityBar/InputContainer';
 import { MessagesContainer } from './ChatActivityBar/MessagesContainer';
@@ -39,11 +39,9 @@ const Container = styled(Content)`
 
 export const ChatActivityBar = () => {
   const { callApi, addListener, removeListener } = useContext(WebviewContext);
-  const { innerWidth } = useWindowSize();
 
   const [isProcessing, setIsProcessing] = useState(false);
   const [floatButtonBaseYPosition, setFloatButtonBaseYPosition] = useState(60);
-  const [floatButtonsXPosition, setFloatButtonsXPosition] = useState(0);
   const [isModelAdvanceSettingBarOpen, setIsModelAdvanceSettingBarOpen] =
     useState(false);
 
@@ -106,10 +104,6 @@ export const ChatActivityBar = () => {
       removeListener('streamResponse', handleStreamResponseEvent);
     };
   }, [dispatch]);
-
-  useEffect(() => {
-    setFloatButtonsXPosition(innerWidth - 84);
-  }, [innerWidth]);
 
   useEffect(() => {
     const updateYPosition = () => {
@@ -237,18 +231,16 @@ export const ChatActivityBar = () => {
           isProcessing={isProcessing}
         />
       </Container>
-      <Tooltip title={'Model Advance Settings'} placement={'left'}>
-        <FloatButton
-          icon={<ControlOutlined />}
-          onClick={() => setIsModelAdvanceSettingBarOpen(true)}
-          style={{
-            left: floatButtonsXPosition,
-            bottom: floatButtonBaseYPosition + 50,
-          }}
-        />
-      </Tooltip>
+      <FloatButton
+        tooltip={'Model Advance Settings'}
+        icon={<ControlOutlined />}
+        onClick={() => setIsModelAdvanceSettingBarOpen(true)}
+        style={{
+          insetInlineEnd: 40,
+          bottom: floatButtonBaseYPosition + 50,
+        }}
+      />
       <ToolActivateFloatButtons
-        floatButtonsXPosition={floatButtonsXPosition}
         floatButtonBaseYPosition={floatButtonBaseYPosition}
       />
       <ModelAdvanceSettingBar
