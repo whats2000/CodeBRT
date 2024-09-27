@@ -10,6 +10,7 @@ import type {
   ToolServiceType,
 } from '../../types';
 import { MODEL_SERVICE_CONSTANTS, toolsSchema } from '../../constants';
+import { ParseToolCallUtils } from '../../utils';
 import { AbstractLanguageModelService } from './abstractLanguageModelService';
 import { HistoryManager, SettingsManager } from '../../api';
 import { ToolService } from '../tools';
@@ -210,32 +211,6 @@ export class OllamaService extends AbstractLanguageModelService {
     return { client, conversationHistory, model };
   }
 
-  private convertContentToToolCall(responseText: string): ToolCall | undefined {
-    try {
-      // Parse the JSON string to an object
-      const parsed = JSON.parse(responseText);
-
-      // Ensure the parsed object has the required structure
-      if (parsed && parsed.name && parsed.parameters) {
-        return {
-          function: {
-            name: parsed.name,
-            arguments: parsed.parameters,
-          },
-        };
-      } else {
-        return {
-          function: {
-            name: 'Unknown Tool Format',
-            arguments: {},
-          },
-        };
-      }
-    } catch (error) {
-      console.error('Failed to convert content to tool call:', error);
-    }
-  }
-
   private handleFunctionCalls = async (
     functionCalls: ToolCall[],
     updateStatus?: (status: string) => void,
@@ -336,9 +311,6 @@ export class OllamaService extends AbstractLanguageModelService {
 
     let functionCallCount = 0;
     const MAX_FUNCTION_CALLS = 5;
-    let functionCallFlag = false;
-    let functionCallBuffer = '';
-    let isFirstChunk = true;
 
     const { systemPrompt, generationConfig } = this.getAdvanceSettings();
 
@@ -352,9 +324,6 @@ export class OllamaService extends AbstractLanguageModelService {
     try {
       if (!sendStreamResponse) {
         while (functionCallCount < MAX_FUNCTION_CALLS) {
-          functionCallFlag = false;
-          functionCallBuffer = '';
-
           const response = await client.chat({
             model,
             messages: conversationHistory,
@@ -362,32 +331,20 @@ export class OllamaService extends AbstractLanguageModelService {
             options: generationConfig,
           });
 
-          // Check if the first chunk indicates a function call
-          if (response.message.content.trim().startsWith('{"name": ')) {
-            functionCallFlag = true;
-          }
-
           if (
-            functionCallFlag ||
-            (response.message.tool_calls &&
-              response.message.tool_calls.length > 0)
+            response.message.tool_calls &&
+            response.message.tool_calls.length > 0
           ) {
-            const toolCall = this.convertContentToToolCall(
-              response.message.content,
-            );
-
-            if (!toolCall) {
-              return response.message.content;
-            }
+            const toolCalls = response.message.tool_calls!;
 
             const functionCallResults = await this.handleFunctionCalls(
-              [toolCall],
+              toolCalls,
               updateStatus,
             );
             conversationHistory.push({
               role: 'assistant',
               content: response.message.content,
-              tool_calls: [toolCall],
+              tool_calls: toolCalls,
             });
             conversationHistory.push(...functionCallResults);
 
@@ -399,14 +356,16 @@ export class OllamaService extends AbstractLanguageModelService {
         return 'Max function call limit reached.';
       } else {
         let responseText = '';
+        let toolCallBuffer = '';
+        let inToolCall = false;
+        let inCodeBlock = false;
+        let openBraces = 0;
+        let inTaggedToolCall = false;
 
         while (functionCallCount < MAX_FUNCTION_CALLS) {
           if (this.stopStreamFlag) {
-            return responseText;
+            return ParseToolCallUtils.cleanResponseText(responseText);
           }
-
-          functionCallFlag = false;
-          functionCallBuffer = '';
 
           const streamResponse = await client.chat({
             model,
@@ -416,78 +375,125 @@ export class OllamaService extends AbstractLanguageModelService {
             options: generationConfig,
           });
 
-          let functionCallResults: Message[] = [];
+          let breakByToolCall = false;
 
           for await (const chunk of streamResponse) {
             if (this.stopStreamFlag) {
-              return responseText;
+              return ParseToolCallUtils.cleanResponseText(responseText);
             }
 
-            // Check only the first chunk for function call indication
-            if (isFirstChunk) {
-              isFirstChunk = false;
-              if (chunk.message.content.trim().startsWith('{')) {
-                functionCallFlag = true;
+            const chunkContent = chunk.message.content;
+
+            // Check for code block
+            if (chunkContent.includes('```')) {
+              inCodeBlock = !inCodeBlock;
+              if (inCodeBlock && (inToolCall || inTaggedToolCall)) {
+                // If entering a code block while in a potential tool call, abort the tool call
+                sendStreamResponse(toolCallBuffer);
+                responseText += toolCallBuffer;
+                toolCallBuffer = '';
+                inToolCall = false;
+                inTaggedToolCall = false;
+                openBraces = 0;
               }
             }
 
-            if (functionCallFlag) {
-              functionCallBuffer += chunk.message.content;
+            if (inCodeBlock) {
+              // In code block, send everything as is
+              sendStreamResponse(chunkContent);
+              responseText += chunkContent;
               continue;
             }
 
-            // if (
-            //   functionCallFlag ||
-            //   (chunk.message.tool_calls && chunk.message.tool_calls.length > 0)
-            // ) {
-            //   functionCallResults = await this.handleFunctionCalls(
-            //     chunk.message.tool_calls || [JSON.parse(chunk.message.content)],
-            //     updateStatus,
-            //   );
-            //
-            //   conversationHistory.push({
-            //     role: 'assistant',
-            //     content: chunk.message.content,
-            //     tool_calls: chunk.message.tool_calls,
-            //   });
-            //   conversationHistory.push(...functionCallResults);
-            //   break;
-            // }
+            // Process the chunk character by character
+            for (const char of chunkContent) {
+              if (!inToolCall && !inTaggedToolCall && char === '<') {
+                // Potential start of a tagged tool call
+                if (
+                  chunkContent
+                    .substring(chunkContent.indexOf(char))
+                    .startsWith('<tool_call>')
+                ) {
+                  inTaggedToolCall = true;
+                  toolCallBuffer = '<';
+                }
+              } else if (inTaggedToolCall) {
+                toolCallBuffer += char;
+                if (toolCallBuffer.endsWith('</tool_call>')) {
+                  // End of tagged tool call
+                  breakByToolCall = true;
+                  break;
+                }
+              } else if (!inToolCall && !inTaggedToolCall && char === '{') {
+                inToolCall = true;
+                openBraces = 1;
+                toolCallBuffer = char;
+              } else if (inToolCall) {
+                toolCallBuffer += char;
+                if (char === '{') {
+                  openBraces++;
+                } else if (char === '}') {
+                  openBraces--;
+                  if (openBraces === 0) {
+                    // Potential end of a tool call
+                    breakByToolCall = true;
+                    break;
+                  }
+                }
+              } else {
+                // Regular content
+                sendStreamResponse(char);
+                responseText += char;
+              }
+            }
 
-            const partText = chunk.message.content;
-            sendStreamResponse(partText);
-            responseText += partText;
+            if (breakByToolCall) {
+              break;
+            }
           }
-          // if (functionCallResults.length === 0) {
-          //   return responseText;
-          // }
 
-          if (!functionCallFlag) {
-            return responseText;
+          if (!breakByToolCall) {
+            // Handle any remaining content in the buffer
+            if (toolCallBuffer) {
+              sendStreamResponse(toolCallBuffer);
+              responseText += toolCallBuffer;
+              toolCallBuffer = '';
+              inToolCall = false;
+              inTaggedToolCall = false;
+            }
+
+            return ParseToolCallUtils.cleanResponseText(responseText);
           }
 
-          const toolCall: ToolCall | undefined =
-            this.convertContentToToolCall(functionCallBuffer);
-
-          if (!toolCall) {
-            return functionCallBuffer;
+          // Process the potential tool call
+          const possibleToolCall =
+            ParseToolCallUtils.extractToolCalls(toolCallBuffer);
+          if (!possibleToolCall) {
+            // Not a valid tool call, send as regular content
+            sendStreamResponse(toolCallBuffer);
+            responseText += toolCallBuffer;
+            return ParseToolCallUtils.cleanResponseText(responseText);
           }
 
-          functionCallResults = await this.handleFunctionCalls(
-            [toolCall],
+          // Valid tool call found
+          const functionCallResults = await this.handleFunctionCalls(
+            [possibleToolCall],
             updateStatus,
           );
-
           conversationHistory.push({
             role: 'assistant',
-            content: functionCallBuffer,
-            tool_calls: [toolCall],
+            content: toolCallBuffer,
+            tool_calls: [possibleToolCall],
           });
-
           conversationHistory.push(...functionCallResults);
+
           functionCallCount++;
+          toolCallBuffer = '';
+          inToolCall = false;
+          inTaggedToolCall = false;
         }
-        return responseText;
+
+        return ParseToolCallUtils.cleanResponseText(responseText);
       }
     } catch (error) {
       vscode.window

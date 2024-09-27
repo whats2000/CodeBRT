@@ -69,14 +69,14 @@ export const MessageFloatButton: React.FC<MessageFloatButtonProps> = ({
     <FloatButton.Group
       shape='circle'
       style={{
-        left: floatButtonsPosition.xRight,
-        top: floatButtonsPosition.yTop,
-        position: 'fixed',
+        bottom: window.innerHeight - floatButtonsPosition.yTop - 37,
+        insetInlineEnd: 40,
         visibility: hoveredBubble ? 'visible' : 'hidden',
-        height: 225,
       }}
       icon={<EllipsisOutlined />}
-      trigger='hover'
+      trigger='click'
+      tooltip={'Show Actions'}
+      placement={'bottom'}
     >
       {hoveredBubble.entry.id !== editingEntryId ? (
         <>
