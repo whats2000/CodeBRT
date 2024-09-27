@@ -9,7 +9,9 @@ import type {
 import {
   BUILD_IN_FUNCTIONS_PROMPT_TEMPLATE,
   COMMON_LIBRARIES_PROMPT_TEMPLATE,
-  Constants,
+  FILE_TO_LANGUAGE_CONTEXT,
+  FILE_MAPPING,
+  LANGUAGE_NAME_MAPPING,
   MAIN_PROMPT_TEMPLATE,
   TRIGGER_KIND_PROMPT_TEMPLATE,
 } from './constants';
@@ -27,51 +29,7 @@ export class ManuallyCompletionProvider
   ) {}
 
   private getLanguageInfo(languageId: string): ManuallyCompleteLanguageInfo {
-    const mappedId = this.mapLanguageId(languageId);
-    return Constants[mappedId];
-  }
-
-  private mapLanguageId(vsCodeLangId: string): string {
-    const mapping: { [key: string]: string } = {
-      typescript: 'ts',
-      javascript: 'js',
-      typescriptreact: 'tsx',
-      javascriptreact: 'jsx',
-      python: 'py',
-      jupyter: 'ipynb',
-      java: 'java',
-      cpp: 'cpp',
-      csharp: 'cs',
-      c: 'c',
-      php: 'php',
-      ruby: 'rb',
-      clojure: 'clj',
-      r: 'r',
-      yaml: 'yaml',
-      markdown: 'md',
-    };
-    return mapping[vsCodeLangId] || vsCodeLangId;
-  }
-
-  private getLanguageName(languageId: string): string {
-    const mapping: { [key: string]: string } = {
-      typescript: 'TypeScript',
-      javascript: 'JavaScript',
-      jsx: 'JavaScript',
-      python: 'Python',
-      jupyter: 'Jupyter Notebook',
-      java: 'Java',
-      cpp: 'C++',
-      csharp: 'C#',
-      c: 'C',
-      php: 'PHP',
-      ruby: 'Ruby',
-      clojure: 'Clojure',
-      r: 'R',
-      yaml: 'YAML',
-      markdown: 'Markdown',
-    };
-    return mapping[languageId] || 'Unknown';
+    return FILE_TO_LANGUAGE_CONTEXT[FILE_MAPPING[languageId] || languageId];
   }
 
   private buildPromptWithLanguageInfo(
@@ -84,7 +42,7 @@ export class ManuallyCompletionProvider
 
     let prompt = MAIN_PROMPT_TEMPLATE.replace(
       '{languageName}',
-      this.getLanguageName(languageId),
+      LANGUAGE_NAME_MAPPING[languageId] || 'Unknown',
     )
       .replace('{prefix}', prefix)
       .replace('{suffix}', suffix);
@@ -117,103 +75,6 @@ export class ManuallyCompletionProvider
 
   private cleanCompletionResult(completion: string): string {
     return completion.replace(/```/g, '').trim();
-  }
-
-  async provideCompletionItems(
-    document: vscode.TextDocument,
-    position: vscode.Position,
-    token: vscode.CancellationToken,
-    context: vscode.CompletionContext,
-  ): Promise<vscode.CompletionItem[] | vscode.CompletionList> {
-    try {
-      if (token.isCancellationRequested) {
-        console.log('Operation cancelled at start');
-        return new vscode.CompletionList([], false);
-      }
-
-      console.log('Completion context:', {
-        triggerKind: context.triggerKind,
-        triggerCharacter: context.triggerCharacter,
-      });
-
-      const prefixLines = document
-        .getText(
-          new vscode.Range(
-            new vscode.Position(Math.max(0, position.line - 5), 0),
-            position,
-          ),
-        )
-        .split('\n');
-      const suffixLines = document
-        .getText(
-          new vscode.Range(
-            position,
-            new vscode.Position(
-              Math.min(document.lineCount - 1, position.line + 5),
-              Number.MAX_VALUE,
-            ),
-          ),
-        )
-        .split('\n');
-
-      const prefix = prefixLines.join('\n');
-      const suffix = suffixLines.join('\n');
-
-      const languageId = document.languageId;
-      console.log('Language ID:', languageId);
-
-      const languageInfo = this.getLanguageInfo(languageId);
-      console.log('Language Info from Constants:', languageInfo);
-
-      console.log('Providing completion items for:', languageId);
-      console.log('Prefix:', prefix);
-      console.log('Suffix:', suffix);
-
-      const modelType = this.settingsManager.get(
-        'lastUsedModelForManualCompletion',
-      ) as ModelServiceType;
-      console.log('Using model for manual completion:', modelType);
-
-      const prompt = this.buildPromptWithLanguageInfo(
-        prefix,
-        suffix,
-        languageId,
-        context,
-      );
-
-      const completionResult = await this.getModelCompletionWithTimeout(
-        modelType,
-        prompt,
-        languageInfo,
-        token,
-        prefix,
-        suffix,
-      );
-
-      if (completionResult.cancelled) {
-        console.log(
-          'Operation cancelled or timed out:',
-          completionResult.timings,
-        );
-        return new vscode.CompletionList([], false);
-      }
-
-      console.log('Completion timings:', completionResult.timings);
-      console.log('Received completion:', completionResult.completion);
-
-      const completionItems = this.processCompletion(
-        completionResult.completion,
-        prefix,
-        languageId,
-        context,
-      );
-      console.log('Processed completion items:', completionItems);
-
-      return new vscode.CompletionList(completionItems, true);
-    } catch (error) {
-      console.error('Error in provideCompletionItems:', error);
-      return new vscode.CompletionList([], false);
-    }
   }
 
   private async getModelCompletionWithTimeout(
@@ -458,6 +319,103 @@ export class ManuallyCompletionProvider
     return isCompleteStatement || startsNewBlock || indentationChanged;
   }
 
+  public async provideCompletionItems(
+    document: vscode.TextDocument,
+    position: vscode.Position,
+    token: vscode.CancellationToken,
+    context: vscode.CompletionContext,
+  ): Promise<vscode.CompletionItem[] | vscode.CompletionList> {
+    try {
+      if (token.isCancellationRequested) {
+        console.log('Operation cancelled at start');
+        return new vscode.CompletionList([], false);
+      }
+
+      console.log('Completion context:', {
+        triggerKind: context.triggerKind,
+        triggerCharacter: context.triggerCharacter,
+      });
+
+      const prefixLines = document
+        .getText(
+          new vscode.Range(
+            new vscode.Position(Math.max(0, position.line - 5), 0),
+            position,
+          ),
+        )
+        .split('\n');
+      const suffixLines = document
+        .getText(
+          new vscode.Range(
+            position,
+            new vscode.Position(
+              Math.min(document.lineCount - 1, position.line + 5),
+              Number.MAX_VALUE,
+            ),
+          ),
+        )
+        .split('\n');
+
+      const prefix = prefixLines.join('\n');
+      const suffix = suffixLines.join('\n');
+
+      const languageId = document.languageId;
+      console.log('Language ID:', languageId);
+
+      const languageInfo = this.getLanguageInfo(languageId);
+      console.log('Language Info from Constants:', languageInfo);
+
+      console.log('Providing completion items for:', languageId);
+      console.log('Prefix:', prefix);
+      console.log('Suffix:', suffix);
+
+      const modelType = this.settingsManager.get(
+        'lastUsedModelForManualCompletion',
+      ) as ModelServiceType;
+      console.log('Using model for manual completion:', modelType);
+
+      const prompt = this.buildPromptWithLanguageInfo(
+        prefix,
+        suffix,
+        languageId,
+        context,
+      );
+
+      const completionResult = await this.getModelCompletionWithTimeout(
+        modelType,
+        prompt,
+        languageInfo,
+        token,
+        prefix,
+        suffix,
+      );
+
+      if (completionResult.cancelled) {
+        console.log(
+          'Operation cancelled or timed out:',
+          completionResult.timings,
+        );
+        return new vscode.CompletionList([], false);
+      }
+
+      console.log('Completion timings:', completionResult.timings);
+      console.log('Received completion:', completionResult.completion);
+
+      const completionItems = this.processCompletion(
+        completionResult.completion,
+        prefix,
+        languageId,
+        context,
+      );
+      console.log('Processed completion items:', completionItems);
+
+      return new vscode.CompletionList(completionItems, true);
+    } catch (error) {
+      console.error('Error in provideCompletionItems:', error);
+      return new vscode.CompletionList([], false);
+    }
+  }
+
   public switchModelType(modelType: ModelServiceType): void {
     if (this.models[modelType]) {
       void this.settingsManager.set(
@@ -473,7 +431,7 @@ export class ManuallyCompletionProvider
     return Object.keys(this.models) as ModelServiceType[];
   }
 
-  async getCustomPromptCompletion(
+  public async getCustomPromptCompletion(
     modelType: ModelServiceType,
     prompt: string,
     languageId: string,

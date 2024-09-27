@@ -5,7 +5,7 @@ import {
 } from './extractionMethods';
 import { filterByLanguageRules } from './languageRules';
 import { removeDuplicates } from './utils';
-import { Constants } from '../constants';
+import { FILE_TO_LANGUAGE_CONTEXT } from '../constants';
 
 export function filterCodeSnippets(
   response: string,
@@ -14,7 +14,8 @@ export function filterCodeSnippets(
   console.log('Original response:', response);
   console.log('Language ID:', languageId);
 
-  const languageInfo: ManuallyCompleteLanguageInfo = Constants[languageId];
+  const languageInfo: ManuallyCompleteLanguageInfo =
+    FILE_TO_LANGUAGE_CONTEXT[languageId];
   if (!languageInfo) {
     console.warn(`Language info not found for ${languageId}`);
     return [response];

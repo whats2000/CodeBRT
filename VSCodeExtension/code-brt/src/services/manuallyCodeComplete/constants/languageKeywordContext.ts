@@ -153,47 +153,63 @@ export const Markdown: ManuallyCompleteLanguageInfo = {
   },
 };
 
-export const Constants: { [extension: string]: ManuallyCompleteLanguageInfo } =
-  {
-    ts: Typescript,
-    js: Typescript,
-    tsx: Typescript,
-    jsx: Typescript,
-    ipynb: Python,
-    py: Python,
-    pyi: Python,
-    java: Java,
-    cpp: Cpp,
-    cxx: Cpp,
-    h: Cpp,
-    hpp: Cpp,
-    cs: CSharp,
-    c: C,
-    php: PHP,
-    rb: Ruby,
-    rails: RubyOnRails,
-    clj: Clojure,
-    cljs: Clojure,
-    cljc: Clojure,
-    r: R,
-    R: R,
-    yaml: YAML,
-    yml: YAML,
-    md: Markdown,
-  };
+export const FILE_TO_LANGUAGE_CONTEXT: {
+  [extension: string]: ManuallyCompleteLanguageInfo;
+} = {
+  ts: Typescript,
+  js: Typescript,
+  tsx: Typescript,
+  jsx: Typescript,
+  ipynb: Python,
+  py: Python,
+  pyi: Python,
+  java: Java,
+  cpp: Cpp,
+  cxx: Cpp,
+  h: Cpp,
+  hpp: Cpp,
+  cs: CSharp,
+  c: C,
+  php: PHP,
+  rb: Ruby,
+  rails: RubyOnRails,
+  clj: Clojure,
+  cljs: Clojure,
+  cljc: Clojure,
+  r: R,
+  R: R,
+  yaml: YAML,
+  yml: YAML,
+  md: Markdown,
+};
 
-Constants.ts.builtInFunctions = [
+FILE_TO_LANGUAGE_CONTEXT.ts.builtInFunctions = [
   'console.log',
   'parseInt',
   'setTimeout',
   'Promise',
 ];
-Constants.ts.commonLibraries = ['react', 'angular', 'vue', 'express'];
+FILE_TO_LANGUAGE_CONTEXT.ts.commonLibraries = [
+  'react',
+  'angular',
+  'vue',
+  'express',
+];
 
-Constants.py.builtInFunctions = ['print', 'len', 'range', 'input'];
-Constants.py.commonLibraries = ['numpy', 'pandas', 'matplotlib', 'sklearn'];
+FILE_TO_LANGUAGE_CONTEXT.py.builtInFunctions = [
+  'print',
+  'len',
+  'range',
+  'input',
+];
+FILE_TO_LANGUAGE_CONTEXT.py.commonLibraries = [
+  'numpy',
+  'pandas',
+  'matplotlib',
+  'sklearn',
+];
 
-export const supportedLanguages = Object.keys(Constants)
+export const SUPPORTED_LANGUAGES = Object.keys(FILE_TO_LANGUAGE_CONTEXT)
   .map((ext) => {
     switch (ext) {
       case 'ts':
@@ -238,3 +254,40 @@ export const supportedLanguages = Object.keys(Constants)
     }
   })
   .filter((lang) => lang !== null) as { scheme: string; language: string }[];
+
+export const FILE_MAPPING: { [key: string]: string } = {
+  typescript: 'ts',
+  javascript: 'js',
+  typescriptreact: 'tsx',
+  javascriptreact: 'jsx',
+  python: 'py',
+  jupyter: 'ipynb',
+  java: 'java',
+  cpp: 'cpp',
+  csharp: 'cs',
+  c: 'c',
+  php: 'php',
+  ruby: 'rb',
+  clojure: 'clj',
+  r: 'r',
+  yaml: 'yaml',
+  markdown: 'md',
+};
+
+export const LANGUAGE_NAME_MAPPING: { [key: string]: string } = {
+  typescript: 'TypeScript',
+  javascript: 'JavaScript',
+  jsx: 'JavaScript',
+  python: 'Python',
+  jupyter: 'Jupyter Notebook',
+  java: 'Java',
+  cpp: 'C++',
+  csharp: 'C#',
+  c: 'C',
+  php: 'PHP',
+  ruby: 'Ruby',
+  clojure: 'Clojure',
+  r: 'R',
+  yaml: 'YAML',
+  markdown: 'Markdown',
+};

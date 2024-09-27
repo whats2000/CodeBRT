@@ -33,7 +33,7 @@ import {
   activateManuallyComplete,
   deactivateManuallyComplete,
   InlineCompletionProvider,
-  supportedLanguages,
+  SUPPORTED_LANGUAGES,
 } from './services/manuallyCodeComplete';
 import { convertPdfToMarkdown } from './utils/pdfConverter';
 
@@ -95,7 +95,7 @@ export const activate = async (ctx: vscode.ExtensionContext) => {
   // Keep the inline completion provider registration
   ctx.subscriptions.push(
     vscode.languages.registerInlineCompletionItemProvider(
-      supportedLanguages,
+      SUPPORTED_LANGUAGES,
       new InlineCompletionProvider(completionProvider),
     ),
   );
