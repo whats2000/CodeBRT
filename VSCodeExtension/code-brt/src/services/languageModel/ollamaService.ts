@@ -352,7 +352,6 @@ export class OllamaService extends AbstractLanguageModelService {
     try {
       if (!sendStreamResponse) {
         while (functionCallCount < MAX_FUNCTION_CALLS) {
-          functionCallFlag = false;
           functionCallBuffer = '';
 
           const response = await client.chat({
@@ -362,32 +361,20 @@ export class OllamaService extends AbstractLanguageModelService {
             options: generationConfig,
           });
 
-          // Check if the first chunk indicates a function call
-          if (response.message.content.trim().startsWith('{"name": ')) {
-            functionCallFlag = true;
-          }
-
           if (
-            functionCallFlag ||
-            (response.message.tool_calls &&
-              response.message.tool_calls.length > 0)
+            response.message.tool_calls &&
+            response.message.tool_calls.length > 0
           ) {
-            const toolCall = this.convertContentToToolCall(
-              response.message.content,
-            );
-
-            if (!toolCall) {
-              return response.message.content;
-            }
+            const toolCalls = response.message.tool_calls!;
 
             const functionCallResults = await this.handleFunctionCalls(
-              [toolCall],
+              toolCalls,
               updateStatus,
             );
             conversationHistory.push({
               role: 'assistant',
               content: response.message.content,
-              tool_calls: [toolCall],
+              tool_calls: toolCalls,
             });
             conversationHistory.push(...functionCallResults);
 
