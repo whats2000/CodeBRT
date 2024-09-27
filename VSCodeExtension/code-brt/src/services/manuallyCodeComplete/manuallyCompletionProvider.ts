@@ -1,12 +1,18 @@
 import * as vscode from 'vscode';
 
 import type {
-  LoadedModelServices,
-  ModelServiceType,
   ExtendedGetResponseOptions,
+  LoadedModelServices,
   ManuallyCompleteLanguageInfo,
+  ModelServiceType,
 } from '../../types';
-import { Constants } from './constants';
+import {
+  BUILD_IN_FUNCTIONS_PROMPT_TEMPLATE,
+  COMMON_LIBRARIES_PROMPT_TEMPLATE,
+  Constants,
+  MAIN_PROMPT_TEMPLATE,
+  TRIGGER_KIND_PROMPT_TEMPLATE,
+} from './constants';
 import { SettingsManager } from '../../api';
 import { filterCodeSnippets } from './filters';
 
@@ -75,20 +81,33 @@ export class ManuallyCompletionProvider
     context: vscode.CompletionContext,
   ): string {
     const languageInfo = this.getLanguageInfo(languageId);
-    const languageName = this.getLanguageName(languageId);
 
-    let prompt = `Complete the following ${languageName} code. The completion should fit between the prefix and suffix. Provide only the code that should be inserted, no explanations:\n\nPrefix:\n${prefix}\n\nSuffix:\n${suffix}\n\nCompletion:`;
+    let prompt = MAIN_PROMPT_TEMPLATE.replace(
+      '{languageName}',
+      this.getLanguageName(languageId),
+    )
+      .replace('{prefix}', prefix)
+      .replace('{suffix}', suffix);
 
     if (languageInfo.builtInFunctions) {
-      prompt += `\n\nAvailable built-in functions: ${languageInfo.builtInFunctions.join(', ')}`;
+      prompt += BUILD_IN_FUNCTIONS_PROMPT_TEMPLATE.replace(
+        '{builtInFunctions}',
+        languageInfo.builtInFunctions.join(', '),
+      );
     }
 
     if (languageInfo.commonLibraries) {
-      prompt += `\n\nCommon libraries: ${languageInfo.commonLibraries.join(', ')}`;
+      prompt += COMMON_LIBRARIES_PROMPT_TEMPLATE.replace(
+        '{commonLibraries}',
+        languageInfo.commonLibraries.join(', '),
+      );
     }
 
     if (context.triggerKind === vscode.CompletionTriggerKind.TriggerCharacter) {
-      prompt += `\n\nThis completion was triggered by the character: ${context.triggerCharacter}`;
+      prompt += TRIGGER_KIND_PROMPT_TEMPLATE.replace(
+        '{triggerCharacter}',
+        context.triggerCharacter || '',
+      );
     }
 
     prompt = prompt.replace(/```/g, '');
@@ -230,8 +249,7 @@ export class ManuallyCompletionProvider
         requestStartTime = Date.now();
         const options: ExtendedGetResponseOptions = { query: prompt };
         if (languageInfo.useMultiline) {
-          const useMultiline = languageInfo.useMultiline({ prefix, suffix });
-          options.multiline = useMultiline;
+          options.multiline = languageInfo.useMultiline({ prefix, suffix });
         }
         this.models[modelType].service.getResponse(options).then((response) => {
           responseReceivedTime = Date.now();
@@ -470,11 +488,10 @@ export class ManuallyCompletionProvider
       const options: ExtendedGetResponseOptions = { query: prompt };
 
       if (languageInfo.useMultiline) {
-        const useMultiline = languageInfo.useMultiline({
+        options.multiline = languageInfo.useMultiline({
           prefix: '',
           suffix: '',
         });
-        options.multiline = useMultiline;
       }
 
       if (token.isCancellationRequested) {

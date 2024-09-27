@@ -1,5 +1,4 @@
-// TypeScript
-import { ManuallyCompleteLanguageInfo } from '../../types';
+import { ManuallyCompleteLanguageInfo } from '../../../types';
 
 export const Typescript = {
   topLevelKeywords: ['function', 'class', 'module', 'export', 'import'],
