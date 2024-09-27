@@ -1,6 +1,5 @@
 import fs from 'node:fs/promises';
 import * as vscode from 'vscode';
-import * as jsdiff from 'diff';
 
 import type {
   LoadedModelServices,
@@ -35,6 +34,7 @@ import {
 import { GeminiCodeFixerService } from './services/codeFixer/geminiCodeFixerService';
 
 import * as Commands from './diff/commands';
+import { Modification } from './types/viewApi';
 
 export const activate = async (ctx: vscode.ExtensionContext) => {
   const connectedViews: Partial<Record<ViewKey, vscode.WebviewView>> = {};
@@ -384,6 +384,14 @@ export const activate = async (ctx: vscode.ExtensionContext) => {
         extensionId,
       );
     },
+    getCurrentEditorCode: async () => {
+      const editor = vscode.window.activeTextEditor;
+      if (!editor) {
+        vscode.window.showErrorMessage('Failed to find editor');
+        return '';
+      }
+      return editor.document.getText();
+    },
     insertCode: async (code: string) => {
       const editor = vscode.window.activeTextEditor;
       if (!editor) {
@@ -396,23 +404,75 @@ export const activate = async (ctx: vscode.ExtensionContext) => {
         editBuilder.insert(position, code);
       });
     },
-    // 獲取當前編輯器的程式碼
-    getCurrentEditorCode: async () => {
-      const editor = vscode.window.activeTextEditor;
-      if (!editor) {
-        vscode.window.showErrorMessage('未能找到編輯器');
-        return '';
-      }
-      return editor.document.getText();
-    },
-    // 呼叫 CodeFixerService 來比較程式碼
     fixCode: async (options) => {
       const response = await geminiCodeFixerService.getResponse(options);
       return response;
     },
+    showDiffInEditor: async (modifications: Modification[]) => {
+      const editor = vscode.window.activeTextEditor;
+      if (!editor) {
+        vscode.window.showErrorMessage('Editor not found');
+        return;
+      }
 
-    showDiffInEditor, // 顯示差異 API
-    clearDecorations, // 清除裝飾 API
+      const addedDecorationType = vscode.window.createTextEditorDecorationType({
+        isWholeLine: true,
+        backgroundColor: 'rgba(144,238,144,0.5)',
+      });
+
+      const removedDecorationType =
+        vscode.window.createTextEditorDecorationType({
+          isWholeLine: true,
+          backgroundColor: 'rgba(255,99,71,0.5)',
+        });
+
+      const addedRanges: vscode.DecorationOptions[] = [];
+      const removedRanges: vscode.DecorationOptions[] = [];
+
+      await editor.edit((editBuilder) => {
+        modifications.forEach((mod) => {
+          if (mod.content === '') {
+            const start = new vscode.Position(mod.startLine - 1, 0);
+            const end = new vscode.Position(
+              mod.endLine - 1,
+              editor.document.lineAt(mod.endLine - 1).range.end.character,
+            );
+            editBuilder.delete(new vscode.Range(start, end));
+          }
+        });
+      });
+
+      await editor.edit((editBuilder) => {
+        modifications.forEach((mod) => {
+          if (mod.content !== '') {
+            const start = new vscode.Position(mod.startLine - 1, 0);
+            editBuilder.insert(start, mod.content + '\n');
+          }
+        });
+      });
+
+      modifications.forEach((mod) => {
+        const start = new vscode.Position(mod.startLine - 1, 0);
+        const end = new vscode.Position(
+          mod.endLine - 1,
+          editor.document.lineAt(mod.endLine - 1).range.end.character,
+        );
+
+        if (mod.content === '') {
+          removedRanges.push({ range: new vscode.Range(start, end) });
+        } else {
+          addedRanges.push({
+            range: new vscode.Range(
+              start,
+              start.translate(0, mod.content.length),
+            ),
+          });
+        }
+      });
+
+      editor.setDecorations(addedDecorationType, addedRanges);
+      editor.setDecorations(removedDecorationType, removedRanges);
+    },
   };
 
   const isViewApiRequest = <K extends keyof ViewApi>(
@@ -460,7 +520,6 @@ export const activate = async (ctx: vscode.ExtensionContext) => {
   });
   vscode.commands.registerCommand('diff.file', Commands.file);
 
-  // 當檔案內容變更時自動清除裝飾
   vscode.workspace.onDidChangeTextDocument((event) => {
     const editor = vscode.window.activeTextEditor;
     if (editor && event.document === editor.document) {
@@ -468,7 +527,6 @@ export const activate = async (ctx: vscode.ExtensionContext) => {
     }
   });
 
-  // 當切換編輯器時自動清除裝飾
   vscode.window.onDidChangeActiveTextEditor((editor) => {
     if (editor) {
       vscode.commands.executeCommand('extension.clearDecorations');

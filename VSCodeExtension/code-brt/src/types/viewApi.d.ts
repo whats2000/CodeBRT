@@ -6,6 +6,33 @@ import {
 import { ModelServiceType } from './modelServiceType';
 
 /**
+ * Represents the modifications in the code.
+ */
+export interface Modification {
+  startLine: number;
+  endLine: number;
+  content: string;
+}
+
+/**
+ * Represents the response from the code fixer.
+ */
+export interface FixCodeResponse {
+  success: boolean;
+  modifications: Modification[];
+  error?: string;
+}
+
+/**
+ * Represents the options for the fixCode function.
+ */
+export interface FixCodeOptions {
+  originalCode: string;
+  generatedCode: string;
+  userQuery: string;
+}
+
+/**
  * Represents the API request structure for the view.
  */
 export type ViewApiRequest<K extends keyof ViewApi = keyof ViewApi> = {
@@ -278,11 +305,30 @@ export type ViewApi = {
    */
   openExtensionMarketplace: (extensionId: string) => Promise<void>;
 
+  /**
+   * Insert code into the editor at the current cursor position.
+   * @param code - The code to insert.
+   */
   insertCode: (code: string) => Promise<void>;
+
+  /**
+   * Show the differences in the editor using decorations.
+   * @param modifications - The modifications to show.
+   */
   showDiffInEditor: (modifications: Modification[]) => Promise<void>;
-  getCurrentEditorCode: () => void;
-  clearDecorations: () => void;
-  fixCode: (options) => void;
+
+  /**
+   * Get the current editor code.
+   * @returns The current code in the editor.
+   */
+  getCurrentEditorCode: () => Promise<string>;
+
+  /**
+   * Fix the code by comparing the original and generated code.
+   * @param options - The options including the original and generated code.
+   * @returns The result of the code fixing process.
+   */
+  fixCode: (options: FixCodeOptions) => Promise<FixCodeResponse>;
 };
 
 /**

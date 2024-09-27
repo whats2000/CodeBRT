@@ -3,7 +3,6 @@ import { Button } from 'antd';
 import styled from 'styled-components';
 import { DiffOutlined } from '@ant-design/icons';
 import { WebviewContext } from '../../WebviewContext';
-import * as jsdiff from 'diff';
 
 const StyledInsertButton = styled(Button)`
   background-color: transparent;
@@ -35,18 +34,16 @@ const InsertButton: React.FC<InsertButtonProps> = ({ code }) => {
 
   const handleInsertCode = async () => {
     try {
-      // 獲取當前編輯器中的程式碼
       const originalCode: string = await callApi('getCurrentEditorCode');
 
-      // 使用 CodeFixerService 來比較 LLM 生成的程式碼與編輯器中的程式碼
       const response: FixCodeResponse = await callApi('fixCode', {
         originalCode,
         generatedCode: code,
         userQuery: 'Compare and refactor the code',
       });
+      console.log('FixCode Response:', response);
 
       if (response.success) {
-        // 顯示程式碼差異
         await callApi('showDiffInEditor', response.modifications);
       } else {
         console.error('Failed to fix code:', response.error);
