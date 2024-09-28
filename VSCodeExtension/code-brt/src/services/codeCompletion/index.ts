@@ -1,1 +1,1 @@
-export * from './inlineCompletionProvider';
+export * from './providers';

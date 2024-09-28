@@ -1,8 +1,8 @@
 import * as vscode from 'vscode';
 
-import { AutoCodeCompletionProvider } from './autoCodeCompletion';
-import { ManuallyCodeCompletionProvider } from './manuallyCodeCompletion';
-import { SettingsManager } from '../../api';
+import { AutoCodeCompletionProvider } from './autoCodeCompletionProvider';
+import { ManuallyCodeCompletionProvider } from './manuallyCodeCompletionProvider';
+import { SettingsManager } from '../../../api';
 
 export class InlineCompletionProvider
   implements vscode.InlineCompletionItemProvider

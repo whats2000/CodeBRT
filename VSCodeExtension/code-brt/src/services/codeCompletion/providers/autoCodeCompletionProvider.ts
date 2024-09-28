@@ -1,10 +1,10 @@
 import vscode from 'vscode';
 
-import { AbstractCompletionProvider } from '../abstractCompletionProvider';
-import { Promise } from 'promise-deferred';
+import { AbstractCompletionProvider } from '../base';
 import { SettingsManager } from '../../../api';
 
-export class ManuallyCodeCompletionProvider extends AbstractCompletionProvider {
+// TODO: Implement the AutoCodeCompletionProvider class
+export class AutoCodeCompletionProvider extends AbstractCompletionProvider {
   constructor(
     extensionContext: vscode.ExtensionContext,
     settingsManager: SettingsManager,
