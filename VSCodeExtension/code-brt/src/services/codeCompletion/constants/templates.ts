@@ -10,12 +10,3 @@ export const MAIN_PROMPT_TEMPLATE = `
 TASK: Fill the {{FILL_HERE}} hole. Answer only with the CORRECT completion, and NOTHING ELSE. Do it now.
 <COMPLETION>
 `;
-
-export const BUILD_IN_FUNCTIONS_PROMPT_TEMPLATE = `
-## Built-in Functions: {builtInFunctions}`;
-
-export const COMMON_LIBRARIES_PROMPT_TEMPLATE = `
-## Common Libraries: {commonLibraries}`;
-
-export const TRIGGER_KIND_PROMPT_TEMPLATE = `
-## Triggered by: {triggerCharacter}`;
