@@ -36,7 +36,6 @@ export class InlineCompletionProvider
       return await this.manuallyCodeCompletionProvider.provideCompletionItems(
         document,
         position,
-        context,
         token,
       );
     } else if (
@@ -45,7 +44,6 @@ export class InlineCompletionProvider
       return await this.autoCodeCompletionProvider.provideCompletionItems(
         document,
         position,
-        context,
         token,
       );
     }

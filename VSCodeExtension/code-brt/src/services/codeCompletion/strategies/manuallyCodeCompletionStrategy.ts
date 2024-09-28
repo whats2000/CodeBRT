@@ -6,55 +6,31 @@ import {
   LANGUAGE_NAME_MAPPING,
   MAIN_PROMPT_TEMPLATE,
   SYSTEM_PROMPT,
+  FEW_SHOT_EXAMPLES,
 } from '../constants';
 import { CodeLanguageId } from '../types';
 
-const mockLLMInvoke = async (prompt: string) => {
-  return `This is a mock completion for the prompt: ${prompt}`;
-};
+// For testing purposes, we will use gemini to mock the LLM invocation
+import { GoogleGenerativeAI } from '@google/generative-ai';
+import { SettingsManager } from '../../../api';
 
 export class ManuallyCodeCompletionStrategy implements CompletionStrategy {
-  constructor() {}
+  constructor(private settingsManager: SettingsManager) {}
 
-  /**
-   * Provides inline completion items using manually triggered LLM-based completion.
-   */
-  async provideCompletion(
-    document: vscode.TextDocument,
-    position: vscode.Position,
-    context: vscode.InlineCompletionContext,
-    token: vscode.CancellationToken,
-  ): Promise<vscode.InlineCompletionItem[] | null> {
-    // Step 1: Detect the language of the document
-    const languageId = this.detectLanguage(document);
+  private async getResponse(prompt: string): Promise<string> {
+    const generativeModel = new GoogleGenerativeAI(
+      this.settingsManager.get('geminiApiKey'),
+    ).getGenerativeModel({
+      model: 'gemini-1.5-flash-latest',
+    });
 
-    // Step 2: Retrieve the language context (or fallback to a default context)
-    const languageContext = this.getLanguageContext(languageId);
+    const response = await generativeModel.startChat().sendMessage(prompt);
 
-    // TODO: The context is not in-use yet, but will finish the implementation in the future
-    console.log('Language context:', languageContext);
-
-    const languageName =
-      languageId === 'unknown'
-        ? 'Unknown Language'
-        : LANGUAGE_NAME_MAPPING[languageId] || 'Unknown Language';
-
-    // Step 3: Extract surrounding code (prefix and suffix)
-    const prefix = this.getPrefix(document, position);
-    const suffix = this.getSuffix(document, position);
-
-    // Step 4: Build the prompt for the LLM using the context
-    const prompt = this.buildPrompt(prefix, suffix, languageName, context);
-
-    // Step 5: Call the language model (mock for now)
-    const completion = await this.getCompletionWithTimeout(prompt, token);
-
-    if (!completion) {
-      return null;
-    }
-
-    // Step 6: Process and return the completion as VSCode InlineCompletionItems
-    return this.buildInlineCompletionItems(completion, position);
+    // Remove <Completion> tags from the response
+    return response.response
+      .text()
+      .replace(/<COMPLETION>/g, '')
+      .replace(/<\/COMPLETION>/g, '');
   }
 
   /**
@@ -94,10 +70,7 @@ export class ManuallyCodeCompletionStrategy implements CompletionStrategy {
     document: vscode.TextDocument,
     position: vscode.Position,
   ): string {
-    const range = new vscode.Range(
-      new vscode.Position(Math.max(0, position.line - 10), 0),
-      position,
-    );
+    const range = new vscode.Range(new vscode.Position(0, 0), position);
     return document.getText(range);
   }
 
@@ -110,33 +83,35 @@ export class ManuallyCodeCompletionStrategy implements CompletionStrategy {
   ): string {
     const range = new vscode.Range(
       position,
-      new vscode.Position(
-        Math.min(document.lineCount - 1, position.line + 10),
-        Number.MAX_VALUE,
-      ),
+      new vscode.Position(document.lineCount - 1, Number.MAX_VALUE),
     );
     return document.getText(range);
   }
 
   /**
-   * Build the full prompt by integrating the language-specific information and surrounding code.
+   * Build the full prompt by integrating the language-specific information, surrounding code,
+   * and few-shot examples.
    */
   private buildPrompt(
     prefix: string,
     suffix: string,
     languageName: string,
-    context: vscode.InlineCompletionContext,
   ): string {
+    const systemPrompt = SYSTEM_PROMPT.replace(
+      '{languageName}',
+      languageName === 'Unknown Language'
+        ? 'that'
+        : `,written in ${languageName}, that`,
+    );
+
+    const fewShotExamples = FEW_SHOT_EXAMPLES;
+
     const mainPrompt = MAIN_PROMPT_TEMPLATE.replace('{prefix}', prefix).replace(
       '{suffix}',
       suffix,
     );
-    const triggerKind =
-      context.triggerKind === vscode.InlineCompletionTriggerKind.Invoke
-        ? 'manual'
-        : 'automatic';
 
-    return `${SYSTEM_PROMPT}\n\n<LANGUAGE>${languageName}</LANGUAGE>\n<TRIGGER_KIND>${triggerKind}</TRIGGER_KIND>\n${mainPrompt}`;
+    return `${systemPrompt}${fewShotExamples}${mainPrompt}`;
   }
 
   /**
@@ -153,7 +128,7 @@ export class ManuallyCodeCompletionStrategy implements CompletionStrategy {
         timeoutMs,
       );
 
-      mockLLMInvoke(prompt)
+      this.getResponse(prompt)
         .then((result) => {
           clearTimeout(timeout);
           resolve(result);
@@ -180,5 +155,46 @@ export class ManuallyCodeCompletionStrategy implements CompletionStrategy {
     const inlineCompletionItem = new vscode.InlineCompletionItem(completion);
     inlineCompletionItem.range = new vscode.Range(position, position);
     return [inlineCompletionItem];
+  }
+
+  /**
+   * Provides inline completion items using manually triggered LLM-based completion.
+   */
+  public async provideCompletion(
+    document: vscode.TextDocument,
+    position: vscode.Position,
+    token: vscode.CancellationToken,
+  ): Promise<vscode.InlineCompletionItem[] | null> {
+    // Step 1: Detect the language of the document
+    const languageId = this.detectLanguage(document);
+
+    // Step 2: Retrieve the language context (or fallback to a default context)
+    const languageContext = this.getLanguageContext(languageId);
+
+    console.debug(languageContext);
+    // TODO: Implement the context retrieval logic in the future, soon (TM)
+
+    // Retrieve language name for display purposes
+    const languageName =
+      languageId === 'unknown'
+        ? 'Unknown Language'
+        : LANGUAGE_NAME_MAPPING[languageId] || 'Unknown Language';
+
+    // Step 3: Extract surrounding code (prefix and suffix)
+    const prefix = this.getPrefix(document, position);
+    const suffix = this.getSuffix(document, position);
+
+    // Step 4: Build the prompt for the LLM using the context and few-shot examples
+    const prompt = this.buildPrompt(prefix, suffix, languageName);
+
+    // Step 5: Call the language model (mock for now)
+    const completion = await this.getCompletionWithTimeout(prompt, token);
+
+    if (!completion) {
+      return null;
+    }
+
+    // Step 6: Process and return the completion as VSCode InlineCompletionItems
+    return this.buildInlineCompletionItems(completion, position);
   }
 }

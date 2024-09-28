@@ -30,14 +30,16 @@ import {
   VisualStudioCodeBuiltInService,
 } from './services/voice';
 import {
-  activateManuallyComplete,
-  deactivateManuallyComplete,
   InlineCompletionProvider,
   SUPPORTED_LANGUAGES,
-} from './services/manuallyCodeComplete';
+} from './services/codeCompletion';
 import { convertPdfToMarkdown } from './utils/pdfConverter';
 
+let extensionContext: vscode.ExtensionContext | undefined = undefined;
+
 export const activate = async (ctx: vscode.ExtensionContext) => {
+  extensionContext = ctx;
+
   const connectedViews: Partial<Record<ViewKey, vscode.WebviewView>> = {};
   const settingsManager = SettingsManager.getInstance(ctx);
 
@@ -86,17 +88,13 @@ export const activate = async (ctx: vscode.ExtensionContext) => {
   };
 
   // Activate manually complete functionality
-  const completionProvider = activateManuallyComplete(
-    ctx,
-    settingsManager,
-    models,
-  );
+  const completionProvider = new InlineCompletionProvider(ctx, settingsManager);
 
   // Keep the inline completion provider registration
   ctx.subscriptions.push(
     vscode.languages.registerInlineCompletionItemProvider(
       SUPPORTED_LANGUAGES,
-      new InlineCompletionProvider(completionProvider),
+      completionProvider,
     ),
   );
 
@@ -415,5 +413,5 @@ export const activate = async (ctx: vscode.ExtensionContext) => {
 };
 
 export const deactivate = () => {
-  deactivateManuallyComplete();
+  extensionContext?.subscriptions?.forEach((sub) => sub.dispose());
 };

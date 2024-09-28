@@ -11,13 +11,14 @@ export class ManuallyCodeCompletionProvider extends AbstractCompletionProvider {
     settingsManager: SettingsManager,
   ) {
     super(extensionContext, settingsManager);
-    this.completionStrategy = new ManuallyCodeCompletionStrategy();
+    this.completionStrategy = new ManuallyCodeCompletionStrategy(
+      settingsManager,
+    );
   }
 
   async provideCompletionItems(
     document: vscode.TextDocument,
     position: vscode.Position,
-    context: vscode.InlineCompletionContext,
     token: vscode.CancellationToken,
   ): Promise<
     vscode.InlineCompletionItem[] | vscode.InlineCompletionList | null
@@ -26,7 +27,6 @@ export class ManuallyCodeCompletionProvider extends AbstractCompletionProvider {
     const completions = await this.completionStrategy.provideCompletion(
       document,
       position,
-      context,
       token,
     );
 
