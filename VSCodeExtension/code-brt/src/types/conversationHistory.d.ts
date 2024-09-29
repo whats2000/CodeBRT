@@ -1,19 +1,75 @@
 /**
+ * The tool call entry type
+ * @property id - The unique identifier of the tool call entry
+ * @property toolName - The name of the tool that was called
+ * @property parameters - The parameters passed to the tool
+ * @property create_time - The creation time of the tool call entry
+ */
+export type ToolCallEntry = {
+  id: string;
+  toolName: string;
+  parameters: Record<string, any>;
+  create_time: number;
+};
+
+/**
+ * The tool call response type
+ * @property id - The unique identifier of the tool call response entry
+ * @property toolCallId - The ID of the corresponding tool call
+ * @property result - The result returned by the tool
+ * @property status - The status of the tool call (e.g., 'success', 'error')
+ * @property create_time - The creation time of the tool call response entry
+ */
+export type ToolCallResponse = {
+  id: string;
+  toolCallId: string;
+  result: Record<string, any> | string;
+  status: 'success' | 'error';
+  create_time: number;
+};
+
+/**
  * The conversation history types
  * @property id - The unique identifier of the entry
- * @property role - The role of the entry ('user' or 'AI')
+ * @property role - The role of the entry in ['user' or 'AI' or 'tool']
  * @property message - The message of the entry
  * @property images - The images referenced by the entry in path
+ * @property files - The files referenced by the entry in path
+ * @property toolCalls - The tool calls made by the entry
+ * @property toolResponses - The tool responses made by the entry
  * @property parent - The parent ID of the entry
  * @property children - The children's ID of the entry
  */
 export type ConversationEntry = {
   id: string;
-  role: 'user' | 'AI';
+  role: 'user' | 'AI' | 'tool';
   message: string;
   images?: string[];
+  files?: string[];
+  toolCalls?: ToolCallEntry[];
+  toolResponses?: ToolCallResponse[];
   parent: string | null;
   children: string[];
+};
+
+/**
+ * The settings for the conversation model
+ * @property systemPrompt - The system prompt for the model
+ * @property maxTokens - The maximum number of tokens to generate
+ * @property temperature - The temperature of the model
+ * @property topP - The nucleus sampling parameter
+ * @property topK - The top k sampling parameter
+ * @property presencePenalty - The presence penalty
+ * @property frequencyPenalty - The frequency penalty
+ */
+export type ConversationModelAdvanceSettings = {
+  systemPrompt: string;
+  maxTokens: number | undefined;
+  temperature: number | undefined;
+  topP: number | undefined;
+  topK: number | undefined;
+  presencePenalty: number | undefined;
+  frequencyPenalty: number | undefined;
 };
 
 /**
@@ -32,6 +88,7 @@ export type ConversationHistory = {
   root: string;
   top: string[];
   current: string;
+  advanceSettings: ConversationModelAdvanceSettings;
   entries: { [key: string]: ConversationEntry };
 };
 

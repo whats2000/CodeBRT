@@ -12,9 +12,18 @@ import { mapTypeToPythonFormat } from '../../utils';
 import { AbstractLanguageModelService } from './abstractLanguageModelService';
 import { HistoryManager, SettingsManager } from '../../api';
 import { ToolService } from '../tools';
+import { ChatRequest } from 'cohere-ai/api/client/requests/ChatRequest';
 
 export class CohereService extends AbstractLanguageModelService {
-  private readonly tools: Tool[] = [];
+  private stopStreamFlag: boolean = false;
+
+  private readonly modelsWithoutTools = [
+    'command',
+    'command-light',
+    'c4ai-aya-23-35b',
+    'command-light-nightly',
+    'c4ai-aya-23-8b',
+  ];
 
   constructor(
     context: vscode.ExtensionContext,
@@ -32,13 +41,53 @@ export class CohereService extends AbstractLanguageModelService {
       defaultModelName,
       availableModelNames,
     );
-
-    this.tools = this.buildTools();
   }
 
-  private buildTools(): Tool[] {
-    return Object.keys(toolsSchema).map((toolKey) => {
-      const tool = toolsSchema[toolKey as ToolServiceType];
+  private getAdvanceSettings(): {
+    systemPrompt: string | undefined;
+    generationConfig: Partial<ChatRequest>;
+  } {
+    const advanceSettings =
+      this.historyManager.getCurrentHistory().advanceSettings;
+
+    if (!advanceSettings) {
+      return {
+        systemPrompt: undefined,
+        generationConfig: {},
+      };
+    }
+
+    return {
+      systemPrompt:
+        advanceSettings.systemPrompt.length > 0
+          ? advanceSettings.systemPrompt
+          : undefined,
+      generationConfig: {
+        maxTokens: advanceSettings.maxTokens,
+        temperature: advanceSettings.temperature
+          ? advanceSettings.temperature / 2
+          : undefined,
+        k: advanceSettings.topK,
+        p: advanceSettings.topP,
+        presencePenalty: advanceSettings.presencePenalty
+          ? (advanceSettings.presencePenalty + 2) / 4
+          : undefined,
+        frequencyPenalty: advanceSettings.frequencyPenalty
+          ? (advanceSettings.frequencyPenalty + 2) / 4
+          : undefined,
+      },
+    };
+  }
+
+  private getEnabledTools(): Tool[] | undefined {
+    const enabledTools = this.settingsManager.get('enableTools');
+    const tools: Tool[] = [];
+
+    for (const [key, tool] of Object.entries(toolsSchema)) {
+      if (!enabledTools[key as ToolServiceType].active) {
+        continue;
+      }
+
       const parameterDefinitions = Object.keys(
         tool.inputSchema.properties,
       ).reduce(
@@ -60,12 +109,14 @@ export class CohereService extends AbstractLanguageModelService {
         },
       );
 
-      return {
+      tools.push({
         name: tool.name,
         description: tool.description,
         parameterDefinitions,
-      };
-    });
+      });
+    }
+
+    return tools.length > 0 ? tools : undefined;
   }
 
   private conversationHistoryToContent(entries: {
@@ -206,17 +257,17 @@ export class CohereService extends AbstractLanguageModelService {
     let functionCallCount = 0;
     const MAX_FUNCTION_CALLS = 5;
 
-    // List of models that should not use tools
-    const modelsWithoutTools = [
-      'command',
-      'command-light',
-      'c4ai-aya-23-35b',
-      'command-light-nightly',
-      'c4ai-aya-23-8b',
-    ];
+    const { systemPrompt, generationConfig } = this.getAdvanceSettings();
+
+    if (systemPrompt) {
+      conversationHistory.unshift({
+        role: 'SYSTEM',
+        message: systemPrompt,
+      });
+    }
 
     // Determine whether the current model should use tools
-    const shouldUseTools = !modelsWithoutTools.includes(this.currentModel);
+    const shouldUseTools = !this.modelsWithoutTools.includes(this.currentModel);
 
     try {
       if (!sendStreamResponse) {
@@ -225,8 +276,9 @@ export class CohereService extends AbstractLanguageModelService {
             model: this.currentModel,
             message: toolResults.length > 0 ? '' : query,
             chatHistory: conversationHistory,
-            tools: shouldUseTools ? this.tools : undefined,
+            tools: shouldUseTools ? this.getEnabledTools() : undefined,
             toolResults: toolResults.length > 0 ? toolResults : undefined,
+            ...generationConfig,
           });
 
           if (response.chatHistory) {
@@ -247,17 +299,26 @@ export class CohereService extends AbstractLanguageModelService {
         let responseText = '';
 
         while (functionCallCount < MAX_FUNCTION_CALLS) {
+          if (this.stopStreamFlag) {
+            return responseText;
+          }
+
           const streamResponse = await model.chatStream({
             model: this.currentModel,
             message: toolResults.length > 0 ? '' : query,
             chatHistory: conversationHistory,
-            tools: shouldUseTools ? this.tools : undefined,
+            tools: shouldUseTools ? this.getEnabledTools() : undefined,
             toolResults: toolResults.length > 0 ? toolResults : undefined,
+            ...generationConfig,
           });
 
           let functionCalls = null;
 
           for await (const item of streamResponse) {
+            if (this.stopStreamFlag) {
+              return responseText;
+            }
+
             if (item.eventType === 'stream-start') {
               updateStatus && updateStatus('');
             }
@@ -298,6 +359,13 @@ export class CohereService extends AbstractLanguageModelService {
           }
         });
       return 'Failed to connect to the language model service.';
+    } finally {
+      this.stopStreamFlag = false;
+      updateStatus && updateStatus('');
     }
+  }
+
+  public async stopResponse(): Promise<void> {
+    this.stopStreamFlag = true;
   }
 }

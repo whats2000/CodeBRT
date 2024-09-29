@@ -1,9 +1,9 @@
-import vscode from 'vscode';
 import fs from 'fs';
 import path from 'path';
+
+import vscode from 'vscode';
 import axios from 'axios';
 import * as cheerio from 'cheerio';
-
 import type {
   ImageBlockParam,
   MessageParam,
@@ -13,6 +13,10 @@ import type {
   ToolUseBlock,
   ToolResultBlockParam,
 } from '@anthropic-ai/sdk/src/resources';
+import type {
+  MessageCreateParamsNonStreaming,
+  MessageStream,
+} from '@anthropic-ai/sdk/resources/messages';
 import Anthropic from '@anthropic-ai/sdk';
 
 import type {
@@ -26,18 +30,7 @@ import { AbstractLanguageModelService } from './abstractLanguageModelService';
 import { ToolService } from '../tools';
 
 export class AnthropicService extends AbstractLanguageModelService {
-  private readonly generationConfig = {
-    max_tokens: 4096,
-  };
-
-  private readonly tools: Tool[] = Object.keys(toolsSchema).map((toolKey) => {
-    const tool = toolsSchema[toolKey as ToolServiceType];
-    return {
-      name: tool.name,
-      description: tool.description,
-      input_schema: tool.inputSchema as Tool.InputSchema,
-    };
-  });
+  private currentStreamResponse: MessageStream | undefined;
 
   constructor(
     context: vscode.ExtensionContext,
@@ -55,6 +48,71 @@ export class AnthropicService extends AbstractLanguageModelService {
       defaultModelName,
       availableModelNames,
     );
+  }
+
+  private getAdvanceSettings(): {
+    systemPrompt: string | undefined;
+    generationConfig: Partial<MessageCreateParamsNonStreaming> & {
+      max_tokens: number;
+    };
+  } {
+    const advanceSettings =
+      this.historyManager.getCurrentHistory().advanceSettings;
+
+    if (!advanceSettings) {
+      return {
+        systemPrompt: undefined,
+        generationConfig: {
+          max_tokens: 4096,
+        },
+      };
+    }
+
+    if (advanceSettings.presencePenalty || advanceSettings.frequencyPenalty) {
+      void vscode.window.showWarningMessage(
+        'Presence and frequency penalties are not supported by the Anthropic API, so the settings will be ignored.',
+      );
+    }
+
+    const generationConfig: Partial<MessageCreateParamsNonStreaming> = {};
+    if (advanceSettings.temperature) {
+      generationConfig.temperature = advanceSettings.temperature;
+    }
+    if (advanceSettings.topP) {
+      generationConfig.top_p = advanceSettings.topP;
+    }
+    if (advanceSettings.topK) {
+      generationConfig.top_k = advanceSettings.topK;
+    }
+
+    return {
+      systemPrompt:
+        advanceSettings.systemPrompt.length > 0
+          ? advanceSettings.systemPrompt
+          : undefined,
+      generationConfig: {
+        max_tokens: advanceSettings.maxTokens ?? 4096,
+        ...generationConfig,
+      },
+    };
+  }
+
+  private getEnabledTools(): Tool[] | undefined {
+    const enabledTools = this.settingsManager.get('enableTools');
+    const tools: Tool[] = [];
+    for (const [key, tool] of Object.entries(toolsSchema)) {
+      if (!enabledTools[key as ToolServiceType].active) {
+        continue;
+      }
+
+      tools.push({
+        name: tool.name,
+        description: tool.description,
+        input_schema: tool.inputSchema as Tool.InputSchema,
+      });
+    }
+
+    return tools.length > 0 ? tools : undefined;
   }
 
   private conversationHistoryToContent(
@@ -131,11 +189,9 @@ export class AnthropicService extends AbstractLanguageModelService {
     });
 
     if (this.currentModel === '') {
-      vscode.window
-        .showErrorMessage(
-          'Make sure the model is selected before sending a message. Open the model selection dropdown and configure the model.',
-        )
-        .then();
+      void vscode.window.showErrorMessage(
+        'Make sure the model is selected before sending a message. Open the model selection dropdown and configure the model.',
+      );
       return {
         anthropic: anthropic,
         conversationHistory: [],
@@ -159,9 +215,9 @@ export class AnthropicService extends AbstractLanguageModelService {
     for (const image of images) {
       const fileType = path.extname(image).slice(1);
       if (!['jpeg', 'png', 'gif', 'webp'].includes(fileType)) {
-        vscode.window
-          .showErrorMessage(`Unsupported image file type: ${fileType}`)
-          .then();
+        void vscode.window.showErrorMessage(
+          `Unsupported image file type: ${fileType}`,
+        );
 
         return {
           anthropic,
@@ -299,15 +355,19 @@ export class AnthropicService extends AbstractLanguageModelService {
 
     let functionCallCount = 0;
     const MAX_FUNCTION_CALLS = 5;
+
+    const { systemPrompt, generationConfig } = this.getAdvanceSettings();
+
     try {
       if (!sendStreamResponse) {
         while (functionCallCount < MAX_FUNCTION_CALLS) {
           const response = await anthropic.messages.create({
             model: this.currentModel,
+            system: systemPrompt,
             messages: conversationHistory,
-            tools: this.tools,
+            tools: this.getEnabledTools(),
             stream: false,
-            max_tokens: 4096,
+            ...generationConfig,
           });
 
           if (response.content[0].type !== 'tool_use') {
@@ -337,13 +397,15 @@ export class AnthropicService extends AbstractLanguageModelService {
         let responseText = '';
 
         while (functionCallCount < MAX_FUNCTION_CALLS) {
-          const streamResponse = anthropic.messages
+          this.currentStreamResponse?.abort();
+          this.currentStreamResponse = anthropic.messages
             .stream({
               model: this.currentModel,
+              system: systemPrompt,
               messages: conversationHistory,
-              tools: this.tools,
+              tools: this.getEnabledTools(),
               stream: true,
-              ...this.generationConfig,
+              ...generationConfig,
             })
             .on('connect', () => {
               updateStatus && updateStatus('');
@@ -353,7 +415,7 @@ export class AnthropicService extends AbstractLanguageModelService {
               responseText += partText;
             });
 
-          const finalMessage = await streamResponse.finalMessage();
+          const finalMessage = await this.currentStreamResponse.finalMessage();
 
           if (finalMessage.stop_reason !== 'tool_use') {
             return responseText;
@@ -397,6 +459,14 @@ export class AnthropicService extends AbstractLanguageModelService {
         });
 
       return 'Failed to connect to the language model service';
+    } finally {
+      updateStatus && updateStatus('');
+    }
+  }
+
+  public async stopResponse(): Promise<void> {
+    if (this.currentStreamResponse) {
+      this.currentStreamResponse.abort();
     }
   }
 }

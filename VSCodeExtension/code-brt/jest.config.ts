@@ -3,8 +3,8 @@ import type { JestConfigWithTsJest } from 'ts-jest';
 const jestConfig: JestConfigWithTsJest = {
   testEnvironment: 'jest-environment-node',
   moduleNameMapper: {
-    'node-mic': '<rootDir>/__mocks__/node-mic.ts',
-    vscode: '<rootDir>/__mocks__/vscode.ts',
+    'node-mic': '<rootDir>/mocks/node-mic.ts',
+    vscode: '<rootDir>/mocks/vscode.ts',
   },
   transform: {
     // '^.+\\.[tj]sx?$' to process ts,js,tsx,jsx with `ts-jest`

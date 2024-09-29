@@ -6,6 +6,7 @@ import {
   EllipsisOutlined,
   LoadingOutlined,
   PauseCircleOutlined,
+  RedoOutlined,
   SaveOutlined,
   SoundOutlined,
 } from '@ant-design/icons';
@@ -24,12 +25,14 @@ type MessageFloatButtonProps = {
   isAudioPlaying: boolean;
   isStopAudio: boolean;
   editingEntryId: string | null;
-  handleSaveEdit: (entryId: string) => void;
+  editingMessage: string;
   handleCancelEdit: () => void;
   handleEdit: (entryId: string, message: string) => void;
+  handleSaveEdit: (entryId: string, message: string) => void;
   handleConvertTextToVoice: (text: string) => void;
   copied: Record<string, boolean>;
   handleCopy: (text: string, entryId: string) => void;
+  handleRedo: (entryId: string) => void;
 };
 
 export const MessageFloatButton: React.FC<MessageFloatButtonProps> = ({
@@ -38,38 +41,43 @@ export const MessageFloatButton: React.FC<MessageFloatButtonProps> = ({
   isAudioPlaying,
   isStopAudio,
   editingEntryId,
+  editingMessage,
   handleSaveEdit,
   handleCancelEdit,
   handleEdit,
   handleConvertTextToVoice,
   copied,
   handleCopy,
+  handleRedo,
 }) => {
   if (!hoveredBubble.current || !hoveredBubble.entry) return null;
+
+  const EditFloatButton = () => (
+    <FloatButton
+      icon={<EditOutlined />}
+      onClick={() => {
+        if (!hoveredBubble.entry) return;
+
+        editingEntryId === hoveredBubble.entry.id
+          ? handleCancelEdit()
+          : handleEdit(hoveredBubble.entry.id, hoveredBubble.entry.message);
+      }}
+    />
+  );
 
   return (
     <FloatButton.Group
       shape='circle'
       style={{
-        left: floatButtonsPosition.xRight,
-        top: floatButtonsPosition.yTop,
-        position: 'fixed',
+        bottom: window.innerHeight - floatButtonsPosition.yTop - 37,
+        insetInlineEnd: 40,
         visibility: hoveredBubble ? 'visible' : 'hidden',
-        height: 225,
       }}
       icon={<EllipsisOutlined />}
-      trigger='hover'
+      trigger='click'
+      tooltip={'Show Actions'}
+      placement={'bottom'}
     >
-      <FloatButton
-        icon={<EditOutlined />}
-        onClick={() => {
-          if (!hoveredBubble.entry) return;
-
-          editingEntryId === hoveredBubble.entry.id
-            ? handleCancelEdit()
-            : handleEdit(hoveredBubble.entry.id, hoveredBubble.entry.message);
-        }}
-      />
       {hoveredBubble.entry.id !== editingEntryId ? (
         <>
           <FloatButton
@@ -88,6 +96,17 @@ export const MessageFloatButton: React.FC<MessageFloatButtonProps> = ({
               handleConvertTextToVoice(hoveredBubble.entry.message);
             }}
           />
+          {hoveredBubble.entry?.role === 'AI' && (
+            <FloatButton
+              icon={<RedoOutlined />}
+              onClick={() => {
+                if (!hoveredBubble.entry) return;
+
+                handleRedo(hoveredBubble.entry.id);
+              }}
+            />
+          )}
+          <EditFloatButton />
           <FloatButton
             icon={
               hoveredBubble.entry && copied[hoveredBubble.entry.id] ? (
@@ -105,12 +124,13 @@ export const MessageFloatButton: React.FC<MessageFloatButtonProps> = ({
         </>
       ) : (
         <>
+          <EditFloatButton />
           <FloatButton
             icon={<SaveOutlined />}
             onClick={() => {
               if (!hoveredBubble.entry) return;
 
-              handleSaveEdit(hoveredBubble.entry.id);
+              handleSaveEdit(hoveredBubble.entry.id, editingMessage);
             }}
           />
         </>

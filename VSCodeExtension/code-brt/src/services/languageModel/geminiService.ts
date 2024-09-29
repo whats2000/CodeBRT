@@ -3,10 +3,11 @@ import fs from 'fs';
 import {
   Content,
   FunctionCall,
-  FunctionDeclarationSchemaType,
   FunctionResponsePart,
+  GenerationConfig,
   InlineDataPart,
   Part,
+  SchemaType,
   Tool,
 } from '@google/generative-ai';
 import {
@@ -45,12 +46,7 @@ type GeminiModelsList = {
 };
 
 export class GeminiService extends AbstractLanguageModelService {
-  private readonly generationConfig = {
-    temperature: 1,
-    topK: 0,
-    topP: 0.95,
-    maxOutputTokens: 8192,
-  };
+  private stopStreamFlag = false;
 
   private readonly safetySettings = [
     {
@@ -71,8 +67,6 @@ export class GeminiService extends AbstractLanguageModelService {
     },
   ];
 
-  private readonly tools: Tool[] = [];
-
   constructor(
     context: vscode.ExtensionContext,
     settingsManager: SettingsManager,
@@ -89,12 +83,51 @@ export class GeminiService extends AbstractLanguageModelService {
       defaultModelName,
       availableModelNames,
     );
-    this.tools = this.buildTools();
   }
 
-  private buildTools(): Tool[] {
-    return Object.keys(toolsSchema).map((toolKey) => {
-      const tool = toolsSchema[toolKey as ToolServiceType];
+  private getAdvanceSettings(): {
+    systemPrompt: string | undefined;
+    generationConfig: Partial<GenerationConfig>;
+  } {
+    const advanceSettings =
+      this.historyManager.getCurrentHistory().advanceSettings;
+
+    if (!advanceSettings) {
+      return {
+        systemPrompt: undefined,
+        generationConfig: {},
+      };
+    }
+
+    if (advanceSettings.presencePenalty || advanceSettings.frequencyPenalty) {
+      void vscode.window.showWarningMessage(
+        'Presence and Frequency penalties are not supported by the Gemini API, so the settings will be ignored.',
+      );
+    }
+
+    return {
+      systemPrompt:
+        advanceSettings.systemPrompt.length > 0
+          ? advanceSettings.systemPrompt
+          : undefined,
+      generationConfig: {
+        maxOutputTokens: advanceSettings.maxTokens,
+        temperature: advanceSettings.temperature,
+        topP: advanceSettings.topP,
+        topK: advanceSettings.topK,
+      },
+    };
+  }
+
+  private getEnabledTools(): Tool[] | undefined {
+    const enabledTools = this.settingsManager.get('enableTools');
+    const tools: Tool[] = [];
+
+    for (const [key, tool] of Object.entries(toolsSchema)) {
+      if (!enabledTools[key as ToolServiceType].active) {
+        continue;
+      }
+
       const properties = Object.keys(tool.inputSchema.properties).reduce(
         (acc, key) => {
           const property = tool.inputSchema.properties[key];
@@ -107,26 +140,28 @@ export class GeminiService extends AbstractLanguageModelService {
         },
         {} as {
           [key: string]: {
-            type: FunctionDeclarationSchemaType;
+            type: SchemaType;
             description: string;
             nullable: boolean;
           };
         },
       );
 
-      return {
+      tools.push({
         functionDeclarations: [
           {
             name: tool.name,
             description: tool.description,
             parameters: {
-              type: FunctionDeclarationSchemaType.OBJECT,
+              type: SchemaType.OBJECT,
               properties,
             },
           },
         ],
-      };
-    });
+      });
+    }
+
+    return tools.length > 0 ? tools : undefined;
   }
 
   private conversationHistoryToContent(entries: {
@@ -185,7 +220,7 @@ export class GeminiService extends AbstractLanguageModelService {
         },
       };
     } catch (error) {
-      vscode.window.showErrorMessage('Failed to read file: ' + error).then();
+      void vscode.window.showErrorMessage('Failed to read file: ' + error);
     }
   }
 
@@ -215,7 +250,7 @@ export class GeminiService extends AbstractLanguageModelService {
         latestModels.some((model) => model.name === `models/${name}`),
       );
 
-      // Append the models to the available models if they are not already there
+      // Append the models to the available models if they aren't already there
       latestModels.forEach((model) => {
         if (!model.name || !model.supportedGenerationMethods) return;
         if (newAvailableModelNames.includes(model.name.replace('models/', '')))
@@ -304,15 +339,25 @@ export class GeminiService extends AbstractLanguageModelService {
     let queryParts = this.createQueryParts(query, images);
     let functionCallCount = 0;
     const MAX_FUNCTION_CALLS = 5;
+
+    const { systemPrompt, generationConfig } = this.getAdvanceSettings();
+    const systemInstruction: Content | undefined = systemPrompt
+      ? {
+          role: 'system',
+          parts: [{ text: systemPrompt }],
+        }
+      : undefined;
+
     try {
       if (!sendStreamResponse) {
         while (functionCallCount < MAX_FUNCTION_CALLS) {
           const response = await generativeModel
             .startChat({
-              generationConfig: this.generationConfig,
+              systemInstruction: systemInstruction,
+              generationConfig: generationConfig,
               safetySettings: this.safetySettings,
               history: conversationHistory,
-              tools: this.tools,
+              tools: this.getEnabledTools(),
             })
             .sendMessage(queryParts);
 
@@ -346,12 +391,17 @@ export class GeminiService extends AbstractLanguageModelService {
         let responseText = '';
 
         while (functionCallCount < MAX_FUNCTION_CALLS) {
+          if (this.stopStreamFlag) {
+            return responseText;
+          }
+
           const result = await generativeModel
             .startChat({
-              generationConfig: this.generationConfig,
+              systemInstruction: systemInstruction,
+              generationConfig: generationConfig,
               safetySettings: this.safetySettings,
               history: conversationHistory,
-              tools: this.tools,
+              tools: this.getEnabledTools(),
             })
             .sendMessageStream(queryParts);
 
@@ -359,6 +409,10 @@ export class GeminiService extends AbstractLanguageModelService {
           updateStatus && updateStatus('');
 
           for await (const item of result.stream) {
+            if (this.stopStreamFlag) {
+              return responseText;
+            }
+
             functionCalls = item.functionCalls();
             if (functionCalls) {
               const functionCallResults = await this.handleFunctionCalls(
@@ -404,6 +458,13 @@ export class GeminiService extends AbstractLanguageModelService {
           }
         });
       return 'Failed to connect to the language model service.';
+    } finally {
+      this.stopStreamFlag = false;
+      updateStatus && updateStatus('');
     }
+  }
+
+  public async stopResponse(): Promise<void> {
+    this.stopStreamFlag = true;
   }
 }

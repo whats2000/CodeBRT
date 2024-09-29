@@ -1,7 +1,9 @@
 import { CustomModelSettings, ExtensionSettings } from './extensionSettings';
 import {
+  ConversationEntry,
   ConversationHistory,
   ConversationHistoryIndexList,
+  ConversationModelAdvanceSettings,
 } from './conversationHistory';
 import { ModelServiceType } from './modelServiceType';
 
@@ -75,9 +77,9 @@ export type ViewApiEvent<K extends keyof ViewEvents = keyof ViewEvents> = {
  */
 export type ViewApi = {
   /**
-   * Get the contents of the file.
+   * Get the contents of the pdf file.
    */
-  getFileContents: () => Promise<string>;
+  extractPdfText: (filePath: string) => Promise<string>;
 
   /**
    * Set the target setting of the extension.
@@ -85,7 +87,7 @@ export type ViewApi = {
    * @param value - The new value of the setting.
    * @returns A promise that resolves when the setting is updated.
    */
-  setSetting: (
+  setSettingByKey: (
     key: keyof ExtensionSettings,
     value: ExtensionSettings[typeof key],
   ) => Promise<void>;
@@ -95,7 +97,15 @@ export type ViewApi = {
    * @param key - The key of the setting to get.
    * @returns The value of the setting.
    */
-  getSetting: (key: keyof ExtensionSettings) => ExtensionSettings[typeof key];
+  getSettingByKey: (
+    key: keyof ExtensionSettings,
+  ) => ExtensionSettings[typeof key];
+
+  /**
+   * Get all settings of the extension.
+   * @returns The settings of the extension.
+   */
+  getAllSettings: () => Promise<ExtensionSettings>;
 
   /**
    * Show an alert message.
@@ -105,8 +115,13 @@ export type ViewApi = {
   alertMessage: (msg: string, type: 'info' | 'warning' | 'error') => void;
 
   /**
+   * Tell use the action need to reload the extension.
+   */
+  alertReload: (msg?: string) => void;
+
+  /**
    * Get the response for a query.
-   * @param modelType - The type of the model to get the response for.
+   * @param modelServiceType - The type of the model service to get the response for.
    * @param query - The query to get the response for.
    * @param images - The image paths to use for the query, if not provided, the query will be used without images.
    * @param currentEntryID - The current entry ID, if not provided, the history will be used from the latest entry.
@@ -114,13 +129,19 @@ export type ViewApi = {
    * @param useStatus - Whether to show the status if the model is using tools.
    */
   getLanguageModelResponse: (
-    modelType: ModelServiceType,
+    modelServiceType: ModelServiceType,
     query: string,
     images?: string[],
     currentEntryID?: string,
     useStream?: boolean,
     showStatus?: boolean,
   ) => Promise<string>;
+
+  /**
+   * Stop the language model response.
+   * @param modelServiceType - The type of the model service to stop.
+   */
+  stopLanguageModelResponse: (modelServiceType: ModelServiceType) => void;
 
   /**
    * Get the conversation history.
@@ -145,32 +166,16 @@ export type ViewApi = {
   ) => void;
 
   /**
-   * Add a conversation entry to the conversation history for a language model.
-   * @param parentID - The ID of the parent entry.
-   * @param sender - The sender of the message.
-   * @param message - The message to add.
-   * @param images - The images to add.
-   * @param modelServiceType - The type of the model service to add the entry to.
-   * @returns The ID of the new entry.
-   */
-  addConversationEntry: (
-    parentID: string,
-    sender: 'user' | 'AI',
-    message: string,
-    images?: string[],
-    modelServiceType?: ModelServiceType,
-  ) => Promise<string>;
-
-  /**
    * Get the conversation history list.
    */
-  getHistories: () => ConversationHistoryIndexList;
+  getHistoryIndexes: () => ConversationHistoryIndexList;
 
   /**
    * Switch the conversation history.
    * @param historyID - The ID of the history to switch to.
+   * @returns The new conversation history.
    */
-  switchHistory: (historyID: string) => void;
+  switchHistory: (historyID: string) => Promise<ConversationHistory>;
 
   /**
    * Delete a conversation history.
@@ -201,24 +206,51 @@ export type ViewApi = {
   removeHistoryTag: (historyID: string, tag: string) => void;
 
   /**
-   * Get the available models for a language model.
-   * @param modelType - The type of the model to get the available models for.
+   * Update the current history's model advance settings.
+   * @param historyID - The ID of the history to update the advance settings for.
+   * @param advanceSettings - The new advance settings.
    */
-  getAvailableModels: (modelType: ModelServiceType) => string[];
+  updateHistoryModelAdvanceSettings: (
+    historyID: string,
+    advanceSettings: ConversationModelAdvanceSettings,
+  ) => void;
+
+  /**
+   * Add a conversation entry to the conversation history for a language model.
+   * @param parentID - The ID of the parent entry.
+   * @param sender - The sender of the message.
+   * @param message - The message to add.
+   * @param images - The images to add.
+   * @param modelServiceType - The type of the model service to add the entry to.
+   * @returns The ID of the new entry.
+   */
+  addConversationEntry: (
+    parentID: string,
+    sender: 'user' | 'AI',
+    message: string,
+    images?: string[],
+    modelServiceType?: ModelServiceType,
+  ) => Promise<ConversationEntry>;
+
+  /**
+   * Get the available models for a language model.
+   * @param modelServiceType - The type of the model to get the available models for.
+   */
+  getAvailableModels: (modelServiceType: ModelServiceType) => string[];
 
   /**
    * Get the current model for a language model.
-   * @param modelType - The type of the model to get the current model for.
+   * @param modelServiceType - The type of the model to get the current model for.
    */
-  getCurrentModel: (modelType: ModelServiceType) => string;
+  getCurrentModel: (modelServiceType: ModelServiceType) => string;
 
   /**
    * Set the available models for a language model.
-   * @param modelType - The type of the model to set the available models for.
+   * @param modelServiceType - The type of the model to set the available models for.
    * @param newAvailableModels - The new available models.
    */
   setAvailableModels: (
-    modelType: Exclude<ModelServiceType, 'custom'>,
+    modelServiceType: Exclude<ModelServiceType, 'custom'>,
     newAvailableModels: string[],
   ) => void;
 
@@ -231,31 +263,33 @@ export type ViewApi = {
 
   /**
    * Switch to a different model.
-   * @param modelType - The type of the model to switch to.
+   * @param modelServiceType - The type of the model to switch to.
    * @param modelName - The name of the model to switch to.
    */
-  switchModel: (modelType: ModelServiceType, modelName: string) => void;
+  switchModel: (modelServiceType: ModelServiceType, modelName: string) => void;
 
   /**
    * Get the latest available model names.
-   * @param modelType - The type of the model to get the latest available model names for.
+   * @param modelServiceType - The type of the model to get the latest available model names for.
    */
   getLatestAvailableModelNames: (
-    modelType: ModelServiceType,
+    modelServiceType: ModelServiceType,
   ) => Promise<string[]>;
 
   /**
    * Get the response for a query with a file.
    * @param base64Data - The base64 data of the file.
+   * @param originalFileName - The original filename.
    * @returns The path of the file.
    */
-  uploadImage: (base64Data: string) => Promise<string>;
+  uploadFile: (base64Data: string, originalFileName: string) => Promise<string>;
 
   /**
    * Delete an image.
-   * @param imagePath - The path of the image to delete.
+   * @param filePath - The path of the file to delete.
+   * Only work for user uploaded files.
    */
-  deleteImage: (imagePath: string) => Promise<void>;
+  deleteFile: (filePath: string) => Promise<void>;
 
   /**
    * Get the webview URI for a path.

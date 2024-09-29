@@ -10,30 +10,14 @@ import type {
   ToolServiceType,
 } from '../../types';
 import { MODEL_SERVICE_CONSTANTS, toolsSchema } from '../../constants';
+import { ParseToolCallUtils } from '../../utils';
 import { AbstractLanguageModelService } from './abstractLanguageModelService';
 import { HistoryManager, SettingsManager } from '../../api';
 import { ToolService } from '../tools';
 
 export class OllamaService extends AbstractLanguageModelService {
   private runningModel = '';
-
-  private readonly generationConfig: Partial<Options> = {
-    temperature: 1,
-    top_p: 0.95,
-    top_k: 0,
-  };
-
-  private readonly tools: Tool[] = Object.keys(toolsSchema).map((toolKey) => {
-    const tool = toolsSchema[toolKey as ToolServiceType];
-    return {
-      type: 'function',
-      function: {
-        name: tool.name,
-        description: tool.description,
-        parameters: tool.inputSchema,
-      },
-    };
-  });
+  private stopStreamFlag: boolean = false;
 
   constructor(
     context: vscode.ExtensionContext,
@@ -51,6 +35,58 @@ export class OllamaService extends AbstractLanguageModelService {
       defaultModelName,
       availableModelNames,
     );
+  }
+
+  private getAdvanceSettings(): {
+    systemPrompt: string | undefined;
+    generationConfig: Partial<Options>;
+  } {
+    const advanceSettings =
+      this.historyManager.getCurrentHistory().advanceSettings;
+
+    if (!advanceSettings) {
+      return {
+        systemPrompt: undefined,
+        generationConfig: {},
+      };
+    }
+
+    return {
+      systemPrompt:
+        advanceSettings.systemPrompt.length > 0
+          ? advanceSettings.systemPrompt
+          : undefined,
+      generationConfig: {
+        num_ctx: advanceSettings.maxTokens,
+        temperature: advanceSettings.temperature,
+        top_p: advanceSettings.topP,
+        top_k: advanceSettings.topK,
+        presence_penalty: advanceSettings.presencePenalty,
+        frequency_penalty: advanceSettings.frequencyPenalty,
+      },
+    };
+  }
+
+  private getEnabledTools(): Tool[] | undefined {
+    const enabledTools = this.settingsManager.get('enableTools');
+    const tools: Tool[] = [];
+
+    for (const [key, tool] of Object.entries(toolsSchema)) {
+      if (!enabledTools[key as ToolServiceType].active) {
+        continue;
+      }
+
+      tools.push({
+        type: 'function',
+        function: {
+          name: tool.name,
+          description: tool.description,
+          parameters: tool.inputSchema,
+        },
+      });
+    }
+
+    return tools.length > 0 ? tools : undefined;
   }
 
   private async conversationHistoryToContent(
@@ -261,8 +297,8 @@ export class OllamaService extends AbstractLanguageModelService {
       return 'Missing model configuration. Check the model selection dropdown.';
     }
 
-    const { query, images, sendStreamResponse, currentEntryID } = options;
-
+    const { query, images, sendStreamResponse, currentEntryID, updateStatus } =
+      options;
     const { client, conversationHistory, model } = await this.initModel(
       query,
       currentEntryID,
@@ -276,81 +312,188 @@ export class OllamaService extends AbstractLanguageModelService {
     let functionCallCount = 0;
     const MAX_FUNCTION_CALLS = 5;
 
+    const { systemPrompt, generationConfig } = this.getAdvanceSettings();
+
+    if (systemPrompt) {
+      conversationHistory.unshift({
+        role: 'system',
+        content: systemPrompt,
+      });
+    }
+
     try {
       if (!sendStreamResponse) {
         while (functionCallCount < MAX_FUNCTION_CALLS) {
           const response = await client.chat({
             model,
             messages: conversationHistory,
-            tools: this.tools,
-            options: this.generationConfig,
+            tools: this.getEnabledTools(),
+            options: generationConfig,
           });
 
           if (
-            !response.message.tool_calls ||
-            response.message.tool_calls.length === 0
+            response.message.tool_calls &&
+            response.message.tool_calls.length > 0
           ) {
+            const toolCalls = response.message.tool_calls!;
+
+            const functionCallResults = await this.handleFunctionCalls(
+              toolCalls,
+              updateStatus,
+            );
+            conversationHistory.push({
+              role: 'assistant',
+              content: response.message.content,
+              tool_calls: toolCalls,
+            });
+            conversationHistory.push(...functionCallResults);
+
+            functionCallCount++;
+          } else {
             return response.message.content;
           }
-
-          const functionCallResults = await this.handleFunctionCalls(
-            response.message.tool_calls,
-          );
-
-          conversationHistory.push({
-            role: 'assistant',
-            content: response.message.content,
-            tool_calls: response.message.tool_calls,
-          });
-          conversationHistory.push(...functionCallResults);
-
-          functionCallCount++;
         }
         return 'Max function call limit reached.';
       } else {
         let responseText = '';
+        let toolCallBuffer = '';
+        let inToolCall = false;
+        let inCodeBlock = false;
+        let openBraces = 0;
+        let inTaggedToolCall = false;
 
         while (functionCallCount < MAX_FUNCTION_CALLS) {
+          if (this.stopStreamFlag) {
+            return ParseToolCallUtils.cleanResponseText(responseText);
+          }
+
           const streamResponse = await client.chat({
             model,
             messages: conversationHistory,
             stream: true,
-            tools: this.tools,
-            options: this.generationConfig,
+            tools: this.getEnabledTools(),
+            options: generationConfig,
           });
 
-          let functionCallResults: Message[] = [];
+          let breakByToolCall = false;
 
           for await (const chunk of streamResponse) {
-            if (
-              chunk.message.tool_calls &&
-              chunk.message.tool_calls.length > 0
-            ) {
-              functionCallResults = await this.handleFunctionCalls(
-                chunk.message.tool_calls,
-                sendStreamResponse,
-              );
+            if (this.stopStreamFlag) {
+              return ParseToolCallUtils.cleanResponseText(responseText);
+            }
 
-              conversationHistory.push({
-                role: 'assistant',
-                content: chunk.message.content,
-                tool_calls: chunk.message.tool_calls,
-              });
-              conversationHistory.push(...functionCallResults);
+            const chunkContent = chunk.message.content;
+
+            // Check for code block
+            if (chunkContent.includes('```')) {
+              inCodeBlock = !inCodeBlock;
+              if (inCodeBlock && (inToolCall || inTaggedToolCall)) {
+                // If entering a code block while in a potential tool call, abort the tool call
+                sendStreamResponse(toolCallBuffer);
+                responseText += toolCallBuffer;
+                toolCallBuffer = '';
+                inToolCall = false;
+                inTaggedToolCall = false;
+                openBraces = 0;
+              }
+            }
+
+            if (inCodeBlock) {
+              // In code block, send everything as is
+              sendStreamResponse(chunkContent);
+              responseText += chunkContent;
+              continue;
+            }
+
+            // Process the chunk character by character
+            for (const char of chunkContent) {
+              if (!inToolCall && !inTaggedToolCall && char === '<') {
+                // Potential start of a tagged tool call
+                if (
+                  chunkContent
+                    .substring(chunkContent.indexOf(char))
+                    .startsWith('<tool_call>')
+                ) {
+                  inTaggedToolCall = true;
+                  toolCallBuffer = '<';
+                }
+              } else if (inTaggedToolCall) {
+                toolCallBuffer += char;
+                if (toolCallBuffer.endsWith('</tool_call>')) {
+                  // End of tagged tool call
+                  breakByToolCall = true;
+                  break;
+                }
+              } else if (!inToolCall && !inTaggedToolCall && char === '{') {
+                inToolCall = true;
+                openBraces = 1;
+                toolCallBuffer = char;
+              } else if (inToolCall) {
+                toolCallBuffer += char;
+                if (char === '{') {
+                  openBraces++;
+                } else if (char === '}') {
+                  openBraces--;
+                  if (openBraces === 0) {
+                    // Potential end of a tool call
+                    breakByToolCall = true;
+                    break;
+                  }
+                }
+              } else {
+                // Regular content
+                sendStreamResponse(char);
+                responseText += char;
+              }
+            }
+
+            if (breakByToolCall) {
               break;
-            } else {
-              const partText = chunk.message.content;
-              sendStreamResponse(partText);
-              responseText += partText;
             }
           }
 
-          if (functionCallResults.length === 0) {
-            return responseText;
+          if (!breakByToolCall) {
+            // Handle any remaining content in the buffer
+            if (toolCallBuffer) {
+              sendStreamResponse(toolCallBuffer);
+              responseText += toolCallBuffer;
+              toolCallBuffer = '';
+              inToolCall = false;
+              inTaggedToolCall = false;
+            }
+
+            return ParseToolCallUtils.cleanResponseText(responseText);
           }
+
+          // Process the potential tool call
+          const possibleToolCall =
+            ParseToolCallUtils.extractToolCalls(toolCallBuffer);
+          if (!possibleToolCall) {
+            // Not a valid tool call, send as regular content
+            sendStreamResponse(toolCallBuffer);
+            responseText += toolCallBuffer;
+            return ParseToolCallUtils.cleanResponseText(responseText);
+          }
+
+          // Valid tool call found
+          const functionCallResults = await this.handleFunctionCalls(
+            [possibleToolCall],
+            updateStatus,
+          );
+          conversationHistory.push({
+            role: 'assistant',
+            content: toolCallBuffer,
+            tool_calls: [possibleToolCall],
+          });
+          conversationHistory.push(...functionCallResults);
+
           functionCallCount++;
+          toolCallBuffer = '';
+          inToolCall = false;
+          inTaggedToolCall = false;
         }
-        return responseText;
+
+        return ParseToolCallUtils.cleanResponseText(responseText);
       }
     } catch (error) {
       vscode.window
@@ -373,6 +516,13 @@ export class OllamaService extends AbstractLanguageModelService {
         'Failed to connect to the language model service. ' +
         'Make sure the ollama service is running. Also, check the model has been downloaded.'
       );
+    } finally {
+      this.stopStreamFlag = false;
+      updateStatus && updateStatus('');
     }
+  }
+
+  public async stopResponse(): Promise<void> {
+    this.stopStreamFlag = true;
   }
 }

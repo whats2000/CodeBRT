@@ -8,6 +8,7 @@ import type {
   ConversationHistory,
   ConversationHistoryIndex,
   ConversationHistoryIndexList,
+  ConversationModelAdvanceSettings,
   IHistoryManager,
   ModelServiceType,
 } from '../types';
@@ -42,7 +43,7 @@ export class HistoryManager implements IHistoryManager {
     }
 
     // Load the conversation history index
-    this.loadHistories().catch((error) =>
+    this.loadHistoryIndexes().catch((error) =>
       vscode.window.showErrorMessage('Failed to load histories: ' + error),
     );
   }
@@ -50,7 +51,7 @@ export class HistoryManager implements IHistoryManager {
   /**
    * Load the conversation history index from the index file
    */
-  private async loadHistories(): Promise<void> {
+  private async loadHistoryIndexes(): Promise<void> {
     if (!this.historyIndexFilePath) {
       return;
     }
@@ -78,6 +79,15 @@ export class HistoryManager implements IHistoryManager {
       current: '',
       create_time: Date.now(),
       update_time: Date.now(),
+      advanceSettings: {
+        systemPrompt: 'You are a helpful assistant.',
+        maxTokens: undefined,
+        temperature: undefined,
+        topP: undefined,
+        topK: undefined,
+        presencePenalty: undefined,
+        frequencyPenalty: undefined,
+      },
       entries: {},
     };
   }
@@ -101,7 +111,11 @@ export class HistoryManager implements IHistoryManager {
    * Save a single conversation history by its ID
    */
   private async saveHistoryById(history: ConversationHistory): Promise<void> {
-    if (!this.historiesFolderPath) {
+    // Prevent saving the empty history
+    if (
+      !this.historiesFolderPath ||
+      Object.keys(history.entries).length === 0
+    ) {
       return;
     }
     try {
@@ -119,20 +133,26 @@ export class HistoryManager implements IHistoryManager {
   /**
    * Load a single conversation history by its ID
    */
-  private async loadHistoryById(historyId: string): Promise<void> {
+  private async loadHistoryById(
+    historyId: string,
+  ): Promise<ConversationHistory> {
     if (!this.historiesFolderPath) {
-      return;
+      return this.getDefaultConversationHistory();
     }
     const filePath = path.join(this.historiesFolderPath, `${historyId}.json`);
     if (!fs.existsSync(filePath)) {
       vscode.window.showErrorMessage('History file not found: ' + historyId);
-      return;
+      return this.getDefaultConversationHistory();
     }
     try {
       const data = await fs.promises.readFile(filePath, 'utf8');
-      this.history = JSON.parse(data);
+      return {
+        ...this.getDefaultConversationHistory(),
+        ...JSON.parse(data),
+      };
     } catch (error) {
       vscode.window.showErrorMessage('Failed to load history: ' + error);
+      return this.getDefaultConversationHistory();
     }
   }
 
@@ -149,6 +169,7 @@ export class HistoryManager implements IHistoryManager {
       current: currentEntryID,
       create_time: this.history.create_time,
       update_time: Date.now(),
+      advanceSettings: this.history.advanceSettings,
       entries: {},
     };
 
@@ -174,6 +195,8 @@ export class HistoryManager implements IHistoryManager {
   public async addNewConversationHistory(): Promise<ConversationHistory> {
     const newHistory: ConversationHistory =
       this.getDefaultConversationHistory();
+    newHistory.advanceSettings.systemPrompt =
+      this.history.advanceSettings.systemPrompt;
     this.history = newHistory;
     return newHistory;
   }
@@ -184,7 +207,7 @@ export class HistoryManager implements IHistoryManager {
     message: string,
     images?: string[],
     modelServiceType?: ModelServiceType,
-  ): Promise<string> {
+  ): Promise<ConversationEntry> {
     const newID = uuidV4();
     const newEntry: ConversationEntry = {
       id: newID,
@@ -197,10 +220,8 @@ export class HistoryManager implements IHistoryManager {
 
     if (parentID) {
       if (!this.history.entries[parentID]) {
-        vscode.window
-          .showErrorMessage('Parent entry not found: ' + parentID)
-          .then();
-        return '';
+        vscode.window.showErrorMessage('Parent entry not found: ' + parentID);
+        return newEntry;
       }
       this.history.entries[parentID].children.push(newID);
     } else {
@@ -215,7 +236,7 @@ export class HistoryManager implements IHistoryManager {
     if (!this.historyIndex[this.history.root]) {
       this.historyIndex[this.history.root] = {
         id: this.history.root,
-        title: `${message.substring(0, 20)}...`,
+        title: `${message.substring(0, 50)}`,
         create_time: this.history.create_time,
         update_time: this.history.update_time,
       };
@@ -247,7 +268,7 @@ export class HistoryManager implements IHistoryManager {
       await this.addTagToHistory(this.history.root, modelServiceType);
     }
 
-    return newID;
+    return newEntry;
   }
 
   public async editConversationEntry(
@@ -263,9 +284,7 @@ export class HistoryManager implements IHistoryManager {
         ),
       );
     } else {
-      vscode.window
-        .showErrorMessage('Entry not found: ' + entryID)
-        .then(() => console.error('Entry not found: ' + entryID));
+      vscode.window.showErrorMessage('Entry not found: ' + entryID);
     }
   }
 
@@ -282,22 +301,25 @@ export class HistoryManager implements IHistoryManager {
         ),
       );
     } else {
-      vscode.window.showErrorMessage('History not found: ' + historyID).then();
+      vscode.window.showErrorMessage('History not found: ' + historyID);
     }
   }
 
-  public async switchHistory(historyID: string): Promise<void> {
+  public async switchHistory(historyID: string): Promise<ConversationHistory> {
     if (this.historyIndex[historyID]) {
-      await this.loadHistoryById(historyID);
       await this.saveHistoryById(this.history).catch((error) =>
-        vscode.window.showErrorMessage('Failed to switch history: ' + error),
+        vscode.window.showErrorMessage(
+          'Failed to save current history: ' + error,
+        ),
       );
+      this.history = await this.loadHistoryById(historyID);
+      return this.history;
     } else {
-      vscode.window.showErrorMessage('History not found: ' + historyID).then();
+      return this.history;
     }
   }
 
-  public getHistories(): ConversationHistoryIndexList {
+  public getHistoryIndexes(): ConversationHistoryIndexList {
     return this.historyIndex;
   }
 
@@ -321,7 +343,7 @@ export class HistoryManager implements IHistoryManager {
 
       return await this.addNewConversationHistory();
     } else {
-      vscode.window.showErrorMessage('History not found: ' + historyID).then();
+      vscode.window.showErrorMessage('History not found: ' + historyID);
       return this.history;
     }
   }
@@ -351,5 +373,24 @@ export class HistoryManager implements IHistoryManager {
     await this.saveHistoryIndex().catch((error) =>
       vscode.window.showErrorMessage('Failed to save history index: ' + error),
     );
+  }
+
+  public async updateHistoryModelAdvanceSettings(
+    historyID: string,
+    advanceSettings: ConversationModelAdvanceSettings,
+  ): Promise<void> {
+    // Prevent updating the advance settings if the history got swapped
+    if (this.history.root !== historyID) return;
+
+    this.history.advanceSettings = advanceSettings;
+
+    // Only save the history when it's created otherwise only store in memory
+    if (this.historyIndex[historyID]) {
+      await this.saveHistoryById(this.history).catch((error) =>
+        vscode.window.showErrorMessage(
+          'Failed to update model advance settings: ' + error,
+        ),
+      );
+    }
   }
 }

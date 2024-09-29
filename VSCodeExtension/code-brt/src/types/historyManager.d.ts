@@ -1,6 +1,8 @@
 import type {
+  ConversationEntry,
   ConversationHistory,
   ConversationHistoryIndexList,
+  ConversationModelAdvanceSettings,
   ModelServiceType,
 } from '../types';
 
@@ -39,7 +41,7 @@ export type IHistoryManager = {
     message: string,
     images?: string[],
     modelServiceType?: ModelServiceType,
-  ): Promise<string>;
+  ): Promise<ConversationEntry>;
 
   /**
    * Edit a conversation entry
@@ -59,13 +61,13 @@ export type IHistoryManager = {
    * Switch the current history by ID
    * @param historyID The history ID
    */
-  switchHistory(historyID: string): Promise<void>;
+  switchHistory(historyID: string): Promise<ConversationHistory>;
 
   /**
    * Get the histories index
    * @returns The history index
    */
-  getHistories(): ConversationHistoryIndexList;
+  getHistoryIndexes(): ConversationHistoryIndexList;
 
   /**
    * Delete a history by ID
@@ -87,4 +89,12 @@ export type IHistoryManager = {
    * @param tag The tag to remove
    */
   removeTagFromHistory(historyID: string, tag: string): Promise<void>;
+
+  /**
+   * Update the current history's model advance settings
+   */
+  updateHistoryModelAdvanceSettings(
+    historyID: string,
+    advanceSettings: ConversationModelAdvanceSettings,
+  ): Promise<void>;
 };
