@@ -19,7 +19,11 @@ export class HistoryManager implements IHistoryManager {
   private history: ConversationHistory = this.getDefaultConversationHistory();
   private historyIndex: { [key: string]: ConversationHistoryIndex } = {};
 
-  constructor(context: vscode.ExtensionContext) {
+  constructor(
+    context: vscode.ExtensionContext,
+    indexFileName: string = 'historyIndex.json',
+    folderName: string = 'histories',
+  ) {
     const workspaceFolders = vscode.workspace.workspaceFolders;
     if (workspaceFolders) {
       const vscodePath = path.join(workspaceFolders[0].uri.fsPath, '.vscode');
@@ -27,8 +31,8 @@ export class HistoryManager implements IHistoryManager {
         fs.mkdirSync(vscodePath);
       }
 
-      this.historyIndexFilePath = path.join(vscodePath, 'historyIndex.json');
-      this.historiesFolderPath = path.join(vscodePath, 'histories');
+      this.historyIndexFilePath = path.join(vscodePath, indexFileName);
+      this.historiesFolderPath = path.join(vscodePath, folderName);
       if (!fs.existsSync(this.historiesFolderPath)) {
         fs.mkdirSync(this.historiesFolderPath);
       }

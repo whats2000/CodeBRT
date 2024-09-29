@@ -1,8 +1,6 @@
 import * as vscode from 'vscode';
 
 import type {
-  LoadedModelServices,
-  LoadedVoiceServices,
   ModelServiceType,
   ViewApi,
   ViewApiError,
@@ -53,12 +51,7 @@ export const activate = async (ctx: vscode.ExtensionContext) => {
   ];
 
   // Dynamically initialize the services for all available models
-  const models = modelKeys.reduce((acc, modelKey) => {
-    acc[modelKey] = {
-      service: modelServiceFactory.createModelService(modelKey),
-    };
-    return acc;
-  }, {} as LoadedModelServices);
+  const models = modelServiceFactory.createModelServices(modelKeys);
 
   const voiceServiceFactory = new VoiceServiceFactory(ctx, settingsManager);
 
@@ -69,15 +62,8 @@ export const activate = async (ctx: vscode.ExtensionContext) => {
     'visualStudioCodeBuiltIn',
   ];
 
-  const voiceServices: LoadedVoiceServices = voiceServiceKeys.reduce(
-    (acc, voiceServiceKey) => {
-      acc[voiceServiceKey] = {
-        service: voiceServiceFactory.createVoiceService(voiceServiceKey),
-      };
-      return acc;
-    },
-    {} as LoadedVoiceServices,
-  );
+  const voiceServices =
+    voiceServiceFactory.createVoiceServices(voiceServiceKeys);
 
   // Activate manually complete functionality
   const completionProvider = new InlineCompletionProvider(ctx, settingsManager);

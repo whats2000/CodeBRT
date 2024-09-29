@@ -1,7 +1,11 @@
 import vscode from 'vscode';
 
 import type { SettingsManager } from '../../api';
-import { VoiceService, VoiceServiceType } from '../../types';
+import {
+  LoadedVoiceServices,
+  VoiceService,
+  VoiceServiceType,
+} from '../../types';
 import { GptSoVitsApiService } from './gptSoVitsService';
 import { OpenaiVoiceService } from './openaiVoiceService';
 import { VisualStudioCodeBuiltInService } from './visualStudioCodeBuildInService';
@@ -29,5 +33,19 @@ export class VoiceServiceFactory {
       default:
         throw new Error(`Voice service type ${modelKey} is not supported.`);
     }
+  }
+
+  public createVoiceServices(
+    modelServiceKeys: VoiceServiceType[],
+  ): LoadedVoiceServices {
+    const voiceServices: LoadedVoiceServices = {} as LoadedVoiceServices;
+
+    for (const modelServiceKey of modelServiceKeys) {
+      voiceServices[modelServiceKey] = {
+        service: this.createVoiceService(modelServiceKey),
+      };
+    }
+
+    return voiceServices;
   }
 }
