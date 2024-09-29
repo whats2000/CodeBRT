@@ -29,12 +29,10 @@ import {
   OpenaiVoiceService,
   VisualStudioCodeBuiltInService,
 } from './services/voice';
+import { GeminiCodeFixerService } from './services/codeFixer';
 import { convertPdfToMarkdown } from './utils/pdfConverter';
 
-import { GeminiCodeFixerService } from './services/codeFixer/geminiCodeFixerService';
-
 import * as Commands from './diff/commands';
-import { Modification } from './types/viewApi';
 
 export const activate = async (ctx: vscode.ExtensionContext) => {
   const connectedViews: Partial<Record<ViewKey, vscode.WebviewView>> = {};

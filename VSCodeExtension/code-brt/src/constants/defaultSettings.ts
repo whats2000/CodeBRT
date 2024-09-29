@@ -56,6 +56,26 @@ export const DEFAULT_LOCAL_SETTINGS: ExtensionSettingsLocal = {
   },
   systemPrompts: [],
   retainContextWhenHidden: false,
+  codeFixerOpenaiAvailableModels: [
+    'gpt-4o-mini',
+    'gpt-4o',
+    'gpt-4-turbo',
+    'gpt-4',
+  ],
+  codeFixerGeminiAvailableModels: [
+    'gemini-1.5-pro-latest',
+    'gemini-1.5-flash-latest',
+  ],
+  codeFixerLastSelectedModel: {
+    gemini: 'gemini-1.5-pro',
+    anthropic: 'claude-3-5-sonnet-20240620',
+    openai: 'gpt-4',
+    cohere: 'command',
+    groq: 'llama3-70b-8192',
+    huggingFace: 'HuggingFaceH4/zephyr-7b-beta',
+    ollama: 'Auto Detect',
+    custom: '',
+  },
 };
 export const DEFAULT_WORKSPACE_SETTINGS: ExtensionSettingsWorkspace = {
   lastUsedHistoryID: '',

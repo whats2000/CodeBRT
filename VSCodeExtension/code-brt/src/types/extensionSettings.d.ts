@@ -2,7 +2,7 @@ import type * as hljs from 'react-syntax-highlighter/dist/cjs/styles/hljs';
 import { SpeechCreateParams } from 'openai/resources/audio';
 
 import { ModelServiceType } from './modelServiceType';
-import {CodeFixerModelServiceType} from './codeFixerModelServiceType';
+import { CodeFixerModelServiceType } from './codeFixerModelServiceType';
 import {
   TextToVoiceServiceType,
   VoiceToTextServiceType,
@@ -153,6 +153,20 @@ export type ToolServiceSettings = {
 };
 
 /**
+ * Represents the settings for the code fixer services.
+ * @property codeFixerGeminiAvailableModels - The available models for the Gemini API
+ * @property codeFixerOpenaiAvailableModels - The available models for the OpenAI API
+ * @property codeFixerLastSelectedModel - The last selected model for each code fixer service
+ */
+export type CodeFixerSettings = {
+  codeFixerOpenaiAvailableModels: string[];
+  codeFixerGeminiAvailableModels: string[];
+  codeFixerLastSelectedModel: {
+    [keyof in CodeFixerModelServiceType]: string;
+  };
+};
+
+/**
  * Other local settings that are not related to the services.
  * @property systemPrompts - An array of system prompts
  * @property retainContextWhenHidden - Indicates whether the context should be retained when the extension is hidden
@@ -170,6 +184,7 @@ export type OtherLocalSettings = {
 export type ExtensionSettingsLocal = ModelServiceSettings &
   VoiceServiceSettings &
   ToolServiceSettings &
+  CodeFixerSettings &
   OtherLocalSettings;
 
 /**
