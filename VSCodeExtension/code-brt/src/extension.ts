@@ -3,32 +3,21 @@ import * as vscode from 'vscode';
 import type {
   LoadedModelServices,
   LoadedVoiceServices,
+  ModelServiceType,
   ViewApi,
   ViewApiError,
   ViewApiEvent,
   ViewApiRequest,
   ViewApiResponse,
   ViewEvents,
+  VoiceServiceType,
 } from './types';
 import { FileUtils } from './utils';
 import { ViewKey } from './views';
 import { viewRegistration, SettingsManager, HistoryManager } from './api';
-import {
-  AnthropicService,
-  CohereService,
-  CustomApiService,
-  GeminiService,
-  GroqService,
-  HuggingFaceService,
-  OllamaService,
-  OpenAIService,
-} from './services/languageModel';
-import {
-  GptSoVitsApiService,
-  GroqVoiceService,
-  OpenaiVoiceService,
-  VisualStudioCodeBuiltInService,
-} from './services/voice';
+import { ModelServiceFactory } from './services/languageModel';
+import { VoiceServiceFactory } from './services/voice';
+import { GptSoVitsApiService } from './services/voice/gptSoVitsService';
 import {
   InlineCompletionProvider,
   SUPPORTED_LANGUAGES,
@@ -42,50 +31,53 @@ export const activate = async (ctx: vscode.ExtensionContext) => {
 
   const connectedViews: Partial<Record<ViewKey, vscode.WebviewView>> = {};
   const settingsManager = SettingsManager.getInstance(ctx);
-
   const historyManager = new HistoryManager(ctx);
 
-  const models: LoadedModelServices = {
-    anthropic: {
-      service: new AnthropicService(ctx, settingsManager, historyManager),
-    },
-    gemini: {
-      service: new GeminiService(ctx, settingsManager, historyManager),
-    },
-    cohere: {
-      service: new CohereService(ctx, settingsManager, historyManager),
-    },
-    openai: {
-      service: new OpenAIService(ctx, settingsManager, historyManager),
-    },
-    groq: {
-      service: new GroqService(ctx, settingsManager, historyManager),
-    },
-    huggingFace: {
-      service: new HuggingFaceService(ctx, settingsManager, historyManager),
-    },
-    ollama: {
-      service: new OllamaService(ctx, settingsManager, historyManager),
-    },
-    custom: {
-      service: new CustomApiService(ctx, settingsManager, historyManager),
-    },
-  };
+  // Create a model service factory instance
+  const modelServiceFactory = new ModelServiceFactory(
+    ctx,
+    settingsManager,
+    historyManager,
+  );
 
-  const voiceServices: LoadedVoiceServices = {
-    visualStudioCodeBuiltIn: {
-      service: new VisualStudioCodeBuiltInService(ctx, settingsManager),
+  // Define the model types
+  const modelKeys: ModelServiceType[] = [
+    'anthropic',
+    'gemini',
+    'openai',
+    'cohere',
+    'groq',
+    'huggingFace',
+    'ollama',
+    'custom',
+  ];
+
+  // Dynamically initialize the services for all available models
+  const models = modelKeys.reduce((acc, modelKey) => {
+    acc[modelKey] = {
+      service: modelServiceFactory.createModelService(modelKey),
+    };
+    return acc;
+  }, {} as LoadedModelServices);
+
+  const voiceServiceFactory = new VoiceServiceFactory(ctx, settingsManager);
+
+  const voiceServiceKeys: VoiceServiceType[] = [
+    'gptSoVits',
+    'openai',
+    'groq',
+    'visualStudioCodeBuiltIn',
+  ];
+
+  const voiceServices: LoadedVoiceServices = voiceServiceKeys.reduce(
+    (acc, voiceServiceKey) => {
+      acc[voiceServiceKey] = {
+        service: voiceServiceFactory.createVoiceService(voiceServiceKey),
+      };
+      return acc;
     },
-    groq: {
-      service: new GroqVoiceService(ctx, settingsManager),
-    },
-    gptSoVits: {
-      service: new GptSoVitsApiService(ctx, settingsManager),
-    },
-    openai: {
-      service: new OpenaiVoiceService(ctx, settingsManager),
-    },
-  };
+    {} as LoadedVoiceServices,
+  );
 
   // Activate manually complete functionality
   const completionProvider = new InlineCompletionProvider(ctx, settingsManager);
