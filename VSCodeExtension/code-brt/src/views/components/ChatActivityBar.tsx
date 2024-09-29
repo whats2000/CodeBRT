@@ -2,7 +2,7 @@ import { useContext, useState, useEffect, useRef } from 'react';
 import styled from 'styled-components';
 import { Content } from 'antd/es/layout/layout';
 import { ConfigProvider, FloatButton } from 'antd';
-import { ControlOutlined } from '@ant-design/icons';
+import { ControlOutlined, LoadingOutlined } from '@ant-design/icons';
 import { useSelector, useDispatch } from 'react-redux';
 
 import { AppDispatch, RootState } from '../redux';
@@ -48,6 +48,8 @@ export const ChatActivityBar = () => {
   const inputContainerRef = useRef<HTMLDivElement>(null);
 
   const dispatch = useDispatch<AppDispatch>();
+
+  const { isLoading } = useSelector((state: RootState) => state.settings);
 
   const conversationHistory = useSelector(
     (state: RootState) => state.conversation,
@@ -217,6 +219,11 @@ export const ChatActivityBar = () => {
       });
   };
 
+  const openModelAdvanceSettingBar = () => {
+    if (conversationHistory.isLoading || isLoading) return;
+    setIsModelAdvanceSettingBarOpen(true);
+  };
+
   return (
     <ConfigProvider theme={theme}>
       <Container ref={dropRef}>
@@ -233,8 +240,14 @@ export const ChatActivityBar = () => {
       </Container>
       <FloatButton
         tooltip={'Model Advance Settings'}
-        icon={<ControlOutlined />}
-        onClick={() => setIsModelAdvanceSettingBarOpen(true)}
+        icon={
+          conversationHistory.isLoading || isLoading ? (
+            <LoadingOutlined />
+          ) : (
+            <ControlOutlined />
+          )
+        }
+        onClick={openModelAdvanceSettingBar}
         style={{
           insetInlineEnd: 40,
           bottom: floatButtonBaseYPosition + 50,
