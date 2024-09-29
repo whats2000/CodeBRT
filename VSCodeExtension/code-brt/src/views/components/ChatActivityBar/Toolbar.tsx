@@ -7,6 +7,7 @@ import {
   SettingOutlined,
   MenuOutlined,
   AudioOutlined,
+  PicRightOutlined,
 } from '@ant-design/icons';
 import styled from 'styled-components';
 import { useDispatch, useSelector } from 'react-redux';
@@ -23,6 +24,7 @@ import { EditModelListBar } from './Toolbar/EditModelListBar';
 import { HistorySidebar } from './Toolbar/HistorySidebar';
 import { SettingsBar } from './Toolbar/SettingsBar';
 import { VoiceSettingsBar } from './Toolbar/VoiceSettingsBar';
+import { CodeCompletionSettingsBar } from './Toolbar/CodeCompletionSettingsBar';
 import { useWindowSize } from '../../hooks';
 
 const StyledSpace = styled(Space)`
@@ -60,6 +62,8 @@ export const Toolbar: React.FC<ToolbarProps> = ({ setTheme }) => {
   const [isHistorySidebarOpen, setIsHistorySidebarOpen] = useState(false);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [isVoiceSettingsOpen, setIsVoiceSettingsOpen] = useState(false);
+  const [isCodeCompletionSettingsOpen, setIsCodeCompletionSettingsOpen] =
+    useState(false);
   const [isSelectModelOpen, setIsSelectModelOpen] = useState(false);
   const [isEditModelListOpen, setIsEditModelListOpen] = useState(false);
 
@@ -124,6 +128,12 @@ export const Toolbar: React.FC<ToolbarProps> = ({ setTheme }) => {
       onClick: () => setIsVoiceSettingsOpen(true),
       label: 'Voice Settings',
       icon: <AudioOutlined />,
+    },
+    {
+      key: 'code completion',
+      onClick: () => setIsCodeCompletionSettingsOpen(true),
+      label: 'Code Completion Settings',
+      icon: <PicRightOutlined />,
     },
   ];
 
@@ -260,6 +270,10 @@ export const Toolbar: React.FC<ToolbarProps> = ({ setTheme }) => {
       <EditModelListBar
         isOpen={isEditModelListOpen}
         onClose={() => setIsEditModelListOpen(false)}
+      />
+      <CodeCompletionSettingsBar
+        isOpen={isCodeCompletionSettingsOpen}
+        onClose={() => setIsCodeCompletionSettingsOpen(false)}
       />
     </>
   );
