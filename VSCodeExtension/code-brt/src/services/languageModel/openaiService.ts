@@ -8,7 +8,7 @@ import OpenAI from 'openai';
 
 import type { GetResponseOptions } from '../../types';
 import { HistoryManager, SettingsManager } from '../../api';
-import { AbstractOpenaiLikeService } from './abstractOpenaiLikeService';
+import { AbstractOpenaiLikeService } from './base';
 import { MODEL_SERVICE_CONSTANTS } from '../../constants';
 
 export class OpenAIService extends AbstractOpenaiLikeService {

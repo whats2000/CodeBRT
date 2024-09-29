@@ -4,8 +4,8 @@ import {
   LanguageModelService,
   GetResponseOptions,
   ModelServiceType,
-} from '../../types';
-import { HistoryManager, SettingsManager } from '../../api';
+} from '../../../types';
+import { HistoryManager, SettingsManager } from '../../../api';
 
 /**
  * Abstract class for the Language Model Service

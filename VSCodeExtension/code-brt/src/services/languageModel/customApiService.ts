@@ -9,7 +9,7 @@ import {
   CustomModelSettings,
   GetResponseOptions,
 } from '../../types';
-import { AbstractLanguageModelService } from './abstractLanguageModelService';
+import { AbstractLanguageModelService } from './base';
 import { HistoryManager, SettingsManager } from '../../api';
 
 export class CustomApiService extends AbstractLanguageModelService {

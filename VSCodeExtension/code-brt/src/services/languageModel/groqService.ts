@@ -9,7 +9,7 @@ import Groq from 'groq-sdk';
 
 import type { GetResponseOptions } from '../../types';
 import { MODEL_SERVICE_CONSTANTS } from '../../constants';
-import { AbstractOpenaiLikeService } from './abstractOpenaiLikeService';
+import { AbstractOpenaiLikeService } from './base';
 import { HistoryManager, SettingsManager } from '../../api';
 
 export class GroqService extends AbstractOpenaiLikeService {

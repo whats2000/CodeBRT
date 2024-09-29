@@ -10,10 +10,10 @@ import type {
   ChatCompletionToolOpenaiLike,
   ConversationEntry,
   ToolServiceType,
-} from '../../types';
-import { toolsSchema } from '../../constants';
+} from '../../../types';
+import { toolsSchema } from '../../../constants';
 import { AbstractLanguageModelService } from './abstractLanguageModelService';
-import { ToolService } from '../tools';
+import { ToolService } from '../../tools';
 import vscode from 'vscode';
 
 export abstract class AbstractOpenaiLikeService extends AbstractLanguageModelService {

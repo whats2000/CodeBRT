@@ -9,7 +9,7 @@ import type {
 } from '../../types';
 import { MODEL_SERVICE_CONSTANTS, toolsSchema } from '../../constants';
 import { mapTypeToPythonFormat } from '../../utils';
-import { AbstractLanguageModelService } from './abstractLanguageModelService';
+import { AbstractLanguageModelService } from './base';
 import { HistoryManager, SettingsManager } from '../../api';
 import { ToolService } from '../tools';
 import { ChatRequest } from 'cohere-ai/api/client/requests/ChatRequest';

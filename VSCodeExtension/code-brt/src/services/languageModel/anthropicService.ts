@@ -26,7 +26,7 @@ import type {
 } from '../../types';
 import { MODEL_SERVICE_CONSTANTS, toolsSchema } from '../../constants';
 import { HistoryManager, SettingsManager } from '../../api';
-import { AbstractLanguageModelService } from './abstractLanguageModelService';
+import { AbstractLanguageModelService } from './base';
 import { ToolService } from '../tools';
 
 export class AnthropicService extends AbstractLanguageModelService {

@@ -13,7 +13,7 @@ import type {
   GetResponseOptions,
   ToolServiceType,
 } from '../../types';
-import { AbstractLanguageModelService } from './abstractLanguageModelService';
+import { AbstractLanguageModelService } from './base';
 import { HistoryManager, SettingsManager } from '../../api';
 import { MODEL_SERVICE_CONSTANTS, toolsSchema } from '../../constants';
 import { ToolService } from '../tools';

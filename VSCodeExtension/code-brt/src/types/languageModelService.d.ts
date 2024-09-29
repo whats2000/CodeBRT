@@ -44,7 +44,7 @@ export type LanguageModelService = {
   getResponse: (options: GetResponseOptions) => Promise<string>;
 
   /**
-   *
+   * Stop current response
    */
   stopResponse: () => void;
 };
