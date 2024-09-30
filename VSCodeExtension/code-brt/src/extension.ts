@@ -626,7 +626,7 @@ export const activate = async (ctx: vscode.ExtensionContext) => {
   registerAndConnectView('workPanel').catch((e) => {
     console.error(e);
   });
-  vscode.commands.registerCommand('diff.file', Commands.file);
+  vscode.commands.registerCommand('code-brt.diff.file', Commands.file);
   vscode.languages.registerCodeActionsProvider('javascript', {
     provideCodeActions(
       document: vscode.TextDocument,
@@ -635,19 +635,19 @@ export const activate = async (ctx: vscode.ExtensionContext) => {
       _token: vscode.CancellationToken,
     ): vscode.ProviderResult<(vscode.CodeAction | vscode.Command)[]> {
       const fixCodeAction = new vscode.CodeAction(
-        'FixCode',
+        'Quick Fix Code',
         vscode.CodeActionKind.QuickFix,
       );
       fixCodeAction.command = {
         title: 'Send to Chat',
-        command: 'extension.fixCode',
+        command: 'code-brt.fixCode',
         arguments: [document.getText(range)],
       };
       return [fixCodeAction];
     },
   });
 
-  vscode.commands.registerCommand('extension.fixCode', (selectedCode) => {
+  vscode.commands.registerCommand('code-brt.fixCode', (selectedCode) => {
     if (selectedCode) {
       api.insertSelectedCodeToChat();
     }

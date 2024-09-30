@@ -349,11 +349,7 @@ export type ViewApi = {
    * Show the differences in the editor using decorations.
    * @param modifications - The modifications to show.
    */
-<<<<<<< Updated upstream
   showDiffInEditor: (modifications: Modification[]) => Promise<Modification[]>;
-=======
-  showDiffInEditor: (modifications: Modification[]) => Promise<void>;
->>>>>>> Stashed changes
 
   /**
    * Get the current editor code.
@@ -367,13 +363,10 @@ export type ViewApi = {
    * @returns The result of the code fixing process.
    */
   fixCode: (options: FixCodeOptions) => Promise<FixCodeResponse>;
-<<<<<<< Updated upstream
   applyCodeChanges: (modifications: Modification[]) => Promise<void>;
   insertSelectedCodeToChat: () => void;
   updateDecorationToMatchBackground: () => void;
   revertTemporaryInsertions(): Promise<void>;
-=======
->>>>>>> Stashed changes
 };
 
 /**
