@@ -43,9 +43,12 @@ export abstract class AbstractVoiceService implements VoiceService {
    * @param text - The text to preprocess.
    */
   private preprocessText(text: string): string {
-    text = text.replace(/^([*-+]\s.*?)([.!?。！？]?)$/gm, (match, p1, p2) => {
-      return p2 ? match : p1 + '.';
-    });
+    text = text.replace(
+      /^([*-+]\s.*?)([:.!?：。！？]?)$/gm,
+      (match, p1, p2) => {
+        return p2 ? match : p1 + '.';
+      },
+    );
     return removeMarkdown(text);
   }
 
