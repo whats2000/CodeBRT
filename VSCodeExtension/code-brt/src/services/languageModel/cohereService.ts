@@ -243,6 +243,7 @@ export class CohereService extends AbstractLanguageModelService {
       currentEntryID,
       sendStreamResponse,
       updateStatus,
+      selectedModelName,
     } = options;
 
     if (images && images.length > 0) {
@@ -281,7 +282,7 @@ export class CohereService extends AbstractLanguageModelService {
       if (!sendStreamResponse) {
         while (functionCallCount < MAX_FUNCTION_CALLS) {
           const response = await model.chat({
-            model: this.currentModel,
+            model: selectedModelName ?? this.currentModel,
             message: toolResults.length > 0 ? '' : query,
             chatHistory: conversationHistory,
             tools: shouldUseTools ? this.getEnabledTools() : undefined,
@@ -312,7 +313,7 @@ export class CohereService extends AbstractLanguageModelService {
           }
 
           const streamResponse = await model.chatStream({
-            model: this.currentModel,
+            model: selectedModelName ?? this.currentModel,
             message: toolResults.length > 0 ? '' : query,
             chatHistory: conversationHistory,
             tools: shouldUseTools ? this.getEnabledTools() : undefined,

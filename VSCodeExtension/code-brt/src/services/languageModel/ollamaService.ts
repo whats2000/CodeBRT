@@ -187,6 +187,7 @@ export class OllamaService extends AbstractLanguageModelService {
     historyManager: HistoryManager,
     currentEntryID?: string,
     images?: string[],
+    selectedModelName?: string,
   ): Promise<{
     client: Ollama;
     conversationHistory: Message[];
@@ -206,7 +207,7 @@ export class OllamaService extends AbstractLanguageModelService {
     const model =
       this.currentModel === 'Auto Detect'
         ? await this.getRunningModel()
-        : this.currentModel;
+        : (selectedModelName ?? this.currentModel);
 
     return { client, conversationHistory, model };
   }
@@ -301,15 +302,17 @@ export class OllamaService extends AbstractLanguageModelService {
       query,
       historyManager,
       images,
-      sendStreamResponse,
       currentEntryID,
+      sendStreamResponse,
       updateStatus,
+      selectedModelName,
     } = options;
     const { client, conversationHistory, model } = await this.initModel(
       query,
       historyManager,
       currentEntryID,
       images,
+      selectedModelName,
     );
 
     if (model === '') {

@@ -7,6 +7,9 @@
  * @property sendStreamResponse - The callback to send chunks of the response to,
  * if not provided, the response will be returned without streaming and ill not send partial responses text to frontend
  * @property updateStatus - The callback to update the status if the model is using tools,
+ * if not provided, the status will not be updated at frontend
+ * @property selectedModelName - The name of the selected model,
+ * if provided, the model will use the selected model name to get the response,
  *
  * if not provided, the status will not be updated at frontend
  */
@@ -17,6 +20,7 @@ type GetResponseOptions = {
   currentEntryID?: string;
   sendStreamResponse?: (message: string) => void;
   updateStatus?: (status: string) => void;
+  selectedModelName?: string;
 };
 
 export type LanguageModelService = {

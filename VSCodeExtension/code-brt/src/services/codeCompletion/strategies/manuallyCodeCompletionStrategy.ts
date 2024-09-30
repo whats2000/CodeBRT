@@ -1,4 +1,6 @@
 import * as vscode from 'vscode';
+
+import type { LoadedModelServices } from '../../../types';
 import { CompletionStrategy } from './index';
 import {
   FEW_SHOT_EXAMPLES,
@@ -8,10 +10,7 @@ import {
   MAIN_PROMPT_TEMPLATE,
   SYSTEM_PROMPT,
 } from '../constants';
-import type { LoadedModelServices } from '../../../types';
 import { CodeLanguageId } from '../types';
-
-// For testing purposes, we will use gemini to mock the LLM invocation
 import { HistoryManager, SettingsManager } from '../../../api';
 
 export class ManuallyCodeCompletionStrategy implements CompletionStrategy {
@@ -41,12 +40,19 @@ export class ManuallyCodeCompletionStrategy implements CompletionStrategy {
     });
   }
 
+  /**
+   * Get the response from the model service.
+   * @param prompt The prompt to send to the model service.
+   */
   private async getResponse(prompt: string): Promise<string> {
+    const modelService = this.settingsManager.get('lastUsedModelService');
     const response = await this.loadedModelServices[
-      this.settingsManager.get('lastUsedModelService')
+      modelService
     ].service.getResponse({
       query: prompt,
       historyManager: this.historyManager,
+      selectedModelName:
+        this.settingsManager.get('lastSelectedModel')[modelService],
     });
 
     // Remove <Completion> tags from the response

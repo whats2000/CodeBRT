@@ -347,6 +347,7 @@ export class AnthropicService extends AbstractLanguageModelService {
       currentEntryID,
       sendStreamResponse,
       updateStatus,
+      selectedModelName,
     } = options;
 
     const { anthropic, conversationHistory, errorMessage } = this.initModel(
@@ -370,7 +371,7 @@ export class AnthropicService extends AbstractLanguageModelService {
       if (!sendStreamResponse) {
         while (functionCallCount < MAX_FUNCTION_CALLS) {
           const response = await anthropic.messages.create({
-            model: this.currentModel,
+            model: selectedModelName ?? this.currentModel,
             system: systemPrompt,
             messages: conversationHistory,
             tools: this.getEnabledTools(),
@@ -408,7 +409,7 @@ export class AnthropicService extends AbstractLanguageModelService {
           this.currentStreamResponse?.abort();
           this.currentStreamResponse = anthropic.messages
             .stream({
-              model: this.currentModel,
+              model: selectedModelName ?? this.currentModel,
               system: systemPrompt,
               messages: conversationHistory,
               tools: this.getEnabledTools(),

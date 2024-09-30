@@ -80,6 +80,7 @@ export class GroqService extends AbstractOpenaiLikeService {
       currentEntryID,
       sendStreamResponse,
       updateStatus,
+      selectedModelName,
     } = options;
 
     if (images && images.length > 0) {
@@ -116,7 +117,7 @@ export class GroqService extends AbstractOpenaiLikeService {
         while (functionCallCount < MAX_FUNCTION_CALLS) {
           const response = await groq.chat.completions.create({
             messages: conversationHistory,
-            model: this.currentModel,
+            model: selectedModelName ?? this.currentModel,
             tools: this.getEnabledTools(),
             stream: false,
             ...generationConfig,
@@ -151,7 +152,7 @@ export class GroqService extends AbstractOpenaiLikeService {
 
           const streamResponse = await groq.chat.completions.create({
             messages: conversationHistory,
-            model: this.currentModel,
+            model: selectedModelName ?? this.currentModel,
             stream: true,
             tools: this.getEnabledTools(),
             ...generationConfig,

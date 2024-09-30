@@ -196,6 +196,7 @@ export class HuggingFaceService extends AbstractLanguageModelService {
       currentEntryID,
       sendStreamResponse,
       updateStatus,
+      selectedModelName,
     } = options;
 
     if (images && images.length > 0) {
@@ -236,7 +237,7 @@ export class HuggingFaceService extends AbstractLanguageModelService {
         return (
           await huggerFace.chatCompletion({
             messages: conversationHistory,
-            model: this.currentModel,
+            model: selectedModelName ?? this.currentModel,
             stream: false,
             ...generationConfig,
           })
@@ -289,7 +290,7 @@ export class HuggingFaceService extends AbstractLanguageModelService {
 
           const streamResponse = huggerFace.chatCompletionStream({
             messages: conversationHistory,
-            model: this.currentModel,
+            model: selectedModelName ?? this.currentModel,
             tools: functionCallSuccess ? undefined : this.getEnabledTools(),
             stream: true,
             ...generationConfig,

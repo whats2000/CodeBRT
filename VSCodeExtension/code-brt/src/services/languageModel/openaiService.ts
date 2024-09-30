@@ -86,6 +86,7 @@ export class OpenAIService extends AbstractOpenaiLikeService {
       currentEntryID,
       sendStreamResponse,
       updateStatus,
+      selectedModelName,
     } = options;
     const openai = new OpenAI({
       apiKey: this.settingsManager.get('openaiApiKey'),
@@ -116,7 +117,7 @@ export class OpenAIService extends AbstractOpenaiLikeService {
         while (functionCallCount < MAX_FUNCTION_CALLS) {
           const response = await openai.chat.completions.create({
             messages: conversationHistory,
-            model: this.currentModel,
+            model: selectedModelName ?? this.currentModel,
             tools: this.getEnabledTools(),
             stream: false,
             ...generationConfig,
@@ -149,7 +150,7 @@ export class OpenAIService extends AbstractOpenaiLikeService {
           }
 
           const streamResponse = await openai.chat.completions.create({
-            model: this.currentModel,
+            model: selectedModelName ?? this.currentModel,
             messages: conversationHistory,
             tools: this.getEnabledTools(),
             stream: true,

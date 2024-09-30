@@ -330,12 +330,13 @@ export class GeminiService extends AbstractLanguageModelService {
       currentEntryID,
       sendStreamResponse,
       updateStatus,
+      selectedModelName,
     } = options;
 
     const generativeModel = new GoogleGenerativeAI(
       this.settingsManager.get('geminiApiKey'),
     ).getGenerativeModel({
-      model: this.currentModel,
+      model: selectedModelName ?? this.currentModel,
     });
 
     const conversationHistory = this.conversationHistoryToContent(
