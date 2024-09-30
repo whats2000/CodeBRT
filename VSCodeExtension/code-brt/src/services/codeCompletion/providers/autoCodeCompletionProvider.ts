@@ -2,14 +2,13 @@ import vscode from 'vscode';
 
 import type { LoadedModelServices } from 'src/types';
 import { AbstractCompletionProvider } from '../base';
-import { HistoryManager, SettingsManager } from '../../../api';
+import { SettingsManager } from '../../../api';
 
 // TODO: Implement the AutoCodeCompletionProvider class
 export class AutoCodeCompletionProvider implements AbstractCompletionProvider {
   constructor(
     _ctx: vscode.ExtensionContext,
     _settingsManager: SettingsManager,
-    _historyManager: HistoryManager,
     _loadedModelServices: LoadedModelServices,
   ) {}
 

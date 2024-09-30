@@ -5,7 +5,7 @@ import type {
   LoadedModelServices,
   ModelServiceType,
 } from '../../types';
-import type { HistoryManager, SettingsManager } from '../../api';
+import type { SettingsManager } from '../../api';
 import { AnthropicService } from './anthropicService';
 import { GeminiService } from './geminiService';
 import { CohereService } from './cohereService';
@@ -19,59 +19,26 @@ export class ModelServiceFactory {
   constructor(
     private ctx: vscode.ExtensionContext,
     private settingsManager: SettingsManager,
-    private historyManager: HistoryManager,
   ) {}
 
   public createModelService(modelKey: ModelServiceType): LanguageModelService {
     switch (modelKey) {
       case 'anthropic':
-        return new AnthropicService(
-          this.ctx,
-          this.settingsManager,
-          this.historyManager,
-        );
+        return new AnthropicService(this.ctx, this.settingsManager);
       case 'gemini':
-        return new GeminiService(
-          this.ctx,
-          this.settingsManager,
-          this.historyManager,
-        );
+        return new GeminiService(this.ctx, this.settingsManager);
       case 'cohere':
-        return new CohereService(
-          this.ctx,
-          this.settingsManager,
-          this.historyManager,
-        );
+        return new CohereService(this.ctx, this.settingsManager);
       case 'openai':
-        return new OpenAIService(
-          this.ctx,
-          this.settingsManager,
-          this.historyManager,
-        );
+        return new OpenAIService(this.ctx, this.settingsManager);
       case 'groq':
-        return new GroqService(
-          this.ctx,
-          this.settingsManager,
-          this.historyManager,
-        );
+        return new GroqService(this.ctx, this.settingsManager);
       case 'huggingFace':
-        return new HuggingFaceService(
-          this.ctx,
-          this.settingsManager,
-          this.historyManager,
-        );
+        return new HuggingFaceService(this.ctx, this.settingsManager);
       case 'ollama':
-        return new OllamaService(
-          this.ctx,
-          this.settingsManager,
-          this.historyManager,
-        );
+        return new OllamaService(this.ctx, this.settingsManager);
       case 'custom':
-        return new CustomApiService(
-          this.ctx,
-          this.settingsManager,
-          this.historyManager,
-        );
+        return new CustomApiService(this.ctx, this.settingsManager);
       default:
         throw new Error(`Unsupported model: ${modelKey}`);
     }

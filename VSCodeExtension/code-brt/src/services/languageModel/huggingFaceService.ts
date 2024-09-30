@@ -24,7 +24,6 @@ export class HuggingFaceService extends AbstractLanguageModelService {
   constructor(
     context: vscode.ExtensionContext,
     settingsManager: SettingsManager,
-    historyManager: HistoryManager,
   ) {
     const availableModelNames = settingsManager.get(
       'huggingFaceAvailableModels',
@@ -36,18 +35,16 @@ export class HuggingFaceService extends AbstractLanguageModelService {
       'huggingFace',
       context,
       settingsManager,
-      historyManager,
       defaultModelName,
       availableModelNames,
     );
   }
 
-  private getAdvanceSettings(): {
+  private getAdvanceSettings(historyManager: HistoryManager): {
     systemPrompt: string | undefined;
     generationConfig: Partial<ChatCompletionInput>;
   } {
-    const advanceSettings =
-      this.historyManager.getCurrentHistory().advanceSettings;
+    const advanceSettings = historyManager.getCurrentHistory().advanceSettings;
 
     if (!advanceSettings) {
       return {
@@ -96,9 +93,10 @@ export class HuggingFaceService extends AbstractLanguageModelService {
   private conversationHistoryToContent(
     entries: { [key: string]: ConversationEntry },
     query: string,
+    historyManager: HistoryManager,
   ): ChatCompletionInputMessage[] {
     const result: ChatCompletionInputMessage[] = [];
-    let currentEntry = entries[this.historyManager.getCurrentHistory().current];
+    let currentEntry = entries[historyManager.getCurrentHistory().current];
 
     while (currentEntry) {
       result.unshift({
@@ -191,8 +189,14 @@ export class HuggingFaceService extends AbstractLanguageModelService {
       return 'Missing model configuration. Check the model selection dropdown.';
     }
 
-    const { query, images, currentEntryID, sendStreamResponse, updateStatus } =
-      options;
+    const {
+      query,
+      historyManager,
+      images,
+      currentEntryID,
+      sendStreamResponse,
+      updateStatus,
+    } = options;
 
     if (images && images.length > 0) {
       vscode.window.showWarningMessage(
@@ -205,14 +209,16 @@ export class HuggingFaceService extends AbstractLanguageModelService {
     );
 
     const conversationHistory = this.conversationHistoryToContent(
-      this.historyManager.getHistoryBeforeEntry(currentEntryID).entries,
+      historyManager.getHistoryBeforeEntry(currentEntryID).entries,
       query,
+      historyManager,
     );
 
     let functionCallCount = 0;
     const MAX_FUNCTION_CALLS = 5;
 
-    const { systemPrompt, generationConfig } = this.getAdvanceSettings();
+    const { systemPrompt, generationConfig } =
+      this.getAdvanceSettings(historyManager);
 
     if (systemPrompt) {
       conversationHistory.unshift({

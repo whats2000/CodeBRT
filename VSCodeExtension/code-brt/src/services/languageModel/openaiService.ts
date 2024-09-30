@@ -7,7 +7,7 @@ import type {
 import OpenAI from 'openai';
 
 import type { GetResponseOptions } from '../../types';
-import { HistoryManager, SettingsManager } from '../../api';
+import { SettingsManager } from '../../api';
 import { AbstractOpenaiLikeService } from './base';
 import { MODEL_SERVICE_CONSTANTS } from '../../constants';
 
@@ -17,7 +17,6 @@ export class OpenAIService extends AbstractOpenaiLikeService {
   constructor(
     context: vscode.ExtensionContext,
     settingsManager: SettingsManager,
-    historyManager: HistoryManager,
   ) {
     const availableModelNames = settingsManager.get('openaiAvailableModels');
     const defaultModelName = settingsManager.get('lastSelectedModel').openai;
@@ -26,7 +25,6 @@ export class OpenAIService extends AbstractOpenaiLikeService {
       'openai',
       context,
       settingsManager,
-      historyManager,
       defaultModelName,
       availableModelNames,
     );
@@ -81,22 +79,30 @@ export class OpenAIService extends AbstractOpenaiLikeService {
       options.images = undefined;
     }
 
-    const { query, images, currentEntryID, sendStreamResponse, updateStatus } =
-      options;
+    const {
+      query,
+      historyManager,
+      images,
+      currentEntryID,
+      sendStreamResponse,
+      updateStatus,
+    } = options;
     const openai = new OpenAI({
       apiKey: this.settingsManager.get('openaiApiKey'),
     });
 
     const conversationHistory = await this.conversationHistoryToContent(
-      this.historyManager.getHistoryBeforeEntry(currentEntryID).entries,
+      historyManager.getHistoryBeforeEntry(currentEntryID).entries,
       query,
+      historyManager,
       images,
     );
 
     let functionCallCount = 0;
     const MAX_FUNCTION_CALLS = 5;
 
-    const { systemPrompt, generationConfig } = this.getAdvanceSettings();
+    const { systemPrompt, generationConfig } =
+      this.getAdvanceSettings(historyManager);
 
     if (systemPrompt) {
       conversationHistory.unshift({

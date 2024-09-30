@@ -30,22 +30,12 @@ export const activate = async (ctx: vscode.ExtensionContext) => {
   const connectedViews: Partial<Record<ViewKey, vscode.WebviewView>> = {};
   const settingsManager = SettingsManager.getInstance(ctx);
   const historyManager = new HistoryManager(ctx);
-  const codeCompletionHistoryManager = new HistoryManager(
-    ctx,
-    'codeCompletion.json',
-    'codeCompletion',
-  );
 
   // Create a model service factory instance
-  const modelServiceFactory = new ModelServiceFactory(
-    ctx,
-    settingsManager,
-    historyManager,
-  );
+  const modelServiceFactory = new ModelServiceFactory(ctx, settingsManager);
   const codeCompletionModelServiceFactory = new ModelServiceFactory(
     ctx,
     settingsManager,
-    codeCompletionHistoryManager,
   );
 
   // Define the model types
@@ -81,7 +71,6 @@ export const activate = async (ctx: vscode.ExtensionContext) => {
   const completionProvider = new InlineCompletionProvider(
     ctx,
     settingsManager,
-    codeCompletionHistoryManager,
     codeCompletionModels,
   );
 
@@ -172,6 +161,7 @@ export const activate = async (ctx: vscode.ExtensionContext) => {
     ) => {
       return await models[modelServiceType].service.getResponse({
         query,
+        historyManager,
         images,
         currentEntryID,
         sendStreamResponse: useStream

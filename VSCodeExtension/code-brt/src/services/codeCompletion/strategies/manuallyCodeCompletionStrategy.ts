@@ -21,13 +21,26 @@ type PromptTemplate = {
 };
 
 export class ManuallyCodeCompletionStrategy implements CompletionStrategy {
+  private ctx: vscode.ExtensionContext;
+  private settingsManager: SettingsManager;
+  private historyManager: HistoryManager;
+  private loadedModelServices: LoadedModelServices;
+
   constructor(
     // TODO: Implement context retrieval in the with the loaded model services
-    private ctx: vscode.ExtensionContext,
-    private settingsManager: SettingsManager,
-    private historyManager: HistoryManager,
-    private loadedModelServices: LoadedModelServices,
-  ) {}
+    ctx: vscode.ExtensionContext,
+    settingsManager: SettingsManager,
+    loadedModelServices: LoadedModelServices,
+  ) {
+    this.ctx = ctx;
+    this.settingsManager = settingsManager;
+    this.historyManager = new HistoryManager(
+      ctx,
+      'manuallyCodeCompletionIndex.json',
+      'manuallyCodeCompletionHistories',
+    );
+    this.loadedModelServices = loadedModelServices;
+  }
 
   private async getResponse(prompt: PromptTemplate): Promise<string> {
     const generativeModel = new GoogleGenerativeAI(

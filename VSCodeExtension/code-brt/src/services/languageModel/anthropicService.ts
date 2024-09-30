@@ -19,7 +19,7 @@ import type {
 } from '@anthropic-ai/sdk/resources/messages';
 import Anthropic from '@anthropic-ai/sdk';
 
-import type {
+import {
   ConversationEntry,
   GetResponseOptions,
   ToolServiceType,
@@ -35,7 +35,6 @@ export class AnthropicService extends AbstractLanguageModelService {
   constructor(
     context: vscode.ExtensionContext,
     settingsManager: SettingsManager,
-    historyManager: HistoryManager,
   ) {
     const availableModelNames = settingsManager.get('anthropicAvailableModels');
     const defaultModelName = settingsManager.get('lastSelectedModel').anthropic;
@@ -44,20 +43,18 @@ export class AnthropicService extends AbstractLanguageModelService {
       'anthropic',
       context,
       settingsManager,
-      historyManager,
       defaultModelName,
       availableModelNames,
     );
   }
 
-  private getAdvanceSettings(): {
+  private getAdvanceSettings(historyManager: HistoryManager): {
     systemPrompt: string | undefined;
     generationConfig: Partial<MessageCreateParamsNonStreaming> & {
       max_tokens: number;
     };
   } {
-    const advanceSettings =
-      this.historyManager.getCurrentHistory().advanceSettings;
+    const advanceSettings = historyManager.getCurrentHistory().advanceSettings;
 
     if (!advanceSettings) {
       return {
@@ -118,9 +115,10 @@ export class AnthropicService extends AbstractLanguageModelService {
   private conversationHistoryToContent(
     entries: { [key: string]: ConversationEntry },
     query: string,
+    historyManager: HistoryManager,
   ): MessageParam[] {
     const result: MessageParam[] = [];
-    let currentEntry = entries[this.historyManager.getCurrentHistory().current];
+    let currentEntry = entries[historyManager.getCurrentHistory().current];
 
     while (currentEntry) {
       result.unshift({
@@ -177,6 +175,7 @@ export class AnthropicService extends AbstractLanguageModelService {
 
   private initModel(
     query: string,
+    historyManager: HistoryManager,
     currentEntryID?: string,
     images?: string[],
   ): {
@@ -201,8 +200,9 @@ export class AnthropicService extends AbstractLanguageModelService {
     }
 
     const conversationHistory = this.conversationHistoryToContent(
-      this.historyManager.getHistoryBeforeEntry(currentEntryID).entries,
+      historyManager.getHistoryBeforeEntry(currentEntryID).entries,
       query,
+      historyManager,
     );
 
     if (!images) {
@@ -340,11 +340,18 @@ export class AnthropicService extends AbstractLanguageModelService {
   }
 
   public async getResponse(options: GetResponseOptions): Promise<string> {
-    const { query, images, currentEntryID, sendStreamResponse, updateStatus } =
-      options;
+    const {
+      query,
+      historyManager,
+      images,
+      currentEntryID,
+      sendStreamResponse,
+      updateStatus,
+    } = options;
 
     const { anthropic, conversationHistory, errorMessage } = this.initModel(
       query,
+      historyManager,
       currentEntryID,
       images,
     );
@@ -356,7 +363,8 @@ export class AnthropicService extends AbstractLanguageModelService {
     let functionCallCount = 0;
     const MAX_FUNCTION_CALLS = 5;
 
-    const { systemPrompt, generationConfig } = this.getAdvanceSettings();
+    const { systemPrompt, generationConfig } =
+      this.getAdvanceSettings(historyManager);
 
     try {
       if (!sendStreamResponse) {

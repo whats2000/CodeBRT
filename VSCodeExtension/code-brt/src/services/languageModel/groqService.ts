@@ -10,7 +10,7 @@ import Groq from 'groq-sdk';
 import type { GetResponseOptions } from '../../types';
 import { MODEL_SERVICE_CONSTANTS } from '../../constants';
 import { AbstractOpenaiLikeService } from './base';
-import { HistoryManager, SettingsManager } from '../../api';
+import { SettingsManager } from '../../api';
 
 export class GroqService extends AbstractOpenaiLikeService {
   private stopStreamFlag: boolean = false;
@@ -18,7 +18,6 @@ export class GroqService extends AbstractOpenaiLikeService {
   constructor(
     context: vscode.ExtensionContext,
     settingsManager: SettingsManager,
-    historyManager: HistoryManager,
   ) {
     const availableModelNames = settingsManager.get('groqAvailableModels');
     const defaultModelName = settingsManager.get('lastSelectedModel').groq;
@@ -27,7 +26,6 @@ export class GroqService extends AbstractOpenaiLikeService {
       'groq',
       context,
       settingsManager,
-      historyManager,
       defaultModelName,
       availableModelNames,
     );
@@ -75,8 +73,14 @@ export class GroqService extends AbstractOpenaiLikeService {
       return 'Missing model configuration. Check the model selection dropdown.';
     }
 
-    const { query, images, currentEntryID, sendStreamResponse, updateStatus } =
-      options;
+    const {
+      query,
+      historyManager,
+      images,
+      currentEntryID,
+      sendStreamResponse,
+      updateStatus,
+    } = options;
 
     if (images && images.length > 0) {
       vscode.window.showWarningMessage(
@@ -89,14 +93,16 @@ export class GroqService extends AbstractOpenaiLikeService {
     });
 
     const conversationHistory = await this.conversationHistoryToContent(
-      this.historyManager.getHistoryBeforeEntry(currentEntryID).entries,
+      historyManager.getHistoryBeforeEntry(currentEntryID).entries,
       query,
+      historyManager,
     );
 
     let functionCallCount = 0;
     const MAX_FUNCTION_CALLS = 5;
 
-    const { systemPrompt, generationConfig } = this.getAdvanceSettings();
+    const { systemPrompt, generationConfig } =
+      this.getAdvanceSettings(historyManager);
 
     if (systemPrompt) {
       conversationHistory.unshift({

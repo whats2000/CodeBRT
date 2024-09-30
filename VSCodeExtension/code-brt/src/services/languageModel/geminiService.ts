@@ -70,7 +70,6 @@ export class GeminiService extends AbstractLanguageModelService {
   constructor(
     context: vscode.ExtensionContext,
     settingsManager: SettingsManager,
-    historyManager: HistoryManager,
   ) {
     const availableModelNames = settingsManager.get('geminiAvailableModels');
     const defaultModelName = settingsManager.get('lastSelectedModel').gemini;
@@ -79,18 +78,16 @@ export class GeminiService extends AbstractLanguageModelService {
       'gemini',
       context,
       settingsManager,
-      historyManager,
       defaultModelName,
       availableModelNames,
     );
   }
 
-  private getAdvanceSettings(): {
+  private getAdvanceSettings(historyManager: HistoryManager): {
     systemPrompt: string | undefined;
     generationConfig: Partial<GenerationConfig>;
   } {
-    const advanceSettings =
-      this.historyManager.getCurrentHistory().advanceSettings;
+    const advanceSettings = historyManager.getCurrentHistory().advanceSettings;
 
     if (!advanceSettings) {
       return {
@@ -164,11 +161,14 @@ export class GeminiService extends AbstractLanguageModelService {
     return tools.length > 0 ? tools : undefined;
   }
 
-  private conversationHistoryToContent(entries: {
-    [key: string]: ConversationEntry;
-  }): Content[] {
+  private conversationHistoryToContent(
+    entries: {
+      [key: string]: ConversationEntry;
+    },
+    historyManager: HistoryManager,
+  ): Content[] {
     let result: Content[] = [];
-    let currentEntry = entries[this.historyManager.getCurrentHistory().current];
+    let currentEntry = entries[historyManager.getCurrentHistory().current];
 
     while (currentEntry) {
       result.unshift({
@@ -323,8 +323,14 @@ export class GeminiService extends AbstractLanguageModelService {
       return 'Missing model configuration. Check the model selection dropdown.';
     }
 
-    const { query, images, currentEntryID, sendStreamResponse, updateStatus } =
-      options;
+    const {
+      query,
+      historyManager,
+      images,
+      currentEntryID,
+      sendStreamResponse,
+      updateStatus,
+    } = options;
 
     const generativeModel = new GoogleGenerativeAI(
       this.settingsManager.get('geminiApiKey'),
@@ -333,14 +339,16 @@ export class GeminiService extends AbstractLanguageModelService {
     });
 
     const conversationHistory = this.conversationHistoryToContent(
-      this.historyManager.getHistoryBeforeEntry(currentEntryID).entries,
+      historyManager.getHistoryBeforeEntry(currentEntryID).entries,
+      historyManager,
     );
 
     let queryParts = this.createQueryParts(query, images);
     let functionCallCount = 0;
     const MAX_FUNCTION_CALLS = 5;
 
-    const { systemPrompt, generationConfig } = this.getAdvanceSettings();
+    const { systemPrompt, generationConfig } =
+      this.getAdvanceSettings(historyManager);
     const systemInstruction: Content | undefined = systemPrompt
       ? {
           role: 'system',

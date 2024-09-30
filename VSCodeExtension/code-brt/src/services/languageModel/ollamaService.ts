@@ -22,7 +22,6 @@ export class OllamaService extends AbstractLanguageModelService {
   constructor(
     context: vscode.ExtensionContext,
     settingsManager: SettingsManager,
-    historyManager: HistoryManager,
   ) {
     const availableModelNames = settingsManager.get('ollamaAvailableModels');
     const defaultModelName = settingsManager.get('lastSelectedModel').ollama;
@@ -31,18 +30,16 @@ export class OllamaService extends AbstractLanguageModelService {
       'ollama',
       context,
       settingsManager,
-      historyManager,
       defaultModelName,
       availableModelNames,
     );
   }
 
-  private getAdvanceSettings(): {
+  private getAdvanceSettings(historyManager: HistoryManager): {
     systemPrompt: string | undefined;
     generationConfig: Partial<Options>;
   } {
-    const advanceSettings =
-      this.historyManager.getCurrentHistory().advanceSettings;
+    const advanceSettings = historyManager.getCurrentHistory().advanceSettings;
 
     if (!advanceSettings) {
       return {
@@ -94,10 +91,11 @@ export class OllamaService extends AbstractLanguageModelService {
       [key: string]: ConversationEntry;
     },
     query: string,
+    historyManager: HistoryManager,
     images?: string[],
   ): Promise<Message[]> {
     const result: Message[] = [];
-    let currentEntry = entries[this.historyManager.getCurrentHistory().current];
+    let currentEntry = entries[historyManager.getCurrentHistory().current];
 
     while (currentEntry) {
       result.unshift({
@@ -186,6 +184,7 @@ export class OllamaService extends AbstractLanguageModelService {
 
   private async initModel(
     query: string,
+    historyManager: HistoryManager,
     currentEntryID?: string,
     images?: string[],
   ): Promise<{
@@ -198,8 +197,9 @@ export class OllamaService extends AbstractLanguageModelService {
     });
 
     const conversationHistory = await this.conversationHistoryToContent(
-      this.historyManager.getHistoryBeforeEntry(currentEntryID).entries,
+      historyManager.getHistoryBeforeEntry(currentEntryID).entries,
       query,
+      historyManager,
       images,
     );
 
@@ -297,10 +297,17 @@ export class OllamaService extends AbstractLanguageModelService {
       return 'Missing model configuration. Check the model selection dropdown.';
     }
 
-    const { query, images, sendStreamResponse, currentEntryID, updateStatus } =
-      options;
+    const {
+      query,
+      historyManager,
+      images,
+      sendStreamResponse,
+      currentEntryID,
+      updateStatus,
+    } = options;
     const { client, conversationHistory, model } = await this.initModel(
       query,
+      historyManager,
       currentEntryID,
       images,
     );
@@ -312,7 +319,8 @@ export class OllamaService extends AbstractLanguageModelService {
     let functionCallCount = 0;
     const MAX_FUNCTION_CALLS = 5;
 
-    const { systemPrompt, generationConfig } = this.getAdvanceSettings();
+    const { systemPrompt, generationConfig } =
+      this.getAdvanceSettings(historyManager);
 
     if (systemPrompt) {
       conversationHistory.unshift({
