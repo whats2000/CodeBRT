@@ -39,8 +39,8 @@ export class HistoryManager implements IHistoryManager {
     } else {
       // Use Global Storage
       const extensionPath = context.extensionPath;
-      this.historyIndexFilePath = path.join(extensionPath, 'historyIndex.json');
-      this.historiesFolderPath = path.join(extensionPath, 'histories');
+      this.historyIndexFilePath = path.join(extensionPath, indexFileName);
+      this.historiesFolderPath = path.join(extensionPath, folderName);
       if (!fs.existsSync(this.historiesFolderPath)) {
         fs.mkdirSync(this.historiesFolderPath);
       }

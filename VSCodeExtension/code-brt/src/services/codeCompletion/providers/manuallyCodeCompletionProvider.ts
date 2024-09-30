@@ -1,18 +1,26 @@
 import * as vscode from 'vscode';
+
+import type { LoadedModelServices } from '../../../types';
 import { AbstractCompletionProvider } from '../base';
-import { SettingsManager } from '../../../api';
+import { HistoryManager, SettingsManager } from '../../../api';
 import { ManuallyCodeCompletionStrategy } from '../strategies';
 
-export class ManuallyCodeCompletionProvider extends AbstractCompletionProvider {
+export class ManuallyCodeCompletionProvider
+  implements AbstractCompletionProvider
+{
   private readonly completionStrategy: ManuallyCodeCompletionStrategy;
 
   constructor(
-    extensionContext: vscode.ExtensionContext,
+    ctx: vscode.ExtensionContext,
     settingsManager: SettingsManager,
+    historyManager: HistoryManager,
+    loadedModelServices: LoadedModelServices,
   ) {
-    super(extensionContext, settingsManager);
     this.completionStrategy = new ManuallyCodeCompletionStrategy(
+      ctx,
       settingsManager,
+      historyManager,
+      loadedModelServices,
     );
   }
 

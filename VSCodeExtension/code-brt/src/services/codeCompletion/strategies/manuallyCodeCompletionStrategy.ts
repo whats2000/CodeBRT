@@ -8,14 +8,21 @@ import {
   SYSTEM_PROMPT,
   FEW_SHOT_EXAMPLES,
 } from '../constants';
+import type { LoadedModelServices } from '../../../types';
 import { CodeLanguageId } from '../types';
 
 // For testing purposes, we will use gemini to mock the LLM invocation
 import { GoogleGenerativeAI } from '@google/generative-ai';
-import { SettingsManager } from '../../../api';
+import { HistoryManager, SettingsManager } from '../../../api';
 
 export class ManuallyCodeCompletionStrategy implements CompletionStrategy {
-  constructor(private settingsManager: SettingsManager) {}
+  constructor(
+    // TODO: Implement context retrieval in the with the loaded model services
+    private ctx: vscode.ExtensionContext,
+    private settingsManager: SettingsManager,
+    private historyManager: HistoryManager,
+    private loadedModelServices: LoadedModelServices,
+  ) {}
 
   private async getResponse(prompt: string): Promise<string> {
     const generativeModel = new GoogleGenerativeAI(

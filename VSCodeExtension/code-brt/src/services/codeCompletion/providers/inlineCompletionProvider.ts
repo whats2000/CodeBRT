@@ -2,7 +2,8 @@ import * as vscode from 'vscode';
 
 import { AutoCodeCompletionProvider } from './autoCodeCompletionProvider';
 import { ManuallyCodeCompletionProvider } from './manuallyCodeCompletionProvider';
-import { SettingsManager } from '../../../api';
+import { HistoryManager, SettingsManager } from '../../../api';
+import { LoadedModelServices } from '../../../types';
 
 export class InlineCompletionProvider
   implements vscode.InlineCompletionItemProvider
@@ -11,16 +12,22 @@ export class InlineCompletionProvider
   private readonly manuallyCodeCompletionProvider: ManuallyCodeCompletionProvider;
 
   constructor(
-    extensionContext: vscode.ExtensionContext,
+    ctx: vscode.ExtensionContext,
     settingsManager: SettingsManager,
+    historyManager: HistoryManager,
+    loadedModelServices: LoadedModelServices,
   ) {
     this.autoCodeCompletionProvider = new AutoCodeCompletionProvider(
-      extensionContext,
+      ctx,
       settingsManager,
+      historyManager,
+      loadedModelServices,
     );
     this.manuallyCodeCompletionProvider = new ManuallyCodeCompletionProvider(
-      extensionContext,
+      ctx,
       settingsManager,
+      historyManager,
+      loadedModelServices,
     );
   }
 

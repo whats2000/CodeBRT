@@ -30,12 +30,22 @@ export const activate = async (ctx: vscode.ExtensionContext) => {
   const connectedViews: Partial<Record<ViewKey, vscode.WebviewView>> = {};
   const settingsManager = SettingsManager.getInstance(ctx);
   const historyManager = new HistoryManager(ctx);
+  const codeCompletionHistoryManager = new HistoryManager(
+    ctx,
+    'codeCompletion.json',
+    'codeCompletion',
+  );
 
   // Create a model service factory instance
   const modelServiceFactory = new ModelServiceFactory(
     ctx,
     settingsManager,
     historyManager,
+  );
+  const codeCompletionModelServiceFactory = new ModelServiceFactory(
+    ctx,
+    settingsManager,
+    codeCompletionHistoryManager,
   );
 
   // Define the model types
@@ -52,6 +62,8 @@ export const activate = async (ctx: vscode.ExtensionContext) => {
 
   // Dynamically initialize the services for all available models
   const models = modelServiceFactory.createModelServices(modelKeys);
+  const codeCompletionModels =
+    codeCompletionModelServiceFactory.createModelServices(modelKeys);
 
   const voiceServiceFactory = new VoiceServiceFactory(ctx, settingsManager);
 
@@ -66,7 +78,12 @@ export const activate = async (ctx: vscode.ExtensionContext) => {
     voiceServiceFactory.createVoiceServices(voiceServiceKeys);
 
   // Activate manually complete functionality
-  const completionProvider = new InlineCompletionProvider(ctx, settingsManager);
+  const completionProvider = new InlineCompletionProvider(
+    ctx,
+    settingsManager,
+    codeCompletionHistoryManager,
+    codeCompletionModels,
+  );
 
   // Keep the inline completion provider registration
   ctx.subscriptions.push(
