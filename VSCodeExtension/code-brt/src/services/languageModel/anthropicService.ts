@@ -139,7 +139,7 @@ export class AnthropicService extends AbstractLanguageModelService {
     }
 
     // Anthropic's API requires the query message at the end of the history
-    if (result.length > 0 && result[result.length - 1].role !== 'user') {
+    if (result[result.length - 1]?.role !== 'user') {
       result.push({
         role: 'user',
         content: [

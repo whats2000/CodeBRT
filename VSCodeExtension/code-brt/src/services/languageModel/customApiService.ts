@@ -59,6 +59,7 @@ export class CustomApiService extends AbstractLanguageModelService {
     entries: {
       [key: string]: ConversationEntry;
     },
+    query: string,
     historyManager: HistoryManager,
   ): string {
     const historyArray = [];
@@ -78,6 +79,14 @@ export class CustomApiService extends AbstractLanguageModelService {
 
     // If the API format history doesn't include the query message and the last message is a user message, remove it
     if (
+      this.selectedCustomModelSettings.includeQueryInHistory &&
+      historyArray[historyArray.length - 1]?.role !== 'user'
+    ) {
+      historyArray.push({
+        role: 'user',
+        message: query,
+      });
+    } else if (
       !this.selectedCustomModelSettings.includeQueryInHistory &&
       historyArray.length > 0 &&
       historyArray[historyArray.length - 1].role === 'user'
@@ -279,6 +288,7 @@ export class CustomApiService extends AbstractLanguageModelService {
 
     const conversationHistory = this.conversationHistoryToJson(
       historyManager.getHistoryBeforeEntry(currentEntryID).entries,
+      query,
       historyManager,
     );
 

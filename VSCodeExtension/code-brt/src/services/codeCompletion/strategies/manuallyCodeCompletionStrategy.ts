@@ -1,30 +1,23 @@
 import * as vscode from 'vscode';
 import { CompletionStrategy } from './index';
 import {
+  FEW_SHOT_EXAMPLES,
   FILE_TO_LANGUAGE,
   FILE_TO_LANGUAGE_CONTEXT,
   LANGUAGE_NAME_MAPPING,
   MAIN_PROMPT_TEMPLATE,
   SYSTEM_PROMPT,
-  FEW_SHOT_EXAMPLES,
 } from '../constants';
 import type { LoadedModelServices } from '../../../types';
 import { CodeLanguageId } from '../types';
 
 // For testing purposes, we will use gemini to mock the LLM invocation
-import { GoogleGenerativeAI } from '@google/generative-ai';
 import { HistoryManager, SettingsManager } from '../../../api';
 
-type PromptTemplate = {
-  systemPrompt: string;
-  mainPrompt: string;
-};
-
 export class ManuallyCodeCompletionStrategy implements CompletionStrategy {
-  private ctx: vscode.ExtensionContext;
-  private settingsManager: SettingsManager;
-  private historyManager: HistoryManager;
-  private loadedModelServices: LoadedModelServices;
+  private readonly settingsManager: SettingsManager;
+  private readonly historyManager: HistoryManager;
+  private readonly loadedModelServices: LoadedModelServices;
 
   constructor(
     // TODO: Implement context retrieval in the with the loaded model services
@@ -32,7 +25,6 @@ export class ManuallyCodeCompletionStrategy implements CompletionStrategy {
     settingsManager: SettingsManager,
     loadedModelServices: LoadedModelServices,
   ) {
-    this.ctx = ctx;
     this.settingsManager = settingsManager;
     this.historyManager = new HistoryManager(
       ctx,
@@ -40,33 +32,25 @@ export class ManuallyCodeCompletionStrategy implements CompletionStrategy {
       'manuallyCodeCompletionHistories',
     );
     this.loadedModelServices = loadedModelServices;
+
+    const history = this.historyManager.getCurrentHistory();
+    void this.historyManager.updateHistoryModelAdvanceSettings(history.root, {
+      ...history.advanceSettings,
+      systemPrompt: SYSTEM_PROMPT + FEW_SHOT_EXAMPLES,
+      temperature: 0.7,
+    });
   }
 
-  private async getResponse(prompt: PromptTemplate): Promise<string> {
-    const generativeModel = new GoogleGenerativeAI(
-      this.settingsManager.get('geminiApiKey'),
-    ).getGenerativeModel({
-      model: 'gemini-1.5-flash-latest',
-      generationConfig: {
-        temperature: 0.7,
-        stopSequences: ['</COMPLETION>'],
-      },
+  private async getResponse(prompt: string): Promise<string> {
+    const response = await this.loadedModelServices[
+      this.settingsManager.get('lastUsedModelService')
+    ].service.getResponse({
+      query: prompt,
+      historyManager: this.historyManager,
     });
 
-    const response = await generativeModel
-      .startChat({
-        systemInstruction: {
-          role: 'system',
-          parts: [{ text: prompt.systemPrompt }],
-        },
-      })
-      .sendMessage(prompt.mainPrompt);
-
     // Remove <Completion> tags from the response
-    return response.response
-      .text()
-      .replace(/<COMPLETION>/g, '')
-      .replace(/<\/COMPLETION>/g, '');
+    return response.replace(/<COMPLETION>/g, '').replace(/<\/COMPLETION>/g, '');
   }
 
   /**
@@ -132,27 +116,17 @@ export class ManuallyCodeCompletionStrategy implements CompletionStrategy {
     prefix: string,
     suffix: string,
     languageName: string,
-  ): PromptTemplate {
-    const fewShotExamples = FEW_SHOT_EXAMPLES;
-
-    const mainPrompt = MAIN_PROMPT_TEMPLATE.replace(
-      '{codeLanguage}',
-      languageName,
-    )
+  ): string {
+    return MAIN_PROMPT_TEMPLATE.replace('{codeLanguage}', languageName)
       .replace('{prefix}', prefix)
       .replace('{suffix}', suffix);
-
-    return {
-      systemPrompt: SYSTEM_PROMPT + fewShotExamples,
-      mainPrompt: mainPrompt,
-    };
   }
 
   /**
    * Invoke the model and handle timeout and cancellation.
    */
   private async getCompletionWithTimeout(
-    prompt: PromptTemplate,
+    prompt: string,
     token: vscode.CancellationToken,
   ): Promise<string | null> {
     const timeoutMs = 50000; // 50 seconds request timeout

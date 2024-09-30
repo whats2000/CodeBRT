@@ -170,7 +170,7 @@ export abstract class AbstractOpenaiLikeService extends AbstractLanguageModelSer
     }
 
     // OpenAI like APIs require the query message at the end of the history
-    if (result.length > 0 && result[result.length - 1].role !== 'user') {
+    if (result[result.length - 1]?.role !== 'user') {
       result.push({
         role: 'user',
         content: [{ type: 'text', text: query }],
