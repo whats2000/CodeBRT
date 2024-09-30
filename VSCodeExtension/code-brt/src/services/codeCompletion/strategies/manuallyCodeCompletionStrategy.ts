@@ -15,6 +15,11 @@ import { CodeLanguageId } from '../types';
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import { HistoryManager, SettingsManager } from '../../../api';
 
+type PromptTemplate = {
+  systemPrompt: string;
+  mainPrompt: string;
+};
+
 export class ManuallyCodeCompletionStrategy implements CompletionStrategy {
   constructor(
     // TODO: Implement context retrieval in the with the loaded model services
@@ -24,14 +29,25 @@ export class ManuallyCodeCompletionStrategy implements CompletionStrategy {
     private loadedModelServices: LoadedModelServices,
   ) {}
 
-  private async getResponse(prompt: string): Promise<string> {
+  private async getResponse(prompt: PromptTemplate): Promise<string> {
     const generativeModel = new GoogleGenerativeAI(
       this.settingsManager.get('geminiApiKey'),
     ).getGenerativeModel({
       model: 'gemini-1.5-flash-latest',
+      generationConfig: {
+        temperature: 0.7,
+        stopSequences: ['</COMPLETION>'],
+      },
     });
 
-    const response = await generativeModel.startChat().sendMessage(prompt);
+    const response = await generativeModel
+      .startChat({
+        systemInstruction: {
+          role: 'system',
+          parts: [{ text: prompt.systemPrompt }],
+        },
+      })
+      .sendMessage(prompt.mainPrompt);
 
     // Remove <Completion> tags from the response
     return response.response
@@ -103,29 +119,27 @@ export class ManuallyCodeCompletionStrategy implements CompletionStrategy {
     prefix: string,
     suffix: string,
     languageName: string,
-  ): string {
-    const systemPrompt = SYSTEM_PROMPT.replace(
-      '{languageName}',
-      languageName === 'Unknown Language'
-        ? 'that'
-        : `,written in ${languageName}, that`,
-    );
-
+  ): PromptTemplate {
     const fewShotExamples = FEW_SHOT_EXAMPLES;
 
-    const mainPrompt = MAIN_PROMPT_TEMPLATE.replace('{prefix}', prefix).replace(
-      '{suffix}',
-      suffix,
-    );
+    const mainPrompt = MAIN_PROMPT_TEMPLATE.replace(
+      '{codeLanguage}',
+      languageName,
+    )
+      .replace('{prefix}', prefix)
+      .replace('{suffix}', suffix);
 
-    return `${systemPrompt}${fewShotExamples}${mainPrompt}`;
+    return {
+      systemPrompt: SYSTEM_PROMPT + fewShotExamples,
+      mainPrompt: mainPrompt,
+    };
   }
 
   /**
    * Invoke the model and handle timeout and cancellation.
    */
   private async getCompletionWithTimeout(
-    prompt: string,
+    prompt: PromptTemplate,
     token: vscode.CancellationToken,
   ): Promise<string | null> {
     const timeoutMs = 50000; // 50 seconds request timeout
