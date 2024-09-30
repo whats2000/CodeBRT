@@ -18,7 +18,7 @@ import {
   handleFilesUpload,
 } from '../../redux/slices/fileUploadSlice';
 import { CancelOutlined } from '../../icons';
-import { INPUT_MESSAGE_KEY } from 'src/constants';
+import { INPUT_MESSAGE_KEY } from '../../../constants';
 
 const StyledInputContainer = styled.div`
   display: flex;

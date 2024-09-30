@@ -1,12 +1,12 @@
 import React, { useContext, useEffect, useRef, useState } from 'react';
 import styled, { keyframes } from 'styled-components';
-import { GlobalToken, theme } from 'antd';
+import { Alert, Button, GlobalToken, Space, theme } from 'antd';
 import { Spin } from 'antd';
 import { useDispatch, useSelector } from 'react-redux';
 import { VirtuosoHandle } from 'react-virtuoso';
 import { Virtuoso } from 'react-virtuoso';
 
-import type { ConversationEntry } from '../../../types';
+import type { ConversationEntry, Modification } from '../../../types';
 import type { RootState } from '../../redux';
 import { updateEntryMessage } from '../../redux/slices/conversationSlice';
 import { WebviewContext } from '../../WebviewContext';
@@ -81,6 +81,10 @@ export const MessagesContainer = React.memo<MessagesContainerProps>(
     const [showFloatButtons, setShowFloatButtons] = useState(false);
     const [toolStatus, setToolStatus] = useState<string>('');
     const [isAutoScroll, setIsAutoScroll] = useState(true);
+    const [showAlertApplyChanges, setShowAlertApplyChanges] = useState(false);
+    const [updatedModifications, setUpdatedModifications] = useState<
+      Modification[]
+    >([]);
 
     const virtualListRef = useRef<VirtuosoHandle>(null);
     const messagesContainerRef = useRef<HTMLDivElement>(null);
@@ -272,6 +276,28 @@ export const MessagesContainer = React.memo<MessagesContainerProps>(
       );
     };
 
+    const handleOpenApplyChangesAlert = (
+      updatedModifications: Modification[],
+    ) => {
+      setUpdatedModifications(updatedModifications);
+      setShowAlertApplyChanges(true);
+    };
+
+    const handleApplyChanges = async () => {
+      setShowAlertApplyChanges(false);
+      try {
+        await callApi('updateDecorationToMatchBackground');
+        await callApi('applyCodeChanges', updatedModifications);
+      } catch (applyError) {
+        console.error('Failed to apply code changes:', applyError);
+      }
+    };
+
+    const handleDeclineChanges = async () => {
+      setShowAlertApplyChanges(false);
+      await callApi('revertTemporaryInsertions');
+    };
+
     const renderMessage = (index: number) => {
       return (
         <MessageItem
@@ -295,6 +321,7 @@ export const MessagesContainer = React.memo<MessagesContainerProps>(
           handleRedo={handleRedo}
           floatButtonsXPosition={floatButtonsXPosition}
           showFloatButtons={showFloatButtons}
+          handleOpenApplyChangesAlert={handleOpenApplyChangesAlert}
         />
       );
     };
@@ -327,6 +354,35 @@ export const MessagesContainer = React.memo<MessagesContainerProps>(
             atBottomStateChange={handleAtBottomStateChange}
           />
         </StyledMessagesContainer>
+        {showAlertApplyChanges && (
+          <Alert
+            style={{ marginTop: 15, marginRight: 70 }}
+            showIcon={true}
+            message={'Apply the changes?'}
+            description={
+              'Do you want to apply these code changes to your editor?'
+            }
+            action={
+              <Space direction={'vertical'}>
+                <Button
+                  size='small'
+                  type='primary'
+                  onClick={handleApplyChanges}
+                >
+                  Accept
+                </Button>
+                <Button
+                  size='small'
+                  danger
+                  ghost
+                  onClick={handleDeclineChanges}
+                >
+                  Decline
+                </Button>
+              </Space>
+            }
+          />
+        )}
       </>
     );
   },

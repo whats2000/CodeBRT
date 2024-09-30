@@ -9,7 +9,7 @@ import remarkMath from 'remark-math';
 import remarkGfm from 'remark-gfm';
 import hljs from 'react-syntax-highlighter/dist/cjs/styles/hljs';
 
-import type { ConversationEntry } from '../../../../types';
+import type { ConversationEntry, Modification } from '../../../../types';
 import { preprocessLaTeX } from '../../../utils';
 import { TypingAnimation } from '../../common/TypingAnimation';
 import { RendererCode, RendererCodeProvider } from '../../common/RenderCode';
@@ -101,6 +101,7 @@ type MessageTextContainerProps = {
   hljsTheme: keyof typeof hljs;
   setHljsTheme: (theme: keyof typeof hljs) => void;
   toolStatus: string;
+  handleOpenApplyChangesAlert: (updatedModifications: Modification[]) => void;
 };
 
 export const TextContainer: React.FC<MessageTextContainerProps> = ({
@@ -110,6 +111,7 @@ export const TextContainer: React.FC<MessageTextContainerProps> = ({
   hljsTheme,
   setHljsTheme,
   toolStatus,
+  handleOpenApplyChangesAlert,
 }) => {
   return (
     <MessageText>
@@ -130,6 +132,7 @@ export const TextContainer: React.FC<MessageTextContainerProps> = ({
           value={{
             hljsTheme,
             setHljsTheme,
+            handleOpenApplyChangesAlert,
           }}
         >
           <ReactMarkdown

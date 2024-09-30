@@ -5,7 +5,7 @@ import styled from 'styled-components';
 import { useDispatch, useSelector } from 'react-redux';
 import * as hljs from 'react-syntax-highlighter/dist/cjs/styles/hljs';
 
-import type { ConversationEntry } from '../../../../types';
+import type { ConversationEntry, Modification } from '../../../../types';
 import type { AppDispatch, RootState } from '../../../redux';
 import { updateAndSaveSetting } from '../../../redux/slices/settingsSlice';
 import { TopToolBar } from './TopToolBar';
@@ -68,6 +68,7 @@ type MessageItemProps = {
   handleRedo: (entryId: string) => void;
   floatButtonsXPosition: number;
   showFloatButtons: boolean;
+  handleOpenApplyChangesAlert: (updatedModifications: Modification[]) => void;
 };
 
 export const MessageItem = React.memo<MessageItemProps>(
@@ -91,6 +92,7 @@ export const MessageItem = React.memo<MessageItemProps>(
     handleRedo,
     floatButtonsXPosition,
     showFloatButtons,
+    handleOpenApplyChangesAlert,
   }) => {
     const token = theme.useToken();
     const entry = conversationHistoryEntries[index];
@@ -176,6 +178,7 @@ export const MessageItem = React.memo<MessageItemProps>(
                   hljsTheme={settings.hljsTheme}
                   setHljsTheme={setHljsTheme}
                   toolStatus={toolStatus}
+                  handleOpenApplyChangesAlert={handleOpenApplyChangesAlert}
                 />
                 <ImageContainer entry={entry} />
               </div>

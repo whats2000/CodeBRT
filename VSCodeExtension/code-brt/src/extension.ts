@@ -3,6 +3,7 @@ import * as vscode from 'vscode';
 import type {
   LoadedModelServices,
   LoadedVoiceServices,
+  Modification,
   ViewApi,
   ViewApiError,
   ViewApiEvent,
@@ -12,7 +13,7 @@ import type {
 } from './types';
 import { FileUtils } from './utils';
 import { ViewKey } from './views';
-import { viewRegistration, SettingsManager, HistoryManager } from './api';
+import { HistoryManager, SettingsManager, viewRegistration } from './api';
 import {
   AnthropicService,
   CohereService,
@@ -33,7 +34,6 @@ import { GeminiCodeFixerService } from './services/codeFixer';
 import { convertPdfToMarkdown } from './utils/pdfConverter';
 
 import * as Commands from './diff/commands';
-import { Modification } from './types/viewApi';
 
 let originalContentSnapshot: string | null = null;
 let addedDecorationType: vscode.TextEditorDecorationType | null = null;
@@ -360,8 +360,7 @@ export const activate = async (ctx: vscode.ExtensionContext) => {
       });
     },
     fixCode: async (options) => {
-      const response = await geminiCodeFixerService.getResponse(options);
-      return response;
+      return await geminiCodeFixerService.getResponse(options);
     },
     showDiffInEditor: async (
       modifications: Modification[],
@@ -632,8 +631,8 @@ export const activate = async (ctx: vscode.ExtensionContext) => {
     provideCodeActions(
       document: vscode.TextDocument,
       range: vscode.Range,
-      context: vscode.CodeActionContext,
-      token: vscode.CancellationToken,
+      _context: vscode.CodeActionContext,
+      _token: vscode.CancellationToken,
     ): vscode.ProviderResult<(vscode.CodeAction | vscode.Command)[]> {
       const fixCodeAction = new vscode.CodeAction(
         'FixCode',

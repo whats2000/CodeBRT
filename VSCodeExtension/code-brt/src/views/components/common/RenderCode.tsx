@@ -7,6 +7,7 @@ import styled from 'styled-components';
 
 import { CopyButton } from './CopyButton';
 import InsertButton from './InsertCode';
+import type { Modification } from '../../../types';
 
 const CodeContainer = styled.div<{ $dynamicStyle: React.CSSProperties }>`
   border-radius: 4px !important;
@@ -53,6 +54,7 @@ type RenderCodeProviderProps = {
   value: {
     hljsTheme: keyof typeof hljs;
     setHljsTheme: (theme: keyof typeof hljs) => void;
+    handleOpenApplyChangesAlert: (updatedModifications: Modification[]) => void;
   };
   children: React.ReactNode;
 };
@@ -60,6 +62,7 @@ type RenderCodeProviderProps = {
 const RendererCodeContext = createContext({
   hljsTheme: 'darcula' as keyof typeof hljs,
   setHljsTheme: (_theme: keyof typeof hljs) => {},
+  handleOpenApplyChangesAlert: (_updatedModifications: Modification[]) => {},
 });
 
 export const RendererCodeProvider: React.FC<RenderCodeProviderProps> = ({
@@ -77,7 +80,8 @@ export const RendererCode: { [nodeType: string]: React.ElementType } = {
   code: ({ node, inline, className, children, ...props }) => {
     const [copied, setCopied] = useState(false);
     const [showSetting, setShowSetting] = useState(false);
-    const { hljsTheme, setHljsTheme } = useContext(RendererCodeContext);
+    const { hljsTheme, setHljsTheme, handleOpenApplyChangesAlert } =
+      useContext(RendererCodeContext);
     const match = /language-(\w+)/.exec(className || '');
     const generatedCode = String(children).replace(/\n$/, '');
 
@@ -135,7 +139,10 @@ export const RendererCode: { [nodeType: string]: React.ElementType } = {
               />
             )}
             <CopyButton copied={copied} handleCopy={handleCopy} />
-            <InsertButton code={generatedCode} />
+            <InsertButton
+              code={generatedCode}
+              handleOpenApplyChangesAlert={handleOpenApplyChangesAlert}
+            />
           </Flex>
         </CodeInfoContainer>
         <CodeBlock

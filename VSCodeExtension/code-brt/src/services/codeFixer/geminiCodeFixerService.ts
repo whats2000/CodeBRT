@@ -160,10 +160,6 @@ export class GeminiCodeFixerService extends AbstractCodeFixerService {
         originalCode: options.originalCode,
         generatedCode: options.generatedCode,
       });
-<<<<<<< Updated upstream
-=======
-      console.log('Gemini Code Fixer Response:', response); // 檢查 response 的內容
->>>>>>> Stashed changes
       // // Update the status to 'receivedResponse'.
       // if (options.sendCodeFixerStatus) {
       //   this.updateStatus('codeFixer', 'receivedResponse');
