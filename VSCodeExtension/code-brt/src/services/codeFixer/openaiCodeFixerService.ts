@@ -1,7 +1,7 @@
 import * as vscode from 'vscode';
 import { JsonOutputParser } from '@langchain/core/output_parsers';
 import { ChatPromptTemplate } from '@langchain/core/prompts';
-import { ChatGoogleGenerativeAI } from '@langchain/google-genai';
+import { ChatOpenAI } from '@langchain/openai';
 import type { GetResponseCodeFixerOptions } from '../../types';
 import { MODEL_SERVICE_CONSTANTS } from '../../constants';
 import { AbstractCodeFixerService } from './abstractCodeFixerService';
@@ -26,18 +26,18 @@ type GeminiModelsList = {
   models: GeminiModel[];
 };
 
-export class GeminiCodeFixerService extends AbstractCodeFixerService {
+export class OpenaiCodeFixerService extends AbstractCodeFixerService {
   constructor(
     context: vscode.ExtensionContext,
     settingsManager: SettingsManager,
   ) {
-    const availableModelNames = settingsManager.get('geminiAvailableModels');
+    const availableModelNames = settingsManager.get('openaiAvailableModels');
     const defaultModelName = settingsManager.get(
       'codeFixerLastSelectedModel',
-    ).gemini;
+    ).openai;
 
     super(
-      'gemini',
+      'openai',
       context,
       settingsManager,
       defaultModelName,
@@ -111,10 +111,10 @@ export class GeminiCodeFixerService extends AbstractCodeFixerService {
     //   options.sendCodeFixerStatus(this.statuses);
     // }
 
-    const generativeModel = new ChatGoogleGenerativeAI({
-      apiKey: this.settingsManager.get('geminiApiKey'),
+    const generativeModel = new ChatOpenAI({
+      apiKey: this.settingsManager.get('openaiApiKey'),
       model: this.currentModel,
-      maxOutputTokens: 2048,
+      temperature: 0,
     });
 
     const parser = new JsonOutputParser<CodeFixerModification[]>();

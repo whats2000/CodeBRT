@@ -21,20 +21,24 @@ export type GetResponseCodeFixerOptions = {
   sendCodeFixerStatus?: (codeFixerStatuses: CodeFixerStatuses) => void;
 };
 
-export type CodeFixerResponse = {
-  modifications: CodeFixerModification[];
-  success: boolean;
-  error?: string;
-};
-
 /*
- * Represents a code fixer response.
+ * Represents one of LLM responses in code fixer.
  */
 export type CodeFixerModification = {
   startLine: number;
   endLine: number;
   content: string;
 };
+
+/**
+ * Represents code fixer responses.
+ */
+export type CodeFixerResponse = {
+  modifications: CodeFixerModification[];
+  success: boolean;
+  error?: string;
+};
+
 
 /*
  * Service for code fixer operations.

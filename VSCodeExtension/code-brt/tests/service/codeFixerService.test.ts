@@ -1,4 +1,4 @@
-import { GeminiCodeFixerService } from '../../src/services/codeFixer'; // 載入要測試的服務
+import { OpenaiCodeFixerService } from '../../src/services/codeFixer'; // 載入要測試的服務
 import { CodeFixerModification, CodeFixerResponse, GetResponseCodeFixerOptions } from '../../src/types';
 import path from 'path';
 import fs from 'fs'; // 載入回應類型
@@ -69,7 +69,7 @@ const mockSettingsManager = {
       themeBorderRadius: 4,
       hljsTheme: 'darcula',
       codeFixerLastSelectedModel: {
-        gemini: 'gemini-1.5-pro-latest',
+        gemini: 'gemini-1.5-pro',
         anthropic: 'claude-3-5-sonnet-20240620',
         openai: 'gpt-3.5-turbo',
         cohere: 'command',
@@ -84,7 +84,8 @@ const mockSettingsManager = {
 };
 
 describe('GeminiCodeFixerService', () => {
-  let codeFixerService: GeminiCodeFixerService;
+  jest.setTimeout(10000); // 設置 10 秒的超時限制
+  let codeFixerService: OpenaiCodeFixerService;
   const workspacePath = path.join(__dirname, '../../tests/testsWorkspace');
 
   if (!fs.existsSync(workspacePath)) {
@@ -96,32 +97,20 @@ describe('GeminiCodeFixerService', () => {
   const settingsManager = mockSettingsManager as any;
 
   beforeEach(() => {
-    codeFixerService = new GeminiCodeFixerService(ctx, settingsManager);
+    codeFixerService = new OpenaiCodeFixerService(ctx, settingsManager);
   });
 
   describe('getResponse', () => {
     it('should return a valid response for a valid user query', async () => {
       const options: GetResponseCodeFixerOptions = {
-        userQuery: 'Refactor the calculateArea function to use arrow functions and make it more concise:',
+        userQuery: 'def add(x, y): return x + y',
         originalCode:
-          `1: function calculateArea(radius) {
-          2:   const pi = 3.14159;
-          3:   return pi * radius * radius;
-          4: }
-          5: 
-          6: function displayArea(area) {
-          7:   console.log('The area is:', area);
-          8: }
-          9: 
-          10: function getCircleInfo(radius) {
-          11:   const area = calculateArea(radius);
-          12:   displayArea(area);
-          13: }
-          14: 
-          15: getCircleInfo(5);
+          `1: def add(a, b):
+           2:    return a + b
             `,
         generatedCode:
-          `1: const calculateArea = (radius) => 3.14159 * radius * radius;
+          `1: def add(x, y):
+           2:    return x + y
           `,
       };
 

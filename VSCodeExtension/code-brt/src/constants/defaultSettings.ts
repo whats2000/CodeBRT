@@ -67,7 +67,7 @@ export const DEFAULT_LOCAL_SETTINGS: ExtensionSettingsLocal = {
     'gemini-1.5-flash-latest',
   ],
   codeFixerLastSelectedModel: {
-    gemini: 'gemini-1.5-pro',
+    gemini: 'gemini-1.5-pro-latest',
     anthropic: 'claude-3-5-sonnet-20240620',
     openai: 'gpt-4',
     cohere: 'command',
