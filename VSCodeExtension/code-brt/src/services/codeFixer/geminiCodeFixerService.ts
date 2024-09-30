@@ -1,10 +1,8 @@
 import * as vscode from 'vscode';
-import { JsonOutputParser } from "@langchain/core/output_parsers";
-import { ChatPromptTemplate } from "@langchain/core/prompts";
-import { ChatGoogleGenerativeAI } from "@langchain/google-genai";
-import type {
-  GetResponseCodeFixerOptions,
-} from '../../types';
+import { JsonOutputParser } from '@langchain/core/output_parsers';
+import { ChatPromptTemplate } from '@langchain/core/prompts';
+import { ChatGoogleGenerativeAI } from '@langchain/google-genai';
+import type { GetResponseCodeFixerOptions } from '../../types';
 import { MODEL_SERVICE_CONSTANTS } from '../../constants';
 import { AbstractCodeFixerService } from './abstractCodeFixerService';
 import { SettingsManager } from '../../api';
@@ -62,7 +60,9 @@ export class GeminiCodeFixerService extends AbstractCodeFixerService {
     settingsManager: SettingsManager,
   ) {
     const availableModelNames = settingsManager.get('geminiAvailableModels');
-    const defaultModelName = settingsManager.get('codeFixerLastSelectedModel').gemini;
+    const defaultModelName = settingsManager.get(
+      'codeFixerLastSelectedModel',
+    ).gemini;
 
     super(
       'gemini',
@@ -86,7 +86,7 @@ export class GeminiCodeFixerService extends AbstractCodeFixerService {
       if (!response.ok) {
         vscode.window.showErrorMessage(
           'Failed to fetch available models from Gemini Service: ' +
-          response.statusText,
+            response.statusText,
         );
         return this.availableModelNames;
       }
@@ -118,15 +118,18 @@ export class GeminiCodeFixerService extends AbstractCodeFixerService {
     return newAvailableModelNames;
   }
 
-  public async getResponse(options: GetResponseCodeFixerOptions): Promise<CodeFixerResponse> {
+  public async getResponse(
+    options: GetResponseCodeFixerOptions,
+  ): Promise<CodeFixerResponse> {
     if (this.currentModel === '') {
       vscode.window.showErrorMessage(
         'Make sure the model is selected before sending a message. Open the model selection dropdown and configure the model.',
       );
       return {
-        modifications:[],
-        success:false,
-        error: 'Missing model configuration. Check the model selection dropdown.',
+        modifications: [],
+        success: false,
+        error:
+          'Missing model configuration. Check the model selection dropdown.',
       };
     }
 
@@ -139,11 +142,11 @@ export class GeminiCodeFixerService extends AbstractCodeFixerService {
     const generativeModel = new ChatGoogleGenerativeAI({
       apiKey: this.settingsManager.get('geminiApiKey'),
       model: this.currentModel,
-      maxOutputTokens: 2048
+      maxOutputTokens: 2048,
     });
 
     const parser = new JsonOutputParser<CodeFixerModification[]>();
-    const promptTemplate = ChatPromptTemplate.fromTemplate(this.prompt)
+    const promptTemplate = ChatPromptTemplate.fromTemplate(this.prompt);
     // 部分应用模板
     const partialedPrompt = await promptTemplate.partial({
       format_instructions: this.formatInstructions,
@@ -152,20 +155,24 @@ export class GeminiCodeFixerService extends AbstractCodeFixerService {
     const chain = partialedPrompt.pipe(generativeModel).pipe(parser);
 
     try {
-          const response = await chain.invoke({
-            userQuery: options.userQuery,
-            originalCode: options.originalCode,
-            generatedCode: options.generatedCode,
-          });
-          // // Update the status to 'receivedResponse'.
-          // if (options.sendCodeFixerStatus) {
-          //   this.updateStatus('codeFixer', 'receivedResponse');
-          //   options.sendCodeFixerStatus(this.statuses);
-          // }
-          return {
-            modifications:response,
-            success:true,
-          };
+      const response = await chain.invoke({
+        userQuery: options.userQuery,
+        originalCode: options.originalCode,
+        generatedCode: options.generatedCode,
+      });
+<<<<<<< Updated upstream
+=======
+      console.log('Gemini Code Fixer Response:', response); // 檢查 response 的內容
+>>>>>>> Stashed changes
+      // // Update the status to 'receivedResponse'.
+      // if (options.sendCodeFixerStatus) {
+      //   this.updateStatus('codeFixer', 'receivedResponse');
+      //   options.sendCodeFixerStatus(this.statuses);
+      // }
+      return {
+        modifications: response,
+        success: true,
+      };
     } catch (error) {
       vscode.window
         .showErrorMessage(
@@ -180,8 +187,8 @@ export class GeminiCodeFixerService extends AbstractCodeFixerService {
           }
         });
       return {
-        modifications:[],
-        success:false,
+        modifications: [],
+        success: false,
         error: 'Failed to connect to the language model service.',
       };
     }

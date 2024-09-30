@@ -55,7 +55,7 @@ type InputContainerProps = {
 
 export const InputContainer = React.memo<InputContainerProps>(
   ({ inputContainerRef, processMessage, isProcessing }) => {
-    const { callApi } = useContext(WebviewContext);
+    const { callApi, addListener, removeListener } = useContext(WebviewContext);
     const [enterPressCount, setEnterPressCount] = useState(0);
     const [previewOpen, setPreviewOpen] = useState(false);
     const [previewImage, setPreviewImage] = useState('');
@@ -92,6 +92,19 @@ export const InputContainer = React.memo<InputContainerProps>(
         link.href = '';
       });
     }, [fileList]);
+
+    useEffect(() => {
+      const handleMessage = (message: string) => {
+        const formattedMessage = `\`\`\`javascript\n${message}\n\`\`\``;
+        setInputMessage((prev) => prev + `\n${formattedMessage}`);
+      };
+
+      addListener('message', handleMessage);
+
+      return () => {
+        removeListener('message', handleMessage);
+      };
+    }, [addListener, removeListener, setInputMessage]);
 
     const resetEnterPressCount = () => setEnterPressCount(0);
 

@@ -33,6 +33,11 @@ import { GeminiCodeFixerService } from './services/codeFixer';
 import { convertPdfToMarkdown } from './utils/pdfConverter';
 
 import * as Commands from './diff/commands';
+import { Modification } from './types/viewApi';
+
+let originalContentSnapshot: string | null = null;
+let addedDecorationType: vscode.TextEditorDecorationType | null = null;
+let removedDecorationType: vscode.TextEditorDecorationType | null = null;
 
 export const activate = async (ctx: vscode.ExtensionContext) => {
   const connectedViews: Partial<Record<ViewKey, vscode.WebviewView>> = {};
@@ -85,71 +90,6 @@ export const activate = async (ctx: vscode.ExtensionContext) => {
       service: new OpenaiVoiceService(ctx, settingsManager),
     },
   };
-
-  let addedDecorationType: vscode.TextEditorDecorationType;
-  let removedDecorationType: vscode.TextEditorDecorationType;
-
-  // 初始化裝飾類型
-  addedDecorationType = vscode.window.createTextEditorDecorationType({
-    isWholeLine: true,
-    backgroundColor: 'rgba(144,238,144,0.5)', // 綠色背景（新增）
-  });
-
-  removedDecorationType = vscode.window.createTextEditorDecorationType({
-    isWholeLine: true,
-    backgroundColor: 'rgba(255,99,71,0.5)', // 紅色背景（刪除）
-  });
-
-  interface Modification {
-    startLine: number; // 修改的開始行號
-    endLine: number; // 修改的結束行號
-    content: string; // 要插入的內容，如果是刪除操作則為空字串
-  }
-  // 顯示程式碼差異的 API
-  const showDiffInEditor = async (modifications: Modification[]) => {
-    const editor = vscode.window.activeTextEditor;
-    if (!editor) {
-      vscode.window.showErrorMessage('未能找到編輯器');
-      return;
-    }
-
-    const addedRanges: vscode.DecorationOptions[] = [];
-    const removedRanges: vscode.DecorationOptions[] = [];
-
-    modifications.forEach((modification) => {
-      const startLine = modification.startLine - 1; // 調整行號到 0-based
-      const endLine = modification.endLine - 1;
-
-      if (modification.content) {
-        // 新增或替換的部分
-        const startPos = new vscode.Position(startLine, 0);
-        const endPos = editor.document.lineAt(endLine).range.end;
-        addedRanges.push({ range: new vscode.Range(startPos, endPos) });
-      } else {
-        // 刪除的部分
-        const startPos = new vscode.Position(startLine, 0);
-        const endPos = editor.document.lineAt(endLine).range.end;
-        removedRanges.push({ range: new vscode.Range(startPos, endPos) });
-      }
-    });
-
-    // 應用裝飾
-    editor.setDecorations(addedDecorationType, addedRanges);
-    editor.setDecorations(removedDecorationType, removedRanges);
-  };
-
-  // 清除裝飾的 API
-  const clearDecorations = () => {
-    const editor = vscode.window.activeTextEditor;
-    if (!editor) {
-      vscode.window.showErrorMessage('未能找到編輯器');
-      return;
-    }
-    // 清除裝飾
-    editor.setDecorations(addedDecorationType, []);
-    editor.setDecorations(removedDecorationType, []);
-  };
-
   /**
    * Trigger an event on all connected views
    * @param key - The event key
@@ -423,36 +363,100 @@ export const activate = async (ctx: vscode.ExtensionContext) => {
       const response = await geminiCodeFixerService.getResponse(options);
       return response;
     },
-    showDiffInEditor: async (modifications: Modification[]) => {
+    showDiffInEditor: async (
+      modifications: Modification[],
+    ): Promise<Modification[]> => {
+      const editor = vscode.window.activeTextEditor;
+      if (!editor) {
+        vscode.window.showErrorMessage('Editor not found');
+        return [];
+      }
+      addedDecorationType = vscode.window.createTextEditorDecorationType({
+        isWholeLine: true,
+        backgroundColor: 'rgba(144,238,144,0.5)',
+      });
+
+      removedDecorationType = vscode.window.createTextEditorDecorationType({
+        isWholeLine: true,
+        backgroundColor: 'rgba(255,99,71,0.5)',
+      });
+
+      const addedRanges: vscode.DecorationOptions[] = [];
+      const removedRanges: vscode.DecorationOptions[] = [];
+
+      let offset = 0;
+      const updatedModifications: Modification[] = [];
+
+      for (const mod of modifications) {
+        if (mod.content !== '') {
+          const newStart = new vscode.Position(mod.startLine - 1 + offset, 0);
+          addedRanges.push({
+            range: new vscode.Range(newStart, newStart),
+          });
+
+          await editor.edit((editBuilder) => {
+            editBuilder.insert(newStart, mod.content + '\n');
+          });
+
+          const insertedLines = mod.content.split('\n').length;
+          offset += insertedLines;
+
+          updatedModifications.push({
+            ...mod,
+            startLine: mod.startLine + offset,
+            endLine: mod.endLine + offset,
+          });
+        }
+      }
+
+      for (const mod of modifications) {
+        if (mod.content === '') {
+          const start = new vscode.Position(mod.startLine - 1 + offset, 0);
+          const end = new vscode.Position(
+            mod.endLine - 1 + offset,
+            editor.document.lineAt(mod.endLine - 1).range.end.character,
+          );
+          removedRanges.push({ range: new vscode.Range(start, end) });
+
+          updatedModifications.push({
+            startLine: mod.startLine + offset,
+            endLine: mod.endLine + offset,
+            content: mod.content,
+          });
+        }
+      }
+
+      editor.setDecorations(addedDecorationType, addedRanges);
+      editor.setDecorations(removedDecorationType, removedRanges);
+
+      return updatedModifications;
+    },
+
+    applyCodeChanges: async (modifications: Modification[]) => {
       const editor = vscode.window.activeTextEditor;
       if (!editor) {
         vscode.window.showErrorMessage('Editor not found');
         return;
       }
 
-      const addedDecorationType = vscode.window.createTextEditorDecorationType({
-        isWholeLine: true,
-        backgroundColor: 'rgba(144,238,144,0.5)',
-      });
-
-      const removedDecorationType =
-        vscode.window.createTextEditorDecorationType({
-          isWholeLine: true,
-          backgroundColor: 'rgba(255,99,71,0.5)',
-        });
-
-      const addedRanges: vscode.DecorationOptions[] = [];
-      const removedRanges: vscode.DecorationOptions[] = [];
+      let offset = 0;
 
       await editor.edit((editBuilder) => {
         modifications.forEach((mod) => {
           if (mod.content === '') {
-            const start = new vscode.Position(mod.startLine - 1, 0);
+            const startLine = mod.startLine - 1 + offset;
+            const endLine = mod.endLine - 1 + offset;
+
+            const start = new vscode.Position(startLine, 0);
             const end = new vscode.Position(
-              mod.endLine - 1,
-              editor.document.lineAt(mod.endLine - 1).range.end.character,
+              endLine,
+              editor.document.lineAt(endLine).range.end.character,
             );
+
             editBuilder.delete(new vscode.Range(start, end));
+
+            const deletedLines = mod.endLine - mod.startLine + 1;
+            offset -= deletedLines;
           }
         });
       });
@@ -460,33 +464,112 @@ export const activate = async (ctx: vscode.ExtensionContext) => {
       await editor.edit((editBuilder) => {
         modifications.forEach((mod) => {
           if (mod.content !== '') {
-            const start = new vscode.Position(mod.startLine - 1, 0);
-            editBuilder.insert(start, mod.content + '\n');
+            const newStart = new vscode.Position(mod.startLine - 1 + offset, 0);
+            editBuilder.insert(newStart, mod.content + '\n');
+
+            const insertedLines = mod.content.split('\n').length;
+            offset += insertedLines;
           }
         });
       });
 
-      modifications.forEach((mod) => {
-        const start = new vscode.Position(mod.startLine - 1, 0);
-        const end = new vscode.Position(
-          mod.endLine - 1,
-          editor.document.lineAt(mod.endLine - 1).range.end.character,
-        );
-
-        if (mod.content === '') {
-          removedRanges.push({ range: new vscode.Range(start, end) });
-        } else {
-          addedRanges.push({
-            range: new vscode.Range(
-              start,
-              start.translate(0, mod.content.length),
-            ),
-          });
+      await editor.edit((editBuilder) => {
+        for (let lineNum = 0; lineNum < editor.document.lineCount; lineNum++) {
+          const lineText = editor.document.lineAt(lineNum).text;
+          if (lineText.trim() === '') {
+            const start = new vscode.Position(lineNum, 0);
+            const end = new vscode.Position(lineNum + 1, 0);
+            editBuilder.delete(new vscode.Range(start, end));
+          }
         }
       });
 
-      editor.setDecorations(addedDecorationType, addedRanges);
-      editor.setDecorations(removedDecorationType, removedRanges);
+      const backgroundColor = new vscode.ThemeColor('editor.background');
+
+      const invisibleDecorationType =
+        vscode.window.createTextEditorDecorationType({
+          isWholeLine: true,
+          backgroundColor: backgroundColor,
+        });
+
+      editor.setDecorations(invisibleDecorationType, []);
+
+      vscode.window.showInformationMessage(
+        'Code changes applied successfully.',
+      );
+    },
+    insertSelectedCodeToChat: async () => {
+      const editor = vscode.window.activeTextEditor;
+      if (!editor) {
+        vscode.window.showErrorMessage('Failed to find editor');
+        return;
+      }
+
+      const selectedText = editor.document.getText(editor.selection);
+      if (!selectedText) {
+        vscode.window.showErrorMessage('No code selected');
+        return;
+      }
+
+      Object.values(connectedViews).forEach((view) => {
+        view.webview.postMessage({
+          type: 'message',
+          text: selectedText,
+        });
+      });
+
+      vscode.window.showInformationMessage(
+        `Selected code sent to chat: ${selectedText}`,
+      );
+    },
+    updateDecorationToMatchBackground: async () => {
+      const editor = vscode.window.activeTextEditor;
+      if (!editor) {
+        vscode.window.showErrorMessage('Editor not found');
+        return;
+      }
+
+      const editorBackgroundColor = new vscode.ThemeColor('editor.background');
+
+      const emptyDecorationType = vscode.window.createTextEditorDecorationType(
+        {},
+      );
+
+      const addedDecoration = addedDecorationType || emptyDecorationType;
+      const removedDecoration = removedDecorationType || emptyDecorationType;
+
+      editor.setDecorations(addedDecoration, []);
+      editor.setDecorations(removedDecoration, []);
+
+      const neutralDecorationType =
+        vscode.window.createTextEditorDecorationType({
+          isWholeLine: true,
+          backgroundColor: editorBackgroundColor,
+        });
+
+      editor.setDecorations(neutralDecorationType, []);
+    },
+    revertTemporaryInsertions: async () => {
+      const editor = vscode.window.activeTextEditor;
+      if (!editor) {
+        vscode.window.showErrorMessage('Editor not found');
+        return;
+      }
+
+      if (originalContentSnapshot === null) {
+        vscode.window.showErrorMessage('No original content snapshot found.');
+        return;
+      }
+
+      await editor.edit((editBuilder) => {
+        const entireRange = new vscode.Range(
+          editor.document.positionAt(0),
+          editor.document.positionAt(editor.document.getText().length),
+        );
+        editBuilder.replace(entireRange, originalContentSnapshot || '');
+      });
+
+      vscode.window.showInformationMessage('Temporary insertions reverted.');
     },
   };
 
@@ -545,17 +628,29 @@ export const activate = async (ctx: vscode.ExtensionContext) => {
     console.error(e);
   });
   vscode.commands.registerCommand('diff.file', Commands.file);
-
-  vscode.workspace.onDidChangeTextDocument((event) => {
-    const editor = vscode.window.activeTextEditor;
-    if (editor && event.document === editor.document) {
-      vscode.commands.executeCommand('extension.clearDecorations');
-    }
+  vscode.languages.registerCodeActionsProvider('javascript', {
+    provideCodeActions(
+      document: vscode.TextDocument,
+      range: vscode.Range,
+      context: vscode.CodeActionContext,
+      token: vscode.CancellationToken,
+    ): vscode.ProviderResult<(vscode.CodeAction | vscode.Command)[]> {
+      const fixCodeAction = new vscode.CodeAction(
+        'FixCode',
+        vscode.CodeActionKind.QuickFix,
+      );
+      fixCodeAction.command = {
+        title: 'Send to Chat',
+        command: 'extension.fixCode',
+        arguments: [document.getText(range)],
+      };
+      return [fixCodeAction];
+    },
   });
 
-  vscode.window.onDidChangeActiveTextEditor((editor) => {
-    if (editor) {
-      vscode.commands.executeCommand('extension.clearDecorations');
+  vscode.commands.registerCommand('extension.fixCode', (selectedCode) => {
+    if (selectedCode) {
+      api.insertSelectedCodeToChat();
     }
   });
 };

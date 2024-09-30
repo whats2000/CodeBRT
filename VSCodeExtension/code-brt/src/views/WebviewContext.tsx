@@ -75,6 +75,11 @@ export const webviewContextValue = (
     } else if (e.data.type === 'event') {
       const data = e.data as ViewApiEvent;
       listeners?.[data.key]?.forEach((cb) => cb(...data.value));
+    } else if (e.data.type === 'message') {
+      listeners?.['message']?.forEach((cb) => cb(e.data.text));
+    } else if (e.data.type === 'event') {
+      const data = e.data as ViewApiEvent;
+      listeners?.[data.key]?.forEach((cb) => cb(...data.value));
     }
   };
 
@@ -123,6 +128,16 @@ export const webviewContextValue = (
       return;
     }
     listeners[key].delete(cb as (...args: unknown[]) => void);
+  };
+
+  // Function to handle the received code and insert into chat input
+  const handleSendToChat = (code: string) => {
+    const inputElement = document.getElementById(
+      'chat-input',
+    ) as HTMLInputElement;
+    if (inputElement) {
+      inputElement.value = code;
+    }
   };
 
   return { callApi, addListener, removeListener };
