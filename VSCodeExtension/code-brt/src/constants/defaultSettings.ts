@@ -57,9 +57,9 @@ export const DEFAULT_LOCAL_SETTINGS: ExtensionSettingsLocal = {
   systemPrompts: [],
   retainContextWhenHidden: false,
   lastUsedModelForManualCompletion: 'gemini',
-  manualTrigger: false,
-  lastUsedManualModel: 'gemini',
-  lastSelectedManualModel: {
+  manualTriggerCodeCompletion: false,
+  lastUsedManualCodeCompletionModel: 'gemini',
+  lastSelectedManualCodeCompletionModel: {
     gemini: 'gemini-1.5-flash',
     anthropic: 'claude-3-5-sonnet-20240620',
     openai: 'gpt-4o-mini',
@@ -69,9 +69,9 @@ export const DEFAULT_LOCAL_SETTINGS: ExtensionSettingsLocal = {
     ollama: 'Auto Detect',
     custom: '',
   },
-  autoTrigger: false,
-  lastUsedAutoModel: 'gemini',
-  lastSelectedAutoModel: {
+  autoTriggerCodeCompletion: false,
+  lastUsedAutoCodeCompletionModel: 'gemini',
+  lastSelectedAutoCodeCompletionModel: {
     gemini: 'gemini-1.5-flash',
     anthropic: 'claude-3-5-sonnet-20240620',
     openai: 'gpt-4o-mini',
