@@ -134,10 +134,6 @@ const settingsSlice = createSlice({
         state.needsReload = true;
       }
     },
-    // Reset unsaved changes to the original state
-    resetUnsavedChanges(state) {
-      state.unsavedChanges = false;
-    },
     startLoading(state) {
       state.isLoading = true;
     },
@@ -167,15 +163,5 @@ const settingsSlice = createSlice({
 });
 
 // Export actions and reducer
-export const {
-  updateLocalSetting,
-  resetUnsavedChanges,
-  startLoading,
-  finishLoading,
-} = settingsSlice.actions;
+export const { updateLocalSetting } = settingsSlice.actions;
 export const settingsReducer = settingsSlice.reducer;
-
-// Selector to get settings from the state
-export const selectSettings = (state: RootState) => state.settings;
-export const selectUnsavedChanges = (state: RootState) =>
-  state.settings.unsavedChanges;

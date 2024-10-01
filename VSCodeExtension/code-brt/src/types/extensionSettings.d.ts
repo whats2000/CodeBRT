@@ -137,6 +137,19 @@ export type VoiceServiceSettings = {
   gptSoVitsSelectedReferenceVoice: string;
 };
 
+export type CodeCompletionSettings = {
+  manualTrigger: boolean;
+  lastUsedManualModel: ModelServiceType;
+  lastSelectedManualModel: {
+    [keyof in ModelServiceType]: string;
+  };
+  autoTrigger: boolean;
+  lastUsedAutoModel: ModelServiceType;
+  lastSelectedAutoModel: {
+    [keyof in ModelServiceType]: string;
+  };
+};
+
 /**
  * Represents the settings for the tool services.
  * @property enableTools - The enabled tools
@@ -166,6 +179,7 @@ export type OtherLocalSettings = {
  */
 export type ExtensionSettingsLocal = ModelServiceSettings &
   VoiceServiceSettings &
+  CodeCompletionSettings &
   ToolServiceSettings &
   OtherLocalSettings;
 
