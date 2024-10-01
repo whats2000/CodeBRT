@@ -1,5 +1,5 @@
 import React from 'react';
-import { Drawer } from 'antd';
+import { Divider, Drawer, Typography } from 'antd';
 import { useSelector } from 'react-redux';
 
 import type { RootState } from '../../../redux';
@@ -22,6 +22,25 @@ export const CodeCompletionSettingsBar: React.FC<
       onClose={onClose}
       width={400}
       loading={isLoading}
-    ></Drawer>
+    >
+      <Divider orientation={'left'} orientationMargin={0}>
+        <Typography.Text type='secondary'>
+          Manually Trigger Configuration
+        </Typography.Text>
+      </Divider>
+      <Typography.Text type='secondary'>
+        This will use more context, resources and token to provide higher
+        quality completions.
+      </Typography.Text>
+      <Divider orientation={'left'} orientationMargin={0}>
+        <Typography.Text type='secondary'>
+          Auto Trigger Configuration
+        </Typography.Text>
+      </Divider>
+      <Typography.Text type='secondary'>
+        This will use when you typing pause for a moment. Which mean will faster
+        suit for simple code snippet.
+      </Typography.Text>
+    </Drawer>
   );
 };

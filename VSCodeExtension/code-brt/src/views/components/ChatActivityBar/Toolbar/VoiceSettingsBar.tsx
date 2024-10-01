@@ -92,6 +92,11 @@ export const VoiceSettingsBar: React.FC<VoiceSettingsBarProps> = ({
         loading={isLoading}
       >
         <Form layout='vertical'>
+          <Divider orientation={'left'} orientationMargin={0}>
+            <Typography.Text type='secondary'>
+              Voice Services Configuration
+            </Typography.Text>
+          </Divider>
           <Form.Item label='Text To Voice Service'>
             <Select
               value={settings.selectedTextToVoiceService}
@@ -196,7 +201,11 @@ export const VoiceSettingsBar: React.FC<VoiceSettingsBarProps> = ({
                 .
               </Typography.Text>
             )}
-          <Divider />
+          <Divider orientation={'left'} orientationMargin={0}>
+            <Typography.Text type='secondary'>
+              OpenAI Voice Configuration
+            </Typography.Text>
+          </Divider>
           <Form.Item
             label={
               <Space>
@@ -232,7 +241,11 @@ export const VoiceSettingsBar: React.FC<VoiceSettingsBarProps> = ({
               })}
             />
           </Form.Item>
-          <Divider />
+          <Divider orientation={'left'} orientationMargin={0}>
+            <Typography.Text type='secondary'>
+              GPT-SoVits Voice Configuration
+            </Typography.Text>
+          </Divider>
           <Form.Item
             label={
               <Space>
@@ -280,7 +293,6 @@ export const VoiceSettingsBar: React.FC<VoiceSettingsBarProps> = ({
           >
             GPT-SoVits Advance Settings
           </Button>
-          <Divider />
           <Button
             type='primary'
             ghost
