@@ -1,25 +1,28 @@
 import * as vscode from 'vscode';
 
 import type {
-  ModelServiceType,
   ViewApi,
   ViewApiError,
   ViewApiEvent,
   ViewApiRequest,
   ViewApiResponse,
   ViewEvents,
-  VoiceServiceType,
 } from './types';
+import {
+  AVAILABLE_MODEL_SERVICES,
+  AVAILABLE_VOICE_SERVICES,
+} from './constants';
 import { FileUtils } from './utils';
 import { ViewKey } from './views';
-import { viewRegistration, SettingsManager, HistoryManager } from './api';
+import {
+  viewRegistration,
+  SettingsManager,
+  HistoryManager,
+  registerInlineCompletion,
+} from './api';
 import { ModelServiceFactory } from './services/languageModel';
 import { VoiceServiceFactory } from './services/voice';
 import { GptSoVitsApiService } from './services/voice/gptSoVitsService';
-import {
-  InlineCompletionProvider,
-  SUPPORTED_LANGUAGES,
-} from './services/codeCompletion';
 import { convertPdfToMarkdown } from './utils/pdfConverter';
 
 let extensionContext: vscode.ExtensionContext | undefined = undefined;
@@ -33,59 +36,12 @@ export const activate = async (ctx: vscode.ExtensionContext) => {
 
   // Create a model service factory instance
   const modelServiceFactory = new ModelServiceFactory(ctx, settingsManager);
-  const codeCompletionModelServiceFactory = new ModelServiceFactory(
-    ctx,
-    settingsManager,
+  const models = modelServiceFactory.createModelServices(
+    AVAILABLE_MODEL_SERVICES,
   );
-
-  // Define the model types
-  const modelKeys: ModelServiceType[] = [
-    'anthropic',
-    'gemini',
-    'openai',
-    'cohere',
-    'groq',
-    'huggingFace',
-    'ollama',
-    'custom',
-  ];
-
-  // Dynamically initialize the services for all available models
-  const models = modelServiceFactory.createModelServices(modelKeys);
-  const codeCompletionModels =
-    codeCompletionModelServiceFactory.createModelServices(modelKeys);
-
   const voiceServiceFactory = new VoiceServiceFactory(ctx, settingsManager);
-
-  const voiceServiceKeys: VoiceServiceType[] = [
-    'gptSoVits',
-    'openai',
-    'groq',
-    'visualStudioCodeBuiltIn',
-  ];
-
-  const voiceServices =
-    voiceServiceFactory.createVoiceServices(voiceServiceKeys);
-
-  // Activate manually complete functionality
-  const completionProvider = new InlineCompletionProvider(
-    ctx,
-    settingsManager,
-    codeCompletionModels,
-  );
-
-  // Keep the inline completion provider registration
-  ctx.subscriptions.push(
-    vscode.languages.registerInlineCompletionItemProvider(
-      SUPPORTED_LANGUAGES,
-      completionProvider,
-    ),
-  );
-
-  ctx.subscriptions.push(
-    vscode.commands.registerCommand('extension.triggerInlineCompletion', () => {
-      vscode.commands.executeCommand('editor.action.inlineSuggest.trigger');
-    }),
+  const voiceServices = voiceServiceFactory.createVoiceServices(
+    AVAILABLE_VOICE_SERVICES,
   );
 
   /**
@@ -395,6 +351,8 @@ export const activate = async (ctx: vscode.ExtensionContext) => {
   registerAndConnectView('workPanel').catch((e) => {
     console.error(e);
   });
+
+  registerInlineCompletion(ctx, settingsManager);
 };
 
 export const deactivate = () => {

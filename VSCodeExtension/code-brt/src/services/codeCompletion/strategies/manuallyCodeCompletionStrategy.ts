@@ -41,6 +41,27 @@ export class ManuallyCodeCompletionStrategy implements CompletionStrategy {
   }
 
   /**
+   * Clean the completion response by removing the <COMPLETION> tags and keeping the inner code.
+   * @param response The response from the model service.
+   * @private
+   */
+  private cleanCompletionResponse(response: string): string {
+    // Step 1: If <COMPLETION> tags are missing, wrap the entire response with them
+    if (!response.includes('<COMPLETION>')) {
+      response = `<COMPLETION>${response}</COMPLETION>`;
+    }
+
+    // Step 2: Remove only the outer markdown code blocks (```), preserving internal code
+    response = response.replace(/```[a-zA-Z]*\n([\s\S]*?)\n```/g, (_, code) => {
+      // Return only the content inside the markdown block, keeping valid backticks inside
+      return code;
+    });
+
+    // Step 3: Return the response with the <COMPLETION> tags removed
+    return response.replace(/<COMPLETION>/g, '').replace(/<\/COMPLETION>/g, '');
+  }
+
+  /**
    * Get the response from the model service.
    * @param prompt The prompt to send to the model service.
    */
@@ -55,8 +76,7 @@ export class ManuallyCodeCompletionStrategy implements CompletionStrategy {
         this.settingsManager.get('lastSelectedModel')[modelService],
     });
 
-    // Remove <Completion> tags from the response
-    return response.replace(/<COMPLETION>/g, '').replace(/<\/COMPLETION>/g, '');
+    return this.cleanCompletionResponse(response);
   }
 
   /**

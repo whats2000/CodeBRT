@@ -16,6 +16,8 @@ function sum_evens(lim) {
 }
 </QUERY>
 
+## CORRECT COMPLETION:
+
 <COMPLETION>if (i % 2 === 0) {
       sum += i;
     }</COMPLETION>
@@ -31,6 +33,8 @@ def sum_list(lst: List[int]) -> int:
   return total
 </QUERY>
 
+## CORRECT COMPLETION:
+
 <COMPLETION>  total += x</COMPLETION>
 
 ## EXAMPLE 3:
@@ -43,6 +47,8 @@ def sum_list(lst: List[int]) -> int:
 // Convert to TypeScript:
 {{FILL_HERE}}
 </QUERY>
+
+## CORRECT COMPLETION:
 
 <COMPLETION>type Tree<T>
   = {$:"Node", lft: Tree<T>, rgt: Tree<T>}
@@ -66,6 +72,8 @@ function sum(tree: Tree<number>): number {
 The 5th {{FILL_HERE}} is Jupiter.
 </QUERY>
 
+## CORRECT COMPLETION:
+
 <COMPLETION>planet from the Sun</COMPLETION>
 
 ## EXAMPLE 5:
@@ -77,6 +85,8 @@ function hypothenuse(a, b) {
 }
 </QUERY>
 
+## CORRECT COMPLETION:
+
 <COMPLETION>a ** 2 + </COMPLETION>
 `;
 
@@ -87,5 +97,6 @@ export const MAIN_PROMPT_TEMPLATE = `
 {prefix}{{FILL_HERE}}{suffix}
 </QUERY>
 
-TASK: Fill the {{FILL_HERE}} hole. Answer only with the CORRECT completion inside the <COMPLETION> tag. Do NOT include any explanations, markdown formatting, or extra content.
+TASK: Fill the {{FILL_HERE}} hole. Answer only with the CORRECT completion inside the <COMPLETION> tag. Do NOT include any explanations, markdown formatting, or extra content. Do it now.
+<COMPLETION>
 `;
