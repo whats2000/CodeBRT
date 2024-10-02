@@ -199,6 +199,13 @@ export class ManuallyCodeCompletionStrategy implements CompletionStrategy {
     position: vscode.Position,
     token: vscode.CancellationToken,
   ): Promise<vscode.InlineCompletionItem[] | null> {
+    if (!this.settingsManager.get('manualTriggerCodeCompletion')) {
+      vscode.window.showWarningMessage(
+        'Manual code completion is disabled. Please enable it in the code completion settings.',
+      );
+      return null;
+    }
+
     // Step 1: Detect the language of the document
     const languageId = this.detectLanguage(document);
 

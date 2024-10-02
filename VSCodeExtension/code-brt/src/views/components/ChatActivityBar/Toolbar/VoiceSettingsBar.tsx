@@ -8,6 +8,7 @@ import {
   Typography,
   Tooltip,
   Space,
+  Alert,
 } from 'antd';
 import { useDispatch, useSelector } from 'react-redux';
 
@@ -149,57 +150,76 @@ export const VoiceSettingsBar: React.FC<VoiceSettingsBarProps> = ({
           {showMoreInfo &&
             settings.selectedVoiceToTextService ===
               'visualStudioCodeBuiltIn' && (
-              <Typography.Text type={'secondary'}>
-                {MODEL_SERVICE_CONSTANTS.visualStudioCodeBuiltIn.description}{' '}
-                This relies on the built-in voice to text service in VSCode. If
-                you have not installed it, you can do so by{' '}
-                <Typography.Link
-                  type={'warning'}
-                  onClick={() =>
-                    callApi(
-                      'openExtensionMarketplace',
-                      'ms-vscode.vscode-speech',
-                    )
-                  }
-                >
-                  marketplace
-                </Typography.Link>
-                .
-              </Typography.Text>
+              <Alert
+                type={'info'}
+                showIcon={true}
+                closable={true}
+                onClose={(_) => setTimeout(() => setShowMoreInfo(false), 500)}
+                description={
+                  <Typography.Text type={'secondary'}>
+                    {
+                      MODEL_SERVICE_CONSTANTS.visualStudioCodeBuiltIn
+                        .description
+                    }{' '}
+                    This relies on the built-in voice to text service in VSCode.
+                    If you have not installed it, you can do so by{' '}
+                    <Typography.Link
+                      type={'warning'}
+                      onClick={() =>
+                        callApi(
+                          'openExtensionMarketplace',
+                          'ms-vscode.vscode-speech',
+                        )
+                      }
+                    >
+                      marketplace
+                    </Typography.Link>
+                    .
+                  </Typography.Text>
+                }
+              />
             )}
           {showMoreInfo &&
             ['groq', 'openai'].includes(
               settings.selectedVoiceToTextService ?? '',
             ) && (
-              <Typography.Text type={'secondary'}>
-                Notice: This will require microphone access with{' '}
-                <Typography.Link
-                  type={'warning'}
-                  onClick={() =>
-                    openLink('https://sourceforge.net/projects/sox/')
-                  }
-                >
-                  SoX
-                </Typography.Link>{' '}
-                installed on Windows/Mac or{' '}
-                <Typography.Link
-                  type={'warning'}
-                  onClick={() =>
-                    openLink('https://www.alsa-project.org/wiki/Download')
-                  }
-                >
-                  ALSA
-                </Typography.Link>{' '}
-                on Linux. This is required as we use shell for recording audio.
-                (If you have a better way, please suggest on{' '}
-                <Typography.Link
-                  type={'warning'}
-                  onClick={() => openLink(PROJECT_LINK.issues)}
-                >
-                  GitHub
-                </Typography.Link>
-                .
-              </Typography.Text>
+              <Alert
+                type={'info'}
+                showIcon={true}
+                closable={true}
+                onClose={(_) => setTimeout(() => setShowMoreInfo(false), 500)}
+                description={
+                  <Typography.Text type={'secondary'}>
+                    Notice: This will require microphone access with{' '}
+                    <Typography.Link
+                      type={'warning'}
+                      onClick={() =>
+                        openLink('https://sourceforge.net/projects/sox/')
+                      }
+                    >
+                      SoX
+                    </Typography.Link>{' '}
+                    installed on Windows/Mac or{' '}
+                    <Typography.Link
+                      type={'warning'}
+                      onClick={() =>
+                        openLink('https://www.alsa-project.org/wiki/Download')
+                      }
+                    >
+                      ALSA
+                    </Typography.Link>{' '}
+                    on Linux. This is required as we use shell for recording
+                    audio. (If you have a better way, please suggest on{' '}
+                    <Typography.Link
+                      type={'warning'}
+                      onClick={() => openLink(PROJECT_LINK.issues)}
+                    >
+                      GitHub
+                    </Typography.Link>
+                    .
+                  </Typography.Text>
+                }
+              />
             )}
           <Divider orientation={'left'} orientationMargin={0}>
             <Typography.Text type='secondary'>
