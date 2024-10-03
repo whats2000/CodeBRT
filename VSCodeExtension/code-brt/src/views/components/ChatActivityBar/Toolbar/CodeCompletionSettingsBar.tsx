@@ -1,26 +1,28 @@
-import React, { useContext, useState } from 'react';
+import React, { useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
+import type { CheckboxProps } from 'antd/es/checkbox';
 import {
   Alert,
   Checkbox,
   Divider,
   Drawer,
   Form,
+  Select,
+  SelectProps,
   Space,
   Tooltip,
   Typography,
 } from 'antd';
+import { QuestionCircleFilled } from '@ant-design/icons';
 import styled from 'styled-components';
 
 import type { AppDispatch, RootState } from '../../../redux';
-import { WebviewContext } from '../../../WebviewContext';
 import type {
   CodeCompletionSettings,
   ExtensionSettings,
 } from '../../../../types';
-import type { CheckboxProps } from 'antd/es/checkbox';
+import { AVAILABLE_MODEL_SERVICES } from '../../../../constants';
 import { updateAndSaveSetting } from '../../../redux/slices/settingsSlice';
-import { QuestionCircleFilled } from '@ant-design/icons';
 
 const StyledForm = styled(Form)`
   display: flex;
@@ -39,11 +41,9 @@ type CodeCompletionSettingsBarProps = {
 export const CodeCompletionSettingsBar: React.FC<
   CodeCompletionSettingsBarProps
 > = ({ isOpen, onClose }) => {
-  const { callApi } = useContext(WebviewContext);
-
   const dispatch = useDispatch<AppDispatch>();
 
-  const { isLoading, settings, needsReload } = useSelector(
+  const { isLoading, settings } = useSelector(
     (state: RootState) => state.settings,
   );
 
@@ -51,10 +51,22 @@ export const CodeCompletionSettingsBar: React.FC<
     keyof CodeCompletionSettings | null
   >(null);
 
+  const modelServiceOptions: SelectProps['options'] =
+    AVAILABLE_MODEL_SERVICES.map((service) => ({
+      key: service,
+      label: service,
+      value: service,
+    }));
+
   const handleCheckboxChange =
     (key: keyof ExtensionSettings): CheckboxProps['onChange'] =>
     (e) => {
       const value = e.target.checked;
+      dispatch(updateAndSaveSetting({ key, value }));
+    };
+
+  const handleSelectChange =
+    (key: keyof ExtensionSettings) => (value: string) => {
       dispatch(updateAndSaveSetting({ key, value }));
     };
 
@@ -103,6 +115,23 @@ export const CodeCompletionSettingsBar: React.FC<
               Enable Manual Trigger Code Completion
             </Typography.Text>
           </Checkbox>
+        </FormGroup>
+        <FormGroup
+          key={'lastUsedManualCodeCompletionModelService'}
+          label={'Model Service for Manual Code Completion'}
+        >
+          <Select
+            showSearch
+            value={settings.lastUsedManualCodeCompletionModelService}
+            onChange={handleSelectChange(
+              'lastUsedManualCodeCompletionModelService',
+            )}
+            style={{
+              width: '100%',
+            }}
+            loading={isLoading}
+            options={modelServiceOptions}
+          />
         </FormGroup>
         {showMoreInfo === 'manualTriggerCodeCompletion' && (
           <Alert
@@ -154,6 +183,23 @@ export const CodeCompletionSettingsBar: React.FC<
               Enable Auto Trigger Code Completion (Soon)
             </Typography.Text>
           </Checkbox>
+        </FormGroup>
+        <FormGroup
+          key={'lastUsedAutoCodeCompletionModelService'}
+          label={'Model Service for Auto Code Completion'}
+        >
+          <Select
+            showSearch
+            value={settings.lastUsedAutoCodeCompletionModelService}
+            onChange={handleSelectChange(
+              'lastUsedAutoCodeCompletionModelService',
+            )}
+            style={{
+              width: '100%',
+            }}
+            loading={isLoading}
+            options={modelServiceOptions}
+          />
         </FormGroup>
         {showMoreInfo === 'autoTriggerCodeCompletion' && (
           <Alert

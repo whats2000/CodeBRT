@@ -26,6 +26,7 @@ import { SettingsBar } from './Toolbar/SettingsBar';
 import { VoiceSettingsBar } from './Toolbar/VoiceSettingsBar';
 import { CodeCompletionSettingsBar } from './Toolbar/CodeCompletionSettingsBar';
 import { useWindowSize } from '../../hooks';
+import { AVAILABLE_MODEL_SERVICES } from '../../../constants';
 
 const StyledSpace = styled(Space)`
   display: flex;
@@ -48,16 +49,6 @@ type ToolbarProps = {
 
 export const Toolbar: React.FC<ToolbarProps> = ({ setTheme }) => {
   const { callApi } = useContext(WebviewContext);
-  const modelServices: ModelServiceType[] = [
-    'anthropic',
-    'gemini',
-    'cohere',
-    'openai',
-    'groq',
-    'huggingFace',
-    'ollama',
-    'custom',
-  ];
 
   const [isHistorySidebarOpen, setIsHistorySidebarOpen] = useState(false);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
@@ -153,13 +144,12 @@ export const Toolbar: React.FC<ToolbarProps> = ({ setTheme }) => {
     ...settingMenuItems,
   ];
 
-  const modelServiceOptions: SelectProps['options'] = modelServices.map(
-    (service) => ({
+  const modelServiceOptions: SelectProps['options'] =
+    AVAILABLE_MODEL_SERVICES.map((service) => ({
       key: service,
       label: service,
       value: service,
-    }),
-  );
+    }));
 
   const modelOptions: SelectProps['options'] = [
     ...availableModels.map((model, index) => ({

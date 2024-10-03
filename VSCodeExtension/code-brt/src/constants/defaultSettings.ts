@@ -58,7 +58,7 @@ export const DEFAULT_LOCAL_SETTINGS: ExtensionSettingsLocal = {
   retainContextWhenHidden: false,
   lastUsedModelForManualCompletion: 'gemini',
   manualTriggerCodeCompletion: false,
-  lastUsedManualCodeCompletionModel: 'gemini',
+  lastUsedManualCodeCompletionModelService: 'gemini',
   lastSelectedManualCodeCompletionModel: {
     gemini: 'gemini-1.5-flash',
     anthropic: 'claude-3-5-sonnet-20240620',
@@ -70,7 +70,7 @@ export const DEFAULT_LOCAL_SETTINGS: ExtensionSettingsLocal = {
     custom: '',
   },
   autoTriggerCodeCompletion: false,
-  lastUsedAutoCodeCompletionModel: 'gemini',
+  lastUsedAutoCodeCompletionModelService: 'ollama',
   lastSelectedAutoCodeCompletionModel: {
     gemini: 'gemini-1.5-flash',
     anthropic: 'claude-3-5-sonnet-20240620',
@@ -78,7 +78,7 @@ export const DEFAULT_LOCAL_SETTINGS: ExtensionSettingsLocal = {
     cohere: 'command',
     groq: 'llama3-70b-8192',
     huggingFace: 'HuggingFaceH4/zephyr-7b-beta',
-    ollama: 'Auto Detect',
+    ollama: 'starcoder2',
     custom: '',
   },
 };

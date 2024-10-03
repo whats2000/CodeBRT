@@ -139,12 +139,12 @@ export type VoiceServiceSettings = {
 
 export type CodeCompletionSettings = {
   manualTriggerCodeCompletion: boolean;
-  lastUsedManualCodeCompletionModel: ModelServiceType;
+  lastUsedManualCodeCompletionModelService: ModelServiceType;
   lastSelectedManualCodeCompletionModel: {
     [keyof in ModelServiceType]: string;
   };
   autoTriggerCodeCompletion: boolean;
-  lastUsedAutoCodeCompletionModel: ModelServiceType;
+  lastUsedAutoCodeCompletionModelService: ModelServiceType;
   lastSelectedAutoCodeCompletionModel: {
     [keyof in ModelServiceType]: string;
   };
