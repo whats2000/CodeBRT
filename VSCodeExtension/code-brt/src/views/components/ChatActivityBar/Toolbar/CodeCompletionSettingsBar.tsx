@@ -225,6 +225,7 @@ export const CodeCompletionSettingsBar: React.FC<
           />
         </FormGroup>
         <Button
+          style={{ marginBottom: 15 }}
           onClick={() =>
             callApi('openKeyboardShortcuts', 'code-brt.triggerInlineCompletion')
           }
