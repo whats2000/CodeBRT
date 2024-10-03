@@ -3,6 +3,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import type { CheckboxProps } from 'antd/es/checkbox';
 import {
   Alert,
+  Button,
   Checkbox,
   Divider,
   Drawer,
@@ -223,6 +224,13 @@ export const CodeCompletionSettingsBar: React.FC<
             }))}
           />
         </FormGroup>
+        <Button
+          onClick={() =>
+            callApi('openKeyboardShortcuts', 'code-brt.triggerInlineCompletion')
+          }
+        >
+          <Typography.Text type='secondary'>Edit Keybinding</Typography.Text>
+        </Button>
         {showMoreInfo === 'manualTriggerCodeCompletion' && (
           <Alert
             type={'info'}

@@ -124,19 +124,15 @@
   "contributes": {
     "commands": [
       {
-        "command": "extension.switchAutocompleteModel",
-        "title": "Switch Autocomplete Model"
-      },
-      {
-        "command": "extension.triggerInlineCompletion",
+        "command": "code-brt.triggerInlineCompletion",
         "title": "Trigger Inline Completion"
       }
     ],
     "keybindings": [
       {
-        "command": "extension.triggerInlineCompletion",
+        "command": "code-brt.triggerInlineCompletion",
         "key": "ctrl+shift+x",
-        "mac": "cmd+shift+space",
+        "mac": "cmd+shift+x",
         "when": "editorTextFocus"
       }
     ],

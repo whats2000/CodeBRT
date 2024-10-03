@@ -288,6 +288,12 @@ export const activate = async (ctx: vscode.ExtensionContext) => {
     openExternalLink: async (url) => {
       await vscode.env.openExternal(vscode.Uri.parse(url));
     },
+    openKeyboardShortcuts: async (commandId) => {
+      await vscode.commands.executeCommand(
+        'workbench.action.openGlobalKeybindings',
+        `@command:${commandId}`,
+      );
+    },
     openExtensionMarketplace: async (extensionId) => {
       await vscode.commands.executeCommand(
         'workbench.extensions.search',

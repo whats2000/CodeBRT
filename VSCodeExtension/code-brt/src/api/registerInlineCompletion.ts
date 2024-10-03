@@ -38,7 +38,7 @@ export const registerInlineCompletion = (
   );
 
   ctx.subscriptions.push(
-    vscode.commands.registerCommand('extension.triggerInlineCompletion', () => {
+    vscode.commands.registerCommand('code-brt.triggerInlineCompletion', () => {
       void vscode.commands.executeCommand(
         'editor.action.inlineSuggest.trigger',
       );
