@@ -2,7 +2,7 @@
 
 ## Overview
 
-**Version**: 0.2.6
+**Version**: 0.3.0
 
 **Status**: _Under Development_  
 ⚠️ This project is currently in the Beta phase. Some features are still being developed, and you may encounter bugs or
@@ -63,12 +63,15 @@ Here’s an outline of the upcoming features and improvements for CodeBRT:
 - [x] Full voice input and output features
 - [x] Open-source GPT-SoVits text-to-voice integration
 
-### Version 0.3 (Upcoming)
+### Version 0.3 (WIP)
 
 - [x] Optimized history rendering
 - [x] Redux for better state management
 - [ ] In-editor chat for code generation
-- [ ] Tab auto-completion
+- [ ] Manual code completion with hotkeys
+  - [x] Trigger code completion
+  - [ ] Context retrieval
+- [ ] Auto code completion
 - [ ] Code integrator to compose code snippets
 
 ### Version 0.4 (Upcoming)
