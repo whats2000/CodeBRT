@@ -66,14 +66,18 @@ export class ManuallyCodeCompletionStrategy implements CompletionStrategy {
    * @param prompt The prompt to send to the model service.
    */
   private async getResponse(prompt: string): Promise<string> {
-    const modelService = this.settingsManager.get('lastUsedModelService');
+    const modelService = this.settingsManager.get(
+      'lastUsedManualCodeCompletionModelService',
+    );
+    const modelName = this.settingsManager.get(
+      'lastSelectedManualCodeCompletionModel',
+    )[modelService];
     const response = await this.loadedModelServices[
       modelService
     ].service.getResponse({
       query: prompt,
       historyManager: this.historyManager,
-      selectedModelName:
-        this.settingsManager.get('lastSelectedModel')[modelService],
+      selectedModelName: modelName,
     });
 
     return this.cleanCompletionResponse(response);

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useContext, useEffect, useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import type { CheckboxProps } from 'antd/es/checkbox';
 import {
@@ -16,11 +16,13 @@ import {
 import { QuestionCircleFilled } from '@ant-design/icons';
 import styled from 'styled-components';
 
-import type { AppDispatch, RootState } from '../../../redux';
 import type {
   CodeCompletionSettings,
   ExtensionSettings,
+  ModelServiceType,
 } from '../../../../types';
+import type { AppDispatch, RootState } from '../../../redux';
+import { WebviewContext } from '../../../WebviewContext';
 import { AVAILABLE_MODEL_SERVICES } from '../../../../constants';
 import { updateAndSaveSetting } from '../../../redux/slices/settingsSlice';
 
@@ -41,6 +43,8 @@ type CodeCompletionSettingsBarProps = {
 export const CodeCompletionSettingsBar: React.FC<
   CodeCompletionSettingsBarProps
 > = ({ isOpen, onClose }) => {
+  const { callApi } = useContext(WebviewContext);
+
   const dispatch = useDispatch<AppDispatch>();
 
   const { isLoading, settings } = useSelector(
@@ -50,6 +54,15 @@ export const CodeCompletionSettingsBar: React.FC<
   const [showMoreInfo, setShowMoreInfo] = useState<
     keyof CodeCompletionSettings | null
   >(null);
+  const [isAvailableModelLoading, setIsAvailableModelLoading] = useState(false);
+  const [
+    availableManualCodeCompletionModels,
+    setAvailableManualCodeCompletionModels,
+  ] = useState<string[]>([]);
+  const [
+    availableAutoCodeCompletionModels,
+    setAvailableAutoCodeCompletionModels,
+  ] = useState<string[]>([]);
 
   const modelServiceOptions: SelectProps['options'] =
     AVAILABLE_MODEL_SERVICES.map((service) => ({
@@ -57,6 +70,38 @@ export const CodeCompletionSettingsBar: React.FC<
       label: service,
       value: service,
     }));
+
+  useEffect(() => {
+    setIsAvailableModelLoading(true);
+    callApi(
+      'getAvailableModels',
+      settings.lastUsedManualCodeCompletionModelService,
+    )
+      .then((models) => {
+        setAvailableManualCodeCompletionModels(models);
+        setIsAvailableModelLoading(false);
+      })
+      .catch((e) => {
+        console.error(e);
+        setIsAvailableModelLoading(false);
+      });
+  }, [settings.lastUsedManualCodeCompletionModelService, dispatch]);
+
+  useEffect(() => {
+    setIsAvailableModelLoading(true);
+    callApi(
+      'getAvailableModels',
+      settings.lastUsedAutoCodeCompletionModelService,
+    )
+      .then((models) => {
+        setAvailableAutoCodeCompletionModels(models);
+        setIsAvailableModelLoading(false);
+      })
+      .catch((e) => {
+        console.error(e);
+        setIsAvailableModelLoading(false);
+      });
+  }, [settings.lastUsedAutoCodeCompletionModelService, dispatch]);
 
   const handleCheckboxChange =
     (key: keyof ExtensionSettings): CheckboxProps['onChange'] =>
@@ -69,6 +114,22 @@ export const CodeCompletionSettingsBar: React.FC<
     (key: keyof ExtensionSettings) => (value: string) => {
       dispatch(updateAndSaveSetting({ key, value }));
     };
+
+  const handleModelSelectChange = (
+    key: keyof ExtensionSettings,
+    modelService: ModelServiceType,
+    modelName: string,
+  ) => {
+    dispatch(
+      updateAndSaveSetting({
+        key,
+        value: {
+          ...settings[key],
+          [modelService]: modelName,
+        },
+      }),
+    );
+  };
 
   return (
     <Drawer
@@ -129,8 +190,37 @@ export const CodeCompletionSettingsBar: React.FC<
             style={{
               width: '100%',
             }}
-            loading={isLoading}
+            loading={isLoading || isAvailableModelLoading}
             options={modelServiceOptions}
+          />
+        </FormGroup>
+        <FormGroup
+          key={'lastSelectedManualCodeCompletionModel'}
+          label={'Model for Manual Code Completion'}
+        >
+          <Select
+            showSearch
+            value={
+              settings.lastSelectedManualCodeCompletionModel[
+                settings.lastUsedManualCodeCompletionModelService
+              ]
+            }
+            onChange={(value) =>
+              handleModelSelectChange(
+                'lastSelectedManualCodeCompletionModel',
+                settings.lastUsedManualCodeCompletionModelService,
+                value,
+              )
+            }
+            style={{
+              width: '100%',
+            }}
+            loading={isLoading || isAvailableModelLoading}
+            options={availableManualCodeCompletionModels.map((model) => ({
+              key: model,
+              label: model,
+              value: model,
+            }))}
           />
         </FormGroup>
         {showMoreInfo === 'manualTriggerCodeCompletion' && (
@@ -197,8 +287,37 @@ export const CodeCompletionSettingsBar: React.FC<
             style={{
               width: '100%',
             }}
-            loading={isLoading}
+            loading={isLoading || isAvailableModelLoading}
             options={modelServiceOptions}
+          />
+        </FormGroup>
+        <FormGroup
+          key={'lastSelectedAutoCodeCompletionModel'}
+          label={'Model for Auto Code Completion'}
+        >
+          <Select
+            showSearch
+            value={
+              settings.lastSelectedAutoCodeCompletionModel[
+                settings.lastUsedAutoCodeCompletionModelService
+              ]
+            }
+            onChange={(value) =>
+              handleModelSelectChange(
+                'lastSelectedAutoCodeCompletionModel',
+                settings.lastUsedAutoCodeCompletionModelService,
+                value,
+              )
+            }
+            style={{
+              width: '100%',
+            }}
+            loading={isLoading || isAvailableModelLoading}
+            options={availableAutoCodeCompletionModels.map((model) => ({
+              key: model,
+              label: model,
+              value: model,
+            }))}
           />
         </FormGroup>
         {showMoreInfo === 'autoTriggerCodeCompletion' && (

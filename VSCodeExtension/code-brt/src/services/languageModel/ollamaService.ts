@@ -204,10 +204,10 @@ export class OllamaService extends AbstractLanguageModelService {
       images,
     );
 
-    const model =
-      this.currentModel === 'Auto Detect'
-        ? await this.getRunningModel()
-        : (selectedModelName ?? this.currentModel);
+    let model = selectedModelName ?? this.currentModel;
+    if (model === 'Auto Detect') {
+      model = await this.getRunningModel();
+    }
 
     return { client, conversationHistory, model };
   }
