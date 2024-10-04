@@ -4,7 +4,7 @@ import vscode from 'vscode';
 import type { GptSoVitsVoiceSetting } from '../../types';
 import { MODEL_SERVICE_CONSTANTS } from '../../constants';
 import { SettingsManager } from '../../api';
-import { AbstractVoiceService } from './abstractVoiceService';
+import { AbstractVoiceService } from './base/abstractVoiceService';
 
 export class GptSoVitsApiService extends AbstractVoiceService {
   private referWavPath: string = '';

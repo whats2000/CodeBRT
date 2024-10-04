@@ -25,7 +25,13 @@ export const ToolActivateFloatButtons: React.FC<
     (state: RootState) => state.settings,
   );
 
+  const { isLoading: historyLoading } = useSelector(
+    (state: RootState) => state.conversation,
+  );
+
   const handleSettingChange = (key: ToolServiceType) => {
+    if (isLoading || historyLoading) return;
+
     dispatch(
       updateAndSaveSetting({
         key: 'enableTools',
@@ -39,7 +45,13 @@ export const ToolActivateFloatButtons: React.FC<
 
   return (
     <FloatButton.Group
-      icon={isLoading ? <LoadingOutlined /> : <MagicWandOutlined />}
+      icon={
+        isLoading || historyLoading ? (
+          <LoadingOutlined />
+        ) : (
+          <MagicWandOutlined />
+        )
+      }
       trigger='click'
       tooltip={'Activate Tools'}
       style={{

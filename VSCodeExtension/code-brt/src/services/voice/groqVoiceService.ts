@@ -6,7 +6,7 @@ import Groq from 'groq-sdk';
 
 import { MODEL_SERVICE_CONSTANTS } from '../../constants';
 import { SettingsManager } from '../../api';
-import { AbstractVoiceService } from './abstractVoiceService';
+import { AbstractVoiceService } from './base/abstractVoiceService';
 
 export class GroqVoiceService extends AbstractVoiceService {
   private readonly settingsListener: vscode.Disposable;

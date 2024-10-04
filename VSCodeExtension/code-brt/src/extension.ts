@@ -1,8 +1,6 @@
 import * as vscode from 'vscode';
 
 import type {
-  LoadedModelServices,
-  LoadedVoiceServices,
   ViewApi,
   ViewApiError,
   ViewApiEvent,
@@ -10,74 +8,41 @@ import type {
   ViewApiResponse,
   ViewEvents,
 } from './types';
+import {
+  AVAILABLE_MODEL_SERVICES,
+  AVAILABLE_VOICE_SERVICES,
+} from './constants';
 import { FileUtils } from './utils';
 import { ViewKey } from './views';
-import { viewRegistration, SettingsManager, HistoryManager } from './api';
 import {
-  AnthropicService,
-  CohereService,
-  CustomApiService,
-  GeminiService,
-  GroqService,
-  HuggingFaceService,
-  OllamaService,
-  OpenAIService,
-} from './services/languageModel';
-import {
-  GptSoVitsApiService,
-  GroqVoiceService,
-  OpenaiVoiceService,
-  VisualStudioCodeBuiltInService,
-} from './services/voice';
+  viewRegistration,
+  SettingsManager,
+  HistoryManager,
+  registerInlineCompletion,
+} from './api';
+import { ModelServiceFactory } from './services/languageModel';
+import { VoiceServiceFactory } from './services/voice';
+import { GptSoVitsApiService } from './services/voice/gptSoVitsService';
 import { convertPdfToMarkdown } from './utils/pdfConverter';
 
+let extensionContext: vscode.ExtensionContext | undefined = undefined;
+
 export const activate = async (ctx: vscode.ExtensionContext) => {
+  extensionContext = ctx;
+
   const connectedViews: Partial<Record<ViewKey, vscode.WebviewView>> = {};
   const settingsManager = SettingsManager.getInstance(ctx);
-
   const historyManager = new HistoryManager(ctx);
 
-  const models: LoadedModelServices = {
-    anthropic: {
-      service: new AnthropicService(ctx, settingsManager, historyManager),
-    },
-    gemini: {
-      service: new GeminiService(ctx, settingsManager, historyManager),
-    },
-    cohere: {
-      service: new CohereService(ctx, settingsManager, historyManager),
-    },
-    openai: {
-      service: new OpenAIService(ctx, settingsManager, historyManager),
-    },
-    groq: {
-      service: new GroqService(ctx, settingsManager, historyManager),
-    },
-    huggingFace: {
-      service: new HuggingFaceService(ctx, settingsManager, historyManager),
-    },
-    ollama: {
-      service: new OllamaService(ctx, settingsManager, historyManager),
-    },
-    custom: {
-      service: new CustomApiService(ctx, settingsManager, historyManager),
-    },
-  };
-
-  const voiceServices: LoadedVoiceServices = {
-    visualStudioCodeBuiltIn: {
-      service: new VisualStudioCodeBuiltInService(ctx, settingsManager),
-    },
-    groq: {
-      service: new GroqVoiceService(ctx, settingsManager),
-    },
-    gptSoVits: {
-      service: new GptSoVitsApiService(ctx, settingsManager),
-    },
-    openai: {
-      service: new OpenaiVoiceService(ctx, settingsManager),
-    },
-  };
+  // Create a model service factory instance
+  const modelServiceFactory = new ModelServiceFactory(ctx, settingsManager);
+  const models = modelServiceFactory.createModelServices(
+    AVAILABLE_MODEL_SERVICES,
+  );
+  const voiceServiceFactory = new VoiceServiceFactory(ctx, settingsManager);
+  const voiceServices = voiceServiceFactory.createVoiceServices(
+    AVAILABLE_VOICE_SERVICES,
+  );
 
   /**
    * Trigger an event on all connected views
@@ -152,6 +117,7 @@ export const activate = async (ctx: vscode.ExtensionContext) => {
     ) => {
       return await models[modelServiceType].service.getResponse({
         query,
+        historyManager,
         images,
         currentEntryID,
         sendStreamResponse: useStream
@@ -322,6 +288,12 @@ export const activate = async (ctx: vscode.ExtensionContext) => {
     openExternalLink: async (url) => {
       await vscode.env.openExternal(vscode.Uri.parse(url));
     },
+    openKeyboardShortcuts: async (commandId) => {
+      await vscode.commands.executeCommand(
+        'workbench.action.openGlobalKeybindings',
+        `@command:${commandId}`,
+      );
+    },
     openExtensionMarketplace: async (extensionId) => {
       await vscode.commands.executeCommand(
         'workbench.extensions.search',
@@ -385,8 +357,10 @@ export const activate = async (ctx: vscode.ExtensionContext) => {
   registerAndConnectView('workPanel').catch((e) => {
     console.error(e);
   });
+
+  registerInlineCompletion(ctx, settingsManager);
 };
 
 export const deactivate = () => {
-  return;
+  extensionContext?.subscriptions?.forEach((sub) => sub.dispose());
 };

@@ -5,7 +5,7 @@ import * as path from 'path';
 import AsyncLock from 'async-lock';
 
 import { SettingsManager } from '../../api';
-import { AbstractVoiceService } from './abstractVoiceService';
+import { AbstractVoiceService } from './base/abstractVoiceService';
 
 export class VisualStudioCodeBuiltInService extends AbstractVoiceService {
   private interval: NodeJS.Timeout | null = null;

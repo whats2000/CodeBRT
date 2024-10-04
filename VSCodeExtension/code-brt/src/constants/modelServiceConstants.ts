@@ -1,8 +1,27 @@
 import {
   ModelServiceType,
   TextToVoiceServiceType,
+  type VoiceServiceType,
   VoiceToTextServiceType,
 } from '../types';
+
+export const AVAILABLE_MODEL_SERVICES: ModelServiceType[] = [
+  'anthropic',
+  'gemini',
+  'openai',
+  'cohere',
+  'groq',
+  'huggingFace',
+  'ollama',
+  'custom',
+];
+
+export const AVAILABLE_VOICE_SERVICES: VoiceServiceType[] = [
+  'gptSoVits',
+  'openai',
+  'groq',
+  'visualStudioCodeBuiltIn',
+];
 
 export const MODEL_SERVICE_CONSTANTS: {
   [key in Exclude<

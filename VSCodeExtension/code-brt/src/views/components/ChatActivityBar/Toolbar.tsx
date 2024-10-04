@@ -1,5 +1,5 @@
 import React, { useContext, useEffect, useState } from 'react';
-import { Flex, MenuProps, SelectProps } from 'antd';
+import { Flex, MenuProps, SelectProps, Tooltip } from 'antd';
 import { Select, Button, Space, Dropdown, Drawer } from 'antd';
 import {
   PlusOutlined,
@@ -7,6 +7,7 @@ import {
   SettingOutlined,
   MenuOutlined,
   AudioOutlined,
+  PicRightOutlined,
 } from '@ant-design/icons';
 import styled from 'styled-components';
 import { useDispatch, useSelector } from 'react-redux';
@@ -23,7 +24,9 @@ import { EditModelListBar } from './Toolbar/EditModelListBar';
 import { HistorySidebar } from './Toolbar/HistorySidebar';
 import { SettingsBar } from './Toolbar/SettingsBar';
 import { VoiceSettingsBar } from './Toolbar/VoiceSettingsBar';
+import { CodeCompletionSettingsBar } from './Toolbar/CodeCompletionSettingsBar';
 import { useWindowSize } from '../../hooks';
+import { AVAILABLE_MODEL_SERVICES } from '../../../constants';
 
 const StyledSpace = styled(Space)`
   display: flex;
@@ -46,20 +49,12 @@ type ToolbarProps = {
 
 export const Toolbar: React.FC<ToolbarProps> = ({ setTheme }) => {
   const { callApi } = useContext(WebviewContext);
-  const modelServices: ModelServiceType[] = [
-    'anthropic',
-    'gemini',
-    'cohere',
-    'openai',
-    'groq',
-    'huggingFace',
-    'ollama',
-    'custom',
-  ];
 
   const [isHistorySidebarOpen, setIsHistorySidebarOpen] = useState(false);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [isVoiceSettingsOpen, setIsVoiceSettingsOpen] = useState(false);
+  const [isCodeCompletionSettingsOpen, setIsCodeCompletionSettingsOpen] =
+    useState(false);
   const [isSelectModelOpen, setIsSelectModelOpen] = useState(false);
   const [isEditModelListOpen, setIsEditModelListOpen] = useState(false);
 
@@ -125,6 +120,12 @@ export const Toolbar: React.FC<ToolbarProps> = ({ setTheme }) => {
       label: 'Voice Settings',
       icon: <AudioOutlined />,
     },
+    {
+      key: 'code completion',
+      onClick: () => setIsCodeCompletionSettingsOpen(true),
+      label: 'Code Completion Settings',
+      icon: <PicRightOutlined />,
+    },
   ];
 
   const settingMenuItemsSmallWidth: MenuProps['items'] = [
@@ -143,13 +144,12 @@ export const Toolbar: React.FC<ToolbarProps> = ({ setTheme }) => {
     ...settingMenuItems,
   ];
 
-  const modelServiceOptions: SelectProps['options'] = modelServices.map(
-    (service) => ({
+  const modelServiceOptions: SelectProps['options'] =
+    AVAILABLE_MODEL_SERVICES.map((service) => ({
       key: service,
       label: service,
       value: service,
-    }),
-  );
+    }));
 
   const modelOptions: SelectProps['options'] = [
     ...availableModels.map((model, index) => ({
@@ -236,8 +236,15 @@ export const Toolbar: React.FC<ToolbarProps> = ({ setTheme }) => {
           </Dropdown>
         ) : (
           <Space>
-            <Button icon={<HistoryOutlined />} onClick={toggleHistorySidebar} />
-            <Button icon={<PlusOutlined />} onClick={createNewChat} />
+            <Tooltip title={'History'}>
+              <Button
+                icon={<HistoryOutlined />}
+                onClick={toggleHistorySidebar}
+              />
+            </Tooltip>
+            <Tooltip title={'New Chat'}>
+              <Button icon={<PlusOutlined />} onClick={createNewChat} />
+            </Tooltip>
             <Dropdown menu={{ items: settingMenuItems }}>
               <Button icon={<SettingOutlined />} />
             </Dropdown>
@@ -260,6 +267,10 @@ export const Toolbar: React.FC<ToolbarProps> = ({ setTheme }) => {
       <EditModelListBar
         isOpen={isEditModelListOpen}
         onClose={() => setIsEditModelListOpen(false)}
+      />
+      <CodeCompletionSettingsBar
+        isOpen={isCodeCompletionSettingsOpen}
+        onClose={() => setIsCodeCompletionSettingsOpen(false)}
       />
     </>
   );

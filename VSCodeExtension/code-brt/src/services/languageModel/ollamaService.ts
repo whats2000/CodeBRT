@@ -11,7 +11,7 @@ import type {
 } from '../../types';
 import { MODEL_SERVICE_CONSTANTS, toolsSchema } from '../../constants';
 import { ParseToolCallUtils } from '../../utils';
-import { AbstractLanguageModelService } from './abstractLanguageModelService';
+import { AbstractLanguageModelService } from './base';
 import { HistoryManager, SettingsManager } from '../../api';
 import { ToolService } from '../tools';
 
@@ -22,7 +22,6 @@ export class OllamaService extends AbstractLanguageModelService {
   constructor(
     context: vscode.ExtensionContext,
     settingsManager: SettingsManager,
-    historyManager: HistoryManager,
   ) {
     const availableModelNames = settingsManager.get('ollamaAvailableModels');
     const defaultModelName = settingsManager.get('lastSelectedModel').ollama;
@@ -31,18 +30,16 @@ export class OllamaService extends AbstractLanguageModelService {
       'ollama',
       context,
       settingsManager,
-      historyManager,
       defaultModelName,
       availableModelNames,
     );
   }
 
-  private getAdvanceSettings(): {
+  private getAdvanceSettings(historyManager: HistoryManager): {
     systemPrompt: string | undefined;
     generationConfig: Partial<Options>;
   } {
-    const advanceSettings =
-      this.historyManager.getCurrentHistory().advanceSettings;
+    const advanceSettings = historyManager.getCurrentHistory().advanceSettings;
 
     if (!advanceSettings) {
       return {
@@ -94,10 +91,11 @@ export class OllamaService extends AbstractLanguageModelService {
       [key: string]: ConversationEntry;
     },
     query: string,
+    historyManager: HistoryManager,
     images?: string[],
   ): Promise<Message[]> {
     const result: Message[] = [];
-    let currentEntry = entries[this.historyManager.getCurrentHistory().current];
+    let currentEntry = entries[historyManager.getCurrentHistory().current];
 
     while (currentEntry) {
       result.unshift({
@@ -113,7 +111,7 @@ export class OllamaService extends AbstractLanguageModelService {
     }
 
     // Ollama's API requires the query message at the end of the history
-    if (result.length > 0 && result[result.length - 1].role !== 'user') {
+    if (result[result.length - 1]?.role !== 'user') {
       result.push({
         role: 'user',
         content: query,
@@ -186,8 +184,10 @@ export class OllamaService extends AbstractLanguageModelService {
 
   private async initModel(
     query: string,
+    historyManager: HistoryManager,
     currentEntryID?: string,
     images?: string[],
+    selectedModelName?: string,
   ): Promise<{
     client: Ollama;
     conversationHistory: Message[];
@@ -198,15 +198,16 @@ export class OllamaService extends AbstractLanguageModelService {
     });
 
     const conversationHistory = await this.conversationHistoryToContent(
-      this.historyManager.getHistoryBeforeEntry(currentEntryID).entries,
+      historyManager.getHistoryBeforeEntry(currentEntryID).entries,
       query,
+      historyManager,
       images,
     );
 
-    const model =
-      this.currentModel === 'Auto Detect'
-        ? await this.getRunningModel()
-        : this.currentModel;
+    let model = selectedModelName ?? this.currentModel;
+    if (model === 'Auto Detect') {
+      model = await this.getRunningModel();
+    }
 
     return { client, conversationHistory, model };
   }
@@ -297,12 +298,22 @@ export class OllamaService extends AbstractLanguageModelService {
       return 'Missing model configuration. Check the model selection dropdown.';
     }
 
-    const { query, images, sendStreamResponse, currentEntryID, updateStatus } =
-      options;
+    const {
+      query,
+      historyManager,
+      images,
+      currentEntryID,
+      sendStreamResponse,
+      updateStatus,
+      selectedModelName,
+      disableTools,
+    } = options;
     const { client, conversationHistory, model } = await this.initModel(
       query,
+      historyManager,
       currentEntryID,
       images,
+      selectedModelName,
     );
 
     if (model === '') {
@@ -312,7 +323,8 @@ export class OllamaService extends AbstractLanguageModelService {
     let functionCallCount = 0;
     const MAX_FUNCTION_CALLS = 5;
 
-    const { systemPrompt, generationConfig } = this.getAdvanceSettings();
+    const { systemPrompt, generationConfig } =
+      this.getAdvanceSettings(historyManager);
 
     if (systemPrompt) {
       conversationHistory.unshift({
@@ -327,7 +339,7 @@ export class OllamaService extends AbstractLanguageModelService {
           const response = await client.chat({
             model,
             messages: conversationHistory,
-            tools: this.getEnabledTools(),
+            tools: disableTools ? undefined : this.getEnabledTools(),
             options: generationConfig,
           });
 
@@ -371,7 +383,7 @@ export class OllamaService extends AbstractLanguageModelService {
             model,
             messages: conversationHistory,
             stream: true,
-            tools: this.getEnabledTools(),
+            tools: disableTools ? undefined : this.getEnabledTools(),
             options: generationConfig,
           });
 
