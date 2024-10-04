@@ -343,12 +343,7 @@ export const CodeCompletionSettingsBar: React.FC<
             }
           />
         )}
-        <Button
-          type='primary'
-          ghost
-          onClick={onClose}
-          style={{ marginTop: 20 }}
-        >
+        <Button onClick={onClose} style={{ marginTop: 20 }}>
           Close and Save
         </Button>
       </StyledForm>
