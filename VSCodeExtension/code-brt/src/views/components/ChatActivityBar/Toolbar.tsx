@@ -1,5 +1,5 @@
 import React, { useContext, useEffect, useState } from 'react';
-import { Flex, MenuProps, SelectProps } from 'antd';
+import { Flex, MenuProps, SelectProps, Tooltip } from 'antd';
 import { Select, Button, Space, Dropdown, Drawer } from 'antd';
 import {
   PlusOutlined,
@@ -236,8 +236,15 @@ export const Toolbar: React.FC<ToolbarProps> = ({ setTheme }) => {
           </Dropdown>
         ) : (
           <Space>
-            <Button icon={<HistoryOutlined />} onClick={toggleHistorySidebar} />
-            <Button icon={<PlusOutlined />} onClick={createNewChat} />
+            <Tooltip title={'History'}>
+              <Button
+                icon={<HistoryOutlined />}
+                onClick={toggleHistorySidebar}
+              />
+            </Tooltip>
+            <Tooltip title={'New Chat'}>
+              <Button icon={<PlusOutlined />} onClick={createNewChat} />
+            </Tooltip>
             <Dropdown menu={{ items: settingMenuItems }}>
               <Button icon={<SettingOutlined />} />
             </Dropdown>
