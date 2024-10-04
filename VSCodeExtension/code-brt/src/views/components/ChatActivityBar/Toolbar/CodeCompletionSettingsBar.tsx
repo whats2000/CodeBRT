@@ -230,7 +230,7 @@ export const CodeCompletionSettingsBar: React.FC<
             callApi('openKeyboardShortcuts', 'code-brt.triggerInlineCompletion')
           }
         >
-          <Typography.Text type='secondary'>Edit Keybinding</Typography.Text>
+          <Typography.Text>Edit Keybinding</Typography.Text>
         </Button>
         {showMoreInfo === 'manualTriggerCodeCompletion' && (
           <Alert
@@ -343,6 +343,14 @@ export const CodeCompletionSettingsBar: React.FC<
             }
           />
         )}
+        <Button
+          type='primary'
+          ghost
+          onClick={onClose}
+          style={{ marginTop: 20 }}
+        >
+          Close and Save
+        </Button>
       </StyledForm>
     </Drawer>
   );

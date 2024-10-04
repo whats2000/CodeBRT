@@ -358,12 +358,7 @@ export const SettingsBar: React.FC<SettingSidebarProps> = ({
       >
         Reset Theme
       </Button>
-      <Button
-        type='primary'
-        ghost
-        onClick={handleCloseAndSave}
-        style={{ marginTop: 20, width: '100%' }}
-      >
+      <Button onClick={handleCloseAndSave} style={{ marginTop: 20 }} block>
         Close and Save
       </Button>
     </Drawer>

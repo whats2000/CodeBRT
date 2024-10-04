@@ -305,20 +305,10 @@ export const VoiceSettingsBar: React.FC<VoiceSettingsBarProps> = ({
               )}
             />
           </Form.Item>
-          <Button
-            type='primary'
-            onClick={() => setIsGptSoVitsSettingsOpen(true)}
-            ghost={true}
-            block
-          >
+          <Button onClick={() => setIsGptSoVitsSettingsOpen(true)} block>
             GPT-SoVits Advance Settings
           </Button>
-          <Button
-            type='primary'
-            ghost
-            onClick={onClose}
-            style={{ marginTop: 20, width: '100%' }}
-          >
+          <Button onClick={onClose} style={{ marginTop: 20 }} block>
             Close and Save
           </Button>
         </Form>
