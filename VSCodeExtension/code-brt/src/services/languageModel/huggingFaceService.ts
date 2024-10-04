@@ -197,6 +197,7 @@ export class HuggingFaceService extends AbstractLanguageModelService {
       sendStreamResponse,
       updateStatus,
       selectedModelName,
+      disableTools,
     } = options;
 
     if (images && images.length > 0) {
@@ -230,9 +231,11 @@ export class HuggingFaceService extends AbstractLanguageModelService {
 
     try {
       if (!sendStreamResponse) {
-        vscode.window.showWarningMessage(
-          'The non-streaming response is not supported tool calls in this version. The tool calls will be ignored.',
-        );
+        if (!disableTools) {
+          vscode.window.showWarningMessage(
+            'The non-streaming response is not supported tool calls in this version. The tool calls will be ignored.',
+          );
+        }
 
         return (
           await huggerFace.chatCompletion({
@@ -291,7 +294,10 @@ export class HuggingFaceService extends AbstractLanguageModelService {
           const streamResponse = huggerFace.chatCompletionStream({
             messages: conversationHistory,
             model: selectedModelName ?? this.currentModel,
-            tools: functionCallSuccess ? undefined : this.getEnabledTools(),
+            tools:
+              functionCallSuccess || disableTools
+                ? undefined
+                : this.getEnabledTools(),
             stream: true,
             ...generationConfig,
           });

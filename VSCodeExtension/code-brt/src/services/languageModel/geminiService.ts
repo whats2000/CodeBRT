@@ -331,6 +331,7 @@ export class GeminiService extends AbstractLanguageModelService {
       sendStreamResponse,
       updateStatus,
       selectedModelName,
+      disableTools,
     } = options;
 
     const generativeModel = new GoogleGenerativeAI(
@@ -366,7 +367,7 @@ export class GeminiService extends AbstractLanguageModelService {
               generationConfig: generationConfig,
               safetySettings: this.safetySettings,
               history: conversationHistory,
-              tools: this.getEnabledTools(),
+              tools: disableTools ? undefined : this.getEnabledTools(),
             })
             .sendMessage(queryParts);
 
@@ -410,7 +411,7 @@ export class GeminiService extends AbstractLanguageModelService {
               generationConfig: generationConfig,
               safetySettings: this.safetySettings,
               history: conversationHistory,
-              tools: this.getEnabledTools(),
+              tools: disableTools ? undefined : this.getEnabledTools(),
             })
             .sendMessageStream(queryParts);
 

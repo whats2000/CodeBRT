@@ -78,6 +78,7 @@ export class ManuallyCodeCompletionStrategy implements CompletionStrategy {
       query: prompt,
       historyManager: this.historyManager,
       selectedModelName: modelName,
+      disableTools: true,
     });
 
     return this.cleanCompletionResponse(response);

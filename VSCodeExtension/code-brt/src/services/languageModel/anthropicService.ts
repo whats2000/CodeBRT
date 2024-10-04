@@ -348,6 +348,7 @@ export class AnthropicService extends AbstractLanguageModelService {
       sendStreamResponse,
       updateStatus,
       selectedModelName,
+      disableTools,
     } = options;
 
     const { anthropic, conversationHistory, errorMessage } = this.initModel(
@@ -374,7 +375,7 @@ export class AnthropicService extends AbstractLanguageModelService {
             model: selectedModelName ?? this.currentModel,
             system: systemPrompt,
             messages: conversationHistory,
-            tools: this.getEnabledTools(),
+            tools: disableTools ? undefined : this.getEnabledTools(),
             stream: false,
             ...generationConfig,
           });
@@ -412,7 +413,7 @@ export class AnthropicService extends AbstractLanguageModelService {
               model: selectedModelName ?? this.currentModel,
               system: systemPrompt,
               messages: conversationHistory,
-              tools: this.getEnabledTools(),
+              tools: disableTools ? undefined : this.getEnabledTools(),
               stream: true,
               ...generationConfig,
             })

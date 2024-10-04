@@ -87,6 +87,7 @@ export class OpenAIService extends AbstractOpenaiLikeService {
       sendStreamResponse,
       updateStatus,
       selectedModelName,
+      disableTools,
     } = options;
     const openai = new OpenAI({
       apiKey: this.settingsManager.get('openaiApiKey'),
@@ -118,7 +119,7 @@ export class OpenAIService extends AbstractOpenaiLikeService {
           const response = await openai.chat.completions.create({
             messages: conversationHistory,
             model: selectedModelName ?? this.currentModel,
-            tools: this.getEnabledTools(),
+            tools: disableTools ? undefined : this.getEnabledTools(),
             stream: false,
             ...generationConfig,
           } as ChatCompletionCreateParamsNonStreaming);
@@ -152,7 +153,7 @@ export class OpenAIService extends AbstractOpenaiLikeService {
           const streamResponse = await openai.chat.completions.create({
             model: selectedModelName ?? this.currentModel,
             messages: conversationHistory,
-            tools: this.getEnabledTools(),
+            tools: disableTools ? undefined : this.getEnabledTools(),
             stream: true,
             ...generationConfig,
           } as ChatCompletionCreateParamsStreaming);

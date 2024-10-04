@@ -244,6 +244,7 @@ export class CohereService extends AbstractLanguageModelService {
       sendStreamResponse,
       updateStatus,
       selectedModelName,
+      disableTools,
     } = options;
 
     if (images && images.length > 0) {
@@ -285,7 +286,10 @@ export class CohereService extends AbstractLanguageModelService {
             model: selectedModelName ?? this.currentModel,
             message: toolResults.length > 0 ? '' : query,
             chatHistory: conversationHistory,
-            tools: shouldUseTools ? this.getEnabledTools() : undefined,
+            tools:
+              disableTools || !shouldUseTools
+                ? undefined
+                : this.getEnabledTools(),
             toolResults: toolResults.length > 0 ? toolResults : undefined,
             ...generationConfig,
           });
@@ -316,7 +320,10 @@ export class CohereService extends AbstractLanguageModelService {
             model: selectedModelName ?? this.currentModel,
             message: toolResults.length > 0 ? '' : query,
             chatHistory: conversationHistory,
-            tools: shouldUseTools ? this.getEnabledTools() : undefined,
+            tools:
+              disableTools || !shouldUseTools
+                ? undefined
+                : this.getEnabledTools(),
             toolResults: toolResults.length > 0 ? toolResults : undefined,
             ...generationConfig,
           });

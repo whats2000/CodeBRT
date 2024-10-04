@@ -81,6 +81,7 @@ export class GroqService extends AbstractOpenaiLikeService {
       sendStreamResponse,
       updateStatus,
       selectedModelName,
+      disableTools,
     } = options;
 
     if (images && images.length > 0) {
@@ -118,7 +119,7 @@ export class GroqService extends AbstractOpenaiLikeService {
           const response = await groq.chat.completions.create({
             messages: conversationHistory,
             model: selectedModelName ?? this.currentModel,
-            tools: this.getEnabledTools(),
+            tools: disableTools ? undefined : this.getEnabledTools(),
             stream: false,
             ...generationConfig,
           } as ChatCompletionCreateParamsNonStreaming);
@@ -154,7 +155,7 @@ export class GroqService extends AbstractOpenaiLikeService {
             messages: conversationHistory,
             model: selectedModelName ?? this.currentModel,
             stream: true,
-            tools: this.getEnabledTools(),
+            tools: disableTools ? undefined : this.getEnabledTools(),
             ...generationConfig,
           } as ChatCompletionCreateParamsStreaming);
 

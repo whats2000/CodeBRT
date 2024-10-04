@@ -306,6 +306,7 @@ export class OllamaService extends AbstractLanguageModelService {
       sendStreamResponse,
       updateStatus,
       selectedModelName,
+      disableTools,
     } = options;
     const { client, conversationHistory, model } = await this.initModel(
       query,
@@ -338,7 +339,7 @@ export class OllamaService extends AbstractLanguageModelService {
           const response = await client.chat({
             model,
             messages: conversationHistory,
-            tools: this.getEnabledTools(),
+            tools: disableTools ? undefined : this.getEnabledTools(),
             options: generationConfig,
           });
 
@@ -382,7 +383,7 @@ export class OllamaService extends AbstractLanguageModelService {
             model,
             messages: conversationHistory,
             stream: true,
-            tools: this.getEnabledTools(),
+            tools: disableTools ? undefined : this.getEnabledTools(),
             options: generationConfig,
           });
 

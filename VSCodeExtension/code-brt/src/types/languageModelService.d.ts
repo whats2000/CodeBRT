@@ -10,6 +10,8 @@
  * if not provided, the status will not be updated at frontend
  * @property selectedModelName - The name of the selected model,
  * if provided, the model will use the selected model name to get the response,
+ * @property disableTools - The flag to disable tools for the model,
+ * if provided, the model will not use tools for the response
  *
  * if not provided, the status will not be updated at frontend
  */
@@ -21,6 +23,7 @@ type GetResponseOptions = {
   sendStreamResponse?: (message: string) => void;
   updateStatus?: (status: string) => void;
   selectedModelName?: string;
+  disableTools?: boolean;
 };
 
 export type LanguageModelService = {
