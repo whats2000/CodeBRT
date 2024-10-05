@@ -9,8 +9,8 @@ on:
       - main
 
 jobs:
-  build:
-    runs-on: ubuntu-latest
+  build-windows:
+    runs-on: windows-latest
 
     steps:
       - name: Checkout code
@@ -22,9 +22,7 @@ jobs:
           node-version: '20'
 
       - name: Install dependencies
-        run: |
-          rm -f package-lock.json
-          npm install
+        run: npm install
         working-directory: VSCodeExtension/code-brt
 
       - name: Run tests
@@ -32,16 +30,16 @@ jobs:
         working-directory: VSCodeExtension/code-brt
 
       - name: Build project
-        run: |
-          cd VSCodeExtension/code-brt
-          npm run build:ci
+        run: npm run build
+        working-directory: VSCodeExtension/code-brt
 
-      - name: Locate VSIX file
+      - name: Locate VSIX file (Windows compatible)
         id: locate-vsix
+        shell: powershell
         run: |
-          vsix_file=$(find VSCodeExtension/code-brt/build -name "*.vsix")
-          echo "VSIX file located at: $vsix_file"
-          echo "vsix_path=$vsix_file" >> $GITHUB_ENV
+          $vsix_file = Get-ChildItem -Path VSCodeExtension/code-brt/build -Filter *.vsix -Recurse | Select-Object -ExpandProperty FullName
+          Write-Output "VSIX file located at: $vsix_file"
+          echo "vsix_path=$vsix_file" >> $env:GITHUB_ENV
 
       - name: Upload Artifact
         uses: actions/upload-artifact@v4
