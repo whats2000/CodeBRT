@@ -1,3 +1,8 @@
+/**
+ * The follow code is modified from the original source code.
+ * https://github.com/continuedev/continue/blob/main/core/autocomplete/templates.ts
+ * Under the Apache-2.0 License.
+ */
 export const SYSTEM_PROMPT = `You are a HOLE FILLER. Replace holes marked '{{HOLE_NAME}}' with precise, context-aware code inside <COMPLETION/> tags. 
 Do NOT include any explanations, markdown formatting, or extra content.`;
 
