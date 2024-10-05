@@ -35,7 +35,7 @@ export class ManuallyCodeCompletionStrategy implements CompletionStrategy {
     const history = this.historyManager.getCurrentHistory();
     void this.historyManager.updateHistoryModelAdvanceSettings(history.root, {
       ...history.advanceSettings,
-      systemPrompt: SYSTEM_PROMPT + FEW_SHOT_EXAMPLES,
+      systemPrompt: `${SYSTEM_PROMPT}\n\n${FEW_SHOT_EXAMPLES}`,
       temperature: 0.7,
     });
   }

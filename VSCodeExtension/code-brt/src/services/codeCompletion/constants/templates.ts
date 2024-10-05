@@ -1,9 +1,7 @@
 export const SYSTEM_PROMPT = `You are a HOLE FILLER. Replace holes marked '{{HOLE_NAME}}' with precise, context-aware code inside <COMPLETION/> tags. 
 Do NOT include any explanations, markdown formatting, or extra content.`;
 
-export const FEW_SHOT_EXAMPLES = `
-
-## EXAMPLE 1:
+export const FEW_SHOT_EXAMPLES = `## EXAMPLE 1:
 
 <LANGUAGE>JavaScript</LANGUAGE>
 <QUERY>
@@ -90,13 +88,10 @@ function hypothenuse(a, b) {
 <COMPLETION>a ** 2 + </COMPLETION>
 `;
 
-export const MAIN_PROMPT_TEMPLATE = `
-
-<LANGUAGE>{codeLanguage}</LANGUAGE>
+export const MAIN_PROMPT_TEMPLATE = `<LANGUAGE>{codeLanguage}</LANGUAGE>
 <QUERY>
 {prefix}{{FILL_HERE}}{suffix}
 </QUERY>
 
 TASK: Fill the {{FILL_HERE}} hole. Answer only with the CORRECT completion inside the <COMPLETION> tag. Do NOT include any explanations, markdown formatting, or extra content. Do it now.
-<COMPLETION>
-`;
+<COMPLETION>`;
