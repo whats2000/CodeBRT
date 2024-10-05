@@ -4,6 +4,7 @@ import type { LoadedModelServices } from '../../../types';
 import { AbstractCompletionProvider } from '../base';
 import { SettingsManager } from '../../../api';
 import { ManuallyCodeCompletionStrategy } from '../strategies';
+import { StatusBarManager } from '../ui/statusBarManager';
 
 export class ManuallyCodeCompletionProvider
   implements AbstractCompletionProvider
@@ -14,11 +15,13 @@ export class ManuallyCodeCompletionProvider
     ctx: vscode.ExtensionContext,
     settingsManager: SettingsManager,
     loadedModelServices: LoadedModelServices,
+    statusBarManager: StatusBarManager,
   ) {
     this.completionStrategy = new ManuallyCodeCompletionStrategy(
       ctx,
       settingsManager,
       loadedModelServices,
+      statusBarManager,
     );
   }
 

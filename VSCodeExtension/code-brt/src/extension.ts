@@ -358,7 +358,7 @@ export const activate = async (ctx: vscode.ExtensionContext) => {
     console.error(e);
   });
 
-  registerInlineCompletion(ctx, settingsManager);
+  registerInlineCompletion(ctx, settingsManager, connectedViews);
 };
 
 export const deactivate = () => {
