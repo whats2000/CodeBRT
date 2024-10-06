@@ -6,13 +6,22 @@
 export const SYSTEM_PROMPT = `You are a HOLE FILLER. Replace holes marked '{{HOLE_NAME}}' with precise, context-aware code inside <COMPLETION/> tags. 
 Do NOT include any explanations, markdown formatting, or extra content.`;
 
+export const CHAIN_OF_THOUGHT = `You follow these steps:
+1. Analyze the context around {{FILL_HERE}}.
+2. Decide if it's a comment or code that needs completion.
+   - If a comment is incomplete, finish the comment.
+   - If the comment is complete, generate the code based on it.
+3. If it’s code, complete it accurately.
+4. Ensure the style and format match the surrounding code.
+5. Output only the correct completion in <COMPLETION> tags. No explanations, markdown, or extra content.`;
+
 export const FEW_SHOT_EXAMPLES = `## EXAMPLE 1:
 
-<LANGUAGE>JavaScript</LANGUAGE>
+<LANGUAGE>C++</LANGUAGE>
 <QUERY>
-function sum_evens(lim) {
-  var sum = 0;
-  for (var i = 0; i < lim; ++i) {
+int sum_numbers(int n) {
+  int sum = 0;
+  for (int i = 0; i < n; i++) {
     {{FILL_HERE}}
   }
   return sum;
@@ -21,7 +30,7 @@ function sum_evens(lim) {
 
 ## CORRECT COMPLETION:
 
-<COMPLETION>if (i % 2 === 0) {
+<COMPLETION>if (i % 2 == 0) {
       sum += i;
     }</COMPLETION>
 
@@ -70,14 +79,18 @@ function sum(tree: Tree<number>): number {
 
 ## EXAMPLE 4:
 
-<LANGUAGE>Markdown</LANGUAGE>
+<LANGUAGE>Python</LANGUAGE>
 <QUERY>
-The 5th {{FILL_HERE}} is Jupiter.
+def remove_spaces(s: str) -> str:
+  """
+  {{FILL_HERE}}
+  """
+  return s.replace(" ", "")
 </QUERY>
 
 ## CORRECT COMPLETION:
 
-<COMPLETION>planet from the Sun</COMPLETION>
+<COMPLETION>Returns the input string with all spaces removed.</COMPLETION>
 
 ## EXAMPLE 5:
 

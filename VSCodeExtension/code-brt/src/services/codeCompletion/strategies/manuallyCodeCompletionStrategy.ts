@@ -3,6 +3,7 @@ import * as vscode from 'vscode';
 import type { LoadedModelServices } from '../../../types';
 import { CompletionStrategy } from './index';
 import {
+  CHAIN_OF_THOUGHT,
   FEW_SHOT_EXAMPLES,
   FILE_TO_LANGUAGE,
   FILE_TO_LANGUAGE_CONTEXT,
@@ -34,19 +35,18 @@ export class ManuallyCodeCompletionStrategy implements CompletionStrategy {
     );
     this.loadedModelServices = loadedModelServices;
     this.statusBarManager = statusBarManager;
-
-    const history = this.historyManager.getCurrentHistory();
-    void this.historyManager.updateHistoryModelAdvanceSettings(history.root, {
-      ...history.advanceSettings,
-      systemPrompt: `${SYSTEM_PROMPT}\n\n${FEW_SHOT_EXAMPLES}`,
-      temperature: 0.7,
-    });
   }
 
   /**
    * Clean the completion response by removing the <COMPLETION> tags and keeping the inner code.
    */
   private cleanCompletionResponse(response: string): string {
+    if (
+      response.startsWith('Failed to connect to the language model service.')
+    ) {
+      return '';
+    }
+
     if (!response.includes('<COMPLETION>')) {
       response = `<COMPLETION>${response}</COMPLETION>`;
     }
@@ -69,6 +69,22 @@ export class ManuallyCodeCompletionStrategy implements CompletionStrategy {
     const modelName = this.settingsManager.get(
       'lastSelectedManualCodeCompletionModel',
     )[modelService];
+
+    // For smaller models, use a simpler prompt
+    const systemPrompt =
+      modelService === 'ollama'
+        ? `${SYSTEM_PROMPT}\n\n${FEW_SHOT_EXAMPLES}`
+        : `${SYSTEM_PROMPT}\n\n${CHAIN_OF_THOUGHT}\n\n${FEW_SHOT_EXAMPLES}`;
+
+    // Set the system prompt and temperature
+    const history = this.historyManager.getCurrentHistory();
+    void this.historyManager.updateHistoryModelAdvanceSettings(history.root, {
+      ...history.advanceSettings,
+      systemPrompt: systemPrompt,
+      temperature: 0.7,
+    });
+
+    // Get the response from the model service
     const response = await this.loadedModelServices[
       modelService
     ].service.getResponse({
