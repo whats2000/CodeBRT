@@ -126,6 +126,10 @@
       {
         "command": "code-brt.triggerInlineCompletion",
         "title": "Trigger Inline Completion"
+      },
+      {
+        "command": "code-brt.openMainView",
+        "title": "Open CodeBRT Chat"
       }
     ],
     "keybindings": [
