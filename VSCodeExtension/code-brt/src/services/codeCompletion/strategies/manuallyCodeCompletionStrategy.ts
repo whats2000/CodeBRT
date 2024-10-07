@@ -1,6 +1,6 @@
 import * as vscode from 'vscode';
 
-import type { LoadedModelServices } from '../../../types';
+import type { LoadedModelServices, ModelServiceType } from '../../../types';
 import { CompletionStrategy } from './index';
 import {
   CHAIN_OF_THOUGHT,
@@ -14,6 +14,7 @@ import {
 import { CodeLanguageId } from '../types';
 import { HistoryManager, SettingsManager } from '../../../api';
 import { StatusBarManager } from '../ui/statusBarManager';
+import { postProcessCompletion } from '../utils';
 
 export class ManuallyCodeCompletionStrategy implements CompletionStrategy {
   private readonly settingsManager: SettingsManager;
@@ -62,14 +63,11 @@ export class ManuallyCodeCompletionStrategy implements CompletionStrategy {
   /**
    * Get the response from the model service.
    */
-  private async getResponse(prompt: string): Promise<string> {
-    const modelService = this.settingsManager.get(
-      'lastUsedManualCodeCompletionModelService',
-    );
-    const modelName = this.settingsManager.get(
-      'lastSelectedManualCodeCompletionModel',
-    )[modelService];
-
+  private async getResponse(
+    prompt: string,
+    modelService: ModelServiceType,
+    modelName: string,
+  ): Promise<string> {
     // For smaller models, use a simpler prompt
     const systemPrompt =
       modelService === 'ollama'
@@ -170,6 +168,8 @@ export class ManuallyCodeCompletionStrategy implements CompletionStrategy {
   private async getCompletionWithTimeout(
     prompt: string,
     token: vscode.CancellationToken,
+    modelService: ModelServiceType,
+    modelName: string,
   ): Promise<string | null> {
     const timeoutMs = 50000; // 50 seconds request timeout
     return new Promise<string | null>((resolve, reject) => {
@@ -178,7 +178,7 @@ export class ManuallyCodeCompletionStrategy implements CompletionStrategy {
         timeoutMs,
       );
 
-      this.getResponse(prompt)
+      this.getResponse(prompt, modelService, modelName)
         .then((result) => {
           clearTimeout(timeout);
           resolve(result);
@@ -251,17 +251,40 @@ export class ManuallyCodeCompletionStrategy implements CompletionStrategy {
       // Step 5: Build the prompt for the LLM using the context and few-shot examples
       const prompt = this.buildPrompt(prefix, suffix, languageName);
 
-      // Step 6: Call the language model (mock for now)
-      const completion = await this.getCompletionWithTimeout(prompt, token);
+      // Step 6: Call the language model
+      const modelService = this.settingsManager.get(
+        'lastUsedManualCodeCompletionModelService',
+      );
+      const modelName = this.settingsManager.get(
+        'lastSelectedManualCodeCompletionModel',
+      )[modelService];
+      const completion = await this.getCompletionWithTimeout(
+        prompt,
+        token,
+        modelService,
+        modelName,
+      );
 
       if (!completion) {
         return null;
       }
 
-      // Step 7: Process and return the completion as VSCode InlineCompletionItems
-      return this.buildInlineCompletionItems(completion, position);
+      // Step 7: Post-process the completion
+      const postProcessedResult = postProcessCompletion(
+        completion,
+        prefix,
+        suffix,
+        modelName,
+      );
+
+      if (!postProcessedResult) {
+        return null;
+      }
+
+      // Step 8: Process and return the completion as VSCode InlineCompletionItems
+      return this.buildInlineCompletionItems(postProcessedResult, position);
     } finally {
-      // Step 8: Show idle status after processing
+      // Step 9: Show idle status after processing
       this.statusBarManager.showIdle();
     }
   }
