@@ -43,36 +43,36 @@ const isRewritesLineAbove = (completion: string, prefix: string): boolean => {
  * @returns {boolean} - Whether extreme repetition is detected
  */
 const isExtremeRepetition = (completion: string): boolean => {
-  const lines = completion.split('\n');
+  const lines = completion.trim().split('\n');
   if (lines.length < 6) {
     return false;
   }
 
-  for (let freq = 1; freq < MAX_REPETITION_FREQ_TO_CHECK; freq++) {
-    const line1 = lines[0].split('');
-    const line2 = lines[freq].split('');
+  // Check repetition between lines, by comparing line pairs
+  for (let freq = 1; freq <= MAX_REPETITION_FREQ_TO_CHECK; freq++) {
+    const line1 = lines[0].trim();
+    const line2 = lines[freq].trim();
 
-    // Find LCS between line1 and line2, using their lengths and a comparison function
+    // Find the LCS (longest common subsequence) between the first line and others
     const lcsPairs = lcs_dp(
       line1.length,
       line2.length,
       (i, j) => line1[i] === line2[j],
     );
 
-    // If the length of the LCS is significant, consider it for repetition check
+    // If there is enough overlap, count repetition
     if (lcsPairs.length > 5 || lcsPairs.length > line1.length * 0.5) {
       let matchCount = 0;
-
-      // Check repetition across the lines using the LCS positions
       for (let i = 0; i < lines.length; i += freq) {
-        const currentLine = lines[i].split('');
+        const currentLine = lines[i].trim();
 
-        // Count how many characters match in the current line based on the LCS pairs
+        // Check how many LCS matches are in the current line
         const matchingChars = lcsPairs.filter(
           ([pos1, pos2]) =>
             pos1 < currentLine.length && currentLine[pos2] === line1[pos1],
         );
 
+        // If the matching characters are above the threshold, increment match count
         if (
           matchingChars.length > 5 ||
           matchingChars.length > currentLine.length * 0.5
@@ -81,12 +81,13 @@ const isExtremeRepetition = (completion: string): boolean => {
         }
       }
 
-      // If the number of matched repetitions exceeds the threshold, consider it as extreme repetition
+      // If repetition is extreme, return true
       if (matchCount * freq > 8 || (matchCount * freq) / lines.length > 0.8) {
         return true;
       }
     }
   }
+
   return false;
 };
 
