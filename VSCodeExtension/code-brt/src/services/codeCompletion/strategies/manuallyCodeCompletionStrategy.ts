@@ -1,8 +1,9 @@
 import * as vscode from 'vscode';
 
-import type { LoadedModelServices } from '../../../types';
+import type { LoadedModelServices, ModelServiceType } from '../../../types';
 import { CompletionStrategy } from './index';
 import {
+  CHAIN_OF_THOUGHT,
   FEW_SHOT_EXAMPLES,
   FILE_TO_LANGUAGE,
   FILE_TO_LANGUAGE_CONTEXT,
@@ -12,17 +13,20 @@ import {
 } from '../constants';
 import { CodeLanguageId } from '../types';
 import { HistoryManager, SettingsManager } from '../../../api';
+import { StatusBarManager } from '../ui/statusBarManager';
+import { postProcessCompletion } from '../utils';
 
 export class ManuallyCodeCompletionStrategy implements CompletionStrategy {
   private readonly settingsManager: SettingsManager;
   private readonly historyManager: HistoryManager;
   private readonly loadedModelServices: LoadedModelServices;
+  private readonly statusBarManager: StatusBarManager;
 
   constructor(
-    // TODO: Implement context retrieval in the with the loaded model services
     ctx: vscode.ExtensionContext,
     settingsManager: SettingsManager,
     loadedModelServices: LoadedModelServices,
+    statusBarManager: StatusBarManager,
   ) {
     this.settingsManager = settingsManager;
     this.historyManager = new HistoryManager(
@@ -31,47 +35,54 @@ export class ManuallyCodeCompletionStrategy implements CompletionStrategy {
       'manuallyCodeCompletionHistories',
     );
     this.loadedModelServices = loadedModelServices;
-
-    const history = this.historyManager.getCurrentHistory();
-    void this.historyManager.updateHistoryModelAdvanceSettings(history.root, {
-      ...history.advanceSettings,
-      systemPrompt: `${SYSTEM_PROMPT}\n\n${FEW_SHOT_EXAMPLES}`,
-      temperature: 0.7,
-    });
+    this.statusBarManager = statusBarManager;
   }
 
   /**
    * Clean the completion response by removing the <COMPLETION> tags and keeping the inner code.
-   * @param response The response from the model service.
-   * @private
    */
   private cleanCompletionResponse(response: string): string {
-    // Step 1: If <COMPLETION> tags are missing, wrap the entire response with them
+    if (
+      response.startsWith('Failed to connect to the language model service.')
+    ) {
+      return '';
+    }
+
     if (!response.includes('<COMPLETION>')) {
       response = `<COMPLETION>${response}</COMPLETION>`;
     }
 
-    // Step 2: Remove only the outer markdown code blocks (```), preserving internal code
-    response = response.replace(/```[a-zA-Z]*\n([\s\S]*?)\n```/g, (_, code) => {
-      // Return only the content inside the markdown block, keeping valid backticks inside
-      return code;
-    });
+    response = response.replace(
+      /```[a-zA-Z]*\n([\s\S]*?)\n```/g,
+      (_, code) => code,
+    );
 
-    // Step 3: Return the response with the <COMPLETION> tags removed
     return response.replace(/<COMPLETION>/g, '').replace(/<\/COMPLETION>/g, '');
   }
 
   /**
    * Get the response from the model service.
-   * @param prompt The prompt to send to the model service.
    */
-  private async getResponse(prompt: string): Promise<string> {
-    const modelService = this.settingsManager.get(
-      'lastUsedManualCodeCompletionModelService',
-    );
-    const modelName = this.settingsManager.get(
-      'lastSelectedManualCodeCompletionModel',
-    )[modelService];
+  private async getResponse(
+    prompt: string,
+    modelService: ModelServiceType,
+    modelName: string,
+  ): Promise<string> {
+    // For smaller models, use a simpler prompt
+    const systemPrompt =
+      modelService === 'ollama'
+        ? `${SYSTEM_PROMPT}\n\n${FEW_SHOT_EXAMPLES}`
+        : `${SYSTEM_PROMPT}\n\n${CHAIN_OF_THOUGHT}\n\n${FEW_SHOT_EXAMPLES}`;
+
+    // Set the system prompt and temperature
+    const history = this.historyManager.getCurrentHistory();
+    void this.historyManager.updateHistoryModelAdvanceSettings(history.root, {
+      ...history.advanceSettings,
+      systemPrompt: systemPrompt,
+      temperature: 0.7,
+    });
+
+    // Get the response from the model service
     const response = await this.loadedModelServices[
       modelService
     ].service.getResponse({
@@ -91,7 +102,6 @@ export class ManuallyCodeCompletionStrategy implements CompletionStrategy {
     document: vscode.TextDocument,
   ): CodeLanguageId | 'unknown' {
     const fileExtension = document.uri.fsPath.split('.').pop();
-
     return (
       FILE_TO_LANGUAGE[fileExtension || ''] ||
       FILE_TO_LANGUAGE[document.languageId] ||
@@ -100,7 +110,7 @@ export class ManuallyCodeCompletionStrategy implements CompletionStrategy {
   }
 
   /**
-   * Retrieve the language context (keywords, comment styles, etc.) or fall back to a default.
+   * Retrieve the language context or fall back to a default.
    */
   private getLanguageContext(languageId: CodeLanguageId | 'unknown') {
     return (
@@ -140,8 +150,7 @@ export class ManuallyCodeCompletionStrategy implements CompletionStrategy {
   }
 
   /**
-   * Build the full prompt by integrating the language-specific information, surrounding code,
-   * and few-shot examples.
+   * Build the full prompt by integrating the language-specific information and surrounding code.
    */
   private buildPrompt(
     prefix: string,
@@ -159,6 +168,8 @@ export class ManuallyCodeCompletionStrategy implements CompletionStrategy {
   private async getCompletionWithTimeout(
     prompt: string,
     token: vscode.CancellationToken,
+    modelService: ModelServiceType,
+    modelName: string,
   ): Promise<string | null> {
     const timeoutMs = 50000; // 50 seconds request timeout
     return new Promise<string | null>((resolve, reject) => {
@@ -167,7 +178,7 @@ export class ManuallyCodeCompletionStrategy implements CompletionStrategy {
         timeoutMs,
       );
 
-      this.getResponse(prompt)
+      this.getResponse(prompt, modelService, modelName)
         .then((result) => {
           clearTimeout(timeout);
           resolve(result);
@@ -198,6 +209,10 @@ export class ManuallyCodeCompletionStrategy implements CompletionStrategy {
 
   /**
    * Provides inline completion items using manually triggered LLM-based completion.
+   * @param document The document in which the completion was triggered.
+   * @param position The position at which the completion was triggered.
+   * @param token A cancellation token.
+   * @returns An array of inline completion items or null.
    */
   public async provideCompletion(
     document: vscode.TextDocument,
@@ -214,33 +229,63 @@ export class ManuallyCodeCompletionStrategy implements CompletionStrategy {
     // Step 1: Detect the language of the document
     const languageId = this.detectLanguage(document);
 
-    // Step 2: Retrieve the language context (or fallback to a default context)
-    const languageContext = this.getLanguageContext(languageId);
+    // Step 2: Show the processing status on the status bar
+    this.statusBarManager.showProcessing();
 
-    console.debug(languageContext);
-    // TODO: Implement the context retrieval logic in the future, soon (TM)
+    try {
+      // Step 3: Retrieve the language context (or fallback to a default context)
+      const languageContext = this.getLanguageContext(languageId);
 
-    // Retrieve language name for display purposes
-    const languageName =
-      languageId === 'unknown'
-        ? 'Unknown Language'
-        : LANGUAGE_NAME_MAPPING[languageId] || 'Unknown Language';
+      // TODO: Use this for additional context in the future
+      console.debug(languageContext);
 
-    // Step 3: Extract surrounding code (prefix and suffix)
-    const prefix = this.getPrefix(document, position);
-    const suffix = this.getSuffix(document, position);
+      const languageName =
+        languageId === 'unknown'
+          ? 'Unknown Language'
+          : LANGUAGE_NAME_MAPPING[languageId] || 'Unknown Language';
 
-    // Step 4: Build the prompt for the LLM using the context and few-shot examples
-    const prompt = this.buildPrompt(prefix, suffix, languageName);
+      // Step 4: Extract surrounding code (prefix and suffix)
+      const prefix = this.getPrefix(document, position);
+      const suffix = this.getSuffix(document, position);
 
-    // Step 5: Call the language model (mock for now)
-    const completion = await this.getCompletionWithTimeout(prompt, token);
+      // Step 5: Build the prompt for the LLM using the context and few-shot examples
+      const prompt = this.buildPrompt(prefix, suffix, languageName);
 
-    if (!completion) {
-      return null;
+      // Step 6: Call the language model
+      const modelService = this.settingsManager.get(
+        'lastUsedManualCodeCompletionModelService',
+      );
+      const modelName = this.settingsManager.get(
+        'lastSelectedManualCodeCompletionModel',
+      )[modelService];
+      const completion = await this.getCompletionWithTimeout(
+        prompt,
+        token,
+        modelService,
+        modelName,
+      );
+
+      if (!completion) {
+        return null;
+      }
+
+      // Step 7: Post-process the completion
+      const postProcessedResult = postProcessCompletion(
+        completion,
+        prefix,
+        suffix,
+        modelName,
+      );
+
+      if (!postProcessedResult) {
+        return null;
+      }
+
+      // Step 8: Process and return the completion as VSCode InlineCompletionItems
+      return this.buildInlineCompletionItems(postProcessedResult, position);
+    } finally {
+      // Step 9: Show idle status after processing
+      this.statusBarManager.showIdle();
     }
-
-    // Step 6: Process and return the completion as VSCode InlineCompletionItems
-    return this.buildInlineCompletionItems(completion, position);
   }
 }

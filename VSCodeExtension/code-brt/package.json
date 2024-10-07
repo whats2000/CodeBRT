@@ -3,7 +3,7 @@
   "private": true,
   "displayName": "CodeBRT",
   "description": "CodeBRT, a LLM/VLM framework for code assistant with multiple models.",
-  "version": "0.3.0",
+  "version": "0.3.1",
   "icon": "static/icon.ico",
   "engines": {
     "vscode": "^1.94.0",
@@ -52,6 +52,7 @@
     "format": "prettier 'src/**/*.js' 'src/**/*.jsx' 'src/**/*.ts' 'src/**/*.tsx' './package.json' '.swcrc' './*.js' --no-error-on-unmatched-pattern --write"
   },
   "devDependencies": {
+    "@algorithm.ts/lcs": "^4.0.5",
     "@ant-design/icons": "^5.5.1",
     "@anthropic-ai/sdk": "^0.28.0",
     "@babel/core": "^7.25.7",
@@ -126,6 +127,10 @@
       {
         "command": "code-brt.triggerInlineCompletion",
         "title": "Trigger Inline Completion"
+      },
+      {
+        "command": "code-brt.openMainView",
+        "title": "Open CodeBRT Chat"
       }
     ],
     "keybindings": [

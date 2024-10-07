@@ -4,6 +4,7 @@ import { AutoCodeCompletionProvider } from './autoCodeCompletionProvider';
 import { ManuallyCodeCompletionProvider } from './manuallyCodeCompletionProvider';
 import { SettingsManager } from '../../../api';
 import { LoadedModelServices } from '../../../types';
+import { StatusBarManager } from '../ui/statusBarManager';
 
 export class InlineCompletionProvider
   implements vscode.InlineCompletionItemProvider
@@ -15,16 +16,19 @@ export class InlineCompletionProvider
     ctx: vscode.ExtensionContext,
     settingsManager: SettingsManager,
     loadedModelServices: LoadedModelServices,
+    statusBarManager: StatusBarManager,
   ) {
     this.autoCodeCompletionProvider = new AutoCodeCompletionProvider(
       ctx,
       settingsManager,
       loadedModelServices,
+      statusBarManager,
     );
     this.manuallyCodeCompletionProvider = new ManuallyCodeCompletionProvider(
       ctx,
       settingsManager,
       loadedModelServices,
+      statusBarManager,
     );
   }
 

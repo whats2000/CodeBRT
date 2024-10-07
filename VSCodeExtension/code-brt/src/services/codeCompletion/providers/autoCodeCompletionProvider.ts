@@ -3,6 +3,7 @@ import vscode from 'vscode';
 import type { LoadedModelServices } from 'src/types';
 import { AbstractCompletionProvider } from '../base';
 import { SettingsManager } from '../../../api';
+import { StatusBarManager } from '../ui/statusBarManager';
 
 // TODO: Implement the AutoCodeCompletionProvider class
 export class AutoCodeCompletionProvider implements AbstractCompletionProvider {
@@ -10,6 +11,7 @@ export class AutoCodeCompletionProvider implements AbstractCompletionProvider {
     _ctx: vscode.ExtensionContext,
     _settingsManager: SettingsManager,
     _loadedModelServices: LoadedModelServices,
+    _statusBarManager: StatusBarManager,
   ) {}
 
   provideCompletionItems(
