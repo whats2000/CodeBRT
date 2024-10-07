@@ -125,6 +125,9 @@ Here’s an outline of the upcoming features and improvements for CodeBRT:
 - [ ] Code style analysis
 - [ ] Improved features from earlier versions
 
+### Later Versions
+The project will continue to evolve with new features and improvements. Stay tuned for more updates!
+
 ## Contributing
 
 We welcome contributions! Whether you're fixing bugs, adding features, or improving documentation, your help is
