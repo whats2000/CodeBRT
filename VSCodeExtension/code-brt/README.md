@@ -120,6 +120,7 @@ CodeBRT is built on various open-source tools and frameworks. Special thanks to 
 
 - [The Starter Framework For VSCode Extension](https://github.com/sfc-gh-tkojima/vscode-react-webviews) by [sfc-gh-tkojima](https://github.com/sfc-gh-tkojima)
 - [The Continue Project For the process of LLM responses](https://github.com/continuedev/continue/) by continuedev team (Apache License 2.0)
+- [The Claude Dev Project For the agent-based framework](https://github.com/saoudrizwan/claude-dev/) by [saoudrizwan](https://github.com/saoudrizwan/) (MIT License)
 
 - Icons and logos from [SVG Repo](https://www.svgrepo.com/):
   - [Vscode2 Opened SVG Vector](https://www.svgrepo.com/svg/373400/vscode2-opened) (MIT License)
