@@ -1,7 +1,10 @@
 /**
- * The prompt templates for mostly tools are heavily inspired and modified from the following source:
- * Claude Dev - https://github.com/saoudrizwan/claude-dev/blob/main/src/core/prompts/tools.ts
- * The source is licensed under the MIT License.
+ * This file contains code modify from repository cline, from the clinebot, which is licensed under
+ * the Apache License, Version 2.0. You can obtain a copy of the Apache License at:
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * The related file is located at:
+ * https://github.com/clinebot/cline/blob/main/src/core/prompts/system.ts
  */
 import { ToolSchema, ToolServiceType } from '../types';
 
