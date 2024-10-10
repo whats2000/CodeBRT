@@ -7,7 +7,7 @@ import axios from 'axios';
 import * as cheerio from 'cheerio';
 
 import type { ToolServicesApi } from './types';
-import { extractTextFromWebpage } from '../../utils';
+import { extractTextFromWebpage } from './utils';
 
 const postProcessResults = (
   results: { title: string; url: string; snippet: string }[],

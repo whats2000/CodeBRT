@@ -10,7 +10,7 @@ import type {
   ToolServiceType,
 } from '../../types';
 import { MODEL_SERVICE_CONSTANTS, toolsSchema } from '../../constants';
-import { ParseToolCallUtils } from '../../utils';
+import { ParseToolCallUtils } from './utils';
 import { AbstractLanguageModelService } from './base';
 import { HistoryManager, SettingsManager } from '../../api';
 import { ToolService } from '../tools';

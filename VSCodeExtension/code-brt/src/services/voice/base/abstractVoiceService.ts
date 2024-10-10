@@ -8,7 +8,7 @@ import removeMarkdown from 'markdown-to-text';
 
 import type { VoiceService } from '../types';
 import { SettingsManager } from '../../../api';
-import { SoundPlay, AudioRecorder } from '../../../utils';
+import { SoundPlay, AudioRecorder } from '../utils';
 
 export abstract class AbstractVoiceService implements VoiceService {
   protected readonly context: vscode.ExtensionContext;
