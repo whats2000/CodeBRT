@@ -1,8 +1,4 @@
-import type {
-  ToolFunction,
-  ToolServicesApi,
-  ToolServiceType,
-} from '../../types';
+import type { ToolFunction, ToolServicesApi, ToolServiceType } from './types';
 import { webSearchTool } from './webSearchTool';
 import { urlFetcherTool } from './urlFetcher';
 

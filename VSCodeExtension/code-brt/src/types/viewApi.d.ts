@@ -5,7 +5,7 @@ import {
   ConversationHistoryIndexList,
   ConversationModelAdvanceSettings,
 } from './conversationHistory';
-import { ModelServiceType } from './modelServiceType';
+import { ModelServiceType } from '../services/languageModel/types';
 
 /**
  * Represents the API request structure for the view.

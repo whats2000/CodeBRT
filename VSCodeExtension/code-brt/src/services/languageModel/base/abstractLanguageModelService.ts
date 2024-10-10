@@ -4,7 +4,7 @@ import {
   LanguageModelService,
   GetResponseOptions,
   ModelServiceType,
-} from '../../../types';
+} from '../types';
 import { SettingsManager } from '../../../api';
 
 /**

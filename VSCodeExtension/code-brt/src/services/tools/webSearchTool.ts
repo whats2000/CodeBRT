@@ -6,7 +6,7 @@
 import axios from 'axios';
 import * as cheerio from 'cheerio';
 
-import type { ToolServicesApi } from '../../types';
+import type { ToolServicesApi } from './types';
 import { extractTextFromWebpage } from '../../utils';
 
 const postProcessResults = (

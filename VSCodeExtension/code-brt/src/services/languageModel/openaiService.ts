@@ -6,7 +6,7 @@ import type {
 } from 'openai/resources/chat/completions';
 import OpenAI from 'openai';
 
-import type { GetResponseOptions } from '../../types';
+import type { GetResponseOptions } from './types';
 import { SettingsManager } from '../../api';
 import { AbstractOpenaiLikeService } from './base';
 import { MODEL_SERVICE_CONSTANTS } from '../../constants';

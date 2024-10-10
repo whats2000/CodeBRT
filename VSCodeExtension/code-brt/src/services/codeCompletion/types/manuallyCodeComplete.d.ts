@@ -1,5 +1,3 @@
-import { ModelServiceType } from './modelServiceType';
-
 type LineFilterArgs = {
   lines: AsyncGenerator<string>;
   fullStop: () => void;
@@ -33,25 +31,4 @@ export type ManuallyCompleteLanguageInfo = {
     prefix: string;
     suffix: string;
   }) => boolean | undefined;
-};
-
-export type IManuallyCompleteService = {
-  /**
-   * Get completion for a prompt
-   * @param prompt - the prompt to get completion for
-   * @returns completion string
-   */
-  getCompletion(prompt: string): Promise<string>;
-
-  /**
-   * Switch the model type
-   * @param modelName - the model type to switch to
-   */
-  switchModel(modelName: ModelServiceType): void;
-
-  /**
-   * Get the available models for the current model type
-   * @returns available models
-   */
-  getAvailableModels(): string[];
 };

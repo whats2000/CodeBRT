@@ -1,4 +1,4 @@
-import { LanguageModelService } from './languageModelService';
+import { LanguageModelService } from './index';
 
 /**
  * Represents the type of models supported by the system.

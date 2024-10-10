@@ -1,3 +1,5 @@
+import { HistoryManager } from '../../../api';
+
 /**
  * The options to get a response for
  * @property query - The query to get a response for

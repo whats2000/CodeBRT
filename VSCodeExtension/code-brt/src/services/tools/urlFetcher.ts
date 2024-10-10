@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-import type { ToolServicesApi } from '../../types';
+import type { ToolServicesApi } from './types';
 import { extractTextFromWebpage } from '../../utils';
 
 const postProcessUrlContent = (

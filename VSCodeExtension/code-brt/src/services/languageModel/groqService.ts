@@ -7,7 +7,7 @@ import type {
 } from 'groq-sdk/src/resources/chat/completions';
 import Groq from 'groq-sdk';
 
-import type { GetResponseOptions } from '../../types';
+import type { GetResponseOptions } from './types';
 import { MODEL_SERVICE_CONSTANTS } from '../../constants';
 import { AbstractOpenaiLikeService } from './base';
 import { SettingsManager } from '../../api';
