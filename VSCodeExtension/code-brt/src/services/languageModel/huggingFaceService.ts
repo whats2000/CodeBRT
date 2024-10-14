@@ -10,12 +10,12 @@ import { HfInference } from '@huggingface/inference';
 import type {
   ConversationEntry,
   GetResponseOptions,
-  ToolServiceType,
+  NonWorkspaceToolType,
 } from '../../types';
 import { AbstractLanguageModelService } from './base';
 import { HistoryManager, SettingsManager } from '../../api';
-import { MODEL_SERVICE_CONSTANTS, toolsSchema } from '../../constants';
-import { ToolService } from '../tools';
+import { MODEL_SERVICE_CONSTANTS } from '../../constants';
+import { ToolServiceProvider } from '../tools';
 
 export class HuggingFaceService extends AbstractLanguageModelService {
   private stopStreamFlag: boolean = false;
@@ -70,9 +70,23 @@ export class HuggingFaceService extends AbstractLanguageModelService {
   private getEnabledTools(): ChatCompletionInputTool[] | undefined {
     const enabledTools = this.settingsManager.get('enableTools');
     const tools: ChatCompletionInputTool[] = [];
+    const { agentTools, ...toolsSchema } = ToolServiceProvider.getToolSchema();
+
+    if (enabledTools.agentTools.active && agentTools) {
+      for (const [_key, tool] of Object.entries(agentTools)) {
+        tools.push({
+          type: 'function',
+          function: {
+            name: tool.name,
+            description: tool.description,
+            arguments: tool.inputSchema,
+          },
+        });
+      }
+    }
 
     for (const [key, tool] of Object.entries(toolsSchema)) {
-      if (!enabledTools[key as ToolServiceType].active) {
+      if (!enabledTools[key as NonWorkspaceToolType].active) {
         continue;
       }
 
@@ -136,7 +150,7 @@ export class HuggingFaceService extends AbstractLanguageModelService {
         continue;
       }
 
-      const tool = ToolService.getTool(functionCall.function.name);
+      const tool = ToolServiceProvider.getTool(functionCall.function.name);
       if (!tool) {
         functionCallResults += `Failed to find tool with name: ${functionCall.function.name}. \n\n The tool available are: \n${JSON.stringify(
           this.getEnabledTools(),

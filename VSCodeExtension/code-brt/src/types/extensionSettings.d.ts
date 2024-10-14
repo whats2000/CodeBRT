@@ -5,7 +5,7 @@ import {
   VoiceToTextServiceType,
 } from '../services/voice/types';
 import { ModelServiceType } from '../services/languageModel/types';
-import { ToolServiceType } from '../services/tools/types';
+import { NonWorkspaceToolType } from '../services/tools/types';
 
 /**
  * Represents the available theme algorithms for the Ant Design theme.
@@ -155,7 +155,7 @@ export type CodeCompletionSettings = {
  */
 export type ToolServiceSettings = {
   enableTools: {
-    [key in ToolServiceType]: {
+    [key in NonWorkspaceToolType | 'agentTools']: {
       active: boolean;
     };
   };

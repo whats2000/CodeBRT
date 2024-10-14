@@ -9,12 +9,11 @@ import type {
   ChatCompletionToolMessageParamOpenaiLike,
   ChatCompletionToolOpenaiLike,
   ConversationEntry,
-  ToolServiceType,
+  NonWorkspaceToolType,
 } from '../../../types';
 import { HistoryManager } from '../../../api';
-import { toolsSchema } from '../../../constants';
 import { AbstractLanguageModelService } from './abstractLanguageModelService';
-import { ToolService } from '../../tools';
+import { ToolServiceProvider } from '../../tools';
 import vscode from 'vscode';
 
 export abstract class AbstractOpenaiLikeService extends AbstractLanguageModelService {
@@ -55,9 +54,23 @@ export abstract class AbstractOpenaiLikeService extends AbstractLanguageModelSer
   protected getEnabledTools(): ChatCompletionToolOpenaiLike[] | undefined {
     const enabledTools = this.settingsManager.get('enableTools');
     const tools: ChatCompletionToolOpenaiLike[] = [];
+    const { agentTools, ...toolsSchema } = ToolServiceProvider.getToolSchema();
+
+    if (enabledTools.agentTools.active && agentTools) {
+      for (const [_key, tool] of Object.entries(agentTools)) {
+        tools.push({
+          type: 'function',
+          function: {
+            name: tool.name,
+            description: tool.description,
+            parameters: tool.inputSchema,
+          },
+        });
+      }
+    }
 
     for (const [key, tool] of Object.entries(toolsSchema)) {
-      if (!enabledTools[key as ToolServiceType].active) {
+      if (!enabledTools[key as NonWorkspaceToolType].active) {
         continue;
       }
 
@@ -106,7 +119,7 @@ export abstract class AbstractOpenaiLikeService extends AbstractLanguageModelSer
         continue;
       }
 
-      const tool = ToolService.getTool(functionCall.function.name);
+      const tool = ToolServiceProvider.getTool(functionCall.function.name);
       if (!tool) {
         functionCallResults.push({
           role: 'tool',

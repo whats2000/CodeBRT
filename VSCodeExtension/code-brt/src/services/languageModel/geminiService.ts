@@ -19,13 +19,14 @@ import {
 import type {
   ConversationEntry,
   GetResponseOptions,
-  ToolServiceType,
+  NonWorkspaceToolType,
+  ToolSchema,
 } from '../../types';
-import { MODEL_SERVICE_CONSTANTS, toolsSchema } from '../../constants';
+import { MODEL_SERVICE_CONSTANTS } from '../../constants';
 import { mapFunctionDeclarationSchemaType } from './utils';
 import { AbstractLanguageModelService } from './base';
 import { HistoryManager, SettingsManager } from '../../api';
-import { ToolService } from '../tools';
+import { ToolServiceProvider } from '../tools';
 
 type GeminiModel = {
   name: string;
@@ -120,11 +121,7 @@ export class GeminiService extends AbstractLanguageModelService {
     const enabledTools = this.settingsManager.get('enableTools');
     const tools: Tool[] = [];
 
-    for (const [key, tool] of Object.entries(toolsSchema)) {
-      if (!enabledTools[key as ToolServiceType].active) {
-        continue;
-      }
-
+    const addTool = (tool: ToolSchema) => {
       const properties = Object.keys(tool.inputSchema.properties).reduce(
         (acc, key) => {
           const property = tool.inputSchema.properties[key];
@@ -156,6 +153,21 @@ export class GeminiService extends AbstractLanguageModelService {
           },
         ],
       });
+    };
+
+    const { agentTools, ...toolsSchema } = ToolServiceProvider.getToolSchema();
+
+    if (enabledTools.agentTools.active && agentTools) {
+      for (const [_key, tool] of Object.entries(agentTools)) {
+        addTool(tool);
+      }
+    }
+
+    for (const [key, tool] of Object.entries(toolsSchema)) {
+      if (!enabledTools[key as NonWorkspaceToolType].active) {
+        continue;
+      }
+      addTool(tool);
     }
 
     return tools.length > 0 ? tools : undefined;
@@ -276,7 +288,7 @@ export class GeminiService extends AbstractLanguageModelService {
     const functionCallResults: FunctionResponsePart[] = [];
 
     for (const functionCall of functionCalls) {
-      const tool = ToolService.getTool(functionCall.name);
+      const tool = ToolServiceProvider.getTool(functionCall.name);
       if (!tool) {
         functionCallResults.push({
           functionResponse: {

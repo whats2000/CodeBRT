@@ -6,7 +6,7 @@
  * The related file is located at:
  * https://github.com/clinebot/cline/blob/main/src/core/prompts/system.ts
  */
-import { ToolSchema, ToolServiceType } from '../types';
+import { ToolSchema } from '../types';
 
 export const webSearchSchema: ToolSchema = {
   name: 'webSearch',
@@ -241,7 +241,7 @@ export const askFollowUpQuestionSchema: ToolSchema = {
   },
 };
 
-export const attemptCompletion: ToolSchema = {
+export const attemptCompletionSchema: ToolSchema = {
   name: 'attemptCompletion',
   description:
     "Once you've completed the task, use this tool to present the result to the user. " +
@@ -268,11 +268,4 @@ export const attemptCompletion: ToolSchema = {
     },
     required: ['result'],
   },
-};
-
-export const toolsSchema: {
-  [key in ToolServiceType]: ToolSchema;
-} = {
-  webSearch: webSearchSchema,
-  urlFetcher: urlFetcherSchema,
 };

@@ -53,6 +53,7 @@ export const DEFAULT_LOCAL_SETTINGS: ExtensionSettingsLocal = {
   enableTools: {
     webSearch: { active: true },
     urlFetcher: { active: true },
+    agentTools: { active: true },
   },
   systemPrompts: [],
   retainContextWhenHidden: false,

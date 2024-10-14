@@ -5,13 +5,14 @@ import { CohereClient } from 'cohere-ai';
 import type {
   ConversationEntry,
   GetResponseOptions,
-  ToolServiceType,
+  NonWorkspaceToolType,
+  ToolSchema,
 } from '../../types';
-import { MODEL_SERVICE_CONSTANTS, toolsSchema } from '../../constants';
+import { MODEL_SERVICE_CONSTANTS } from '../../constants';
 import { mapTypeToPythonFormat } from './utils';
 import { AbstractLanguageModelService } from './base';
 import { HistoryManager, SettingsManager } from '../../api';
-import { ToolService } from '../tools';
+import { ToolServiceProvider } from '../tools';
 import { ChatRequest } from 'cohere-ai/api/client/requests/ChatRequest';
 
 export class CohereService extends AbstractLanguageModelService {
@@ -80,37 +81,44 @@ export class CohereService extends AbstractLanguageModelService {
     const enabledTools = this.settingsManager.get('enableTools');
     const tools: Tool[] = [];
 
-    for (const [key, tool] of Object.entries(toolsSchema)) {
-      if (!enabledTools[key as ToolServiceType].active) {
-        continue;
-      }
+    const { agentTools, ...toolsSchema } = ToolServiceProvider.getToolSchema();
 
-      const parameterDefinitions = Object.keys(
-        tool.inputSchema.properties,
-      ).reduce(
-        (acc, key) => {
-          const property = tool.inputSchema.properties[key];
-          acc[key] = {
-            description: property.description,
-            type: mapTypeToPythonFormat(property.type),
-            required: tool.inputSchema.required.includes(key),
-          };
-          return acc;
-        },
-        {} as {
-          [key: string]: {
-            description: string;
-            type: string;
-            required: boolean;
-          };
-        },
-      );
-
+    const addTool = (tool: ToolSchema) => {
       tools.push({
         name: tool.name,
         description: tool.description,
-        parameterDefinitions,
+        parameterDefinitions: Object.keys(tool.inputSchema.properties).reduce(
+          (acc, key) => {
+            const property = tool.inputSchema.properties[key];
+            acc[key] = {
+              description: property.description,
+              type: mapTypeToPythonFormat(property.type),
+              required: tool.inputSchema.required.includes(key),
+            };
+            return acc;
+          },
+          {} as {
+            [key: string]: {
+              description: string;
+              type: string;
+              required: boolean;
+            };
+          },
+        ),
       });
+    };
+
+    if (!enabledTools.agentTools.active && agentTools) {
+      for (const [_key, tool] of Object.entries(agentTools)) {
+        addTool(tool);
+      }
+    }
+
+    for (const [key, tool] of Object.entries(toolsSchema)) {
+      if (!enabledTools[key as NonWorkspaceToolType].active) {
+        continue;
+      }
+      addTool(tool);
     }
 
     return tools.length > 0 ? tools : undefined;
@@ -153,7 +161,7 @@ export class CohereService extends AbstractLanguageModelService {
     const functionCallResults: ToolResult[] = [];
 
     for (const functionCall of functionCalls) {
-      const tool = ToolService.getTool(functionCall.name);
+      const tool = ToolServiceProvider.getTool(functionCall.name);
       if (!tool) {
         functionCallResults.push({
           call: functionCall,

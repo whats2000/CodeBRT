@@ -7,13 +7,13 @@ import { Ollama } from 'ollama';
 import type {
   ConversationEntry,
   GetResponseOptions,
-  ToolServiceType,
+  NonWorkspaceToolType,
 } from '../../types';
-import { MODEL_SERVICE_CONSTANTS, toolsSchema } from '../../constants';
+import { MODEL_SERVICE_CONSTANTS } from '../../constants';
 import { ParseToolCallUtils } from './utils';
 import { AbstractLanguageModelService } from './base';
 import { HistoryManager, SettingsManager } from '../../api';
-import { ToolService } from '../tools';
+import { ToolServiceProvider } from '../tools';
 
 export class OllamaService extends AbstractLanguageModelService {
   private runningModel = '';
@@ -67,9 +67,23 @@ export class OllamaService extends AbstractLanguageModelService {
   private getEnabledTools(): Tool[] | undefined {
     const enabledTools = this.settingsManager.get('enableTools');
     const tools: Tool[] = [];
+    const { agentTools, ...toolsSchema } = ToolServiceProvider.getToolSchema();
+
+    if (enabledTools.agentTools.active && agentTools) {
+      for (const [_key, tool] of Object.entries(agentTools)) {
+        tools.push({
+          type: 'function',
+          function: {
+            name: tool.name,
+            description: tool.description,
+            parameters: tool.inputSchema,
+          },
+        });
+      }
+    }
 
     for (const [key, tool] of Object.entries(toolsSchema)) {
-      if (!enabledTools[key as ToolServiceType].active) {
+      if (!enabledTools[key as NonWorkspaceToolType].active) {
         continue;
       }
 
@@ -223,7 +237,7 @@ export class OllamaService extends AbstractLanguageModelService {
         continue;
       }
 
-      const tool = ToolService.getTool(functionCall.function.name);
+      const tool = ToolServiceProvider.getTool(functionCall.function.name);
       if (!tool) {
         functionCallResults.push({
           role: 'tool',

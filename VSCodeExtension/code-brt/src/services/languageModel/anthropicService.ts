@@ -22,12 +22,12 @@ import Anthropic from '@anthropic-ai/sdk';
 import {
   ConversationEntry,
   GetResponseOptions,
-  ToolServiceType,
+  NonWorkspaceToolType,
 } from '../../types';
-import { MODEL_SERVICE_CONSTANTS, toolsSchema } from '../../constants';
+import { MODEL_SERVICE_CONSTANTS } from '../../constants';
 import { HistoryManager, SettingsManager } from '../../api';
 import { AbstractLanguageModelService } from './base';
-import { ToolService } from '../tools';
+import { ToolServiceProvider } from '../tools';
 
 export class AnthropicService extends AbstractLanguageModelService {
   private currentStreamResponse: MessageStream | undefined;
@@ -97,8 +97,21 @@ export class AnthropicService extends AbstractLanguageModelService {
   private getEnabledTools(): Tool[] | undefined {
     const enabledTools = this.settingsManager.get('enableTools');
     const tools: Tool[] = [];
+    const { agentTools, ...toolsSchema } = ToolServiceProvider.getToolSchema();
+
+    // Add agent tools if enabled
+    if (enabledTools.agentTools.active && agentTools) {
+      for (const [key, tool] of Object.entries(agentTools)) {
+        tools.push({
+          name: key,
+          description: tool.description,
+          input_schema: tool.inputSchema as Tool.InputSchema,
+        });
+      }
+    }
+
     for (const [key, tool] of Object.entries(toolsSchema)) {
-      if (!enabledTools[key as ToolServiceType].active) {
+      if (!enabledTools[key as NonWorkspaceToolType].active) {
         continue;
       }
 
@@ -259,7 +272,7 @@ export class AnthropicService extends AbstractLanguageModelService {
     const functionCallResults: ToolResultBlockParam[] = [];
 
     for (const functionCall of functionCalls) {
-      const tool = ToolService.getTool(functionCall.name);
+      const tool = ToolServiceProvider.getTool(functionCall.name);
       if (!tool) {
         functionCallResults.push({
           type: 'tool_result',
