@@ -6,7 +6,7 @@ Before we begin, ensure that all [installation](./installation.md) and [configur
 
 To start using CodeBRT:
 
-1. Click the **extension button** on the left sidebar to open the CodeBRT dialog.
+1. Click the **extension button** on the left sidebar to open the CodeBRT dialog.  
    ![Extension Button](/img/getting-started/overview/extension-button.png)
 
 2. To access general settings, click the **gear button** in the upper-right corner of the dialog.
@@ -49,13 +49,12 @@ For more details on configuring the voice service, please refer to the [Voice Se
 ## Getting Started with Chat
 
 ### Language Model Selection
-
+   ![Language Model Selection](/img/getting-started/overview/language-model-selection.png)  
 You can select from multiple **model services** such as Gemini, OpenAI, Ollama, and others. CodeBRT offers flexibility by allowing you to switch between different services easily.
 
 1. **Service Selection**: Choose the model service you want to use from the dropdown.
 
 2. **Model Selection**: Once a service is selected, choose from the available models, or customize your own model list to fit your needs.
-   ![Language Model Selection](/img/getting-started/overview/language-model-selection.png)
 
 ### Sending a Message
 
