@@ -109,14 +109,14 @@ export class CohereService extends AbstractLanguageModelService {
       });
     };
 
-    if (!enabledTools.agentTools.active && agentTools) {
+    if (!enabledTools.agentTools?.active && agentTools) {
       for (const [_key, tool] of Object.entries(agentTools)) {
         addTool(tool);
       }
     }
 
     for (const [key, tool] of Object.entries(toolsSchema)) {
-      if (!enabledTools[key as NonWorkspaceToolType].active) {
+      if (!enabledTools[key as NonWorkspaceToolType]?.active) {
         continue;
       }
       addTool(tool);

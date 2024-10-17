@@ -100,7 +100,7 @@ export class AnthropicService extends AbstractLanguageModelService {
     const { agentTools, ...toolsSchema } = ToolServiceProvider.getToolSchema();
 
     // Add agent tools if enabled
-    if (enabledTools.agentTools.active && agentTools) {
+    if (enabledTools.agentTools?.active && agentTools) {
       for (const [key, tool] of Object.entries(agentTools)) {
         tools.push({
           name: key,
@@ -111,7 +111,7 @@ export class AnthropicService extends AbstractLanguageModelService {
     }
 
     for (const [key, tool] of Object.entries(toolsSchema)) {
-      if (!enabledTools[key as NonWorkspaceToolType].active) {
+      if (!enabledTools[key as NonWorkspaceToolType]?.active) {
         continue;
       }
 

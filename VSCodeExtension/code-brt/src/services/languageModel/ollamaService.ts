@@ -70,7 +70,7 @@ export class OllamaService extends AbstractLanguageModelService {
     const tools: Tool[] = [];
     const { agentTools, ...toolsSchema } = ToolServiceProvider.getToolSchema();
 
-    if (enabledTools.agentTools.active && agentTools) {
+    if (enabledTools.agentTools?.active && agentTools) {
       for (const [_key, tool] of Object.entries(agentTools)) {
         tools.push({
           type: 'function',
@@ -84,7 +84,7 @@ export class OllamaService extends AbstractLanguageModelService {
     }
 
     for (const [key, tool] of Object.entries(toolsSchema)) {
-      if (!enabledTools[key as NonWorkspaceToolType].active) {
+      if (!enabledTools[key as NonWorkspaceToolType]?.active) {
         continue;
       }
 
