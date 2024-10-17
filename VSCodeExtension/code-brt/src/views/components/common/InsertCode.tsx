@@ -35,6 +35,13 @@ const extractUserQuery = (input: string): string => {
   return input.replace(/```[\s\S]*?```/g, '').trim();
 };
 
+const addLineNumbersToCode = (code: string, startingLine: number): string => {
+  return code
+    .split('\n')
+    .map((line, index) => `${startingLine + index}: ${line}`)
+    .join('\n');
+};
+
 const InsertButton: React.FC<InsertButtonProps> = ({
   code,
   handleOpenApplyChangesAlert,
@@ -50,9 +57,20 @@ const InsertButton: React.FC<InsertButtonProps> = ({
 
     try {
       const originalCode: string = await callApi('getCurrentEditorCode');
+      const editorInfo = await callApi('getEditorInfo'); // Assuming this gets the file starting line info
+
+      // If editor info contains the starting line, you can modify this accordingly
+      const startingLine = editorInfo?.startingLine || 1; // Default to line 1 if not provided
+
+      // Add line numbers to the original code
+      const originalCodeWithLineNumbers = addLineNumbersToCode(
+        originalCode,
+        startingLine,
+      );
+
       const userQuery = extractUserQuery(code);
       const response: FixCodeResponse = await callApi('fixCode', {
-        originalCode,
+        originalCode: originalCodeWithLineNumbers,
         generatedCode: code,
         userQuery,
       });
