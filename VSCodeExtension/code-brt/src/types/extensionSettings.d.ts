@@ -135,11 +135,6 @@ export type VoiceServiceSettings = {
   gptSoVitsClientHost: string;
   gptSoVitsAvailableReferenceVoices: GptSoVitsVoiceSetting[];
   gptSoVitsSelectedReferenceVoice: string;
-  codeFixerGeminiAvailableModels: string[];
-  codeFixerOpenaiAvailableModels: string[];
-  codeFixerLastSelectedModel: {
-    [keyof in CodeFixerModelServiceType]: string;
-  };
 };
 
 /**

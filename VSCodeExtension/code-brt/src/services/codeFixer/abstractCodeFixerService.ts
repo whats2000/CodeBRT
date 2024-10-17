@@ -8,6 +8,13 @@ import {
 import vscode from 'vscode';
 import { SettingsManager } from '../../api';
 
+/**
+ * Misson:
+ * 1. geminiCodeFixerService: updateStatus
+ * 2. finish geminiCodeFixerService and abstractCodeFixerService function
+ * 3. test and modify the available model in settingManager+extensionSettings.d.ts
+ * 4. more LLM Service
+ */
 export abstract class AbstractCodeFixerService
   implements CodeFixerService {
   private statuses: CodeFixerStatuses = {};
@@ -41,7 +48,7 @@ export abstract class AbstractCodeFixerService
       - For insertions: Indicate between which two lines the code should be inserted by specifying the lines and providing the inserted code as \`content\`.
       - For deletions: Indicate the start and end line numbers of the code to be deleted, with \`content\` set as an empty string ("").
       - For replacements: Use a combination of insert and delete entries to describe the replacement.
-      
+
       Example 1:
       - Original Code:
         1: const x = 5;
@@ -54,8 +61,8 @@ export abstract class AbstractCodeFixerService
       - Output:
         [
           {{ "startLine": 1, "endLine": 3, "content": "" }},
-          {{ "startLine": 1, "endLine": 3, "content": "const a = 5;\\\\n" +
-            "const b = 10;\\\\n" +
+          {{ "startLine": 1, "endLine": 3, "content": "const a = 5;\\\\\\\\n" +
+            "const b = 10;\\\\\\\\n" +
             "const result = a + b;"
            }},
         ]
@@ -72,8 +79,8 @@ export abstract class AbstractCodeFixerService
       - Output:
         [
           {{ "startLine": 1, "endLine": 3, "content": "" }},
-          {{ "startLine": 1, "endLine": 3, "content": "function add(a, b) {{\\\\n" +
-            "  return a + b;\\\\n"+
+          {{ "startLine": 1, "endLine": 3, "content": "function add(a, b) {{\\\\\\\\n" +
+            "  return a + b;\\\\\\\\n"+
             "}}"
           }}
         ]
@@ -99,11 +106,10 @@ export abstract class AbstractCodeFixerService
   }
 
   public async getLatestAvailableModelNames(): Promise<string[]> {
-    vscode.window
+    void vscode.window
       .showErrorMessage(
         'Current this model service does not support updating available models, Please update it manually.',
       )
-      .then();
 
     return this.availableModelNames;
   }

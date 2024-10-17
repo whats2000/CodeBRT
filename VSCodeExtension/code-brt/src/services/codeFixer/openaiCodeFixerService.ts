@@ -31,7 +31,9 @@ export class OpenaiCodeFixerService extends AbstractCodeFixerService {
     context: vscode.ExtensionContext,
     settingsManager: SettingsManager,
   ) {
-    const availableModelNames = settingsManager.get('openaiAvailableModels');
+    const availableModelNames = settingsManager.get(
+      'codeFixerOpenaiAvailableModels',
+    );
     const defaultModelName = settingsManager.get(
       'codeFixerLastSelectedModel',
     ).openai;
@@ -111,6 +113,7 @@ export class OpenaiCodeFixerService extends AbstractCodeFixerService {
     //   options.sendCodeFixerStatus(this.statuses);
     // }
 
+    console.log('currentModel:', this.currentModel);
     const generativeModel = new ChatOpenAI({
       apiKey: this.settingsManager.get('openaiApiKey'),
       model: this.currentModel,
@@ -137,6 +140,8 @@ export class OpenaiCodeFixerService extends AbstractCodeFixerService {
       //   this.updateStatus('codeFixer', 'receivedResponse');
       //   options.sendCodeFixerStatus(this.statuses);
       // }
+      // console.log('promptTemplate:', promptTemplate);
+      // console.log('Response: ', response);
       return {
         modifications: response,
         success: true,
@@ -144,13 +149,13 @@ export class OpenaiCodeFixerService extends AbstractCodeFixerService {
     } catch (error) {
       vscode.window
         .showErrorMessage(
-          'Failed to get response from Gemini Service: ' + error,
+          'Failed to get response from Openai Service: ' + error,
           'Get API Key',
         )
         .then((selection) => {
           if (selection === 'Get API Key') {
             vscode.env.openExternal(
-              vscode.Uri.parse(MODEL_SERVICE_CONSTANTS.gemini.apiLink),
+              vscode.Uri.parse(MODEL_SERVICE_CONSTANTS.openai.apiLink),
             );
           }
         });

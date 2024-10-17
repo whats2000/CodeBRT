@@ -31,7 +31,9 @@ export class GeminiCodeFixerService extends AbstractCodeFixerService {
     context: vscode.ExtensionContext,
     settingsManager: SettingsManager,
   ) {
-    const availableModelNames = settingsManager.get('geminiAvailableModels');
+    const availableModelNames = settingsManager.get(
+      'codeFixerGeminiAvailableModels',
+    );
     const defaultModelName = settingsManager.get(
       'codeFixerLastSelectedModel',
     ).gemini;
