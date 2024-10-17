@@ -30,7 +30,10 @@ import {
   OpenaiVoiceService,
   VisualStudioCodeBuiltInService,
 } from './services/voice';
-import { GeminiCodeFixerService } from './services/codeFixer';
+import {
+  GeminiCodeFixerService,
+  OpenaiCodeFixerService,
+} from './services/codeFixer';
 import { convertPdfToMarkdown } from './utils/pdfConverter';
 
 import * as Commands from './diff/commands';
@@ -45,6 +48,11 @@ export const activate = async (ctx: vscode.ExtensionContext) => {
   const historyManager = new HistoryManager(ctx);
 
   const geminiCodeFixerService = new GeminiCodeFixerService(
+    ctx,
+    settingsManager,
+  );
+
+  const openaiCodeFixerService = new OpenaiCodeFixerService(
     ctx,
     settingsManager,
   );
@@ -360,7 +368,7 @@ export const activate = async (ctx: vscode.ExtensionContext) => {
       });
     },
     fixCode: async (options) => {
-      return await geminiCodeFixerService.getResponse(options);
+      return await openaiCodeFixerService.getResponse(options);
     },
     showDiffInEditor: async (
       modifications: Modification[],
@@ -569,6 +577,19 @@ export const activate = async (ctx: vscode.ExtensionContext) => {
       });
 
       vscode.window.showInformationMessage('Temporary insertions reverted.');
+    },
+    getEditorInfo: async () => {
+      const editor = vscode.window.activeTextEditor;
+      if (!editor) {
+        vscode.window.showErrorMessage('Editor not found');
+        return null;
+      }
+
+      const document = editor.document;
+      const firstLine = document.lineAt(0);
+      return {
+        startingLine: firstLine.lineNumber + 1,
+      };
     },
   };
 

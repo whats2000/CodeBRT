@@ -367,6 +367,7 @@ export type ViewApi = {
   insertSelectedCodeToChat: () => void;
   updateDecorationToMatchBackground: () => void;
   revertTemporaryInsertions(): Promise<void>;
+  getEditorInfo: () => void;
 };
 
 /**
