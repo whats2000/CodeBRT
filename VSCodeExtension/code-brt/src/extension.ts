@@ -24,13 +24,15 @@ import {
 import { ModelServiceFactory } from './services/languageModel';
 import { VoiceServiceFactory } from './services/voice';
 import { GptSoVitsApiService } from './services/voice/gptSoVitsService';
-import {
-  GeminiCodeFixerService,
-  OpenaiCodeFixerService,
-} from './services/codeFixer';
+import { OpenaiCodeFixerService } from './services/codeFixer';
 import { convertPdfToMarkdown } from './utils/pdfConverter';
 
 let extensionContext: vscode.ExtensionContext | undefined = undefined;
+let addedDecorationType: vscode.TextEditorDecorationType | undefined =
+  undefined;
+let removedDecorationType: vscode.TextEditorDecorationType | undefined =
+  undefined;
+let originalContentSnapshot: string | null = null;
 
 export const activate = async (ctx: vscode.ExtensionContext) => {
   extensionContext = ctx;
@@ -38,11 +40,6 @@ export const activate = async (ctx: vscode.ExtensionContext) => {
   const connectedViews: Partial<Record<ViewKey, vscode.WebviewView>> = {};
   const settingsManager = SettingsManager.getInstance(ctx);
   const historyManager = new HistoryManager(ctx);
-
-  const geminiCodeFixerService = new GeminiCodeFixerService(
-    ctx,
-    settingsManager,
-  );
 
   const openaiCodeFixerService = new OpenaiCodeFixerService(
     ctx,
@@ -346,12 +343,12 @@ export const activate = async (ctx: vscode.ExtensionContext) => {
         vscode.window.showErrorMessage('Editor not found');
         return [];
       }
-      addedDecorationType = vscode.window.createTextEditorDecorationType({
+      let addedDecorationType = vscode.window.createTextEditorDecorationType({
         isWholeLine: true,
         backgroundColor: 'rgba(144,238,144,0.5)',
       });
 
-      removedDecorationType = vscode.window.createTextEditorDecorationType({
+      let removedDecorationType = vscode.window.createTextEditorDecorationType({
         isWholeLine: true,
         backgroundColor: 'rgba(255,99,71,0.5)',
       });
@@ -615,7 +612,6 @@ export const activate = async (ctx: vscode.ExtensionContext) => {
   registerAndConnectView('workPanel').catch((e) => {
     console.error(e);
   });
-  vscode.commands.registerCommand('code-brt.diff.file', Commands.file);
   vscode.languages.registerCodeActionsProvider('javascript', {
     provideCodeActions(
       document: vscode.TextDocument,
