@@ -9,7 +9,7 @@ import {
   CustomModelSettings,
   GetResponseOptions,
 } from '../../types';
-import { AbstractLanguageModelService } from './abstractLanguageModelService';
+import { AbstractLanguageModelService } from './base';
 import { HistoryManager, SettingsManager } from '../../api';
 
 export class CustomApiService extends AbstractLanguageModelService {
@@ -29,7 +29,6 @@ export class CustomApiService extends AbstractLanguageModelService {
   constructor(
     context: vscode.ExtensionContext,
     settingsManager: SettingsManager,
-    historyManager: HistoryManager,
   ) {
     const availableModelNames = settingsManager
       .get('customModels')
@@ -44,7 +43,6 @@ export class CustomApiService extends AbstractLanguageModelService {
       'custom',
       context,
       settingsManager,
-      historyManager,
       selectedModel?.name || 'not set',
       availableModelNames,
     );
@@ -57,11 +55,15 @@ export class CustomApiService extends AbstractLanguageModelService {
       selectedModel || this.defaultCustomModelSettings;
   }
 
-  private conversationHistoryToJson(entries: {
-    [key: string]: ConversationEntry;
-  }): string {
+  private conversationHistoryToJson(
+    entries: {
+      [key: string]: ConversationEntry;
+    },
+    query: string,
+    historyManager: HistoryManager,
+  ): string {
     const historyArray = [];
-    let currentEntry = entries[this.historyManager.getCurrentHistory().current];
+    let currentEntry = entries[historyManager.getCurrentHistory().current];
 
     while (currentEntry) {
       historyArray.unshift({
@@ -77,6 +79,14 @@ export class CustomApiService extends AbstractLanguageModelService {
 
     // If the API format history doesn't include the query message and the last message is a user message, remove it
     if (
+      this.selectedCustomModelSettings.includeQueryInHistory &&
+      historyArray[historyArray.length - 1]?.role !== 'user'
+    ) {
+      historyArray.push({
+        role: 'user',
+        message: query,
+      });
+    } else if (
       !this.selectedCustomModelSettings.includeQueryInHistory &&
       historyArray.length > 0 &&
       historyArray[historyArray.length - 1].role === 'user'
@@ -257,7 +267,13 @@ export class CustomApiService extends AbstractLanguageModelService {
       return 'Missing model configuration. Check the model selection dropdown.';
     }
 
-    const { query, images, sendStreamResponse, currentEntryID } = options;
+    const {
+      query,
+      historyManager,
+      images,
+      sendStreamResponse,
+      currentEntryID,
+    } = options;
 
     const canSendWithImages =
       this.selectedCustomModelSettings.apiMethod === 'GET' &&
@@ -271,7 +287,9 @@ export class CustomApiService extends AbstractLanguageModelService {
     }
 
     const conversationHistory = this.conversationHistoryToJson(
-      this.historyManager.getHistoryBeforeEntry(currentEntryID).entries,
+      historyManager.getHistoryBeforeEntry(currentEntryID).entries,
+      query,
+      historyManager,
     );
 
     try {

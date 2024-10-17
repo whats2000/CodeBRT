@@ -4,8 +4,8 @@ import {
   LanguageModelService,
   GetResponseOptions,
   ModelServiceType,
-} from '../../types';
-import { HistoryManager, SettingsManager } from '../../api';
+} from '../../../types';
+import { SettingsManager } from '../../../api';
 
 /**
  * Abstract class for the Language Model Service
@@ -17,7 +17,6 @@ export abstract class AbstractLanguageModelService
     protected readonly serviceType: ModelServiceType,
     protected readonly context: vscode.ExtensionContext,
     protected readonly settingsManager: SettingsManager,
-    protected readonly historyManager: HistoryManager,
     protected currentModel: string,
     protected availableModelNames: string[],
   ) {}

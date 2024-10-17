@@ -2,7 +2,7 @@
 
 ## Overview
 
-**Version**: 0.2.6
+**Version**: 0.3.1
 
 **Status**: _Under Development_  
 ⚠️ This project is currently in the Beta phase. Some features are still being developed, and you may encounter bugs or
@@ -93,12 +93,15 @@ Here’s an outline of the upcoming features and improvements for CodeBRT:
 - [x] Full voice input and output features
 - [x] Open-source GPT-SoVits text-to-voice integration
 
-### Version 0.3 (Upcoming)
+### Version 0.3 (WIP)
 
 - [x] Optimized history rendering
 - [x] Redux for better state management
 - [ ] In-editor chat for code generation
-- [ ] Tab auto-completion
+- [ ] Manual code completion with hotkeys
+    - [x] Trigger code completion
+    - [ ] Context retrieval
+- [ ] Auto code completion
 - [ ] Code integrator to compose code snippets
 
 ### Version 0.4 (Upcoming)
@@ -121,6 +124,9 @@ Here’s an outline of the upcoming features and improvements for CodeBRT:
 - [ ] Code utility test generation
 - [ ] Code style analysis
 - [ ] Improved features from earlier versions
+
+### Later Versions
+The project will continue to evolve with new features and improvements. Stay tuned for more updates!
 
 ## Contributing
 
@@ -145,8 +151,9 @@ aim to improve the project based on community input.
 
 CodeBRT is built on various open-source tools and frameworks. Special thanks to the following:
 
-- [The Starter Framework For VSCode Extension](https://github.com/sfc-gh-tkojima/vscode-react-webviews)
-  by [sfc-gh-tkojima](https://github.com/sfc-gh-tkojima)
+- [The Starter Framework For VSCode Extension](https://github.com/sfc-gh-tkojima/vscode-react-webviews) by [sfc-gh-tkojima](https://github.com/sfc-gh-tkojima)
+- [The Continue Project For the process of LLM responses](https://github.com/continuedev/continue/) by continuedev team (Apache License 2.0)
+
 - Icons and logos from [SVG Repo](https://www.svgrepo.com/):
     - [Vscode2 Opened SVG Vector](https://www.svgrepo.com/svg/373400/vscode2-opened) (MIT License)
     - [Indent SVG Vector](https://www.svgrepo.com/svg/532181/indent) (CC Attribution License)

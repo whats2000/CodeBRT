@@ -9,8 +9,8 @@ import Groq from 'groq-sdk';
 
 import type { GetResponseOptions } from '../../types';
 import { MODEL_SERVICE_CONSTANTS } from '../../constants';
-import { AbstractOpenaiLikeService } from './abstractOpenaiLikeService';
-import { HistoryManager, SettingsManager } from '../../api';
+import { AbstractOpenaiLikeService } from './base';
+import { SettingsManager } from '../../api';
 
 export class GroqService extends AbstractOpenaiLikeService {
   private stopStreamFlag: boolean = false;
@@ -18,7 +18,6 @@ export class GroqService extends AbstractOpenaiLikeService {
   constructor(
     context: vscode.ExtensionContext,
     settingsManager: SettingsManager,
-    historyManager: HistoryManager,
   ) {
     const availableModelNames = settingsManager.get('groqAvailableModels');
     const defaultModelName = settingsManager.get('lastSelectedModel').groq;
@@ -27,7 +26,6 @@ export class GroqService extends AbstractOpenaiLikeService {
       'groq',
       context,
       settingsManager,
-      historyManager,
       defaultModelName,
       availableModelNames,
     );
@@ -75,8 +73,16 @@ export class GroqService extends AbstractOpenaiLikeService {
       return 'Missing model configuration. Check the model selection dropdown.';
     }
 
-    const { query, images, currentEntryID, sendStreamResponse, updateStatus } =
-      options;
+    const {
+      query,
+      historyManager,
+      images,
+      currentEntryID,
+      sendStreamResponse,
+      updateStatus,
+      selectedModelName,
+      disableTools,
+    } = options;
 
     if (images && images.length > 0) {
       vscode.window.showWarningMessage(
@@ -89,14 +95,16 @@ export class GroqService extends AbstractOpenaiLikeService {
     });
 
     const conversationHistory = await this.conversationHistoryToContent(
-      this.historyManager.getHistoryBeforeEntry(currentEntryID).entries,
+      historyManager.getHistoryBeforeEntry(currentEntryID).entries,
       query,
+      historyManager,
     );
 
     let functionCallCount = 0;
     const MAX_FUNCTION_CALLS = 5;
 
-    const { systemPrompt, generationConfig } = this.getAdvanceSettings();
+    const { systemPrompt, generationConfig } =
+      this.getAdvanceSettings(historyManager);
 
     if (systemPrompt) {
       conversationHistory.unshift({
@@ -110,8 +118,8 @@ export class GroqService extends AbstractOpenaiLikeService {
         while (functionCallCount < MAX_FUNCTION_CALLS) {
           const response = await groq.chat.completions.create({
             messages: conversationHistory,
-            model: this.currentModel,
-            tools: this.getEnabledTools(),
+            model: selectedModelName ?? this.currentModel,
+            tools: disableTools ? undefined : this.getEnabledTools(),
             stream: false,
             ...generationConfig,
           } as ChatCompletionCreateParamsNonStreaming);
@@ -145,9 +153,9 @@ export class GroqService extends AbstractOpenaiLikeService {
 
           const streamResponse = await groq.chat.completions.create({
             messages: conversationHistory,
-            model: this.currentModel,
+            model: selectedModelName ?? this.currentModel,
             stream: true,
-            tools: this.getEnabledTools(),
+            tools: disableTools ? undefined : this.getEnabledTools(),
             ...generationConfig,
           } as ChatCompletionCreateParamsStreaming);
 

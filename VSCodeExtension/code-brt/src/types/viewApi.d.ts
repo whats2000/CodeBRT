@@ -334,6 +334,12 @@ export type ViewApi = {
   openExternalLink: (url: string) => Promise<void>;
 
   /**
+   * Open the keyboard shortcut settings for specific command.
+   * @param commandId - The command ID to open the keyboard shortcut settings for.
+   */
+  openKeyboardShortcuts: (commandId: string) => Promise<void>;
+
+  /**
    * Open marketplace page for target extension.
    * @param extensionId - The extension ID to open the marketplace page for.
    */

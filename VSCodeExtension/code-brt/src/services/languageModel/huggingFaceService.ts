@@ -3,7 +3,6 @@ import {
   ChatCompletionInput,
   ChatCompletionInputMessage,
   ChatCompletionInputTool,
-  ChatCompletionInputToolCall,
   ChatCompletionOutputToolCall,
 } from '@huggingface/tasks/src/tasks/chat-completion/inference';
 import { HfInference } from '@huggingface/inference';
@@ -13,7 +12,7 @@ import type {
   GetResponseOptions,
   ToolServiceType,
 } from '../../types';
-import { AbstractLanguageModelService } from './abstractLanguageModelService';
+import { AbstractLanguageModelService } from './base';
 import { HistoryManager, SettingsManager } from '../../api';
 import { MODEL_SERVICE_CONSTANTS, toolsSchema } from '../../constants';
 import { ToolService } from '../tools';
@@ -24,7 +23,6 @@ export class HuggingFaceService extends AbstractLanguageModelService {
   constructor(
     context: vscode.ExtensionContext,
     settingsManager: SettingsManager,
-    historyManager: HistoryManager,
   ) {
     const availableModelNames = settingsManager.get(
       'huggingFaceAvailableModels',
@@ -36,18 +34,16 @@ export class HuggingFaceService extends AbstractLanguageModelService {
       'huggingFace',
       context,
       settingsManager,
-      historyManager,
       defaultModelName,
       availableModelNames,
     );
   }
 
-  private getAdvanceSettings(): {
+  private getAdvanceSettings(historyManager: HistoryManager): {
     systemPrompt: string | undefined;
     generationConfig: Partial<ChatCompletionInput>;
   } {
-    const advanceSettings =
-      this.historyManager.getCurrentHistory().advanceSettings;
+    const advanceSettings = historyManager.getCurrentHistory().advanceSettings;
 
     if (!advanceSettings) {
       return {
@@ -96,9 +92,10 @@ export class HuggingFaceService extends AbstractLanguageModelService {
   private conversationHistoryToContent(
     entries: { [key: string]: ConversationEntry },
     query: string,
+    historyManager: HistoryManager,
   ): ChatCompletionInputMessage[] {
     const result: ChatCompletionInputMessage[] = [];
-    let currentEntry = entries[this.historyManager.getCurrentHistory().current];
+    let currentEntry = entries[historyManager.getCurrentHistory().current];
 
     while (currentEntry) {
       result.unshift({
@@ -114,7 +111,7 @@ export class HuggingFaceService extends AbstractLanguageModelService {
     }
 
     // Hugging Face's API requires the query message at the end of the history
-    if (result.length > 0 && result[result.length - 1].role !== 'user') {
+    if (result[result.length - 1]?.role !== 'user') {
       result.push({
         role: 'user',
         content: query,
@@ -129,9 +126,9 @@ export class HuggingFaceService extends AbstractLanguageModelService {
     updateStatus?: (status: string) => void,
   ): Promise<{
     success: boolean;
-    functionCallResults: ChatCompletionInputToolCall[];
+    functionCallResults: string;
   }> => {
-    const functionCallResults: ChatCompletionInputToolCall[] = [];
+    let functionCallResults: string = '';
     let success = true;
 
     for (const functionCall of functionCalls) {
@@ -141,16 +138,11 @@ export class HuggingFaceService extends AbstractLanguageModelService {
 
       const tool = ToolService.getTool(functionCall.function.name);
       if (!tool) {
-        functionCallResults.push({
-          id: functionCall.id,
-          type: 'function',
-          function: functionCall.function,
-          content:
-            'Failed to find tool with name: ' +
-            functionCall.function.name +
-            '. \n\n The tool available are: \n' +
-            JSON.stringify(this.getEnabledTools(), null, 2),
-        });
+        functionCallResults += `Failed to find tool with name: ${functionCall.function.name}. \n\n The tool available are: \n${JSON.stringify(
+          this.getEnabledTools(),
+          null,
+          2,
+        )}`;
         success = false;
         continue;
       }
@@ -160,19 +152,9 @@ export class HuggingFaceService extends AbstractLanguageModelService {
           ...functionCall.function.arguments,
           updateStatus,
         } as any);
-        functionCallResults.push({
-          id: functionCall.id,
-          type: 'function',
-          function: functionCall.function,
-          content: result,
-        });
+        functionCallResults += result;
       } catch (error) {
-        functionCallResults.push({
-          id: functionCall.id,
-          type: 'function',
-          function: functionCall.function,
-          content: `Error executing tool ${functionCall.function.name}: ${error}`,
-        });
+        functionCallResults += `Failed to execute tool with name: ${functionCall.function.name}. \n\n Error: ${error}`;
         success = false;
       }
     }
@@ -191,8 +173,16 @@ export class HuggingFaceService extends AbstractLanguageModelService {
       return 'Missing model configuration. Check the model selection dropdown.';
     }
 
-    const { query, images, currentEntryID, sendStreamResponse, updateStatus } =
-      options;
+    const {
+      query,
+      historyManager,
+      images,
+      currentEntryID,
+      sendStreamResponse,
+      updateStatus,
+      selectedModelName,
+      disableTools,
+    } = options;
 
     if (images && images.length > 0) {
       vscode.window.showWarningMessage(
@@ -205,14 +195,16 @@ export class HuggingFaceService extends AbstractLanguageModelService {
     );
 
     const conversationHistory = this.conversationHistoryToContent(
-      this.historyManager.getHistoryBeforeEntry(currentEntryID).entries,
+      historyManager.getHistoryBeforeEntry(currentEntryID).entries,
       query,
+      historyManager,
     );
 
     let functionCallCount = 0;
     const MAX_FUNCTION_CALLS = 5;
 
-    const { systemPrompt, generationConfig } = this.getAdvanceSettings();
+    const { systemPrompt, generationConfig } =
+      this.getAdvanceSettings(historyManager);
 
     if (systemPrompt) {
       conversationHistory.unshift({
@@ -223,14 +215,16 @@ export class HuggingFaceService extends AbstractLanguageModelService {
 
     try {
       if (!sendStreamResponse) {
-        vscode.window.showWarningMessage(
-          'The non-streaming response is not supported tool calls in this version. The tool calls will be ignored.',
-        );
+        if (!disableTools) {
+          vscode.window.showWarningMessage(
+            'The non-streaming response is not supported tool calls in this version. The tool calls will be ignored.',
+          );
+        }
 
         return (
           await huggerFace.chatCompletion({
             messages: conversationHistory,
-            model: this.currentModel,
+            model: selectedModelName ?? this.currentModel,
             stream: false,
             ...generationConfig,
           })
@@ -283,8 +277,11 @@ export class HuggingFaceService extends AbstractLanguageModelService {
 
           const streamResponse = huggerFace.chatCompletionStream({
             messages: conversationHistory,
-            model: this.currentModel,
-            tools: functionCallSuccess ? undefined : this.getEnabledTools(),
+            model: selectedModelName ?? this.currentModel,
+            tools:
+              functionCallSuccess || disableTools
+                ? undefined
+                : this.getEnabledTools(),
             stream: true,
             ...generationConfig,
           });
@@ -340,27 +337,13 @@ export class HuggingFaceService extends AbstractLanguageModelService {
           let toolCallObject = JSON.parse(completeToolCallsString);
 
           // Convert the JSON object to the correct format
-          const correctToolCalls: {
-            id: number;
-            type: string;
-            function: {
-              name: string;
-              arguments: any;
-            };
-          }[] = [];
+          const correctToolCalls: ChatCompletionOutputToolCall[] = [];
 
           // Function to format a single tool call object
           const formatToolCall = (
             toolCall: any,
-            id: number,
-          ): {
-            id: number;
-            type: string;
-            function: {
-              name: string;
-              arguments: any;
-            };
-          } => {
+            id: string,
+          ): ChatCompletionOutputToolCall => {
             if (!toolCall.function?.name) {
               return {
                 id: id,
@@ -385,10 +368,10 @@ export class HuggingFaceService extends AbstractLanguageModelService {
           // Check if the parsed object is an array or a single object
           if (Array.isArray(toolCallObject)) {
             toolCallObject.forEach((toolCall, index) => {
-              correctToolCalls.push(formatToolCall(toolCall, index));
+              correctToolCalls.push(formatToolCall(toolCall, index.toString()));
             });
           } else {
-            correctToolCalls.push(formatToolCall(toolCallObject, 0));
+            correctToolCalls.push(formatToolCall(toolCallObject, '0'));
           }
 
           // Handle the tool calls
@@ -397,11 +380,10 @@ export class HuggingFaceService extends AbstractLanguageModelService {
 
           functionCallSuccess = success;
 
-          // Add the tool results to the conversation history last user message
           conversationHistory[conversationHistory.length - 1].content =
             query +
             '\n The Tool Results are as follows: \n' +
-            functionCallResults.map((result) => result.content).join('\n');
+            functionCallResults;
 
           functionCallCount++;
         }

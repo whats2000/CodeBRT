@@ -88,7 +88,7 @@ export type CustomModelSettings = {
 };
 
 /**
- * Represents the settings for the model services.
+ * Represents the settings for the extension which are stored locally.
  * @property anthropicAvailableModels - The available models for the Anthropic API
  * @property geminiAvailableModels - The available models for the Gemini API
  * @property openaiAvailableModels - The available models for the OpenAI API
@@ -119,6 +119,7 @@ export type ModelServiceSettings = {
     [keyof in ModelServiceType]: string;
   };
   customModels: CustomModelSettings[];
+  lastUsedModelForManualCompletion: ModelServiceType;
 };
 
 /**
@@ -135,6 +136,19 @@ export type VoiceServiceSettings = {
   gptSoVitsClientHost: string;
   gptSoVitsAvailableReferenceVoices: GptSoVitsVoiceSetting[];
   gptSoVitsSelectedReferenceVoice: string;
+};
+
+export type CodeCompletionSettings = {
+  manualTriggerCodeCompletion: boolean;
+  lastUsedManualCodeCompletionModelService: ModelServiceType;
+  lastSelectedManualCodeCompletionModel: {
+    [keyof in ModelServiceType]: string;
+  };
+  autoTriggerCodeCompletion: boolean;
+  lastUsedAutoCodeCompletionModelService: ModelServiceType;
+  lastSelectedAutoCodeCompletionModel: {
+    [keyof in ModelServiceType]: string;
+  };
 };
 
 /**
@@ -180,6 +194,7 @@ export type OtherLocalSettings = {
  */
 export type ExtensionSettingsLocal = ModelServiceSettings &
   VoiceServiceSettings &
+  CodeCompletionSettings &
   ToolServiceSettings &
   CodeFixerSettings &
   OtherLocalSettings;

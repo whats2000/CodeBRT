@@ -3,10 +3,10 @@
   "private": true,
   "displayName": "CodeBRT",
   "description": "CodeBRT, a LLM/VLM framework for code assistant with multiple models.",
-  "version": "0.2.6",
+  "version": "0.3.1",
   "icon": "static/icon.ico",
   "engines": {
-    "vscode": "^1.93.0",
+    "vscode": "^1.94.0",
     "node": "~v20.16.0",
     "npm": "~10.8.1"
   },
@@ -52,36 +52,38 @@
     "format": "prettier 'src/**/*.js' 'src/**/*.jsx' 'src/**/*.ts' 'src/**/*.tsx' './package.json' '.swcrc' './*.js' --no-error-on-unmatched-pattern --write"
   },
   "devDependencies": {
+    "@algorithm.ts/lcs": "^4.0.5",
     "@ant-design/icons": "^5.5.1",
-    "@anthropic-ai/sdk": "^0.27.3",
-    "@babel/core": "^7.25.2",
-    "@babel/preset-env": "^7.25.4",
-    "@babel/preset-typescript": "^7.24.7",
+    "@anthropic-ai/sdk": "^0.28.0",
+    "@babel/core": "^7.25.7",
+    "@babel/preset-env": "^7.25.7",
+    "@babel/preset-typescript": "^7.25.7",
     "@dnd-kit/core": "^6.1.0",
     "@dnd-kit/sortable": "^8.0.0",
-    "@google/generative-ai": "^0.20.0",
-    "@huggingface/inference": "^2.8.0",
+    "@google/generative-ai": "^0.21.0",
+    "@huggingface/inference": "^2.8.1",
     "@langchain/core": "^0.3.3",
     "@langchain/google-genai": "^0.1.0",
     "@langchain/openai": "^0.3.2",
     "@opendocsg/pdf2md": "^0.1.31",
     "@pmmmwh/react-refresh-webpack-plugin": "^0.5.15",
-    "@reduxjs/toolkit": "^2.2.7",
+    "@reduxjs/toolkit": "^2.2.8",
     "@swc/cli": "^0.4.0",
     "@swc/core": "^1.7.28",
     "@swc/jest": "^0.2.36",
     "@types/async-lock": "^1.4.2",
     "@types/cheerio": "^0.22.35",
     "@types/jest": "^29.5.13",
-    "@types/node": "^22.7.3",
+    "@types/lodash": "^4.17.10",
+    "@types/node": "^22.7.5",
     "@types/promise-deferred": "^2.0.5",
-    "@types/react": "^18.3.9",
+    "@types/react": "^18.3.11",
     "@types/react-dom": "^18.3.0",
     "@types/react-syntax-highlighter": "^15.5.13",
     "@types/uuid": "^10.0.0",
-    "@types/vscode": "^1.93.0",
-    "@vscode/vsce": "^3.1.0",
-    "antd": "^5.21.1",
+    "@types/vscode": "^1.94.0",
+    "@vscode/vsce": "^3.1.1",
+    "antd": "^5.21.2",
     "async-lock": "^1.4.1",
     "axios": "^1.7.7",
     "babel-jest": "^29.7.0",
@@ -96,7 +98,7 @@
     "markdown-to-text": "^0.1.1",
     "node-mic": "^1.0.1",
     "ollama": "^0.5.9",
-    "openai": "^4.65.0",
+    "openai": "^4.67.2",
     "prettier": "3.3.3",
     "prettier-plugin-organize-imports": "^4.1.0",
     "promise-deferred": "^2.0.4",
@@ -130,12 +132,28 @@
   "contributes": {
     "commands": [
       {
+        "command": "code-brt.triggerInlineCompletion",
+        "title": "Trigger Inline Completion"
+      },
+      {
+        "command": "code-brt.openMainView",
+        "title": "Open CodeBRT Chat"
+      },
+      {
         "command": "code-brt.diff.file",
         "title": "CodeBRT: ShowDiff"
       },
       {
         "command": "code-brt.fixCode",
         "title": "CodeBRT: Quick Fix Code"
+      }
+    ],
+    "keybindings": [
+      {
+        "command": "code-brt.triggerInlineCompletion",
+        "key": "ctrl+shift+x",
+        "mac": "cmd+shift+x",
+        "when": "editorTextFocus"
       }
     ],
     "viewsContainers": {
@@ -418,8 +436,5 @@
         }
       }
     }
-  },
-  "dependencies": {
-    "code-brt": "file:"
   }
 }

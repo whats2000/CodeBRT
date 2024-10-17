@@ -6,9 +6,9 @@ import * as vscode from 'vscode';
 import * as tokenizer from 'simple-text-tokenizer';
 import removeMarkdown from 'markdown-to-text';
 
-import type { VoiceService } from '../../types';
-import { SettingsManager } from '../../api';
-import { SoundPlay, AudioRecorder } from '../../utils';
+import type { VoiceService } from '../../../types';
+import { SettingsManager } from '../../../api';
+import { SoundPlay, AudioRecorder } from '../../../utils';
 
 export abstract class AbstractVoiceService implements VoiceService {
   protected readonly context: vscode.ExtensionContext;
@@ -43,9 +43,12 @@ export abstract class AbstractVoiceService implements VoiceService {
    * @param text - The text to preprocess.
    */
   private preprocessText(text: string): string {
-    text = text.replace(/^([*-+]\s.*?)([.!?。！？]?)$/gm, (match, p1, p2) => {
-      return p2 ? match : p1 + '.';
-    });
+    text = text.replace(
+      /^([*-+]\s.*?)([:.!?：。！？]?)$/gm,
+      (match, p1, p2) => {
+        return p2 ? match : p1 + '.';
+      },
+    );
     return removeMarkdown(text);
   }
 

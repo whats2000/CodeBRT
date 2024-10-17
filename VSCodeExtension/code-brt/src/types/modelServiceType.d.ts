@@ -21,3 +21,15 @@ export type LoadedModelServices = {
     service: LanguageModelService;
   };
 };
+
+export type GetResponseOptions = {
+  query: string;
+  images?: string[];
+  currentEntryID?: string;
+  sendStreamResponse?: (message: string) => void;
+  updateStatus?: (status: string) => void;
+};
+
+export interface ExtendedGetResponseOptions extends GetResponseOptions {
+  multiline?: boolean;
+}

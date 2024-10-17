@@ -10,19 +10,19 @@ import type {
   ChatCompletionToolOpenaiLike,
   ConversationEntry,
   ToolServiceType,
-} from '../../types';
-import { toolsSchema } from '../../constants';
+} from '../../../types';
+import { HistoryManager } from '../../../api';
+import { toolsSchema } from '../../../constants';
 import { AbstractLanguageModelService } from './abstractLanguageModelService';
-import { ToolService } from '../tools';
+import { ToolService } from '../../tools';
 import vscode from 'vscode';
 
 export abstract class AbstractOpenaiLikeService extends AbstractLanguageModelService {
-  protected getAdvanceSettings(): {
+  protected getAdvanceSettings(historyManager: HistoryManager): {
     systemPrompt: string | undefined;
     generationConfig: Partial<ChatCompletionCreateParamsBaseOpenaiLike>;
   } {
-    const advanceSettings =
-      this.historyManager.getCurrentHistory().advanceSettings;
+    const advanceSettings = historyManager.getCurrentHistory().advanceSettings;
 
     if (!advanceSettings) {
       return {
@@ -142,10 +142,11 @@ export abstract class AbstractOpenaiLikeService extends AbstractLanguageModelSer
   protected async conversationHistoryToContent(
     entries: { [key: string]: ConversationEntry },
     query: string,
+    historyManager: HistoryManager,
     images?: string[],
   ): Promise<ChatCompletionMessageParamOpenaiLike[]> {
     const result: ChatCompletionMessageParamOpenaiLike[] = [];
-    let currentEntry = entries[this.historyManager.getCurrentHistory().current];
+    let currentEntry = entries[historyManager.getCurrentHistory().current];
 
     while (currentEntry) {
       const messageParam: ChatCompletionMessageParamOpenaiLike =
@@ -169,7 +170,7 @@ export abstract class AbstractOpenaiLikeService extends AbstractLanguageModelSer
     }
 
     // OpenAI like APIs require the query message at the end of the history
-    if (result.length > 0 && result[result.length - 1].role !== 'user') {
+    if (result[result.length - 1]?.role !== 'user') {
       result.push({
         role: 'user',
         content: [{ type: 'text', text: query }],

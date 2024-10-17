@@ -6,6 +6,10 @@ export type VoiceToTextServiceType =
   | 'openai'
   | 'visualStudioCodeBuiltIn'
   | 'not set';
+export type VoiceServiceType = Exclude<
+  TextToVoiceServiceType | VoiceToTextServiceType,
+  'not set'
+>;
 
 /**
  * Defines a structure for loaded voice services with detailed service.
