@@ -4,6 +4,7 @@ import {
   LanguageModelService,
   GetResponseOptions,
   ModelServiceType,
+  ResponseWithAction,
 } from '../types';
 import { SettingsManager } from '../../../api';
 
@@ -73,6 +74,17 @@ export abstract class AbstractLanguageModelService
   }
 
   /**
+   * Get the response for a query with an image and also fire a view event to send the response in chunks.
+   * If the currentEntryID is provided
+   * @param options - The options to get a response for
+   * @returns The response for the query
+   * @see GetResponseOptions
+   */
+  public abstract getResponse(
+    options: GetResponseOptions,
+  ): Promise<ResponseWithAction>;
+
+  /**
    * Stop current response
    */
   public async stopResponse(): Promise<void> {
@@ -80,13 +92,4 @@ export abstract class AbstractLanguageModelService
       'This feature is not supported by the current model.',
     );
   }
-
-  /**
-   * Get the response for a query with an image and also fire a view event to send the response in chunks.
-   * If the currentEntryID is provided
-   * @param options - The options to get a response for
-   * @returns The response for the query
-   * @see GetResponseOptions
-   */
-  public abstract getResponse(options: GetResponseOptions): Promise<string>;
 }

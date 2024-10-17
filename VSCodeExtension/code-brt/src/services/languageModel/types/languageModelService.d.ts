@@ -1,4 +1,11 @@
+import { ToolCallEntry } from '../../../types';
+
 import { HistoryManager } from '../../../api';
+
+export type ResponseWithAction = {
+  textResponse: string;
+  toolCall?: ToolCallEntry;
+};
 
 /**
  * The options to get a response for
@@ -53,7 +60,7 @@ export type LanguageModelService = {
    * @returns The response for the query
    * @see GetResponseOptions
    */
-  getResponse: (options: GetResponseOptions) => Promise<string>;
+  getResponse: (options: GetResponseOptions) => Promise<ResponseWithAction>;
 
   /**
    * Stop current response

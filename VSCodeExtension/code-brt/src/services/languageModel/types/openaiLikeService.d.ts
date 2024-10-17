@@ -1,35 +1,26 @@
-import type {
-  ChatCompletionContentPartImage as ChatCompletionContentPartImageOpenai,
-  ChatCompletionCreateParamsBase as ChatCompletionCreateParamsBaseOpenai,
-  ChatCompletionMessageParam as ChatCompletionMessageParamOpenai,
-  ChatCompletionMessageToolCall as ChatCompletionMessageToolCallOpenai,
-  ChatCompletionTool as ChatCompletionToolOpenai,
-  ChatCompletionToolMessageParam as ChatCompletionToolMessageParamOpenai,
-} from 'openai/resources/chat/completions';
-import type {
-  ChatCompletionContentPartImage as ChatCompletionContentPartImageGroq,
-  ChatCompletionCreateParamsBase as ChatCompletionCreateParamsBaseGroq,
-  ChatCompletionMessageParam as ChatCompletionMessageParamGroq,
-  ChatCompletionMessageToolCall as ChatCompletionMessageToolCallGroq,
-  ChatCompletionTool as ChatCompletionToolGroq,
-  ChatCompletionToolMessageParam as ChatCompletionToolMessageParamGroq,
-} from 'groq-sdk/resources/chat/completions';
+import { Stream as StreamOpenai } from 'openai/streaming';
+import { Stream as StreamGroq } from 'groq-sdk/streaming';
+import type OpenAI from 'openai';
+import type Groq from 'groq-sdk';
 
 export type ChatCompletionContentPartImageOpenaiLike =
-  | ChatCompletionContentPartImageOpenai
-  | ChatCompletionContentPartImageGroq;
+  | OpenAI.Chat.Completions.ChatCompletionContentPartImage
+  | Groq.Chat.Completions.ChatCompletionContentPartImage;
 export type ChatCompletionCreateParamsBaseOpenaiLike =
-  | ChatCompletionCreateParamsBaseOpenai
-  | ChatCompletionCreateParamsBaseGroq;
+  | OpenAI.Chat.Completions.ChatCompletionCreateParams
+  | Groq.Chat.Completions.ChatCompletionCreateParams;
 export type ChatCompletionMessageParamOpenaiLike =
-  | ChatCompletionMessageParamOpenai
-  | ChatCompletionMessageParamGroq;
-export type ChatCompletionMessageToolCallOpenaiLike =
-  | ChatCompletionMessageToolCallOpenai
-  | ChatCompletionMessageToolCallGroq;
+  | OpenAI.Chat.Completions.ChatCompletionMessageParam
+  | Groq.Chat.Completions.ChatCompletionMessageParam;
 export type ChatCompletionToolOpenaiLike =
-  | ChatCompletionToolOpenai
-  | ChatCompletionToolGroq;
-export type ChatCompletionToolMessageParamOpenaiLike =
-  | ChatCompletionToolMessageParamOpenai
-  | ChatCompletionToolMessageParamGroq;
+  | OpenAI.Chat.Completions.ChatCompletionTool
+  | Groq.Chat.Completions.ChatCompletionTool;
+export type StreamCompletionOpenaiLike =
+  | StreamOpenai<OpenAI.Chat.Completions.ChatCompletionChunk>
+  | StreamGroq<Groq.Chat.Completions.ChatCompletionChunk>;
+export type NonStreamCompletionOpenaiLike =
+  | OpenAI.Chat.Completions.ChatCompletion
+  | Groq.Chat.Completions.ChatCompletion;
+export type ChatCompletionChunkChoiceDeltaToolCallOpenaiLike =
+  | OpenAI.Chat.Completions.ChatCompletionChunk.Choice.Delta.ToolCall
+  | Groq.Chat.Completions.ChatCompletionChunk.Choice.Delta.ToolCall;

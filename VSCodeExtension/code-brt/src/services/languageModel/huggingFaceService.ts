@@ -11,6 +11,7 @@ import type {
   ConversationEntry,
   GetResponseOptions,
   NonWorkspaceToolType,
+  ResponseWithAction,
 } from '../../types';
 import { AbstractLanguageModelService } from './base';
 import { HistoryManager, SettingsManager } from '../../api';
@@ -179,12 +180,17 @@ export class HuggingFaceService extends AbstractLanguageModelService {
     };
   };
 
-  public async getResponse(options: GetResponseOptions): Promise<string> {
+  public async getResponse(
+    options: GetResponseOptions,
+  ): Promise<ResponseWithAction> {
     if (this.currentModel === '') {
       vscode.window.showErrorMessage(
         'Make sure the model is selected before sending a message. Open the model selection dropdown and configure the model.',
       );
-      return 'Missing model configuration. Check the model selection dropdown.';
+      return {
+        textResponse:
+          'Missing model configuration. Check the model selection dropdown.',
+      };
     }
 
     const {
@@ -193,7 +199,6 @@ export class HuggingFaceService extends AbstractLanguageModelService {
       images,
       currentEntryID,
       sendStreamResponse,
-      updateStatus,
       selectedModelName,
       disableTools,
     } = options;
@@ -214,9 +219,6 @@ export class HuggingFaceService extends AbstractLanguageModelService {
       historyManager,
     );
 
-    let functionCallCount = 0;
-    const MAX_FUNCTION_CALLS = 5;
-
     const { systemPrompt, generationConfig } =
       this.getAdvanceSettings(historyManager);
 
@@ -235,173 +237,144 @@ export class HuggingFaceService extends AbstractLanguageModelService {
           );
         }
 
-        return (
-          await huggerFace.chatCompletion({
-            messages: conversationHistory,
-            model: selectedModelName ?? this.currentModel,
-            stream: false,
-            ...generationConfig,
-          })
-        ).choices[0]?.message?.content!;
+        const response = await huggerFace.chatCompletion({
+          messages: conversationHistory,
+          model: selectedModelName ?? this.currentModel,
+          stream: false,
+          ...generationConfig,
+        });
 
-        // TODO: The following code is not working correctly due to the Hugging Face API not returning the tool calls correctly
-        // Update it after the API is fixed
-        /**
-        while (functionCallCount < MAX_FUNCTION_CALLS) {
-          const response = await huggerFace.chatCompletion({
-            messages: conversationHistory,
-            model: this.currentModel,
-            tools: this.tools,
-            stream: false,
-            ...this.generationConfig,
-          });
-
-          if (!response.choices[0]?.message.tool_calls) {
-            return response.choices[0]?.message?.content!;
-          }
-
-          const { functionCallResults } = await this.handleFunctionCalls(
-            response.choices[0].message.tool_calls,
-          );
-
-          conversationHistory.push({
-            role: 'assistant',
-            tool_calls: response.choices[0].message.tool_calls,
-          });
-
-          conversationHistory.push({
-            role: 'user',
-            tool_calls: functionCallResults,
-          });
-
-          functionCallCount++;
+        if (!response.choices[0]?.message.tool_calls) {
+          return {
+            textResponse: response.choices[0]?.message?.content || '',
+          };
         }
-        return 'Max function call limit reached.';
-        **/
+
+        // TODO: Current have some issues with the Hugging Face API so the tool calls are not being returned correctly format
+        vscode.window.showWarningMessage(
+          'The non-streaming response is not supported tool calls in this version. The tool calls will be ignored.',
+        );
+        return {
+          textResponse: '',
+        };
       } else {
         let responseText = '';
 
         // TODO: Current have some issues with the Hugging Face API so the tool calls are not being returned correctly format
         let functionCallSuccess = false;
 
-        while (functionCallCount < MAX_FUNCTION_CALLS) {
+        if (this.stopStreamFlag) {
+          return { textResponse: '' };
+        }
+
+        const streamResponse = huggerFace.chatCompletionStream({
+          messages: conversationHistory,
+          model: selectedModelName ?? this.currentModel,
+          tools:
+            functionCallSuccess || disableTools
+              ? undefined
+              : this.getEnabledTools(),
+          stream: true,
+          ...generationConfig,
+        });
+
+        let completeToolCallsString: string = '';
+
+        for await (const chunk of streamResponse) {
           if (this.stopStreamFlag) {
-            return responseText;
+            return { textResponse: responseText };
           }
 
-          const streamResponse = huggerFace.chatCompletionStream({
-            messages: conversationHistory,
-            model: selectedModelName ?? this.currentModel,
-            tools:
-              functionCallSuccess || disableTools
-                ? undefined
-                : this.getEnabledTools(),
-            stream: true,
-            ...generationConfig,
-          });
-
-          let completeToolCallsString: string = '';
-          let isClearStatus = false;
-
-          for await (const chunk of streamResponse) {
-            if (this.stopStreamFlag) {
-              return responseText;
-            }
-
-            updateStatus && isClearStatus && updateStatus('');
-            isClearStatus = true;
-
-            if (!chunk.choices[0]?.delta.tool_calls) {
-              const partText = chunk.choices[0]?.delta?.content || '';
-              sendStreamResponse(partText);
-              responseText += partText;
-              continue;
-            }
-
-            // Collect tool calls delta from the stream response delta
-            completeToolCallsString +=
-              chunk.choices[0]?.delta.tool_calls.function.arguments;
+          if (!chunk.choices[0]?.delta.tool_calls) {
+            const partText = chunk.choices[0]?.delta?.content || '';
+            sendStreamResponse(partText);
+            responseText += partText;
+            continue;
           }
 
-          if (completeToolCallsString.length === 0) {
-            return responseText;
-          }
+          // Collect tool calls delta from the stream response delta
+          completeToolCallsString +=
+            chunk.choices[0]?.delta.tool_calls.function.arguments;
+        }
 
-          // Example Tool Calls String:
-          /**
-           * {  "function": {
-           *   "_name": "searchWeb",
-           *   "query": "recent news"
-           * }}<|eot_id|>
-           */
+        if (completeToolCallsString.length === 0) {
+          return { textResponse: responseText };
+        }
 
-          // Remove the "<|eot_id|>" string from the tool calls string
-          completeToolCallsString = completeToolCallsString.replace(
-            '<|eot_id|>',
-            '',
-          );
+        // Example Tool Calls String:
+        /**
+         * {  "function": {
+         *   "_name": "searchWeb",
+         *   "query": "recent news"
+         * }}<|eot_id|>
+         */
 
-          // Replace the "_name" key with "name" key
-          completeToolCallsString = completeToolCallsString.replace(
-            /"_name"/g,
-            '"name"',
-          );
+        // Remove the "<|eot_id|>" string from the tool calls string
+        completeToolCallsString = completeToolCallsString.replace(
+          '<|eot_id|>',
+          '',
+        );
 
-          // Parse the string into a JSON object
-          let toolCallObject = JSON.parse(completeToolCallsString);
+        // Replace the "_name" key with "name" key
+        completeToolCallsString = completeToolCallsString.replace(
+          /"_name"/g,
+          '"name"',
+        );
 
-          // Convert the JSON object to the correct format
-          const correctToolCalls: ChatCompletionOutputToolCall[] = [];
+        // Parse the string into a JSON object
+        let toolCallObject = JSON.parse(completeToolCallsString);
 
-          // Function to format a single tool call object
-          const formatToolCall = (
-            toolCall: any,
-            id: string,
-          ): ChatCompletionOutputToolCall => {
-            if (!toolCall.function?.name) {
-              return {
-                id: id,
-                type: 'function',
-                function: {
-                  name: 'missing "name" key',
-                  arguments: {},
-                },
-              };
-            }
-            const { name, ...args } = toolCall.function;
+        // Convert the JSON object to the correct format
+        const correctToolCalls: ChatCompletionOutputToolCall[] = [];
+
+        // Function to format a single tool call object
+        const formatToolCall = (
+          toolCall: any,
+          id: string,
+        ): ChatCompletionOutputToolCall => {
+          if (!toolCall.function?.name) {
             return {
               id: id,
               type: 'function',
               function: {
-                name: name,
-                arguments: args,
+                name: 'missing "name" key',
+                arguments: {},
               },
             };
-          };
-
-          // Check if the parsed object is an array or a single object
-          if (Array.isArray(toolCallObject)) {
-            toolCallObject.forEach((toolCall, index) => {
-              correctToolCalls.push(formatToolCall(toolCall, index.toString()));
-            });
-          } else {
-            correctToolCalls.push(formatToolCall(toolCallObject, '0'));
           }
+          const { name, ...args } = toolCall.function;
+          return {
+            id: id,
+            type: 'function',
+            function: {
+              name: name,
+              arguments: args,
+            },
+          };
+        };
 
-          // Handle the tool calls
-          const { success, functionCallResults } =
-            await this.handleFunctionCalls(correctToolCalls, updateStatus);
-
-          functionCallSuccess = success;
-
-          conversationHistory[conversationHistory.length - 1].content =
-            query +
-            '\n The Tool Results are as follows: \n' +
-            functionCallResults;
-
-          functionCallCount++;
+        // Check if the parsed object is an array or a single object
+        if (Array.isArray(toolCallObject)) {
+          toolCallObject.forEach((toolCall, index) => {
+            correctToolCalls.push(formatToolCall(toolCall, index.toString()));
+          });
+        } else {
+          correctToolCalls.push(formatToolCall(toolCallObject, '0'));
         }
-        return 'Max function call limit reached.';
+
+        // Return the tool calls
+        return {
+          textResponse: responseText,
+          toolCall: {
+            id: correctToolCalls[0].id,
+            toolName: correctToolCalls[0].function.name,
+            parameters: correctToolCalls[0].function.arguments as Record<
+              string,
+              any
+            >,
+            create_time: Date.now(),
+          },
+        };
       }
     } catch (error) {
       vscode.window
@@ -416,10 +389,11 @@ export class HuggingFaceService extends AbstractLanguageModelService {
             );
           }
         });
-      return 'Failed to connect to the language model service.';
+      return {
+        textResponse: 'Failed to connect to the language model service.',
+      };
     } finally {
       this.stopStreamFlag = false;
-      updateStatus && updateStatus('');
     }
   }
 

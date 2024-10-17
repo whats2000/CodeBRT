@@ -5,7 +5,7 @@ import {
   ConversationHistoryIndexList,
   ConversationModelAdvanceSettings,
 } from './conversationHistory';
-import { ModelServiceType } from '../services/languageModel/types';
+import type { ModelServiceType, ResponseWithAction } from '../types';
 
 /**
  * Represents the API request structure for the view.
@@ -108,7 +108,7 @@ export type ViewApi = {
     currentEntryID?: string,
     useStream?: boolean,
     showStatus?: boolean,
-  ) => Promise<string>;
+  ) => Promise<ResponseWithAction>;
 
   /**
    * Stop the language model response.

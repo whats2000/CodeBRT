@@ -184,7 +184,7 @@ export const ChatActivityBar = () => {
       true,
     )
       .then(async (response) => {
-        const responseText = await response;
+        const responseWithAction = await response;
         if (!tempIdRef.current) {
           setIsProcessing(false);
           return;
@@ -194,7 +194,12 @@ export const ChatActivityBar = () => {
           'addConversationEntry',
           userEntry.id,
           'AI',
-          responseText,
+          responseWithAction.textResponse +
+            `\n\n\`\`\`json\n${JSON.stringify(
+              responseWithAction.toolCall,
+              null,
+              2,
+            )}\n\`\`\``,
           undefined,
           activeModelService,
         );

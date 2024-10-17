@@ -2,8 +2,6 @@ import * as vscode from 'vscode';
 import fs from 'fs';
 import {
   Content,
-  FunctionCall,
-  FunctionResponsePart,
   GenerationConfig,
   InlineDataPart,
   Part,
@@ -20,6 +18,7 @@ import type {
   ConversationEntry,
   GetResponseOptions,
   NonWorkspaceToolType,
+  ResponseWithAction,
   ToolSchema,
 } from '../../types';
 import { MODEL_SERVICE_CONSTANTS } from '../../constants';
@@ -281,58 +280,17 @@ export class GeminiService extends AbstractLanguageModelService {
     return newAvailableModelNames;
   }
 
-  private async handleFunctionCalls(
-    functionCalls: FunctionCall[],
-    updateStatus?: (status: string) => void,
-  ): Promise<FunctionResponsePart[]> {
-    const functionCallResults: FunctionResponsePart[] = [];
-
-    for (const functionCall of functionCalls) {
-      const tool = ToolServiceProvider.getTool(functionCall.name);
-      if (!tool) {
-        functionCallResults.push({
-          functionResponse: {
-            name: functionCall.name,
-            response: {
-              error: `Failed to find tool with name: ${functionCall.name}`,
-            },
-          },
-        });
-        continue;
-      }
-
-      try {
-        const args = { ...functionCall.args, updateStatus };
-        const result = await tool(args as any);
-        functionCallResults.push({
-          functionResponse: {
-            name: functionCall.name,
-            response: {
-              searchResults: result,
-            },
-          },
-        });
-      } catch (error) {
-        functionCallResults.push({
-          functionResponse: {
-            name: functionCall.name,
-            response: {
-              error: `Error executing tool ${functionCall.name}: ${error}`,
-            },
-          },
-        });
-      }
-    }
-
-    return functionCallResults;
-  }
-
-  public async getResponse(options: GetResponseOptions): Promise<string> {
+  public async getResponse(
+    options: GetResponseOptions,
+  ): Promise<ResponseWithAction> {
     if (this.currentModel === '') {
       vscode.window.showErrorMessage(
         'Make sure the model is selected before sending a message. Open the model selection dropdown and configure the model.',
       );
-      return 'Missing model configuration. Check the model selection dropdown.';
+      return {
+        textResponse:
+          'Missing model configuration. Check the model selection dropdown.',
+      };
     }
 
     const {
@@ -341,7 +299,6 @@ export class GeminiService extends AbstractLanguageModelService {
       images,
       currentEntryID,
       sendStreamResponse,
-      updateStatus,
       selectedModelName,
       disableTools,
     } = options;
@@ -358,8 +315,6 @@ export class GeminiService extends AbstractLanguageModelService {
     );
 
     let queryParts = this.createQueryParts(query, images);
-    let functionCallCount = 0;
-    const MAX_FUNCTION_CALLS = 5;
 
     const { systemPrompt, generationConfig } =
       this.getAdvanceSettings(historyManager);
@@ -372,99 +327,74 @@ export class GeminiService extends AbstractLanguageModelService {
 
     try {
       if (!sendStreamResponse) {
-        while (functionCallCount < MAX_FUNCTION_CALLS) {
-          const response = await generativeModel
-            .startChat({
-              systemInstruction: systemInstruction,
-              generationConfig: generationConfig,
-              safetySettings: this.safetySettings,
-              history: conversationHistory,
-              tools: disableTools ? undefined : this.getEnabledTools(),
-            })
-            .sendMessage(queryParts);
+        const response = await generativeModel
+          .startChat({
+            systemInstruction: systemInstruction,
+            generationConfig: generationConfig,
+            safetySettings: this.safetySettings,
+            history: conversationHistory,
+            tools: disableTools ? undefined : this.getEnabledTools(),
+          })
+          .sendMessage(queryParts);
 
-          const functionCalls = response.response.functionCalls();
+        const functionCalls = response.response.functionCalls();
 
-          if (!functionCalls) {
-            return response.response.text();
-          }
-
-          const functionCallResults =
-            await this.handleFunctionCalls(functionCalls);
-
-          conversationHistory.push({
-            role: 'user',
-            parts: queryParts,
-          });
-
-          conversationHistory.push({
-            role: 'model',
-            parts: functionCalls.map((part) => ({
-              functionCall: part,
-            })),
-          });
-
-          queryParts = functionCallResults;
-
-          functionCallCount++;
+        if (functionCalls && functionCalls.length > 0) {
+          // Return the tool call for human-in-the-loop approval
+          const functionCall = functionCalls[0];
+          return {
+            textResponse: response.response.text(),
+            toolCall: {
+              id: Date.now().toString(),
+              toolName: functionCall.name,
+              parameters: functionCall.args,
+              create_time: Date.now(),
+            },
+          };
         }
-        return 'Max function call limit reached.';
+
+        return { textResponse: response.response.text() };
       } else {
         let responseText = '';
 
-        while (functionCallCount < MAX_FUNCTION_CALLS) {
+        const result = await generativeModel
+          .startChat({
+            systemInstruction: systemInstruction,
+            generationConfig: generationConfig,
+            safetySettings: this.safetySettings,
+            history: conversationHistory,
+            tools: disableTools ? undefined : this.getEnabledTools(),
+          })
+          .sendMessageStream(queryParts);
+
+        let functionCalls = null;
+
+        for await (const item of result.stream) {
           if (this.stopStreamFlag) {
-            return responseText;
+            return { textResponse: responseText };
           }
 
-          const result = await generativeModel
-            .startChat({
-              systemInstruction: systemInstruction,
-              generationConfig: generationConfig,
-              safetySettings: this.safetySettings,
-              history: conversationHistory,
-              tools: disableTools ? undefined : this.getEnabledTools(),
-            })
-            .sendMessageStream(queryParts);
-
-          let functionCalls = null;
-          updateStatus && updateStatus('');
-
-          for await (const item of result.stream) {
-            if (this.stopStreamFlag) {
-              return responseText;
-            }
-
-            functionCalls = item.functionCalls();
-            if (functionCalls) {
-              const functionCallResults = await this.handleFunctionCalls(
-                functionCalls,
-                updateStatus,
-              );
-              conversationHistory.push({
-                role: 'user',
-                parts: queryParts,
-              });
-              conversationHistory.push({
-                role: 'model',
-                parts: functionCalls.map((part) => ({
-                  functionCall: part,
-                })),
-              });
-              queryParts = functionCallResults;
-              break;
-            }
-            const partText = item.text();
-            sendStreamResponse(partText);
-            responseText += partText;
+          functionCalls = item.functionCalls();
+          if (functionCalls && functionCalls.length > 0) {
+            // Handle the tool call here and return for approval
+            const functionCall = functionCalls[0];
+            return {
+              textResponse: responseText,
+              toolCall: {
+                id: Date.now().toString(),
+                toolName: functionCall.name,
+                parameters: functionCall.args,
+                create_time: Date.now(),
+              },
+            };
           }
 
-          if (!functionCalls) {
-            return responseText;
-          }
-          functionCallCount++;
+          const partText = item.text();
+          sendStreamResponse(partText);
+          responseText += partText;
         }
-        return responseText;
+
+        return { textResponse: responseText };
       }
     } catch (error) {
       vscode.window
@@ -479,10 +409,11 @@ export class GeminiService extends AbstractLanguageModelService {
             );
           }
         });
-      return 'Failed to connect to the language model service.';
+      return {
+        textResponse: 'Failed to connect to the language model service.',
+      };
     } finally {
       this.stopStreamFlag = false;
-      updateStatus && updateStatus('');
     }
   }
 

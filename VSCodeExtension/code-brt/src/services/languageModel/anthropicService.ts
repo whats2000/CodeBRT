@@ -11,7 +11,6 @@ import type {
   TextBlockParam,
   Tool,
   ToolUseBlock,
-  ToolResultBlockParam,
 } from '@anthropic-ai/sdk/src/resources';
 import type {
   MessageCreateParamsNonStreaming,
@@ -23,6 +22,7 @@ import {
   ConversationEntry,
   GetResponseOptions,
   NonWorkspaceToolType,
+  ResponseWithAction,
 } from '../../types';
 import { MODEL_SERVICE_CONSTANTS } from '../../constants';
 import { HistoryManager, SettingsManager } from '../../api';
@@ -265,46 +265,6 @@ export class AnthropicService extends AbstractLanguageModelService {
     };
   }
 
-  private handleFunctionCalls = async (
-    functionCalls: ToolUseBlock[],
-    updateStatus?: (status: string) => void,
-  ): Promise<ToolResultBlockParam[]> => {
-    const functionCallResults: ToolResultBlockParam[] = [];
-
-    for (const functionCall of functionCalls) {
-      const tool = ToolServiceProvider.getTool(functionCall.name);
-      if (!tool) {
-        functionCallResults.push({
-          type: 'tool_result',
-          tool_use_id: functionCall.id,
-          content: 'Failed to find tool with name: ' + functionCall.name,
-          is_error: true,
-        });
-        continue;
-      }
-
-      try {
-        const args = { ...(functionCall.input as object), updateStatus };
-        const result = await tool(args as any);
-        functionCallResults.push({
-          type: 'tool_result',
-          tool_use_id: functionCall.id,
-          content: result,
-          is_error: false,
-        });
-      } catch (error) {
-        functionCallResults.push({
-          type: 'tool_result',
-          tool_use_id: functionCall.id,
-          content: `Error executing tool ${functionCall.name}: ${error}`,
-          is_error: true,
-        });
-      }
-    }
-
-    return functionCallResults;
-  };
-
   public async getLatestAvailableModelNames(): Promise<string[]> {
     const requestUrl = `https://docs.anthropic.com/en/docs/about-claude/models`;
 
@@ -352,14 +312,15 @@ export class AnthropicService extends AbstractLanguageModelService {
     return newAvailableModelNames;
   }
 
-  public async getResponse(options: GetResponseOptions): Promise<string> {
+  public async getResponse(
+    options: GetResponseOptions,
+  ): Promise<ResponseWithAction> {
     const {
       query,
       historyManager,
       images,
       currentEntryID,
       sendStreamResponse,
-      updateStatus,
       selectedModelName,
       disableTools,
     } = options;
@@ -372,100 +333,77 @@ export class AnthropicService extends AbstractLanguageModelService {
     );
 
     if (errorMessage) {
-      return errorMessage;
+      return { textResponse: errorMessage };
     }
-
-    let functionCallCount = 0;
-    const MAX_FUNCTION_CALLS = 5;
 
     const { systemPrompt, generationConfig } =
       this.getAdvanceSettings(historyManager);
 
     try {
       if (!sendStreamResponse) {
-        while (functionCallCount < MAX_FUNCTION_CALLS) {
-          const response = await anthropic.messages.create({
+        const response = await anthropic.messages.create({
+          model: selectedModelName ?? this.currentModel,
+          system: systemPrompt,
+          messages: conversationHistory,
+          tools: disableTools ? undefined : this.getEnabledTools(),
+          stream: false,
+          ...generationConfig,
+        });
+
+        if (response.content[0].type !== 'tool_use') {
+          return { textResponse: (response.content[0] as TextBlock).text };
+        }
+
+        const toolUseBlock = response.content.filter(
+          (message) => message.type === 'tool_use',
+        ) as ToolUseBlock[];
+
+        return {
+          textResponse: '',
+          toolCall: {
+            id: toolUseBlock[0].id,
+            toolName: toolUseBlock[0].name,
+            parameters: toolUseBlock[0].input as Record<string, any>,
+            create_time: Date.now(),
+          },
+        };
+      } else {
+        let responseText = '';
+
+        this.currentStreamResponse?.abort();
+        this.currentStreamResponse = anthropic.messages
+          .stream({
             model: selectedModelName ?? this.currentModel,
             system: systemPrompt,
             messages: conversationHistory,
             tools: disableTools ? undefined : this.getEnabledTools(),
-            stream: false,
+            stream: true,
             ...generationConfig,
+          })
+          .on('text', (partText) => {
+            sendStreamResponse(partText);
+            responseText += partText;
           });
 
-          if (response.content[0].type !== 'tool_use') {
-            return (response.content[0] as TextBlock).text;
-          }
+        const finalMessage = await this.currentStreamResponse.finalMessage();
 
-          const toolUseBlock = response.content.filter(
-            (message) => message.type === 'tool_use',
-          ) as ToolUseBlock[];
-          const functionCallResults =
-            await this.handleFunctionCalls(toolUseBlock);
-
-          conversationHistory.push({
-            role: 'assistant',
-            content: toolUseBlock,
-          });
-
-          conversationHistory.push({
-            role: 'user',
-            content: functionCallResults,
-          });
-
-          functionCallCount++;
+        if (finalMessage.stop_reason !== 'tool_use') {
+          return { textResponse: responseText };
         }
-        return 'Max function call limit reached.';
-      } else {
-        let responseText = '';
 
-        while (functionCallCount < MAX_FUNCTION_CALLS) {
-          this.currentStreamResponse?.abort();
-          this.currentStreamResponse = anthropic.messages
-            .stream({
-              model: selectedModelName ?? this.currentModel,
-              system: systemPrompt,
-              messages: conversationHistory,
-              tools: disableTools ? undefined : this.getEnabledTools(),
-              stream: true,
-              ...generationConfig,
-            })
-            .on('connect', () => {
-              updateStatus && updateStatus('');
-            })
-            .on('text', (partText) => {
-              sendStreamResponse(partText);
-              responseText += partText;
-            });
+        const toolUseBlock = finalMessage.content.filter(
+          (message) => message.type === 'tool_use',
+        ) as ToolUseBlock[];
 
-          const finalMessage = await this.currentStreamResponse.finalMessage();
-
-          if (finalMessage.stop_reason !== 'tool_use') {
-            return responseText;
-          }
-
-          const toolUseBlock = finalMessage.content.filter(
-            (message) => message.type === 'tool_use',
-          ) as ToolUseBlock[];
-
-          const functionCallResults = await this.handleFunctionCalls(
-            toolUseBlock,
-            updateStatus,
-          );
-
-          conversationHistory.push({
-            role: 'assistant',
-            content: toolUseBlock,
-          });
-
-          conversationHistory.push({
-            role: 'user',
-            content: functionCallResults,
-          });
-
-          functionCallCount++;
-        }
-        return 'Max function call limit reached.';
+        return {
+          textResponse: responseText,
+          toolCall: {
+            id: toolUseBlock[0].id,
+            toolName: toolUseBlock[0].name,
+            parameters: toolUseBlock[0].input as Record<string, any>,
+            create_time: Date.now(),
+          },
+        };
       }
     } catch (error) {
       vscode.window
@@ -481,9 +419,9 @@ export class AnthropicService extends AbstractLanguageModelService {
           }
         });
 
-      return 'Failed to connect to the language model service';
-    } finally {
-      updateStatus && updateStatus('');
+      return {
+        textResponse: 'Failed to connect to the language model service',
+      };
     }
   }
 

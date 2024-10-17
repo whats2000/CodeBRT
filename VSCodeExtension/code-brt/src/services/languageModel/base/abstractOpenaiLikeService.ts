@@ -1,22 +1,27 @@
 import path from 'path';
 import fs from 'fs';
 
-import type {
+import {
+  ChatCompletionChunkChoiceDeltaToolCallOpenaiLike,
   ChatCompletionContentPartImageOpenaiLike,
   ChatCompletionCreateParamsBaseOpenaiLike,
   ChatCompletionMessageParamOpenaiLike,
-  ChatCompletionMessageToolCallOpenaiLike,
-  ChatCompletionToolMessageParamOpenaiLike,
   ChatCompletionToolOpenaiLike,
   ConversationEntry,
+  NonStreamCompletionOpenaiLike,
   NonWorkspaceToolType,
+  ResponseWithAction,
+  StreamCompletionOpenaiLike,
 } from '../../../types';
 import { HistoryManager } from '../../../api';
 import { AbstractLanguageModelService } from './abstractLanguageModelService';
 import { ToolServiceProvider } from '../../tools';
 import vscode from 'vscode';
+import type { ChatCompletionMessageToolCall } from 'openai/resources/chat/completions';
 
 export abstract class AbstractOpenaiLikeService extends AbstractLanguageModelService {
+  protected stopStreamFlag: boolean = false;
+
   protected getAdvanceSettings(historyManager: HistoryManager): {
     systemPrompt: string | undefined;
     generationConfig: Partial<ChatCompletionCreateParamsBaseOpenaiLike>;
@@ -104,53 +109,105 @@ export abstract class AbstractOpenaiLikeService extends AbstractLanguageModelSer
     }
   }
 
-  protected handleFunctionCalls = async (
-    functionCalls: ChatCompletionMessageToolCallOpenaiLike[],
-    updateStatus?: (status: string) => void,
-  ): Promise<ChatCompletionToolMessageParamOpenaiLike[]> => {
-    const functionCallResults: ChatCompletionToolMessageParamOpenaiLike[] = [];
+  protected tryParseToolCallArguments(
+    argumentsString: string,
+  ): Record<string, unknown> {
+    try {
+      return JSON.parse(argumentsString);
+    } catch (error) {
+      console.error('Failed to parse tool call arguments:', error);
+      return {};
+    }
+  }
 
-    for (const functionCall of functionCalls) {
-      if (
-        !functionCall.function?.name ||
-        !functionCall.id ||
-        !functionCall.function?.arguments
-      ) {
-        continue;
-      }
-
-      const tool = ToolServiceProvider.getTool(functionCall.function.name);
-      if (!tool) {
-        functionCallResults.push({
-          role: 'tool',
-          tool_call_id: functionCall.id,
-          content:
-            'Failed to find tool with name: ' + functionCall.function.name,
-        });
-        continue;
-      }
-
-      try {
-        const result = await tool({
-          ...JSON.parse(functionCall.function.arguments),
-          updateStatus,
-        });
-        functionCallResults.push({
-          role: 'tool',
-          tool_call_id: functionCall.id,
-          content: result,
-        });
-      } catch (error) {
-        functionCallResults.push({
-          role: 'tool',
-          tool_call_id: functionCall.id,
-          content: `Error executing tool ${functionCall.function.name}: ${error}`,
-        });
-      }
+  protected async handleNonStreamResponse(
+    response: NonStreamCompletionOpenaiLike,
+  ): Promise<ResponseWithAction> {
+    if (!response.choices[0]?.message.tool_calls) {
+      return {
+        textResponse: response.choices[0]?.message?.content || '',
+      };
     }
 
-    return functionCallResults;
-  };
+    const toolCalls = response.choices[0].message.tool_calls;
+
+    return {
+      textResponse: response.choices[0]?.message?.content || '',
+      toolCall: {
+        id: toolCalls[0].id,
+        toolName: toolCalls[0].function.name,
+        parameters: this.tryParseToolCallArguments(
+          toolCalls[0].function.arguments,
+        ),
+        create_time: Date.now(),
+      },
+    };
+  }
+
+  protected async handleStreamResponse(
+    streamResponse: StreamCompletionOpenaiLike,
+    sendStreamResponse: (text: string) => void,
+  ): Promise<ResponseWithAction> {
+    let responseText = '';
+
+    const completeToolCalls: (ChatCompletionMessageToolCall & {
+      index: number;
+    })[] = [];
+
+    for await (const chunk of streamResponse) {
+      if (this.stopStreamFlag) {
+        return { textResponse: responseText };
+      }
+
+      if (chunk.choices[0]?.finish_reason === 'tool_calls') {
+        return {
+          textResponse: responseText,
+          toolCall: {
+            id: completeToolCalls[0].id,
+            toolName: completeToolCalls[0].function.name,
+            parameters: this.tryParseToolCallArguments(
+              completeToolCalls[0].function.arguments,
+            ),
+            create_time: Date.now(),
+          },
+        };
+      }
+
+      if (!chunk.choices[0]?.delta.tool_calls) {
+        const partText = chunk.choices[0]?.delta?.content || '';
+        sendStreamResponse(partText);
+        responseText += partText;
+        continue;
+      }
+
+      chunk.choices[0].delta.tool_calls.forEach(
+        (deltaToolCall: ChatCompletionChunkChoiceDeltaToolCallOpenaiLike) => {
+          const index = deltaToolCall.index;
+          let existingToolCall = completeToolCalls.find(
+            (call) => call.index === index,
+          );
+
+          if (!existingToolCall) {
+            existingToolCall = {
+              id: '',
+              function: { name: '', arguments: '' },
+              type: 'function',
+              index: index,
+            };
+            completeToolCalls.push(existingToolCall);
+          }
+
+          existingToolCall.id += deltaToolCall.id || '';
+          existingToolCall.function.name =
+            deltaToolCall.function?.name || existingToolCall.function.name;
+          existingToolCall.function.arguments +=
+            deltaToolCall.function?.arguments || '';
+        },
+      );
+    }
+
+    return { textResponse: responseText };
+  }
 
   protected async conversationHistoryToContent(
     entries: { [key: string]: ConversationEntry },

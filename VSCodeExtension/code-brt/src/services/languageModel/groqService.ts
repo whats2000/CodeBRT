@@ -3,18 +3,15 @@ import * as vscode from 'vscode';
 import type {
   ChatCompletionCreateParamsNonStreaming,
   ChatCompletionCreateParamsStreaming,
-  ChatCompletionMessageToolCall,
 } from 'groq-sdk/src/resources/chat/completions';
 import Groq from 'groq-sdk';
 
-import type { GetResponseOptions } from './types';
+import type { GetResponseOptions, ResponseWithAction } from './types';
 import { MODEL_SERVICE_CONSTANTS } from '../../constants';
 import { AbstractOpenaiLikeService } from './base';
 import { SettingsManager } from '../../api';
 
 export class GroqService extends AbstractOpenaiLikeService {
-  private stopStreamFlag: boolean = false;
-
   constructor(
     context: vscode.ExtensionContext,
     settingsManager: SettingsManager,
@@ -65,12 +62,17 @@ export class GroqService extends AbstractOpenaiLikeService {
     return newAvailableModelNames;
   }
 
-  public async getResponse(options: GetResponseOptions): Promise<string> {
+  public async getResponse(
+    options: GetResponseOptions,
+  ): Promise<ResponseWithAction> {
     if (this.currentModel === '') {
       vscode.window.showErrorMessage(
         'Make sure the model is selected before sending a message. Open the model selection dropdown and configure the model.',
       );
-      return 'Missing model configuration. Check the model selection dropdown.';
+      return {
+        textResponse:
+          'Missing model configuration. Check the model selection dropdown.',
+      };
     }
 
     const {
@@ -79,7 +81,6 @@ export class GroqService extends AbstractOpenaiLikeService {
       images,
       currentEntryID,
       sendStreamResponse,
-      updateStatus,
       selectedModelName,
       disableTools,
     } = options;
@@ -100,9 +101,6 @@ export class GroqService extends AbstractOpenaiLikeService {
       historyManager,
     );
 
-    let functionCallCount = 0;
-    const MAX_FUNCTION_CALLS = 5;
-
     const { systemPrompt, generationConfig } =
       this.getAdvanceSettings(historyManager);
 
@@ -115,113 +113,32 @@ export class GroqService extends AbstractOpenaiLikeService {
 
     try {
       if (!sendStreamResponse) {
-        while (functionCallCount < MAX_FUNCTION_CALLS) {
-          const response = await groq.chat.completions.create({
-            messages: conversationHistory,
-            model: selectedModelName ?? this.currentModel,
-            tools: disableTools ? undefined : this.getEnabledTools(),
-            stream: false,
-            ...generationConfig,
-          } as ChatCompletionCreateParamsNonStreaming);
+        const response = await groq.chat.completions.create({
+          messages: conversationHistory,
+          model: selectedModelName ?? this.currentModel,
+          tools: disableTools ? undefined : this.getEnabledTools(),
+          stream: false,
+          ...generationConfig,
+        } as ChatCompletionCreateParamsNonStreaming);
 
-          if (!response.choices[0]?.message.tool_calls) {
-            return response.choices[0]?.message?.content!;
-          }
-
-          const functionCallResults = await this.handleFunctionCalls(
-            response.choices[0].message.tool_calls,
-          );
-
-          conversationHistory.push({
-            role: 'assistant',
-            content: null,
-            tool_calls: response.choices[0].message.tool_calls,
-          });
-
-          conversationHistory.push(...functionCallResults);
-
-          functionCallCount++;
-        }
-        return 'Max function call limit reached.';
+        return await this.handleNonStreamResponse(response);
       } else {
-        let responseText: string = '';
-
-        while (functionCallCount < MAX_FUNCTION_CALLS) {
-          if (this.stopStreamFlag) {
-            return responseText;
-          }
-
-          const streamResponse = await groq.chat.completions.create({
-            messages: conversationHistory,
-            model: selectedModelName ?? this.currentModel,
-            stream: true,
-            tools: disableTools ? undefined : this.getEnabledTools(),
-            ...generationConfig,
-          } as ChatCompletionCreateParamsStreaming);
-
-          const completeToolCalls: (ChatCompletionMessageToolCall & {
-            index: number;
-          })[] = [];
-
-          updateStatus && updateStatus('');
-
-          for await (const chunk of streamResponse) {
-            if (this.stopStreamFlag) {
-              return responseText;
-            }
-
-            if (chunk.choices[0]?.finish_reason === 'tool_calls') {
-              const functionCallResults = await this.handleFunctionCalls(
-                completeToolCalls,
-                updateStatus,
-              );
-
-              conversationHistory.push({
-                role: 'assistant',
-                content: null,
-                tool_calls: completeToolCalls,
-              });
-              conversationHistory.push(...functionCallResults);
-              break;
-            }
-
-            if (!chunk.choices[0]?.delta.tool_calls) {
-              const partText = chunk.choices[0]?.delta?.content || '';
-              sendStreamResponse(partText);
-              responseText += partText;
-              continue;
-            }
-
-            chunk.choices[0].delta.tool_calls.forEach((deltaToolCall) => {
-              const index = deltaToolCall.index;
-              let existingToolCall = completeToolCalls.find(
-                (call) => call.index === index,
-              );
-
-              if (!existingToolCall) {
-                existingToolCall = {
-                  id: '',
-                  function: { name: '', arguments: '' },
-                  type: 'function',
-                  index: index,
-                };
-                completeToolCalls.push(existingToolCall);
-              }
-
-              existingToolCall.id += deltaToolCall.id || '';
-              existingToolCall.function.name =
-                deltaToolCall.function?.name || existingToolCall.function.name;
-              existingToolCall.function.arguments +=
-                deltaToolCall.function?.arguments || '';
-            });
-          }
-
-          if (completeToolCalls.length === 0) {
-            return responseText;
-          }
-          functionCallCount++;
+        if (this.stopStreamFlag) {
+          return { textResponse: '' };
         }
-        return responseText;
+
+        const streamResponse = await groq.chat.completions.create({
+          messages: conversationHistory,
+          model: selectedModelName ?? this.currentModel,
+          stream: true,
+          tools: disableTools ? undefined : this.getEnabledTools(),
+          ...generationConfig,
+        } as ChatCompletionCreateParamsStreaming);
+
+        return await this.handleStreamResponse(
+          streamResponse,
+          sendStreamResponse,
+        );
       }
     } catch (error) {
       vscode.window
@@ -236,10 +153,11 @@ export class GroqService extends AbstractOpenaiLikeService {
             );
           }
         });
-      return 'Failed to connect to the language model service.';
+      return {
+        textResponse: 'Failed to connect to the language model service.',
+      };
     } finally {
       this.stopStreamFlag = false;
-      updateStatus && updateStatus('');
     }
   }
 

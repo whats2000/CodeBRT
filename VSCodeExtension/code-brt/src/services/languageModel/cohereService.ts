@@ -1,11 +1,12 @@
 import * as vscode from 'vscode';
-import type { Message, Tool, ToolCall, ToolResult } from 'cohere-ai/api';
+import type { Message, Tool, ToolCall } from 'cohere-ai/api';
 import { CohereClient } from 'cohere-ai';
 
 import type {
   ConversationEntry,
   GetResponseOptions,
   NonWorkspaceToolType,
+  ResponseWithAction,
   ToolSchema,
 } from '../../types';
 import { MODEL_SERVICE_CONSTANTS } from '../../constants';
@@ -154,56 +155,6 @@ export class CohereService extends AbstractLanguageModelService {
     return result;
   }
 
-  private async handleFunctionCalls(
-    functionCalls: ToolCall[],
-    updateStatus?: (status: string) => void,
-  ): Promise<ToolResult[]> {
-    const functionCallResults: ToolResult[] = [];
-
-    for (const functionCall of functionCalls) {
-      const tool = ToolServiceProvider.getTool(functionCall.name);
-      if (!tool) {
-        functionCallResults.push({
-          call: functionCall,
-          outputs: [
-            {
-              error: true,
-              message: `Failed to find tool with name: ${functionCall.name}`,
-            },
-          ],
-        });
-        continue;
-      }
-
-      try {
-        const result = await tool({
-          ...functionCall.parameters,
-          updateStatus,
-        } as any);
-        functionCallResults.push({
-          call: functionCall,
-          outputs: [
-            {
-              searchResults: result,
-            },
-          ],
-        });
-      } catch (error) {
-        functionCallResults.push({
-          call: functionCall,
-          outputs: [
-            {
-              error: true,
-              message: `Error executing tool ${functionCall.name}: ${error}`,
-            },
-          ],
-        });
-      }
-    }
-
-    return functionCallResults;
-  }
-
   public async getLatestAvailableModelNames(): Promise<string[]> {
     const cohere = new CohereClient({
       token: this.settingsManager.get('cohereApiKey'),
@@ -236,12 +187,17 @@ export class CohereService extends AbstractLanguageModelService {
     return newAvailableModelNames;
   }
 
-  public async getResponse(options: GetResponseOptions): Promise<string> {
+  public async getResponse(
+    options: GetResponseOptions,
+  ): Promise<ResponseWithAction> {
     if (this.currentModel === '') {
       vscode.window.showErrorMessage(
         'Make sure the model is selected before sending a message. Open the model selection dropdown and configure the model.',
       );
-      return 'Missing model configuration. Check the model selection dropdown.';
+      return {
+        textResponse:
+          'Missing model configuration. Check the model selection dropdown.',
+      };
     }
 
     const {
@@ -250,7 +206,6 @@ export class CohereService extends AbstractLanguageModelService {
       images,
       currentEntryID,
       sendStreamResponse,
-      updateStatus,
       selectedModelName,
       disableTools,
     } = options;
@@ -270,10 +225,6 @@ export class CohereService extends AbstractLanguageModelService {
       historyManager,
     );
 
-    let toolResults: ToolResult[] = [];
-    let functionCallCount = 0;
-    const MAX_FUNCTION_CALLS = 5;
-
     const { systemPrompt, generationConfig } =
       this.getAdvanceSettings(historyManager);
 
@@ -289,85 +240,78 @@ export class CohereService extends AbstractLanguageModelService {
 
     try {
       if (!sendStreamResponse) {
-        while (functionCallCount < MAX_FUNCTION_CALLS) {
-          const response = await model.chat({
-            model: selectedModelName ?? this.currentModel,
-            message: toolResults.length > 0 ? '' : query,
-            chatHistory: conversationHistory,
-            tools:
-              disableTools || !shouldUseTools
-                ? undefined
-                : this.getEnabledTools(),
-            toolResults: toolResults.length > 0 ? toolResults : undefined,
-            ...generationConfig,
-          });
+        const response = await model.chat({
+          model: selectedModelName ?? this.currentModel,
+          message: query,
+          chatHistory: conversationHistory,
+          tools:
+            disableTools || !shouldUseTools
+              ? undefined
+              : this.getEnabledTools(),
+          ...generationConfig,
+        });
 
-          if (response.chatHistory) {
-            conversationHistory = response.chatHistory;
-          }
-
-          const functionCalls = response.toolCalls;
-
-          if (!functionCalls) {
-            return response.text;
-          }
-
-          toolResults = await this.handleFunctionCalls(functionCalls);
-          functionCallCount++;
+        if (response.toolCalls && response.toolCalls.length > 0) {
+          // Return the tool call for human-in-the-loop approval
+          const toolCall = response.toolCalls[0];
+          return {
+            textResponse: response.text,
+            toolCall: {
+              id: Date.now().toString(),
+              toolName: toolCall.name,
+              parameters: toolCall.parameters,
+              create_time: Date.now(),
+            },
+          };
         }
-        return 'Max function call limit reached.';
+
+        return { textResponse: response.text };
       } else {
         let responseText = '';
 
-        while (functionCallCount < MAX_FUNCTION_CALLS) {
+        const streamResponse = await model.chatStream({
+          model: selectedModelName ?? this.currentModel,
+          message: query,
+          chatHistory: conversationHistory,
+          tools:
+            disableTools || !shouldUseTools
+              ? undefined
+              : this.getEnabledTools(),
+          ...generationConfig,
+        });
+
+        let toolCall: ToolCall | null = null;
+
+        for await (const item of streamResponse) {
           if (this.stopStreamFlag) {
-            return responseText;
+            return { textResponse: responseText };
           }
 
-          const streamResponse = await model.chatStream({
-            model: selectedModelName ?? this.currentModel,
-            message: toolResults.length > 0 ? '' : query,
-            chatHistory: conversationHistory,
-            tools:
-              disableTools || !shouldUseTools
-                ? undefined
-                : this.getEnabledTools(),
-            toolResults: toolResults.length > 0 ? toolResults : undefined,
-            ...generationConfig,
-          });
-
-          let functionCalls = null;
-
-          for await (const item of streamResponse) {
-            if (this.stopStreamFlag) {
-              return responseText;
-            }
-
-            if (item.eventType === 'stream-start') {
-              updateStatus && updateStatus('');
-            }
-            if (item.eventType === 'tool-calls-generation') {
-              functionCalls = item.toolCalls;
-              toolResults = await this.handleFunctionCalls(
-                functionCalls,
-                updateStatus,
-              );
-            }
-            if (item.eventType === 'text-generation') {
-              const partText = item.text;
-              sendStreamResponse(partText);
-              responseText += partText;
-            }
-            if (item.eventType === 'stream-end' && item.response.chatHistory) {
-              conversationHistory = item.response.chatHistory;
-            }
+          if (item.eventType === 'text-generation') {
+            const partText = item.text;
+            sendStreamResponse(partText);
+            responseText += partText;
           }
-          if (!functionCalls || functionCalls.length === 0) {
-            return responseText;
+
+          if (item.eventType === 'tool-calls-generation') {
+            toolCall = item.toolCalls?.[0];
+            break;
           }
-          functionCallCount++;
         }
-        return responseText;
+
+        if (!toolCall) {
+          return { textResponse: responseText };
+        }
+
+        return {
+          textResponse: responseText,
+          toolCall: {
+            id: Date.now().toString(),
+            toolName: toolCall.name,
+            parameters: toolCall.parameters,
+            create_time: Date.now(),
+          },
+        };
       }
     } catch (error) {
       vscode.window
@@ -382,10 +326,12 @@ export class CohereService extends AbstractLanguageModelService {
             );
           }
         });
-      return 'Failed to connect to the language model service.';
+
+      return {
+        textResponse: 'Failed to connect to the language model service.',
+      };
     } finally {
       this.stopStreamFlag = false;
-      updateStatus && updateStatus('');
     }
   }
 
