@@ -33,6 +33,7 @@ export type IHistoryManager = {
    * @param message The message of the entry
    * @param images The images of the entry
    * @param modelServiceType The model service type of the entry
+   * @param modelName The model name of the entry
    * @returns The new entry ID
    */
   addConversationEntry(
@@ -41,6 +42,7 @@ export type IHistoryManager = {
     message: string,
     images?: string[],
     modelServiceType?: ModelServiceType,
+    modelName?: string,
   ): Promise<ConversationEntry>;
 
   /**

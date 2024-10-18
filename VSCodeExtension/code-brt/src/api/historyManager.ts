@@ -211,6 +211,7 @@ export class HistoryManager implements IHistoryManager {
     message: string,
     images?: string[],
     modelServiceType?: ModelServiceType,
+    modelName?: string,
   ): Promise<ConversationEntry> {
     const newID = uuidV4();
     const newEntry: ConversationEntry = {
@@ -218,6 +219,7 @@ export class HistoryManager implements IHistoryManager {
       role: role,
       message: message,
       images: images,
+      modelName: modelName,
       parent: parentID,
       children: [],
     };

@@ -174,6 +174,7 @@ export const activate = async (ctx: vscode.ExtensionContext) => {
       message,
       images?,
       modelServiceType?,
+      modelName?,
     ) => {
       return await historyManager.addConversationEntry(
         parentID,
@@ -181,6 +182,7 @@ export const activate = async (ctx: vscode.ExtensionContext) => {
         message,
         images,
         modelServiceType,
+        modelName,
       );
     },
     getAvailableModels: (modelServiceType) => {

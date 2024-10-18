@@ -54,7 +54,7 @@ export const ChatActivityBar = () => {
   const conversationHistory = useSelector(
     (state: RootState) => state.conversation,
   );
-  const { activeModelService } = useSelector(
+  const { activeModelService, selectedModel } = useSelector(
     (state: RootState) => state.modelService,
   );
   const uploadedFiles = useSelector(
@@ -202,6 +202,7 @@ export const ChatActivityBar = () => {
             )}\n\`\`\``,
           undefined,
           activeModelService,
+          selectedModel,
         );
 
         dispatch(replaceTempEntry(aiEntry));

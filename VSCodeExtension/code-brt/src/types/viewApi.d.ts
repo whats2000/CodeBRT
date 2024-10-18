@@ -195,6 +195,7 @@ export type ViewApi = {
    * @param message - The message to add.
    * @param images - The images to add.
    * @param modelServiceType - The type of the model service to add the entry to.
+   * @param modelName - The name of the model to add the entry to.
    * @returns The ID of the new entry.
    */
   addConversationEntry: (
@@ -203,6 +204,7 @@ export type ViewApi = {
     message: string,
     images?: string[],
     modelServiceType?: ModelServiceType,
+    modelName?: string,
   ) => Promise<ConversationEntry>;
 
   /**

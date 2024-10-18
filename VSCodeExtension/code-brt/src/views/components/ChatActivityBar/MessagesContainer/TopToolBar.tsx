@@ -13,11 +13,7 @@ import {
 import styled from 'styled-components';
 import { useDispatch, useSelector } from 'react-redux';
 
-import type {
-  ConversationEntry,
-  ConversationHistory,
-  ModelServiceType,
-} from '../../../../types';
+import type { ConversationEntry, ConversationHistory } from '../../../../types';
 import type { RootState } from '../../../redux';
 import { updateCurrentEntry } from '../../../redux/slices/conversationSlice';
 import { CancelOutlined } from '../../../icons';
@@ -30,7 +26,6 @@ const RespondCharacter = styled(Typography.Text)<{ $user: string }>`
 `;
 
 type MessagesTopToolBarProps = {
-  modelType: ModelServiceType | 'loading...';
   index: number;
   conversationHistoryEntries: ConversationEntry[];
   isAudioPlaying: boolean;
@@ -46,7 +41,6 @@ type MessagesTopToolBarProps = {
 };
 
 export const TopToolBar: React.FC<MessagesTopToolBarProps> = ({
-  modelType,
   index,
   conversationHistoryEntries,
   isAudioPlaying,
@@ -65,6 +59,9 @@ export const TopToolBar: React.FC<MessagesTopToolBarProps> = ({
   const dispatch = useDispatch();
   const conversationHistory = useSelector(
     (state: RootState) => state.conversation,
+  );
+  const { activeModelService } = useSelector(
+    (state: RootState) => state.modelService,
   );
 
   const entry = conversationHistoryEntries[index];
@@ -137,9 +134,12 @@ export const TopToolBar: React.FC<MessagesTopToolBarProps> = ({
   return (
     <Flex align={'center'} justify={'space-between'}>
       <RespondCharacter $user={entry.role} theme={token}>
-        {entry.role === 'AI'
-          ? modelType.charAt(0).toUpperCase() + modelType.slice(1)
-          : 'You'}
+        {entry.role !== 'AI'
+          ? 'You'
+          : entry.modelName
+            ? entry.modelName.charAt(0).toUpperCase() + entry.modelName.slice(1)
+            : activeModelService.charAt(0).toUpperCase() +
+              activeModelService.slice(1)}
       </RespondCharacter>
       <Flex gap={1} wrap={true} justify={'flex-end'}>
         {parent && siblingCount > 1 && (

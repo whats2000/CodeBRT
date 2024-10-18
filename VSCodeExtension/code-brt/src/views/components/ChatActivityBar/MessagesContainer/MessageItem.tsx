@@ -98,9 +98,6 @@ export const MessageItem = React.memo<MessageItemProps>(
     const [editedMessage, setEditedMessage] = useState(entry.message);
 
     const dispatch = useDispatch<AppDispatch>();
-    const { activeModelService } = useSelector(
-      (rootState: RootState) => rootState.modelService,
-    );
     const conversationHistory = useSelector(
       (rootState: RootState) => rootState.conversation,
     );
@@ -143,7 +140,6 @@ export const MessageItem = React.memo<MessageItemProps>(
             onMouseEnter={(e) => handleMouseEnter(e, entry)}
           >
             <TopToolBar
-              modelType={activeModelService}
               index={index}
               conversationHistoryEntries={conversationHistoryEntries}
               isAudioPlaying={isAudioPlaying}

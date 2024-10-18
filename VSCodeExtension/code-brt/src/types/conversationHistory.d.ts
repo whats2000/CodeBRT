@@ -37,6 +37,7 @@ export type ToolCallResponse = {
  * @property files - The files referenced by the entry in path
  * @property toolCalls - The tool calls made by the entry
  * @property toolResponses - The tool responses made by the entry
+ * @property modelName - The model name used by the entry
  * @property parent - The parent ID of the entry
  * @property children - The children's ID of the entry
  */
@@ -48,6 +49,7 @@ export type ConversationEntry = {
   files?: string[];
   toolCalls?: ToolCallEntry[];
   toolResponses?: ToolCallResponse[];
+  modelName?: string;
   parent: string | null;
   children: string[];
 };
