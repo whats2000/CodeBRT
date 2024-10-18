@@ -54,7 +54,7 @@
   "devDependencies": {
     "@algorithm.ts/lcs": "^4.0.5",
     "@ant-design/icons": "^5.5.1",
-    "@anthropic-ai/sdk": "^0.29.1",
+    "@anthropic-ai/sdk": "^0.29.2",
     "@babel/core": "^7.25.8",
     "@babel/preset-env": "^7.25.8",
     "@babel/preset-typescript": "^7.25.7",
@@ -94,7 +94,7 @@
     "markdown-to-text": "^0.1.1",
     "node-mic": "^1.0.1",
     "ollama": "^0.5.9",
-    "openai": "^4.67.3",
+    "openai": "^4.68.0",
     "prettier": "3.3.3",
     "prettier-plugin-organize-imports": "^4.1.0",
     "promise-deferred": "^2.0.4",
