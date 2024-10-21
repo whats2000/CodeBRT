@@ -1,9 +1,6 @@
 import * as vscode from 'vscode';
 
-import type {
-  ChatCompletionCreateParamsNonStreaming,
-  ChatCompletionCreateParamsStreaming,
-} from 'groq-sdk/src/resources/chat/completions';
+import type { ChatCompletionCreateParamsBase } from 'groq-sdk/resources/chat/completions';
 import Groq from 'groq-sdk';
 
 import type { GetResponseOptions, ResponseWithAction } from './types';
@@ -111,14 +108,18 @@ export class GroqService extends AbstractOpenaiLikeService {
     }
 
     try {
+      const requestPayload: ChatCompletionCreateParamsBase = {
+        messages: conversationHistory,
+        model: selectedModelName ?? this.currentModel,
+        tools: disableTools ? undefined : this.getEnabledTools(),
+        ...generationConfig,
+      };
+
       if (!sendStreamResponse) {
         const response = await groq.chat.completions.create({
-          messages: conversationHistory,
-          model: selectedModelName ?? this.currentModel,
-          tools: disableTools ? undefined : this.getEnabledTools(),
+          ...requestPayload,
           stream: false,
-          ...generationConfig,
-        } as ChatCompletionCreateParamsNonStreaming);
+        });
 
         return await this.handleNonStreamResponse(response);
       } else {
@@ -127,12 +128,9 @@ export class GroqService extends AbstractOpenaiLikeService {
         }
 
         const streamResponse = await groq.chat.completions.create({
-          messages: conversationHistory,
-          model: selectedModelName ?? this.currentModel,
+          ...requestPayload,
           stream: true,
-          tools: disableTools ? undefined : this.getEnabledTools(),
-          ...generationConfig,
-        } as ChatCompletionCreateParamsStreaming);
+        });
 
         return await this.handleStreamResponse(
           streamResponse,
