@@ -10,6 +10,7 @@ import { getToolSchema, getToolSchemaWithoutWorkspace } from '../utils';
 import { webSearchTool } from '../webSearchTool';
 import { urlFetcherTool } from '../urlFetcher';
 import vscode from 'vscode';
+import { ToolCallEntry } from '../../../types';
 
 export class ToolServiceProvider {
   private static readonly toolServices: {
@@ -52,6 +53,30 @@ export class ToolServiceProvider {
     },
   };
 
+  private static getToolSchemaByToolName(
+    toolName: string,
+  ): ToolSchema | undefined {
+    const tool = this.getTool(toolName);
+    if (!tool) {
+      return undefined;
+    }
+
+    const toolSchema = this.getToolSchema();
+
+    // For NonWorkspaceToolType we can directly return the schema
+    if (tool.name in toolSchema && tool.name !== 'agentTools') {
+      return toolSchema[tool.name as NonWorkspaceToolType];
+    }
+
+    // For WorkspaceToolType we need to check if the tool exists in the agentTools
+    if (toolSchema.agentTools && tool.name in toolSchema.agentTools) {
+      return toolSchema.agentTools[tool.name as WorkspaceToolType];
+    }
+
+    // Otherwise the schema does not exist
+    return undefined;
+  }
+
   public static getTool(
     name: string,
   ): ToolServicesApi[keyof ToolServicesApi] | undefined {
@@ -83,4 +108,57 @@ export class ToolServiceProvider {
 
     return getToolSchema(currentWorkspacePath);
   };
+
+  public static isViableToolCall(toolCallEntry: ToolCallEntry): {
+    isValid: boolean;
+    feedback: string;
+  } {
+    const tool = this.getTool(toolCallEntry.toolName);
+
+    // Validate if the tool exists
+    if (!tool) {
+      return {
+        isValid: false,
+        feedback: `The tool "${toolCallEntry.toolName}" does not exist.`,
+      };
+    }
+
+    // Validate if the tool schema exists
+    const toolSchema = this.getToolSchemaByToolName(toolCallEntry.toolName);
+
+    if (!toolSchema) {
+      return {
+        isValid: false,
+        feedback: `The tool "${toolCallEntry.toolName}" does not have a schema.`,
+      };
+    }
+
+    // Validate if the tool call has the required parameters
+    const requiredParameters = toolSchema.inputSchema.required;
+    for (const parameter of requiredParameters) {
+      // Check if the parameter is present in the tool call
+      if (!(parameter in toolCallEntry.parameters)) {
+        return {
+          isValid: false,
+          feedback: `The tool "${toolCallEntry.toolName}" requires the parameter "${parameter}".`,
+        };
+      }
+    }
+
+    // Validate if the tool call has the correct parameters type
+    for (const [parameter, value] of Object.entries(toolCallEntry.parameters)) {
+      const parameterType = toolSchema.inputSchema.properties[parameter].type;
+      if (typeof value !== parameterType) {
+        return {
+          isValid: false,
+          feedback: `The parameter "${parameter}" of the tool "${toolCallEntry.toolName}" is invalid. Expected type "${parameterType}" but received type "${typeof value}".`,
+        };
+      }
+    }
+
+    return {
+      isValid: true,
+      feedback: '',
+    };
+  }
 }
