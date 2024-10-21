@@ -1,3 +1,5 @@
+export type ConversationEntryRole = 'user' | 'AI' | 'tool';
+
 /**
  * The tool call entry type
  * @property id - The unique identifier of the tool call entry
@@ -43,7 +45,7 @@ export type ToolCallResponse = {
  */
 export type ConversationEntry = {
   id: string;
-  role: 'user' | 'AI' | 'tool';
+  role: ConversationEntryRole;
   message: string;
   images?: string[];
   files?: string[];

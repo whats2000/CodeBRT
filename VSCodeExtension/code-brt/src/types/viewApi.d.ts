@@ -1,6 +1,7 @@
 import { CustomModelSettings, ExtensionSettings } from './extensionSettings';
 import {
   ConversationEntry,
+  ConversationEntryRole,
   ConversationHistory,
   ConversationHistoryIndexList,
   ConversationModelAdvanceSettings,
@@ -200,7 +201,7 @@ export type ViewApi = {
    */
   addConversationEntry: (
     parentID: string,
-    sender: 'user' | 'AI',
+    sender: ConversationEntryRole,
     message: string,
     images?: string[],
     modelServiceType?: ModelServiceType,

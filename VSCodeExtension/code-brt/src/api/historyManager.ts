@@ -3,8 +3,9 @@ import * as path from 'path';
 import { v4 as uuidV4 } from 'uuid';
 import * as vscode from 'vscode';
 
-import type {
+import {
   ConversationEntry,
+  ConversationEntryRole,
   ConversationHistory,
   ConversationHistoryIndex,
   ConversationHistoryIndexList,
@@ -207,7 +208,7 @@ export class HistoryManager implements IHistoryManager {
 
   public async addConversationEntry(
     parentID: string | null,
-    role: 'user' | 'AI',
+    role: ConversationEntryRole,
     message: string,
     images?: string[],
     modelServiceType?: ModelServiceType,

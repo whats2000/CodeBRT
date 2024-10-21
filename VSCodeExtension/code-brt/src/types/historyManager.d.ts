@@ -1,5 +1,6 @@
-import type {
+import {
   ConversationEntry,
+  ConversationEntryRole,
   ConversationHistory,
   ConversationHistoryIndexList,
   ConversationModelAdvanceSettings,
@@ -38,7 +39,7 @@ export type IHistoryManager = {
    */
   addConversationEntry(
     parentID: string | null,
-    role: 'user' | 'AI',
+    role: ConversationEntryRole,
     message: string,
     images?: string[],
     modelServiceType?: ModelServiceType,
