@@ -12,6 +12,7 @@ import type {
   ToolUseBlock,
 } from '@anthropic-ai/sdk/src/resources';
 import type {
+  MessageCreateParamsBase,
   MessageCreateParamsNonStreaming,
   MessageStream,
 } from '@anthropic-ai/sdk/resources/messages';
@@ -344,7 +345,7 @@ export class AnthropicService extends AbstractLanguageModelService {
 
     try {
       while (retryCount < MAX_RETRIES) {
-        const requestPayload = {
+        const requestPayload: MessageCreateParamsBase = {
           model: selectedModelName ?? this.currentModel,
           system: systemPrompt,
           messages: conversationHistory,

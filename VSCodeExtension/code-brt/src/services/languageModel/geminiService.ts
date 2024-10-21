@@ -2,6 +2,7 @@ import * as vscode from 'vscode';
 import fs from 'fs';
 import {
   Content,
+  FunctionCall,
   GenerationConfig,
   InlineDataPart,
   Part,
@@ -324,77 +325,92 @@ export class GeminiService extends AbstractLanguageModelService {
         }
       : undefined;
 
+    const MAX_RETRIES = 5;
+    let retryCount = 0;
+    let responseText = '';
+    let responseToolCall: FunctionCall | undefined = undefined;
     try {
-      if (!sendStreamResponse) {
-        const response = await generativeModel
-          .startChat({
-            systemInstruction: systemInstruction,
-            generationConfig: generationConfig,
-            safetySettings: this.safetySettings,
-            history: conversationHistory,
-            tools: disableTools ? undefined : this.getEnabledTools(),
-          })
-          .sendMessage(queryParts);
+      while (retryCount < MAX_RETRIES) {
+        responseToolCall = undefined;
 
-        const functionCalls = response.response.functionCalls();
+        const chatSession = generativeModel.startChat({
+          systemInstruction: systemInstruction,
+          generationConfig: generationConfig,
+          safetySettings: this.safetySettings,
+          history: conversationHistory,
+          tools: disableTools ? undefined : this.getEnabledTools(),
+        });
 
-        if (functionCalls && functionCalls.length > 0) {
-          // Return the tool call for human-in-the-loop approval
-          const functionCall = functionCalls[0];
+        if (!sendStreamResponse) {
+          const response = await chatSession.sendMessage(queryParts);
+          responseText = response.response.text();
+          responseToolCall = response.response.functionCalls()?.[0];
+        } else {
+          const result = await chatSession.sendMessageStream(queryParts);
+
+          for await (const item of result.stream) {
+            if (this.stopStreamFlag) {
+              return { textResponse: responseText };
+            }
+
+            responseToolCall = item.functionCalls()?.[0];
+            if (responseToolCall) {
+              break;
+            }
+
+            const partText = item.text();
+            sendStreamResponse(partText);
+            responseText += partText;
+          }
+        }
+
+        if (!responseToolCall) {
+          return { textResponse: responseText };
+        }
+
+        const toolCall = {
+          id: Date.now().toString(),
+          toolName: responseToolCall.name,
+          parameters: responseToolCall.args,
+          create_time: Date.now(),
+        };
+
+        const validation = ToolServiceProvider.isViableToolCall(toolCall);
+        // Return the response if the tool call is valid
+        if (validation.isValid) {
           return {
-            textResponse: response.response.text(),
-            toolCall: {
-              id: Date.now().toString(),
-              toolName: functionCall.name,
-              parameters: functionCall.args,
-              create_time: Date.now(),
-            },
+            textResponse: responseText,
+            toolCall,
           };
         }
 
-        return { textResponse: response.response.text() };
-      } else {
-        let responseText = '';
-
-        const result = await generativeModel
-          .startChat({
-            systemInstruction: systemInstruction,
-            generationConfig: generationConfig,
-            safetySettings: this.safetySettings,
-            history: conversationHistory,
-            tools: disableTools ? undefined : this.getEnabledTools(),
-          })
-          .sendMessageStream(queryParts);
-
-        let functionCalls = null;
-
-        for await (const item of result.stream) {
-          if (this.stopStreamFlag) {
-            return { textResponse: responseText };
-          }
-
-          functionCalls = item.functionCalls();
-          if (functionCalls && functionCalls.length > 0) {
-            // Handle the tool call here and return for approval
-            const functionCall = functionCalls[0];
-            return {
-              textResponse: responseText,
-              toolCall: {
-                id: Date.now().toString(),
-                toolName: functionCall.name,
-                parameters: functionCall.args,
-                create_time: Date.now(),
+        // Otherwise, add the tool call feedback to the conversation history and retry
+        conversationHistory.push({
+          role: 'user',
+          parts: queryParts,
+        });
+        conversationHistory.push({
+          role: 'model',
+          parts: [
+            {
+              functionCall: responseToolCall,
+            },
+          ],
+        });
+        queryParts = [
+          {
+            functionResponse: {
+              name: responseToolCall.name,
+              response: {
+                error: true,
+                feedback: validation.feedback,
               },
-            };
-          }
-
-          const partText = item.text();
-          sendStreamResponse(partText);
-          responseText += partText;
-        }
-
-        return { textResponse: responseText };
+            },
+          },
+        ];
+        retryCount++;
       }
+      return { textResponse: responseText };
     } catch (error) {
       return this.handleGetResponseError(error, 'gemini');
     } finally {

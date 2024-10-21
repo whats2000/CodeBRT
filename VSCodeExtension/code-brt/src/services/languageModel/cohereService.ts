@@ -303,6 +303,11 @@ export class CohereService extends AbstractLanguageModelService {
 
         // Otherwise, add the tool call feedback to the conversation history and retry
         conversationHistory.push({
+          role: 'USER',
+          message: query,
+        });
+
+        conversationHistory.push({
           role: 'CHATBOT',
           message: '',
           toolCalls: [responseToolCall],
@@ -319,7 +324,6 @@ export class CohereService extends AbstractLanguageModelService {
             ],
           },
         ];
-
         retryCount++;
       }
       return { textResponse: responseText };
