@@ -53,7 +53,7 @@ export class ToolServiceProvider {
     },
   };
 
-  private static getToolSchemaByToolName(
+  public static getToolSchemaByToolName(
     toolName: string,
   ): ToolSchema | undefined {
     const tool = this.getTool(toolName);
@@ -64,13 +64,13 @@ export class ToolServiceProvider {
     const toolSchema = this.getToolSchema();
 
     // For NonWorkspaceToolType we can directly return the schema
-    if (tool.name in toolSchema && tool.name !== 'agentTools') {
-      return toolSchema[tool.name as NonWorkspaceToolType];
+    if (toolName in toolSchema && toolName !== 'agentTools') {
+      return toolSchema[toolName as NonWorkspaceToolType];
     }
 
     // For WorkspaceToolType we need to check if the tool exists in the agentTools
-    if (toolSchema.agentTools && tool.name in toolSchema.agentTools) {
-      return toolSchema.agentTools[tool.name as WorkspaceToolType];
+    if (toolSchema.agentTools && toolName in toolSchema.agentTools) {
+      return toolSchema.agentTools[toolName as WorkspaceToolType];
     }
 
     // Otherwise the schema does not exist
@@ -145,7 +145,7 @@ export class ToolServiceProvider {
       }
     }
 
-    // Validate if the tool call has the correct parameters type
+    // Validate if the tool call has the correct parameter types
     for (const [parameter, value] of Object.entries(toolCallEntry.parameters)) {
       const parameterType = toolSchema.inputSchema.properties[parameter].type;
       if (typeof value !== parameterType) {
