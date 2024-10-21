@@ -268,7 +268,7 @@ export class AnthropicService extends AbstractLanguageModelService {
     response: Message,
     responseText: string,
   ): ResponseWithAction {
-    if (response.content[0].type !== 'tool_use') {
+    if (response.stop_reason !== 'tool_use') {
       return { textResponse: responseText };
     }
 
