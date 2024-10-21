@@ -135,49 +135,68 @@ export class HuggingFaceService extends AbstractLanguageModelService {
     return result;
   }
 
-  protected handleFunctionCalls = async (
-    functionCalls: ChatCompletionOutputToolCall[],
-    updateStatus?: (status: string) => void,
-  ): Promise<{
-    success: boolean;
-    functionCallResults: string;
-  }> => {
-    let functionCallResults: string = '';
-    let success = true;
+  protected tryParseToolCall(
+    completeToolCallsString: string,
+  ): ChatCompletionOutputToolCall[] | undefined {
+    try {
+      // Example Tool Calls String:
+      /**
+       * {  "function": {
+       *   "_name": "searchWeb",
+       *   "query": "recent news"
+       * }}<|eot_id|>
+       */
 
-    for (const functionCall of functionCalls) {
-      if (!functionCall.function?.name || !functionCall.function?.arguments) {
-        continue;
+      // Remove the "<|eot_id|>" string from the tool calls string and replace the "_name" key with "name"
+      const correctToolCallsString = completeToolCallsString
+        .replace('<|eot_id|>', '')
+        .replace(/"_name"/g, '"name"');
+
+      const toolCallObject = JSON.parse(correctToolCallsString);
+
+      // Convert the JSON object to the correct format
+      const correctToolCalls: ChatCompletionOutputToolCall[] = [];
+
+      // Function to format a single tool call object
+      const formatToolCall = (
+        toolCall: any,
+        id: string,
+      ): ChatCompletionOutputToolCall | undefined => {
+        if (!toolCall.function?.name) {
+          return undefined;
+        }
+        const { name, ...args } = toolCall.function;
+        return {
+          id: id,
+          type: 'function',
+          function: {
+            name: name,
+            arguments: args,
+          },
+        };
+      };
+
+      // Check if the parsed object is an array or a single object
+      if (Array.isArray(toolCallObject)) {
+        toolCallObject.forEach((toolCall, index) => {
+          const toolCallResult = formatToolCall(toolCall, index.toString());
+          if (toolCallResult) {
+            correctToolCalls.push(toolCallResult);
+          }
+        });
+      } else {
+        const toolCallResult = formatToolCall(toolCallObject, '0');
+        if (toolCallResult) {
+          correctToolCalls.push(toolCallResult);
+        }
       }
 
-      const tool = ToolServiceProvider.getTool(functionCall.function.name);
-      if (!tool) {
-        functionCallResults += `Failed to find tool with name: ${functionCall.function.name}. \n\n The tool available are: \n${JSON.stringify(
-          this.getEnabledTools(),
-          null,
-          2,
-        )}`;
-        success = false;
-        continue;
-      }
-
-      try {
-        const result = await tool({
-          ...functionCall.function.arguments,
-          updateStatus,
-        } as any);
-        functionCallResults += result;
-      } catch (error) {
-        functionCallResults += `Failed to execute tool with name: ${functionCall.function.name}. \n\n Error: ${error}`;
-        success = false;
-      }
+      return correctToolCalls.length > 0 ? correctToolCalls : undefined;
+    } catch (error) {
+      console.error('Failed to parse tool call arguments:', error);
+      return undefined;
     }
-
-    return {
-      success,
-      functionCallResults,
-    };
-  };
+  }
 
   public async getResponse(
     options: GetResponseOptions,
@@ -228,153 +247,110 @@ export class HuggingFaceService extends AbstractLanguageModelService {
       });
     }
 
+    const MAX_RETRIES = 5;
+    let retryCount = 0;
+    let responseText = '';
     try {
-      if (!sendStreamResponse) {
-        if (!disableTools) {
-          vscode.window.showWarningMessage(
-            'The non-streaming response is not supported tool calls in this version. The tool calls will be ignored.',
-          );
-        }
+      while (retryCount < MAX_RETRIES) {
+        if (!sendStreamResponse) {
+          // The non-streaming response is not supported tool calls in this version
+          if (!disableTools) {
+            vscode.window.showWarningMessage(
+              'The non-streaming response is not supported tool calls in this version. The tool calls will be ignored.',
+            );
+          }
 
-        const response = await huggerFace.chatCompletion({
-          messages: conversationHistory,
-          model: selectedModelName ?? this.currentModel,
-          stream: false,
-          ...generationConfig,
-        });
+          const response = await huggerFace.chatCompletion({
+            messages: conversationHistory,
+            model: selectedModelName ?? this.currentModel,
+            ...generationConfig,
+            stream: false,
+          });
 
-        if (!response.choices[0]?.message.tool_calls) {
+          responseText = response.choices[0]?.message?.content || '';
+
           return {
-            textResponse: response.choices[0]?.message?.content || '',
+            textResponse: responseText,
+            toolCall: undefined,
           };
-        }
+        } else {
+          // TODO:
+          //  Current have some issues with the Hugging Face API
+          //  so the tool calls are not being returned correctly format
+          const streamResponse = huggerFace.chatCompletionStream({
+            messages: conversationHistory,
+            model: selectedModelName ?? this.currentModel,
+            tools: disableTools ? undefined : this.getEnabledTools(),
+            ...generationConfig,
+            stream: true,
+          });
 
-        // TODO: Current have some issues with the Hugging Face API so the tool calls are not being returned correctly format
-        vscode.window.showWarningMessage(
-          'The non-streaming response is not supported tool calls in this version. The tool calls will be ignored.',
-        );
-        return {
-          textResponse: '',
-        };
-      } else {
-        let responseText = '';
+          let completeToolCallsString: string = '';
 
-        // TODO: Current have some issues with the Hugging Face API so the tool calls are not being returned correctly format
-        let functionCallSuccess = false;
+          for await (const chunk of streamResponse) {
+            if (this.stopStreamFlag) {
+              return { textResponse: responseText };
+            }
 
-        if (this.stopStreamFlag) {
-          return { textResponse: '' };
-        }
+            if (!chunk.choices[0]?.delta.tool_calls) {
+              const partText = chunk.choices[0]?.delta?.content || '';
+              sendStreamResponse(partText);
+              responseText += partText;
+              continue;
+            }
 
-        const streamResponse = huggerFace.chatCompletionStream({
-          messages: conversationHistory,
-          model: selectedModelName ?? this.currentModel,
-          tools:
-            functionCallSuccess || disableTools
-              ? undefined
-              : this.getEnabledTools(),
-          stream: true,
-          ...generationConfig,
-        });
+            // Collect tool calls delta from the stream response delta
+            completeToolCallsString +=
+              chunk.choices[0]?.delta.tool_calls.function.arguments;
+          }
 
-        let completeToolCallsString: string = '';
-
-        for await (const chunk of streamResponse) {
-          if (this.stopStreamFlag) {
+          if (completeToolCallsString.length === 0) {
             return { textResponse: responseText };
           }
 
-          if (!chunk.choices[0]?.delta.tool_calls) {
-            const partText = chunk.choices[0]?.delta?.content || '';
-            sendStreamResponse(partText);
-            responseText += partText;
-            continue;
-          }
+          const correctToolCall = this.tryParseToolCall(
+            completeToolCallsString,
+          )?.[0];
 
-          // Collect tool calls delta from the stream response delta
-          completeToolCallsString +=
-            chunk.choices[0]?.delta.tool_calls.function.arguments;
-        }
-
-        if (completeToolCallsString.length === 0) {
-          return { textResponse: responseText };
-        }
-
-        // Example Tool Calls String:
-        /**
-         * {  "function": {
-         *   "_name": "searchWeb",
-         *   "query": "recent news"
-         * }}<|eot_id|>
-         */
-
-        // Remove the "<|eot_id|>" string from the tool calls string
-        completeToolCallsString = completeToolCallsString.replace(
-          '<|eot_id|>',
-          '',
-        );
-
-        // Replace the "_name" key with "name" key
-        completeToolCallsString = completeToolCallsString.replace(
-          /"_name"/g,
-          '"name"',
-        );
-
-        // Parse the string into a JSON object
-        let toolCallObject = JSON.parse(completeToolCallsString);
-
-        // Convert the JSON object to the correct format
-        const correctToolCalls: ChatCompletionOutputToolCall[] = [];
-
-        // Function to format a single tool call object
-        const formatToolCall = (
-          toolCall: any,
-          id: string,
-        ): ChatCompletionOutputToolCall => {
-          if (!toolCall.function?.name) {
-            return {
-              id: id,
-              type: 'function',
-              function: {
-                name: 'missing "name" key',
-                arguments: {},
-              },
-            };
-          }
-          const { name, ...args } = toolCall.function;
-          return {
-            id: id,
-            type: 'function',
-            function: {
-              name: name,
-              arguments: args,
-            },
+          let validation = {
+            isValid: false,
+            feedback:
+              'The tool call seems to be invalid. Please check the tool call schema and try again.',
           };
-        };
 
-        // Check if the parsed object is an array or a single object
-        if (Array.isArray(toolCallObject)) {
-          toolCallObject.forEach((toolCall, index) => {
-            correctToolCalls.push(formatToolCall(toolCall, index.toString()));
+          if (correctToolCall) {
+            const toolCall = {
+              id: correctToolCall.id,
+              toolName: correctToolCall.function.name,
+              parameters: correctToolCall.function.arguments as Record<
+                string,
+                any
+              >,
+              create_time: Date.now(),
+            };
+            validation = ToolServiceProvider.isViableToolCall(toolCall);
+            // Return the response if the tool call is valid
+            if (validation.isValid) {
+              return {
+                textResponse: responseText,
+                toolCall,
+              };
+            }
+          }
+
+          // Otherwise, add the tool call feedback to the conversation history and retry
+          conversationHistory.push({
+            role: 'assistant',
+            content: completeToolCallsString,
           });
-        } else {
-          correctToolCalls.push(formatToolCall(toolCallObject, '0'));
+          conversationHistory.push({
+            role: 'user',
+            content: validation.feedback,
+          });
+          retryCount++;
         }
-
-        // Return the tool calls
-        return {
-          textResponse: responseText,
-          toolCall: {
-            id: correctToolCalls[0].id,
-            toolName: correctToolCalls[0].function.name,
-            parameters: correctToolCalls[0].function.arguments as Record<
-              string,
-              any
-            >,
-            create_time: Date.now(),
-          },
-        };
       }
+      return { textResponse: responseText };
     } catch (error) {
       return this.handleGetResponseError(error, 'huggingFace');
     } finally {
