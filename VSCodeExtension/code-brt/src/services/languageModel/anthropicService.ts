@@ -336,21 +336,25 @@ export class AnthropicService extends AbstractLanguageModelService {
 
     const { systemPrompt, generationConfig } =
       this.getAdvanceSettings(historyManager);
+
+    const MAX_RETRIES = 5;
     let retryCount = 0;
-    const maxRetries = 5;
     let responseText = '';
+    let response;
 
     try {
-      while (retryCount < maxRetries) {
-        let response;
+      while (retryCount < MAX_RETRIES) {
+        const requestPayload = {
+          model: selectedModelName ?? this.currentModel,
+          system: systemPrompt,
+          messages: conversationHistory,
+          tools: disableTools ? undefined : this.getEnabledTools(),
+          ...generationConfig,
+        };
         if (!sendStreamResponse) {
           response = await anthropic.messages.create({
-            model: selectedModelName ?? this.currentModel,
-            system: systemPrompt,
-            messages: conversationHistory,
-            tools: disableTools ? undefined : this.getEnabledTools(),
+            ...requestPayload,
             stream: false,
-            ...generationConfig,
           });
           if (response.content[0].type === 'text') {
             responseText = response.content[0].text;
@@ -359,12 +363,8 @@ export class AnthropicService extends AbstractLanguageModelService {
           this.currentStreamResponse?.abort();
           this.currentStreamResponse = anthropic.messages
             .stream({
-              model: selectedModelName ?? this.currentModel,
-              system: systemPrompt,
-              messages: conversationHistory,
-              tools: disableTools ? undefined : this.getEnabledTools(),
+              ...requestPayload,
               stream: true,
-              ...generationConfig,
             })
             .on('text', (partText) => {
               sendStreamResponse(partText);
@@ -414,7 +414,7 @@ export class AnthropicService extends AbstractLanguageModelService {
             },
           ],
         });
-        retryCount += 1;
+        retryCount++;
       }
       return { textResponse: responseText };
     } catch (error) {

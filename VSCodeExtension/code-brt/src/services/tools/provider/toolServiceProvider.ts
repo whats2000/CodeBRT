@@ -119,7 +119,9 @@ export class ToolServiceProvider {
     if (!tool) {
       return {
         isValid: false,
-        feedback: `The tool "${toolCallEntry.toolName}" does not exist.`,
+        feedback:
+          `The tool "${toolCallEntry.toolName}" does not exist. ` +
+          `Check the tool name and try again.`,
       };
     }
 
@@ -129,7 +131,9 @@ export class ToolServiceProvider {
     if (!toolSchema) {
       return {
         isValid: false,
-        feedback: `The tool "${toolCallEntry.toolName}" does not have a schema.`,
+        feedback:
+          `The tool "${toolCallEntry.toolName}" does not have a schema. ` +
+          `This mean the tool is working in progress.`,
       };
     }
 
@@ -140,7 +144,9 @@ export class ToolServiceProvider {
       if (!(parameter in toolCallEntry.parameters)) {
         return {
           isValid: false,
-          feedback: `The tool "${toolCallEntry.toolName}" requires the parameter "${parameter}".`,
+          feedback:
+            `The tool "${toolCallEntry.toolName}" requires the parameter "${parameter}". ` +
+            `Please provide the parameter and try again.`,
         };
       }
     }
@@ -151,7 +157,9 @@ export class ToolServiceProvider {
       if (typeof value !== parameterType) {
         return {
           isValid: false,
-          feedback: `The parameter "${parameter}" of the tool "${toolCallEntry.toolName}" is invalid. Expected type "${parameterType}" but received type "${typeof value}".`,
+          feedback:
+            `The parameter "${parameter}" of the tool "${toolCallEntry.toolName}" is invalid. ` +
+            `Please provide the correct parameter type and try again.`,
         };
       }
     }

@@ -1,5 +1,5 @@
 import * as vscode from 'vscode';
-import type { Message, Tool, ToolCall } from 'cohere-ai/api';
+import type { Message, Tool, ToolCall, ToolResult } from 'cohere-ai/api';
 import { CohereClient } from 'cohere-ai';
 
 import type {
@@ -237,81 +237,92 @@ export class CohereService extends AbstractLanguageModelService {
     // Determine whether the current model should use tools
     const shouldUseTools = !this.modelsWithoutTools.includes(this.currentModel);
 
+    const MAX_RETRIES = 5;
+    let retryCount = 0;
+    let responseText = '';
+    let responseToolCall: ToolCall | undefined = undefined;
+    let toolResults: ToolResult[] = [];
+
     try {
-      if (!sendStreamResponse) {
-        const response = await model.chat({
+      while (retryCount < MAX_RETRIES) {
+        responseToolCall = undefined;
+
+        const requestPayload: ChatRequest = {
           model: selectedModelName ?? this.currentModel,
-          message: query,
+          message: toolResults.length > 0 ? '' : query,
           chatHistory: conversationHistory,
+          toolResults: toolResults.length > 0 ? toolResults : undefined,
           tools:
             disableTools || !shouldUseTools
               ? undefined
               : this.getEnabledTools(),
           ...generationConfig,
-        });
+        };
+        if (!sendStreamResponse) {
+          const response = await model.chat(requestPayload);
+          responseText = response.text;
+          responseToolCall = response.toolCalls?.[0];
+        } else {
+          const streamResponse = await model.chatStream(requestPayload);
 
-        if (response.toolCalls && response.toolCalls.length > 0) {
-          // Return the tool call for human-in-the-loop approval
-          const toolCall = response.toolCalls[0];
-          return {
-            textResponse: response.text,
-            toolCall: {
-              id: Date.now().toString(),
-              toolName: toolCall.name,
-              parameters: toolCall.parameters,
-              create_time: Date.now(),
-            },
-          };
-        }
+          for await (const item of streamResponse) {
+            if (this.stopStreamFlag) {
+              return { textResponse: responseText };
+            }
 
-        return { textResponse: response.text };
-      } else {
-        let responseText = '';
-
-        const streamResponse = await model.chatStream({
-          model: selectedModelName ?? this.currentModel,
-          message: query,
-          chatHistory: conversationHistory,
-          tools:
-            disableTools || !shouldUseTools
-              ? undefined
-              : this.getEnabledTools(),
-          ...generationConfig,
-        });
-
-        let toolCall: ToolCall | null = null;
-
-        for await (const item of streamResponse) {
-          if (this.stopStreamFlag) {
-            return { textResponse: responseText };
-          }
-
-          if (item.eventType === 'text-generation') {
-            const partText = item.text;
-            sendStreamResponse(partText);
-            responseText += partText;
-          }
-
-          if (item.eventType === 'tool-calls-generation') {
-            toolCall = item.toolCalls?.[0];
-            break;
+            if (item.eventType === 'text-generation') {
+              const partText = item.text;
+              sendStreamResponse(partText);
+              responseText += partText;
+            } else if (item.eventType === 'tool-calls-generation') {
+              responseToolCall = item.toolCalls?.[0];
+              break;
+            }
           }
         }
 
-        if (!toolCall) {
+        if (!responseToolCall) {
           return { textResponse: responseText };
         }
 
-        return {
-          textResponse: responseText,
-          toolCall: {
-            id: Date.now().toString(),
-            toolName: toolCall.name,
-            parameters: toolCall.parameters,
-            create_time: Date.now(),
-          },
+        const toolCall = {
+          id: Date.now().toString(),
+          toolName: responseToolCall.name,
+          parameters: responseToolCall.parameters,
+          create_time: Date.now(),
         };
+
+        const validation = ToolServiceProvider.isViableToolCall(toolCall);
+        // Return the response if the tool call is valid
+        if (validation.isValid) {
+          return {
+            textResponse: responseText,
+            toolCall,
+          };
+        }
+
+        // Otherwise, add the tool call feedback to the conversation history and retry
+        conversationHistory.push({
+          role: 'CHATBOT',
+          message: '',
+          toolCalls: [responseToolCall],
+        });
+
+        toolResults = [
+          {
+            call: responseToolCall,
+            outputs: [
+              {
+                error: true,
+                feedback: validation.feedback,
+              },
+            ],
+          },
+        ];
+
+        retryCount++;
       }
+      return { textResponse: responseText };
     } catch (error) {
       return this.handleGetResponseError(error, 'cohere');
     } finally {
