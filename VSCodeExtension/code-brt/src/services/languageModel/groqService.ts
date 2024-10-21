@@ -7,7 +7,6 @@ import type {
 import Groq from 'groq-sdk';
 
 import type { GetResponseOptions, ResponseWithAction } from './types';
-import { MODEL_SERVICE_CONSTANTS } from '../../constants';
 import { AbstractOpenaiLikeService } from './base';
 import { SettingsManager } from '../../api';
 
@@ -141,21 +140,7 @@ export class GroqService extends AbstractOpenaiLikeService {
         );
       }
     } catch (error) {
-      vscode.window
-        .showErrorMessage(
-          'Failed to get response from Groq Service: ' + error,
-          'Get API Key',
-        )
-        .then((selection) => {
-          if (selection === 'Get API Key') {
-            vscode.env.openExternal(
-              vscode.Uri.parse(MODEL_SERVICE_CONSTANTS.groq.apiLink),
-            );
-          }
-        });
-      return {
-        textResponse: 'Failed to connect to the language model service.',
-      };
+      return this.handleGetResponseError(error, 'groq');
     } finally {
       this.stopStreamFlag = false;
     }

@@ -15,7 +15,6 @@ import type {
 } from '../../types';
 import { AbstractLanguageModelService } from './base';
 import { HistoryManager, SettingsManager } from '../../api';
-import { MODEL_SERVICE_CONSTANTS } from '../../constants';
 import { ToolServiceProvider } from '../tools';
 
 export class HuggingFaceService extends AbstractLanguageModelService {
@@ -377,21 +376,7 @@ export class HuggingFaceService extends AbstractLanguageModelService {
         };
       }
     } catch (error) {
-      vscode.window
-        .showErrorMessage(
-          'Failed to get response from Hugging Face Service: ' + error,
-          'Get Access Token',
-        )
-        .then((selection) => {
-          if (selection === 'Get Access Token') {
-            vscode.env.openExternal(
-              vscode.Uri.parse(MODEL_SERVICE_CONSTANTS.huggingFace.apiLink),
-            );
-          }
-        });
-      return {
-        textResponse: 'Failed to connect to the language model service.',
-      };
+      return this.handleGetResponseError(error, 'huggingFace');
     } finally {
       this.stopStreamFlag = false;
     }

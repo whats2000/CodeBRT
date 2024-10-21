@@ -7,6 +7,7 @@ import {
   ResponseWithAction,
 } from '../types';
 import { SettingsManager } from '../../../api';
+import { MODEL_SERVICE_CONSTANTS } from '../../../constants';
 
 /**
  * Abstract class for the Language Model Service
@@ -21,6 +22,32 @@ export abstract class AbstractLanguageModelService
     protected currentModel: string,
     protected availableModelNames: string[],
   ) {}
+
+  protected handleGetResponseError(
+    error: unknown,
+    modelServiceType: ModelServiceType,
+  ): ResponseWithAction {
+    vscode.window
+      .showErrorMessage(
+        'Failed to get response from ' +
+          modelServiceType.charAt(0).toUpperCase() +
+          modelServiceType.slice(1) +
+          ' Service: ' +
+          error,
+        'Get API Key',
+      )
+      .then((selection) => {
+        if (selection === 'Get API Key') {
+          void vscode.env.openExternal(
+            vscode.Uri.parse(MODEL_SERVICE_CONSTANTS[modelServiceType].apiLink),
+          );
+        }
+      });
+
+    return {
+      textResponse: 'Failed to connect to the language model service',
+    };
+  }
 
   public updateAvailableModels(newAvailableModels: string[]): void {
     this.availableModelNames = newAvailableModels;

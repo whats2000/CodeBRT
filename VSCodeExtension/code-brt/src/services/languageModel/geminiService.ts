@@ -21,7 +21,6 @@ import type {
   ResponseWithAction,
   ToolSchema,
 } from '../../types';
-import { MODEL_SERVICE_CONSTANTS } from '../../constants';
 import { mapFunctionDeclarationSchemaType } from './utils';
 import { AbstractLanguageModelService } from './base';
 import { HistoryManager, SettingsManager } from '../../api';
@@ -397,21 +396,7 @@ export class GeminiService extends AbstractLanguageModelService {
         return { textResponse: responseText };
       }
     } catch (error) {
-      vscode.window
-        .showErrorMessage(
-          'Failed to get response from Gemini Service: ' + error,
-          'Get API Key',
-        )
-        .then((selection) => {
-          if (selection === 'Get API Key') {
-            vscode.env.openExternal(
-              vscode.Uri.parse(MODEL_SERVICE_CONSTANTS.gemini.apiLink),
-            );
-          }
-        });
-      return {
-        textResponse: 'Failed to connect to the language model service.',
-      };
+      return this.handleGetResponseError(error, 'gemini');
     } finally {
       this.stopStreamFlag = false;
     }

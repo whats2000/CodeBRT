@@ -9,7 +9,6 @@ import type {
   ResponseWithAction,
   ToolSchema,
 } from '../../types';
-import { MODEL_SERVICE_CONSTANTS } from '../../constants';
 import { mapTypeToPythonFormat } from './utils';
 import { AbstractLanguageModelService } from './base';
 import { HistoryManager, SettingsManager } from '../../api';
@@ -314,22 +313,7 @@ export class CohereService extends AbstractLanguageModelService {
         };
       }
     } catch (error) {
-      vscode.window
-        .showErrorMessage(
-          'Failed to get response from Cohere Service: ' + error,
-          'Get API Key',
-        )
-        .then((selection) => {
-          if (selection === 'Get API Key') {
-            vscode.env.openExternal(
-              vscode.Uri.parse(MODEL_SERVICE_CONSTANTS.cohere.apiLink),
-            );
-          }
-        });
-
-      return {
-        textResponse: 'Failed to connect to the language model service.',
-      };
+      return this.handleGetResponseError(error, 'cohere');
     } finally {
       this.stopStreamFlag = false;
     }

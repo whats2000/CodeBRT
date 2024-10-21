@@ -6,8 +6,8 @@ import axios from 'axios';
 import * as cheerio from 'cheerio';
 import type {
   ImageBlockParam,
+  Message,
   MessageParam,
-  TextBlock,
   TextBlockParam,
   Tool,
   ToolUseBlock,
@@ -24,7 +24,6 @@ import {
   NonWorkspaceToolType,
   ResponseWithAction,
 } from '../../types';
-import { MODEL_SERVICE_CONSTANTS } from '../../constants';
 import { HistoryManager, SettingsManager } from '../../api';
 import { AbstractLanguageModelService } from './base';
 import { ToolServiceProvider } from '../tools';
@@ -265,6 +264,31 @@ export class AnthropicService extends AbstractLanguageModelService {
     };
   }
 
+  private handleToolUseResponse(
+    response: Message,
+    responseText: string,
+  ): ResponseWithAction {
+    if (response.content[0].type !== 'tool_use') {
+      return { textResponse: responseText };
+    }
+
+    const toolUseBlock = response.content.filter(
+      (message) => message.type === 'tool_use',
+    ) as ToolUseBlock[];
+
+    const toolCall = {
+      id: toolUseBlock[0].id,
+      toolName: toolUseBlock[0].name,
+      parameters: toolUseBlock[0].input as Record<string, any>,
+      create_time: Date.now(),
+    };
+
+    return {
+      textResponse: responseText,
+      toolCall,
+    };
+  }
+
   public async getLatestAvailableModelNames(): Promise<string[]> {
     const requestUrl = `https://docs.anthropic.com/en/docs/about-claude/models`;
 
@@ -339,6 +363,7 @@ export class AnthropicService extends AbstractLanguageModelService {
     const { systemPrompt, generationConfig } =
       this.getAdvanceSettings(historyManager);
 
+    let responseText = '';
     try {
       if (!sendStreamResponse) {
         const response = await anthropic.messages.create({
@@ -349,27 +374,11 @@ export class AnthropicService extends AbstractLanguageModelService {
           stream: false,
           ...generationConfig,
         });
-
-        if (response.content[0].type !== 'tool_use') {
-          return { textResponse: (response.content[0] as TextBlock).text };
+        if (response.content[0].type === 'text') {
+          responseText = response.content[0].text;
         }
-
-        const toolUseBlock = response.content.filter(
-          (message) => message.type === 'tool_use',
-        ) as ToolUseBlock[];
-
-        return {
-          textResponse: '',
-          toolCall: {
-            id: toolUseBlock[0].id,
-            toolName: toolUseBlock[0].name,
-            parameters: toolUseBlock[0].input as Record<string, any>,
-            create_time: Date.now(),
-          },
-        };
+        return this.handleToolUseResponse(response, responseText);
       } else {
-        let responseText = '';
-
         this.currentStreamResponse?.abort();
         this.currentStreamResponse = anthropic.messages
           .stream({
@@ -386,42 +395,10 @@ export class AnthropicService extends AbstractLanguageModelService {
           });
 
         const finalMessage = await this.currentStreamResponse.finalMessage();
-
-        if (finalMessage.stop_reason !== 'tool_use') {
-          return { textResponse: responseText };
-        }
-
-        const toolUseBlock = finalMessage.content.filter(
-          (message) => message.type === 'tool_use',
-        ) as ToolUseBlock[];
-
-        return {
-          textResponse: responseText,
-          toolCall: {
-            id: toolUseBlock[0].id,
-            toolName: toolUseBlock[0].name,
-            parameters: toolUseBlock[0].input as Record<string, any>,
-            create_time: Date.now(),
-          },
-        };
+        return this.handleToolUseResponse(finalMessage, responseText);
       }
     } catch (error) {
-      vscode.window
-        .showErrorMessage(
-          'Failed to get response from Anthropic Service: ' + error,
-          'Get API Key',
-        )
-        .then((selection) => {
-          if (selection === 'Get API Key') {
-            vscode.env.openExternal(
-              vscode.Uri.parse(MODEL_SERVICE_CONSTANTS.anthropic.apiLink),
-            );
-          }
-        });
-
-      return {
-        textResponse: 'Failed to connect to the language model service',
-      };
+      return this.handleGetResponseError(error, 'anthropic');
     }
   }
 

@@ -8,7 +8,6 @@ import OpenAI from 'openai';
 import type { GetResponseOptions, ResponseWithAction } from './types';
 import { SettingsManager } from '../../api';
 import { AbstractOpenaiLikeService } from './base';
-import { MODEL_SERVICE_CONSTANTS } from '../../constants';
 
 export class OpenAIService extends AbstractOpenaiLikeService {
   constructor(
@@ -141,21 +140,7 @@ export class OpenAIService extends AbstractOpenaiLikeService {
         );
       }
     } catch (error) {
-      vscode.window
-        .showErrorMessage(
-          'Failed to get response from OpenAI Service: ' + error,
-          'Get API Key',
-        )
-        .then((selection) => {
-          if (selection === 'Get API Key') {
-            vscode.env.openExternal(
-              vscode.Uri.parse(MODEL_SERVICE_CONSTANTS.openai.apiLink),
-            );
-          }
-        });
-      return {
-        textResponse: 'Failed to connect to the language model service.',
-      };
+      return this.handleGetResponseError(error, 'openai');
     } finally {
       this.stopStreamFlag = false;
     }
