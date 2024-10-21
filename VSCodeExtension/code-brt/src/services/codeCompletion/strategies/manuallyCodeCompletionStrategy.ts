@@ -92,7 +92,7 @@ export class ManuallyCodeCompletionStrategy implements CompletionStrategy {
       disableTools: true,
     });
 
-    return this.cleanCompletionResponse(response);
+    return this.cleanCompletionResponse(response.textResponse);
   }
 
   /**

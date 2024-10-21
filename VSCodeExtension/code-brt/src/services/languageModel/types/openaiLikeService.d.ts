@@ -21,6 +21,9 @@ export type StreamCompletionOpenaiLike =
 export type NonStreamCompletionOpenaiLike =
   | OpenAI.Chat.Completions.ChatCompletion
   | Groq.Chat.Completions.ChatCompletion;
+export type ChatCompletionMessageToolCallOpenaiLike =
+  | OpenAI.Chat.ChatCompletionMessageToolCall
+  | Groq.Chat.ChatCompletionMessageToolCall;
 export type ChatCompletionChunkChoiceDeltaToolCallOpenaiLike =
   | OpenAI.Chat.Completions.ChatCompletionChunk.Choice.Delta.ToolCall
   | Groq.Chat.Completions.ChatCompletionChunk.Choice.Delta.ToolCall;

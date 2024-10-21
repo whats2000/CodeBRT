@@ -1,7 +1,7 @@
 import fs from 'fs';
 
 import * as vscode from 'vscode';
-import type { Message, Options, Tool } from 'ollama';
+import type { ChatRequest, Message, Options, Tool, ToolCall } from 'ollama';
 import { Ollama } from 'ollama';
 
 import type {
@@ -311,58 +311,36 @@ export class OllamaService extends AbstractLanguageModelService {
       });
     }
 
+    let responseText = '';
+    let responseToolCall: ToolCall | undefined = undefined;
+
     try {
+      const requestPayload: ChatRequest = {
+        model: model,
+        messages: conversationHistory,
+        tools: disableTools ? undefined : this.getEnabledTools(),
+        options: generationConfig,
+      };
+
       if (!sendStreamResponse) {
         const response = await client.chat({
-          model,
-          messages: conversationHistory,
-          tools: disableTools ? undefined : this.getEnabledTools(),
-          options: generationConfig,
+          ...requestPayload,
+          stream: false,
         });
-
-        if (
-          !(
-            response.message.tool_calls &&
-            response.message.tool_calls.length > 0
-          )
-        ) {
-          return { textResponse: response.message.content };
-        }
-
-        const toolCalls = response.message.tool_calls!;
-
-        return {
-          textResponse: response.message.content,
-          toolCall: {
-            id: Date.now().toString(),
-            toolName: toolCalls[0].function.name,
-            parameters: toolCalls[0].function.arguments,
-            create_time: Date.now(),
-          },
-        };
+        responseText = response.message.content;
+        responseToolCall = response.message.tool_calls?.[0];
       } else {
-        let responseText = '';
         let toolCallBuffer = '';
         let inToolCall = false;
         let inCodeBlock = false;
         let openBraces = 0;
         let inTaggedToolCall = false;
-
-        if (this.stopStreamFlag) {
-          return {
-            textResponse: ParseToolCallUtils.cleanResponseText(responseText),
-          };
-        }
+        let breakByToolCall = false;
 
         const streamResponse = await client.chat({
-          model,
-          messages: conversationHistory,
+          ...requestPayload,
           stream: true,
-          tools: disableTools ? undefined : this.getEnabledTools(),
-          options: generationConfig,
         });
-
-        let breakByToolCall = false;
 
         for await (const chunk of streamResponse) {
           if (this.stopStreamFlag) {
@@ -475,6 +453,20 @@ export class OllamaService extends AbstractLanguageModelService {
           },
         };
       }
+
+      if (!responseToolCall) {
+        return { textResponse: responseText };
+      }
+
+      return {
+        textResponse: responseText,
+        toolCall: {
+          id: Date.now().toString(),
+          toolName: responseToolCall.function.name,
+          parameters: responseToolCall.function.arguments,
+          create_time: Date.now(),
+        },
+      };
     } catch (error) {
       vscode.window
         .showErrorMessage(

@@ -2,7 +2,12 @@ import * as vscode from 'vscode';
 import type { ChatCompletionCreateParamsBase } from 'openai/resources/chat/completions';
 import OpenAI from 'openai';
 
-import type { GetResponseOptions, ResponseWithAction } from './types';
+import {
+  GetResponseOptions,
+  NonStreamCompletionOpenaiLike,
+  ResponseWithAction,
+  StreamCompletionOpenaiLike,
+} from './types';
 import { SettingsManager } from '../../api';
 import { AbstractOpenaiLikeService } from './base';
 
@@ -21,6 +26,30 @@ export class OpenAIService extends AbstractOpenaiLikeService {
       defaultModelName,
       availableModelNames,
     );
+  }
+
+  protected async handleGetNonStreamResponse(
+    requestPayload: ChatCompletionCreateParamsBase,
+  ): Promise<NonStreamCompletionOpenaiLike> {
+    const openai = new OpenAI({
+      apiKey: this.settingsManager.get('openaiApiKey'),
+    });
+    return openai.chat.completions.create({
+      ...requestPayload,
+      stream: false,
+    });
+  }
+
+  protected async handleGetStreamResponse(
+    requestPayload: ChatCompletionCreateParamsBase,
+  ): Promise<StreamCompletionOpenaiLike> {
+    const openai = new OpenAI({
+      apiKey: this.settingsManager.get('openaiApiKey'),
+    });
+    return openai.chat.completions.create({
+      ...requestPayload,
+      stream: true,
+    });
   }
 
   public async getLatestAvailableModelNames(): Promise<string[]> {
@@ -86,10 +115,6 @@ export class OpenAIService extends AbstractOpenaiLikeService {
       selectedModelName,
       disableTools,
     } = options;
-    const openai = new OpenAI({
-      apiKey: this.settingsManager.get('openaiApiKey'),
-    });
-
     const conversationHistory = await this.conversationHistoryToContent(
       historyManager.getHistoryBeforeEntry(currentEntryID).entries,
       query,
@@ -108,35 +133,13 @@ export class OpenAIService extends AbstractOpenaiLikeService {
     }
 
     try {
-      const requestPayload: ChatCompletionCreateParamsBase = {
-        messages: conversationHistory,
-        model: selectedModelName ?? this.currentModel,
-        tools: disableTools ? undefined : this.getEnabledTools(),
-        ...generationConfig,
-      };
-
-      if (!sendStreamResponse) {
-        const response = await openai.chat.completions.create({
-          ...requestPayload,
-          stream: false,
-        });
-
-        return await this.handleNonStreamResponse(response);
-      } else {
-        if (this.stopStreamFlag) {
-          return { textResponse: '' };
-        }
-
-        const streamResponse = await openai.chat.completions.create({
-          ...requestPayload,
-          stream: true,
-        });
-
-        return await this.handleStreamResponse(
-          streamResponse,
-          sendStreamResponse,
-        );
-      }
+      return await this.getResponseWithRetry(
+        conversationHistory,
+        selectedModelName,
+        disableTools,
+        generationConfig,
+        sendStreamResponse,
+      );
     } catch (error) {
       return this.handleGetResponseError(error, 'openai');
     } finally {

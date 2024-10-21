@@ -3,7 +3,12 @@ import * as vscode from 'vscode';
 import type { ChatCompletionCreateParamsBase } from 'groq-sdk/resources/chat/completions';
 import Groq from 'groq-sdk';
 
-import type { GetResponseOptions, ResponseWithAction } from './types';
+import {
+  GetResponseOptions,
+  NonStreamCompletionOpenaiLike,
+  ResponseWithAction,
+  StreamCompletionOpenaiLike,
+} from './types';
 import { AbstractOpenaiLikeService } from './base';
 import { SettingsManager } from '../../api';
 
@@ -22,6 +27,30 @@ export class GroqService extends AbstractOpenaiLikeService {
       defaultModelName,
       availableModelNames,
     );
+  }
+
+  protected async handleGetNonStreamResponse(
+    requestPayload: ChatCompletionCreateParamsBase,
+  ): Promise<NonStreamCompletionOpenaiLike> {
+    const groq = new Groq({
+      apiKey: this.settingsManager.get('groqApiKey'),
+    });
+    return groq.chat.completions.create({
+      ...requestPayload,
+      stream: false,
+    });
+  }
+
+  protected async handleGetStreamResponse(
+    requestPayload: ChatCompletionCreateParamsBase,
+  ): Promise<StreamCompletionOpenaiLike> {
+    const groq = new Groq({
+      apiKey: this.settingsManager.get('groqApiKey'),
+    });
+    return groq.chat.completions.create({
+      ...requestPayload,
+      stream: true,
+    });
   }
 
   public async getLatestAvailableModelNames(): Promise<string[]> {
@@ -87,10 +116,6 @@ export class GroqService extends AbstractOpenaiLikeService {
       );
     }
 
-    const groq = new Groq({
-      apiKey: this.settingsManager.get('groqApiKey'),
-    });
-
     const conversationHistory = await this.conversationHistoryToContent(
       historyManager.getHistoryBeforeEntry(currentEntryID).entries,
       query,
@@ -108,35 +133,13 @@ export class GroqService extends AbstractOpenaiLikeService {
     }
 
     try {
-      const requestPayload: ChatCompletionCreateParamsBase = {
-        messages: conversationHistory,
-        model: selectedModelName ?? this.currentModel,
-        tools: disableTools ? undefined : this.getEnabledTools(),
-        ...generationConfig,
-      };
-
-      if (!sendStreamResponse) {
-        const response = await groq.chat.completions.create({
-          ...requestPayload,
-          stream: false,
-        });
-
-        return await this.handleNonStreamResponse(response);
-      } else {
-        if (this.stopStreamFlag) {
-          return { textResponse: '' };
-        }
-
-        const streamResponse = await groq.chat.completions.create({
-          ...requestPayload,
-          stream: true,
-        });
-
-        return await this.handleStreamResponse(
-          streamResponse,
-          sendStreamResponse,
-        );
-      }
+      return await this.getResponseWithRetry(
+        conversationHistory,
+        selectedModelName,
+        disableTools,
+        generationConfig,
+        sendStreamResponse,
+      );
     } catch (error) {
       return this.handleGetResponseError(error, 'groq');
     } finally {

@@ -1,23 +1,25 @@
 import path from 'path';
 import fs from 'fs';
 
+import vscode from 'vscode';
+
 import {
   ChatCompletionChunkChoiceDeltaToolCallOpenaiLike,
   ChatCompletionContentPartImageOpenaiLike,
   ChatCompletionCreateParamsBaseOpenaiLike,
   ChatCompletionMessageParamOpenaiLike,
+  ChatCompletionMessageToolCallOpenaiLike,
   ChatCompletionToolOpenaiLike,
   ConversationEntry,
   NonStreamCompletionOpenaiLike,
   NonWorkspaceToolType,
   ResponseWithAction,
   StreamCompletionOpenaiLike,
+  ToolCallEntry,
 } from '../../../types';
 import { HistoryManager } from '../../../api';
 import { AbstractLanguageModelService } from './abstractLanguageModelService';
 import { ToolServiceProvider } from '../../tools';
-import vscode from 'vscode';
-import type { ChatCompletionMessageToolCall } from 'openai/resources/chat/completions';
 
 export abstract class AbstractOpenaiLikeService extends AbstractLanguageModelService {
   protected stopStreamFlag: boolean = false;
@@ -111,65 +113,36 @@ export abstract class AbstractOpenaiLikeService extends AbstractLanguageModelSer
 
   protected tryParseToolCallArguments(
     argumentsString: string,
-  ): Record<string, unknown> {
+  ): Record<string, unknown> | undefined {
     try {
       return JSON.parse(argumentsString);
     } catch (error) {
       console.error('Failed to parse tool call arguments:', error);
-      return {};
+      return undefined;
     }
-  }
-
-  protected async handleNonStreamResponse(
-    response: NonStreamCompletionOpenaiLike,
-  ): Promise<ResponseWithAction> {
-    if (!response.choices[0]?.message.tool_calls) {
-      return {
-        textResponse: response.choices[0]?.message?.content || '',
-      };
-    }
-
-    const toolCalls = response.choices[0].message.tool_calls;
-
-    return {
-      textResponse: response.choices[0]?.message?.content || '',
-      toolCall: {
-        id: toolCalls[0].id,
-        toolName: toolCalls[0].function.name,
-        parameters: this.tryParseToolCallArguments(
-          toolCalls[0].function.arguments,
-        ),
-        create_time: Date.now(),
-      },
-    };
   }
 
   protected async handleStreamResponse(
+    responseText: string,
     streamResponse: StreamCompletionOpenaiLike,
     sendStreamResponse: (text: string) => void,
-  ): Promise<ResponseWithAction> {
-    let responseText = '';
-
-    const completeToolCalls: (ChatCompletionMessageToolCall & {
+  ): Promise<{
+    responseText: string;
+    responseToolCall?: ChatCompletionMessageToolCallOpenaiLike;
+  }> {
+    const completeToolCalls: (ChatCompletionMessageToolCallOpenaiLike & {
       index: number;
     })[] = [];
 
     for await (const chunk of streamResponse) {
       if (this.stopStreamFlag) {
-        return { textResponse: responseText };
+        return { responseText: responseText };
       }
 
       if (chunk.choices[0]?.finish_reason === 'tool_calls') {
         return {
-          textResponse: responseText,
-          toolCall: {
-            id: completeToolCalls[0].id,
-            toolName: completeToolCalls[0].function.name,
-            parameters: this.tryParseToolCallArguments(
-              completeToolCalls[0].function.arguments,
-            ),
-            create_time: Date.now(),
-          },
+          responseText: responseText,
+          responseToolCall: completeToolCalls[0],
         };
       }
 
@@ -206,7 +179,7 @@ export abstract class AbstractOpenaiLikeService extends AbstractLanguageModelSer
       );
     }
 
-    return { textResponse: responseText };
+    return { responseText: responseText };
   }
 
   protected async conversationHistoryToContent(
@@ -265,4 +238,104 @@ export abstract class AbstractOpenaiLikeService extends AbstractLanguageModelSer
 
     return result;
   }
+
+  protected async getResponseWithRetry(
+    conversationHistory: ChatCompletionMessageParamOpenaiLike[],
+    selectedModelName: string | undefined,
+    disableTools: boolean | undefined,
+    generationConfig: Partial<ChatCompletionCreateParamsBaseOpenaiLike>,
+    sendStreamResponse: ((message: string) => void) | undefined,
+  ): Promise<ResponseWithAction> {
+    const MAX_RETRIES = 5;
+    let retryCount = 0;
+    let responseText = '';
+    let responseToolCall: ChatCompletionMessageToolCallOpenaiLike | undefined =
+      undefined;
+
+    while (retryCount < MAX_RETRIES) {
+      responseToolCall = undefined;
+      const requestPayload: ChatCompletionCreateParamsBaseOpenaiLike = {
+        messages: conversationHistory,
+        model: selectedModelName ?? this.currentModel,
+        tools: disableTools ? undefined : this.getEnabledTools(),
+        ...generationConfig,
+      };
+
+      if (!sendStreamResponse) {
+        const response = await this.handleGetNonStreamResponse(requestPayload);
+        responseText = response.choices[0]?.message?.content || '';
+        responseToolCall = response.choices[0]?.message.tool_calls?.[0];
+      } else {
+        const streamResponse =
+          await this.handleGetStreamResponse(requestPayload);
+        const responseObject = await this.handleStreamResponse(
+          responseText,
+          streamResponse,
+          sendStreamResponse,
+        );
+
+        responseText = responseObject.responseText;
+        responseToolCall = responseObject.responseToolCall;
+      }
+
+      if (!responseToolCall) {
+        return {
+          textResponse: responseText,
+        };
+      }
+
+      const parsedToolCallArguments = this.tryParseToolCallArguments(
+        responseToolCall.function.arguments,
+      );
+
+      let validation = {
+        isValid: false,
+        feedback:
+          'The tool call arguments are not valid JSON format. Please rewrite the tool call and try again.',
+      };
+
+      if (parsedToolCallArguments) {
+        const toolCall: ToolCallEntry = {
+          id: responseToolCall.id,
+          toolName: responseToolCall.function.name,
+          parameters: parsedToolCallArguments,
+          create_time: Date.now(),
+        };
+
+        validation = ToolServiceProvider.isViableToolCall(toolCall);
+        // Return the response if the tool call is valid
+        if (validation.isValid) {
+          return {
+            textResponse: responseText,
+            toolCall,
+          };
+        }
+      }
+
+      // Otherwise, add the tool call feedback to the conversation history and retry
+      conversationHistory.push({
+        role: 'assistant',
+        tool_calls: [responseToolCall],
+      });
+      conversationHistory.push({
+        role: 'tool',
+        content: JSON.stringify({
+          error: true,
+          feedback: validation.feedback,
+        }),
+        tool_call_id: responseToolCall.id,
+      });
+
+      retryCount++;
+    }
+    return { textResponse: responseText };
+  }
+
+  protected abstract handleGetNonStreamResponse(
+    requestPayload: ChatCompletionCreateParamsBaseOpenaiLike,
+  ): Promise<NonStreamCompletionOpenaiLike>;
+
+  protected abstract handleGetStreamResponse(
+    requestPayload: ChatCompletionCreateParamsBaseOpenaiLike,
+  ): Promise<StreamCompletionOpenaiLike>;
 }
