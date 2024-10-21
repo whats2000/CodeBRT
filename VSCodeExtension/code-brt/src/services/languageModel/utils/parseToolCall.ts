@@ -7,92 +7,180 @@ type ToolCall = {
   };
 };
 
+const POSSIBLE_TOOL_CALLS_XML = [
+  'xml',
+  'tool_call',
+  'tools',
+  'tool',
+  'response',
+  'json',
+  'function',
+  'functionCall',
+];
+
+const POSSIBLE_TOOL_CALLS_BLOCKS = ['```json', '```xml'];
+
+const POSSIBLE_TOOL_CALLS_MARKERS = ['[TOOL_CALLS]'];
+
+export type ExtractedToolCall = {
+  text: string;
+  toolCall?: ToolCall;
+};
+
 export class ParseToolCallUtils {
-  static extractToolCalls = (content: string): ToolCall | undefined => {
-    let jsonContent = content;
-
-    // Remove <tool_call> tags if present
-    if (content.includes('<tool_call>')) {
-      jsonContent = content.replace(/<tool_call>|<\/tool_call>/g, '').trim();
-    }
-
+  private static tryExtractToolCall = (
+    result: ExtractedToolCall,
+    potentialJson: string,
+    textBeforeToolCall: string,
+  ): ExtractedToolCall | undefined => {
+    // Try to parse and validate the content
     try {
-      // Parse the JSON string to an object
-      const parsed = JSON.parse(jsonContent);
+      let parsed = JSON.parse(potentialJson);
 
-      // Ensure the parsed object has the required structure
+      if (Array.isArray(parsed)) {
+        parsed = parsed[0];
+      }
+
       if (parsed && parsed.name && (parsed.parameters || parsed.arguments)) {
-        return {
+        result.text = textBeforeToolCall;
+        result.toolCall = {
           function: {
             name: parsed.name,
             arguments: parsed.parameters || parsed.arguments,
           },
         };
-      } else {
-        return {
-          function: {
-            name: 'Unknown Tool Format',
-            arguments: {},
-          },
-        };
+        return result;
       }
     } catch (error) {
-      console.error('Failed to convert content to tool call:', error);
+      console.error('Failed to parse content as JSON:', error);
     }
   };
 
-  static cleanResponseText = (text: string): string => {
-    // Remove <tool_call> tagged content
-    let cleanedText = text.replace(/<tool_call>[\s\S]*?<\/tool_call>/g, '\n');
+  public static extractToolCalls = (content: string): ExtractedToolCall => {
+    let jsonContent = content;
+    let textBeforeToolCall = jsonContent; // Initialize to the full content, will update if a tool call is found.
 
-    // Remove untagged tool call JSON objects
-    const lines = cleanedText.split('\n');
-    let inCodeBlock = false;
-    let filteredLines: string[] = [];
-    let skipNextLines = false;
+    // Define the result structure with the default text (full content if no tool call is found)
+    const result: ExtractedToolCall = {
+      text: content,
+      toolCall: undefined,
+    };
 
-    for (const line of lines) {
-      if (line.trim().startsWith('```')) {
-        inCodeBlock = !inCodeBlock;
-        filteredLines.push(line);
-        continue;
-      }
+    // Check for content inside XML-like tags
+    for (const tag of POSSIBLE_TOOL_CALLS_XML) {
+      const startTag = `<${tag}>`;
+      const endTag = `</${tag}>`;
 
-      if (!inCodeBlock) {
-        if (
-          line.trim().startsWith('{') &&
-          line.includes('"name":') &&
-          line.includes('"arguments":')
-        ) {
-          skipNextLines = true;
-          filteredLines.push('\n');
-        } else if (skipNextLines && line.trim().endsWith('}')) {
-          skipNextLines = false;
-        } else if (!skipNextLines) {
-          filteredLines.push(line);
+      let startIndex = jsonContent.indexOf(startTag);
+      let endIndex = jsonContent.indexOf(endTag);
+
+      while (startIndex !== -1 && endIndex !== -1) {
+        // Extract the text before the tool call
+        textBeforeToolCall = jsonContent.substring(0, startIndex).trim();
+
+        // Extract the content between the tags
+        const potentialJson = jsonContent
+          .substring(startIndex + startTag.length, endIndex)
+          .trim();
+
+        // Try to parse and validate the content
+        const parseResult = ParseToolCallUtils.tryExtractToolCall(
+          result,
+          potentialJson,
+          textBeforeToolCall,
+        );
+
+        if (parseResult) {
+          return parseResult;
         }
-      } else {
-        filteredLines.push(line);
+
+        // Move to the next set of tags in case of failure to parse
+        startIndex = jsonContent.indexOf(startTag, endIndex + endTag.length);
+        endIndex = jsonContent.indexOf(endTag, startIndex + startTag.length);
       }
     }
 
-    // Trim any leading/trailing whitespace and remove any consecutive newlines
-    return filteredLines
-      .join('\n')
-      .trim()
-      .replace(/\n\s*\n/g, '\n');
-  };
+    // Check for content inside code block markers
+    for (const block of POSSIBLE_TOOL_CALLS_BLOCKS) {
+      const startBlock = block;
+      const endBlock = '```'; // All blocks are typically closed by ```
 
-  static isPotentialToolCallStart = (content: string): boolean => {
-    return content.includes('<tool_call>') || content.trim().startsWith('{');
-  };
+      let startIndex = jsonContent.indexOf(startBlock);
+      let endIndex = jsonContent.indexOf(
+        endBlock,
+        startIndex + startBlock.length,
+      );
 
-  static isPotentialToolCallEnd = (content: string): boolean => {
-    return (
-      content.includes('</tool_call>') ||
-      (content.includes('"name":') &&
-        content.includes('"arguments":') &&
-        content.trim().endsWith('}'))
+      while (startIndex !== -1 && endIndex !== -1) {
+        // Extract the text before the tool call
+        textBeforeToolCall = jsonContent.substring(0, startIndex).trim();
+
+        // Extract the content between the markers
+        const potentialJson = jsonContent
+          .substring(startIndex + startBlock.length, endIndex)
+          .trim();
+
+        // Try to parse and validate the content
+        const parseResult = ParseToolCallUtils.tryExtractToolCall(
+          result,
+          potentialJson,
+          textBeforeToolCall,
+        );
+
+        if (parseResult) {
+          return parseResult;
+        }
+
+        // Move to the next set of markers in case of failure to parse
+        startIndex = jsonContent.indexOf(
+          startBlock,
+          endIndex + endBlock.length,
+        );
+        endIndex = jsonContent.indexOf(
+          endBlock,
+          startIndex + startBlock.length,
+        );
+      }
+    }
+
+    // Check for the [TOOL_CALLS] marker
+    for (const marker of POSSIBLE_TOOL_CALLS_MARKERS) {
+      let startIndex = jsonContent.indexOf(marker);
+
+      if (startIndex !== -1) {
+        // Extract the text before the tool call
+        textBeforeToolCall = jsonContent.substring(0, startIndex).trim();
+
+        // Extract the content after the marker
+        const potentialJson = jsonContent
+          .substring(startIndex + marker.length)
+          .trim();
+
+        // Try to parse and validate the content
+        const parseResult = ParseToolCallUtils.tryExtractToolCall(
+          result,
+          potentialJson,
+          textBeforeToolCall,
+        );
+
+        if (parseResult) {
+          return parseResult;
+        }
+      }
+    }
+
+    // Fallback: Try to parse the entire content as a JSON object if no tags or blocks are found
+    const fallbackResult = ParseToolCallUtils.tryExtractToolCall(
+      result,
+      jsonContent.trim(),
+      '',
     );
+
+    if (fallbackResult) {
+      return fallbackResult;
+    }
+
+    // Return the result containing text and tool call (if found)
+    return result;
   };
 }

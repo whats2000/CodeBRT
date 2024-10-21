@@ -311,162 +311,80 @@ export class OllamaService extends AbstractLanguageModelService {
       });
     }
 
+    const MAX_RETRIES = 5;
+    let retryCount = 0;
     let responseText = '';
     let responseToolCall: ToolCall | undefined = undefined;
-
     try {
-      const requestPayload: ChatRequest = {
-        model: model,
-        messages: conversationHistory,
-        tools: disableTools ? undefined : this.getEnabledTools(),
-        options: generationConfig,
-      };
+      while (retryCount < MAX_RETRIES) {
+        const requestPayload: ChatRequest = {
+          model: model,
+          messages: conversationHistory,
+          tools: disableTools ? undefined : this.getEnabledTools(),
+          options: generationConfig,
+        };
 
-      if (!sendStreamResponse) {
-        const response = await client.chat({
-          ...requestPayload,
-          stream: false,
-        });
-        responseText = response.message.content;
-        responseToolCall = response.message.tool_calls?.[0];
-      } else {
-        let toolCallBuffer = '';
-        let inToolCall = false;
-        let inCodeBlock = false;
-        let openBraces = 0;
-        let inTaggedToolCall = false;
-        let breakByToolCall = false;
+        if (!sendStreamResponse) {
+          const response = await client.chat({
+            ...requestPayload,
+            stream: false,
+          });
+          responseText = response.message.content;
+          responseToolCall = response.message.tool_calls?.[0];
+        } else {
+          const streamResponse = await client.chat({
+            ...requestPayload,
+            stream: true,
+          });
 
-        const streamResponse = await client.chat({
-          ...requestPayload,
-          stream: true,
-        });
-
-        for await (const chunk of streamResponse) {
-          if (this.stopStreamFlag) {
-            return {
-              textResponse: ParseToolCallUtils.cleanResponseText(responseText),
-            };
-          }
-
-          const chunkContent = chunk.message.content;
-
-          // Check for code block
-          if (chunkContent.includes('```')) {
-            inCodeBlock = !inCodeBlock;
-            if (inCodeBlock && (inToolCall || inTaggedToolCall)) {
-              // If entering a code block while in a potential tool call, abort the tool call
-              sendStreamResponse(toolCallBuffer);
-              responseText += toolCallBuffer;
-              toolCallBuffer = '';
-              inToolCall = false;
-              inTaggedToolCall = false;
-              openBraces = 0;
+          for await (const chunk of streamResponse) {
+            if (this.stopStreamFlag) {
+              return { textResponse: responseText };
             }
-          }
 
-          if (inCodeBlock) {
-            // In code block, send everything as is
+            const chunkContent = chunk.message.content;
             sendStreamResponse(chunkContent);
             responseText += chunkContent;
-            continue;
           }
 
-          // Process the chunk character by character
-          for (const char of chunkContent) {
-            if (!inToolCall && !inTaggedToolCall && char === '<') {
-              // Potential start of a tagged tool call
-              if (
-                chunkContent
-                  .substring(chunkContent.indexOf(char))
-                  .startsWith('<tool_call>')
-              ) {
-                inTaggedToolCall = true;
-                toolCallBuffer = '<';
-              }
-            } else if (inTaggedToolCall) {
-              toolCallBuffer += char;
-              if (toolCallBuffer.endsWith('</tool_call>')) {
-                // End of tagged tool call
-                breakByToolCall = true;
-                break;
-              }
-            } else if (!inToolCall && !inTaggedToolCall && char === '{') {
-              inToolCall = true;
-              openBraces = 1;
-              toolCallBuffer = char;
-            } else if (inToolCall) {
-              toolCallBuffer += char;
-              if (char === '{') {
-                openBraces++;
-              } else if (char === '}') {
-                openBraces--;
-                if (openBraces === 0) {
-                  // Potential end of a tool call
-                  breakByToolCall = true;
-                  break;
-                }
-              }
-            } else {
-              // Regular content
-              sendStreamResponse(char);
-              responseText += char;
-            }
-          }
-
-          if (breakByToolCall) {
-            break;
-          }
+          // Process the potential tool call
+          const responseObject =
+            ParseToolCallUtils.extractToolCalls(responseText);
+          responseText = responseObject.text;
+          responseToolCall = responseObject.toolCall;
         }
 
-        if (!breakByToolCall) {
-          // Handle any remaining content in the buffer
-          if (toolCallBuffer) {
-            sendStreamResponse(toolCallBuffer);
-            responseText += toolCallBuffer;
-          }
-
-          return {
-            textResponse: ParseToolCallUtils.cleanResponseText(responseText),
-          };
+        if (!responseToolCall) {
+          return { textResponse: responseText };
         }
-
-        // Process the potential tool call
-        const possibleToolCall =
-          ParseToolCallUtils.extractToolCalls(toolCallBuffer);
-        if (!possibleToolCall) {
-          // Not a valid tool call, send as regular content
-          sendStreamResponse(toolCallBuffer);
-          responseText += toolCallBuffer;
-          return {
-            textResponse: ParseToolCallUtils.cleanResponseText(responseText),
-          };
-        }
-
-        return {
-          textResponse: ParseToolCallUtils.cleanResponseText(responseText),
-          toolCall: {
-            id: Date.now().toString(),
-            toolName: possibleToolCall.function.name,
-            parameters: possibleToolCall.function.arguments,
-            create_time: Date.now(),
-          },
-        };
-      }
-
-      if (!responseToolCall) {
-        return { textResponse: responseText };
-      }
-
-      return {
-        textResponse: responseText,
-        toolCall: {
+        const toolCall = {
           id: Date.now().toString(),
           toolName: responseToolCall.function.name,
           parameters: responseToolCall.function.arguments,
           create_time: Date.now(),
-        },
-      };
+        };
+
+        const validation = ToolServiceProvider.isViableToolCall(toolCall);
+        // Return the response if the tool call is valid
+        if (validation.isValid) {
+          return {
+            textResponse: responseText,
+            toolCall,
+          };
+        }
+
+        // Otherwise, add the tool call feedback to the conversation history and retry
+        conversationHistory.push({
+          role: 'assistant',
+          content: responseText,
+        });
+        conversationHistory.push({
+          role: 'user',
+          content: validation.feedback,
+        });
+        retryCount++;
+      }
+      return { textResponse: responseText };
     } catch (error) {
       vscode.window
         .showErrorMessage(
