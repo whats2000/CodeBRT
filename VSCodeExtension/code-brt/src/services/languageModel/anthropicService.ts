@@ -6,7 +6,6 @@ import axios from 'axios';
 import * as cheerio from 'cheerio';
 import type {
   ImageBlockParam,
-  Message,
   MessageParam,
   TextBlockParam,
   Tool,
@@ -264,31 +263,6 @@ export class AnthropicService extends AbstractLanguageModelService {
     };
   }
 
-  private handleToolUseResponse(
-    response: Message,
-    responseText: string,
-  ): ResponseWithAction {
-    if (response.stop_reason !== 'tool_use') {
-      return { textResponse: responseText };
-    }
-
-    const toolUseBlock = response.content.filter(
-      (message) => message.type === 'tool_use',
-    ) as ToolUseBlock[];
-
-    const toolCall = {
-      id: toolUseBlock[0].id,
-      toolName: toolUseBlock[0].name,
-      parameters: toolUseBlock[0].input as Record<string, any>,
-      create_time: Date.now(),
-    };
-
-    return {
-      textResponse: responseText,
-      toolCall,
-    };
-  }
-
   public async getLatestAvailableModelNames(): Promise<string[]> {
     const requestUrl = `https://docs.anthropic.com/en/docs/about-claude/models`;
 
@@ -362,41 +336,87 @@ export class AnthropicService extends AbstractLanguageModelService {
 
     const { systemPrompt, generationConfig } =
       this.getAdvanceSettings(historyManager);
-
+    let retryCount = 0;
+    const maxRetries = 5;
     let responseText = '';
+
     try {
-      if (!sendStreamResponse) {
-        const response = await anthropic.messages.create({
-          model: selectedModelName ?? this.currentModel,
-          system: systemPrompt,
-          messages: conversationHistory,
-          tools: disableTools ? undefined : this.getEnabledTools(),
-          stream: false,
-          ...generationConfig,
-        });
-        if (response.content[0].type === 'text') {
-          responseText = response.content[0].text;
-        }
-        return this.handleToolUseResponse(response, responseText);
-      } else {
-        this.currentStreamResponse?.abort();
-        this.currentStreamResponse = anthropic.messages
-          .stream({
+      while (retryCount < maxRetries) {
+        let response;
+        if (!sendStreamResponse) {
+          response = await anthropic.messages.create({
             model: selectedModelName ?? this.currentModel,
             system: systemPrompt,
             messages: conversationHistory,
             tools: disableTools ? undefined : this.getEnabledTools(),
-            stream: true,
+            stream: false,
             ...generationConfig,
-          })
-          .on('text', (partText) => {
-            sendStreamResponse(partText);
-            responseText += partText;
           });
+          if (response.content[0].type === 'text') {
+            responseText = response.content[0].text;
+          }
+        } else {
+          this.currentStreamResponse?.abort();
+          this.currentStreamResponse = anthropic.messages
+            .stream({
+              model: selectedModelName ?? this.currentModel,
+              system: systemPrompt,
+              messages: conversationHistory,
+              tools: disableTools ? undefined : this.getEnabledTools(),
+              stream: true,
+              ...generationConfig,
+            })
+            .on('text', (partText) => {
+              sendStreamResponse(partText);
+              responseText += partText;
+            });
 
-        const finalMessage = await this.currentStreamResponse.finalMessage();
-        return this.handleToolUseResponse(finalMessage, responseText);
+          response = await this.currentStreamResponse.finalMessage();
+        }
+
+        // Return the response is no tool calls are present
+        if (response.stop_reason !== 'tool_use') {
+          return { textResponse: responseText };
+        }
+
+        const toolUseBlock = response.content.filter(
+          (message) => message.type === 'tool_use',
+        ) as ToolUseBlock[];
+        const toolCall = {
+          id: toolUseBlock[0].id,
+          toolName: toolUseBlock[0].name,
+          parameters: toolUseBlock[0].input as Record<string, any>,
+          create_time: Date.now(),
+        };
+
+        const validation = ToolServiceProvider.isViableToolCall(toolCall);
+        // Return the response if the tool call is valid
+        if (validation.isValid) {
+          return {
+            textResponse: responseText,
+            toolCall,
+          };
+        }
+
+        // Otherwise, add the tool call feedback to the conversation history and retry
+        conversationHistory.push({
+          role: 'assistant',
+          content: [toolUseBlock[0]],
+        });
+        conversationHistory.push({
+          role: 'user',
+          content: [
+            {
+              type: 'tool_result',
+              tool_use_id: toolUseBlock[0].id,
+              content: validation.feedback,
+              is_error: true,
+            },
+          ],
+        });
+        retryCount += 1;
       }
+      return { textResponse: responseText };
     } catch (error) {
       return this.handleGetResponseError(error, 'anthropic');
     }
