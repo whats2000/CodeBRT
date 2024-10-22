@@ -50,7 +50,10 @@ export const ToolActionContainer = React.memo<ToolActionContainerProps>(
     return (
       <div style={{ marginTop: 10 }}>
         {entry.toolCalls?.map((toolCall) => (
-          <Collapse key={toolCall.id}>
+          <Collapse
+            key={toolCall.id}
+            defaultActiveKey={showActionButtons ? '1' : undefined}
+          >
             <Panel
               header={
                 <Space wrap={true}>
