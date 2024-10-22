@@ -168,22 +168,8 @@ export const activate = async (ctx: vscode.ExtensionContext) => {
         advanceSettings,
       );
     },
-    addConversationEntry: async (
-      parentID,
-      sender,
-      message,
-      images?,
-      modelServiceType?,
-      modelName?,
-    ) => {
-      return await historyManager.addConversationEntry(
-        parentID,
-        sender,
-        message,
-        images,
-        modelServiceType,
-        modelName,
-      );
+    addConversationEntry: async (entry) => {
+      return await historyManager.addConversationEntry(entry);
     },
     getAvailableModels: (modelServiceType) => {
       if (modelServiceType === 'custom') {

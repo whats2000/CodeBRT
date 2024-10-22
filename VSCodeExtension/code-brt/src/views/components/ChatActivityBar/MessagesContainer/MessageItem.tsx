@@ -13,6 +13,7 @@ import { TextEditContainer } from './TextEditContainer';
 import { TextContainer } from './TextContainer';
 import { ImageContainer } from './ImageContainer';
 import { MessageFloatButton } from './MessageFloatButton';
+import { ToolActionContainer } from './ToolActionContainer';
 
 const MessageBubbleWrapper = styled.div<{
   $paddingBottom: boolean;
@@ -174,6 +175,7 @@ export const MessageItem = React.memo<MessageItemProps>(
                   toolStatus={toolStatus}
                 />
                 <ImageContainer entry={entry} />
+                <ToolActionContainer entry={entry} />
               </div>
             )}
           </MessageBubble>

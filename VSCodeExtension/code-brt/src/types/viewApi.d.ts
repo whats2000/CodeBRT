@@ -1,12 +1,15 @@
 import { CustomModelSettings, ExtensionSettings } from './extensionSettings';
 import {
   ConversationEntry,
-  ConversationEntryRole,
   ConversationHistory,
   ConversationHistoryIndexList,
   ConversationModelAdvanceSettings,
 } from './conversationHistory';
-import type { ModelServiceType, ResponseWithAction } from '../types';
+import {
+  AddConversationEntryParams,
+  ModelServiceType,
+  ResponseWithAction,
+} from '../types';
 
 /**
  * Represents the API request structure for the view.
@@ -197,15 +200,12 @@ export type ViewApi = {
    * @param images - The images to add.
    * @param modelServiceType - The type of the model service to add the entry to.
    * @param modelName - The name of the model to add the entry to.
+   * @param toolCalls - The tool calls to add.
+   * @param toolResponses - The tool responses to add.
    * @returns The ID of the new entry.
    */
   addConversationEntry: (
-    parentID: string,
-    sender: ConversationEntryRole,
-    message: string,
-    images?: string[],
-    modelServiceType?: ModelServiceType,
-    modelName?: string,
+    entry: AddConversationEntryParams,
   ) => Promise<ConversationEntry>;
 
   /**

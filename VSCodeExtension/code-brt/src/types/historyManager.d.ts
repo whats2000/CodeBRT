@@ -5,7 +5,31 @@ import {
   ConversationHistoryIndexList,
   ConversationModelAdvanceSettings,
   ModelServiceType,
+  ToolCallEntry,
+  ToolCallResponse,
 } from '../types';
+
+/**
+ * The parameters to add a conversation entry
+ * @property parentID - The parent ID of the entry
+ * @property role - The role of the entry
+ * @property message - The message of the entry
+ * @property images - The images of the entry
+ * @property toolCalls - The tool calls of the entry
+ * @property toolResponses - The tool responses of the entry
+ * @property modelServiceType - The model service type of the entry
+ * @property modelName - The model name of the entry
+ */
+export type AddConversationEntryParams = {
+  parentID: string | null;
+  role: ConversationEntryRole;
+  message: string;
+  images?: string[];
+  toolCalls?: ToolCallEntry[];
+  toolResponses?: ToolCallResponse[];
+  modelServiceType?: ModelServiceType;
+  modelName?: string;
+};
 
 export type IHistoryManager = {
   /**
@@ -29,21 +53,11 @@ export type IHistoryManager = {
 
   /**
    * Add a new conversation entry
-   * @param parentID The parent ID of the entry
-   * @param role The role of the entry
-   * @param message The message of the entry
-   * @param images The images of the entry
-   * @param modelServiceType The model service type of the entry
-   * @param modelName The model name of the entry
+   * @param entry The entry to add
    * @returns The new entry ID
    */
   addConversationEntry(
-    parentID: string | null,
-    role: ConversationEntryRole,
-    message: string,
-    images?: string[],
-    modelServiceType?: ModelServiceType,
-    modelName?: string,
+    entry: AddConversationEntryParams,
   ): Promise<ConversationEntry>;
 
   /**

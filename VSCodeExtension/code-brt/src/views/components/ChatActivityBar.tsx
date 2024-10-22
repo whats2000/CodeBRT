@@ -162,14 +162,13 @@ export const ChatActivityBar = () => {
     // TODO: Support PDF Extractor at later version current only pass the images
     files = files.filter((file: string) => !file.endsWith('.pdf'));
 
-    const userEntry = await callApi(
-      'addConversationEntry',
-      parentId,
-      'user',
+    const userEntry = await callApi('addConversationEntry', {
+      parentID: parentId,
+      role: 'user',
       message,
-      files,
-      activeModelService,
-    );
+      images: files,
+      modelServiceType: activeModelService,
+    });
 
     dispatch(addEntry(userEntry));
     dispatch(addTempAIResponseEntry({ parentId: userEntry.id }));
@@ -190,20 +189,16 @@ export const ChatActivityBar = () => {
           return;
         }
 
-        const aiEntry = await callApi(
-          'addConversationEntry',
-          userEntry.id,
-          'AI',
-          responseWithAction.textResponse +
-            `\n\n\`\`\`json\n${JSON.stringify(
-              responseWithAction.toolCall,
-              null,
-              2,
-            )}\n\`\`\``,
-          undefined,
-          activeModelService,
-          selectedModel,
-        );
+        const aiEntry = await callApi('addConversationEntry', {
+          parentID: userEntry.id,
+          role: 'AI',
+          message: responseWithAction.textResponse,
+          modelServiceType: activeModelService,
+          modelName: selectedModel,
+          toolCalls: responseWithAction.toolCall
+            ? [responseWithAction.toolCall]
+            : undefined,
+        });
 
         dispatch(replaceTempEntry(aiEntry));
 
