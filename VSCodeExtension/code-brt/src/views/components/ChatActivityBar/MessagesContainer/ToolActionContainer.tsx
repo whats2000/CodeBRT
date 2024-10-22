@@ -1,5 +1,5 @@
 import React from 'react';
-import { Card, Collapse, Descriptions, Space } from 'antd';
+import { Collapse, Descriptions, Space, Button } from 'antd';
 import {
   PlayCircleOutlined,
   FileOutlined,
@@ -39,10 +39,14 @@ const MAP_TOOL_NAME_TO_ICON: {
 
 type ToolActionContainerProps = {
   entry: ConversationEntry;
+  showActionButtons?: boolean;
 };
 
 export const ToolActionContainer = React.memo<ToolActionContainerProps>(
-  ({ entry }) => {
+  ({ entry, showActionButtons }) => {
+    const onApprove = (_entry: ConversationEntry) => {};
+    const onReject = (_entry: ConversationEntry) => {};
+
     return (
       <div style={{ marginTop: 10 }}>
         {entry.toolCalls?.map((toolCall) => (
@@ -74,6 +78,22 @@ export const ToolActionContainer = React.memo<ToolActionContainerProps>(
                   </Descriptions.Item>
                 ))}
               </Descriptions>
+
+              {/* Add Approve and Reject buttons */}
+              {showActionButtons && (
+                <Space wrap={true} style={{ marginTop: 16 }}>
+                  <Button
+                    type='primary'
+                    ghost={true}
+                    onClick={() => onApprove(entry)}
+                  >
+                    Approve
+                  </Button>
+                  <Button type='default' danger onClick={() => onReject(entry)}>
+                    Reject
+                  </Button>
+                </Space>
+              )}
             </Panel>
           </Collapse>
         ))}

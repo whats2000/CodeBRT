@@ -175,7 +175,10 @@ export const MessageItem = React.memo<MessageItemProps>(
                   toolStatus={toolStatus}
                 />
                 <ImageContainer entry={entry} />
-                <ToolActionContainer entry={entry} />
+                <ToolActionContainer
+                  entry={entry}
+                  showActionButtons={conversationHistory.current === entry.id}
+                />
               </div>
             )}
           </MessageBubble>
