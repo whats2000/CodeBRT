@@ -7,6 +7,7 @@ type ToolCall = {
   };
 };
 
+// This pattern is common seen in the qwen model
 const POSSIBLE_TOOL_CALLS_XML = [
   'xml',
   'tool_call',
@@ -16,11 +17,20 @@ const POSSIBLE_TOOL_CALLS_XML = [
   'json',
   'function',
   'functionCall',
+  'functionCalls',
+  'function_call',
+  'function_calls',
 ];
 
+// Some models use code blocks to represent tool calls
 const POSSIBLE_TOOL_CALLS_BLOCKS = ['```json', '```xml'];
 
+// This use for the mistral model
 const POSSIBLE_TOOL_CALLS_MARKERS = ['[TOOL_CALLS]'];
+
+// If all else fails, try to parse the content as a JSON object to test if it is a tool call.
+// This common in the llama model
+const POSSIBLE_TOOL_CALLS_REGEX = /({\s*"name"\s*:\s*".*?"\s*,.*})/;
 
 export type ExtractedToolCall = {
   text: string;
@@ -52,13 +62,13 @@ export class ParseToolCallUtils {
         return result;
       }
     } catch (error) {
-      console.error('Failed to parse content as JSON:', error);
+      return undefined;
     }
   };
 
   public static extractToolCalls = (content: string): ExtractedToolCall => {
     let jsonContent = content;
-    let textBeforeToolCall = jsonContent; // Initialize to the full content, will update if a tool call is found.
+    let textBeforeToolCall = jsonContent;
 
     // Define the result structure with the default text (full content if no tool call is found)
     const result: ExtractedToolCall = {
@@ -169,15 +179,22 @@ export class ParseToolCallUtils {
       }
     }
 
-    // Fallback: Try to parse the entire content as a JSON object if no tags or blocks are found
-    const fallbackResult = ParseToolCallUtils.tryExtractToolCall(
-      result,
-      jsonContent.trim(),
-      '',
-    );
+    // For llamas, check for the tool call in the content as it will not have any tags or blocks
+    const match = jsonContent.match(POSSIBLE_TOOL_CALLS_REGEX);
+    if (match) {
+      const potentialJson = match[1]; // First captured group, which is the JSON object
+      textBeforeToolCall = jsonContent.substring(0, match.index).trim();
 
-    if (fallbackResult) {
-      return fallbackResult;
+      // Try to parse and validate the content
+      const parseResult = ParseToolCallUtils.tryExtractToolCall(
+        result,
+        potentialJson,
+        textBeforeToolCall,
+      );
+
+      if (parseResult) {
+        return parseResult;
+      }
     }
 
     // Return the result containing text and tool call (if found)
