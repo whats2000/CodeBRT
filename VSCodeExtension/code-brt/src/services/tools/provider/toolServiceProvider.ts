@@ -169,4 +169,22 @@ export class ToolServiceProvider {
       feedback: '',
     };
   }
+
+  public static async executeToolCall(
+    ToolCallEntry: ToolCallEntry,
+    updateStatus: (status: string) => void,
+  ): Promise<string> {
+    try {
+      const tool = this.getTool(ToolCallEntry.toolName);
+
+      if (!tool) {
+        return 'The tool does not exist';
+      }
+
+      const args = { ...ToolCallEntry.parameters, updateStatus };
+      return tool(args as any);
+    } catch (error) {
+      return 'There was an error executing the tool, please report this issue';
+    }
+  }
 }

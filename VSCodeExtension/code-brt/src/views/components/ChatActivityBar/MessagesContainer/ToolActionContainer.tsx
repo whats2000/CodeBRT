@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useContext } from 'react';
 import { Collapse, Descriptions, Space, Button } from 'antd';
 import {
   PlayCircleOutlined,
@@ -18,6 +18,7 @@ import type {
   WorkspaceToolType,
   NonWorkspaceToolType,
 } from '../../../../types';
+import { WebviewContext } from '../../../WebviewContext';
 
 // Mapping tool names to Antd icons
 const MAP_TOOL_NAME_TO_ICON: {
@@ -43,7 +44,17 @@ type ToolActionContainerProps = {
 
 export const ToolActionContainer = React.memo<ToolActionContainerProps>(
   ({ entry, showActionButtons }) => {
-    const onApprove = (_entry: ConversationEntry) => {};
+    const { callApi } = useContext(WebviewContext);
+
+    const [toolCallResponse, setToolCallResponse] = React.useState('');
+    const [isToolCallPending, setIsToolCallPending] = React.useState(false);
+
+    const onApprove = async (entry: ConversationEntry) => {
+      setIsToolCallPending(true);
+      const response = await callApi('approveToolCall', entry);
+      setToolCallResponse(response);
+      setIsToolCallPending(false);
+    };
     const onReject = (_entry: ConversationEntry) => {};
 
     return (
@@ -88,6 +99,7 @@ export const ToolActionContainer = React.memo<ToolActionContainerProps>(
                     type='primary'
                     ghost={true}
                     onClick={() => onApprove(entry)}
+                    loading={isToolCallPending}
                   >
                     Approve
                   </Button>
@@ -99,6 +111,15 @@ export const ToolActionContainer = React.memo<ToolActionContainerProps>(
             </Collapse.Panel>
           </Collapse>
         ))}
+
+        {/* Display the tool call response */}
+        {toolCallResponse !== '' && (
+          <Collapse>
+            <Collapse.Panel header='Tool Call Response' key='1'>
+              <pre>{toolCallResponse}</pre>
+            </Collapse.Panel>
+          </Collapse>
+        )}
       </div>
     );
   },

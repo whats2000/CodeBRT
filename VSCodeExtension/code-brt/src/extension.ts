@@ -7,17 +7,18 @@ import {
 } from './constants';
 import { FileUtils } from './utils';
 import {
-  SettingsManager,
-  HistoryManager,
-  registerInlineCompletion,
-  triggerEvent,
-  registerAndConnectView,
   connectedViews,
+  HistoryManager,
+  registerAndConnectView,
+  registerInlineCompletion,
+  SettingsManager,
+  triggerEvent,
 } from './api';
 import { ModelServiceFactory } from './services/languageModel';
 import { VoiceServiceFactory } from './services/voice';
 import { GptSoVitsApiService } from './services/voice/gptSoVitsService';
 import { convertPdfToMarkdown } from './utils/pdfConverter';
+import { ToolServiceProvider } from './services/tools';
 
 let extensionContext: vscode.ExtensionContext | undefined = undefined;
 
@@ -262,6 +263,16 @@ export const activate = async (ctx: vscode.ExtensionContext) => {
         extensionId,
       );
     },
+    approveToolCall: async (entry) => {
+      const toolCall = entry.toolCalls?.[0];
+      if (!toolCall) {
+        return 'No tool call found';
+      }
+      return await ToolServiceProvider.executeToolCall(toolCall, (status) => {
+        triggerEvent('updateStatus', status);
+      });
+    },
+    rejectToolCall: async (_entry) => {},
   };
 
   void registerAndConnectView(ctx, settingsManager, 'chatActivityBar', api);

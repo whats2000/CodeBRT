@@ -320,6 +320,21 @@ export type ViewApi = {
    * @param extensionId - The extension ID to open the marketplace page for.
    */
   openExtensionMarketplace: (extensionId: string) => Promise<void>;
+
+  /**
+   * Approve the tool call.
+   * @param entry - The conversation entry to approve the tool call for.
+   * @param modelServiceType - The type of the model service to approve the tool call for.
+   * @returns The response of the tool call.
+   */
+  approveToolCall: (entry: ConversationEntry) => Promise<string>;
+
+  /**
+   * Reject the tool call.
+   * @param entry - The conversation entry to reject the tool call for.
+   * @param modelServiceType - The type of the model service to reject the tool call for.
+   */
+  rejectToolCall: (entry: ConversationEntry) => Promise<void>;
 };
 
 /**
