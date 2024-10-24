@@ -10,7 +10,7 @@ export type ResponseWithAction = {
 /**
  * The options to get a response for
  * @property query - The query to get a response for
- * @property historyManager - The history manager to use for the query
+ * @property historyManager - The history register to use for the query
  * @property images - The image paths to use for the query, if not provided, the query will be used without images
  * @property currentEntryID - The current entry ID, if not provided, the history will be used from the latest entry
  * @property sendStreamResponse - The callback to send chunks of the response to,

@@ -1,24 +1,18 @@
 import * as vscode from 'vscode';
 
-import type {
-  ViewApi,
-  ViewApiError,
-  ViewApiEvent,
-  ViewApiRequest,
-  ViewApiResponse,
-  ViewEvents,
-} from './types';
+import type { ViewApi } from './types';
 import {
   AVAILABLE_MODEL_SERVICES,
   AVAILABLE_VOICE_SERVICES,
 } from './constants';
 import { FileUtils } from './utils';
-import { ViewKey } from './views';
 import {
-  viewRegistration,
   SettingsManager,
   HistoryManager,
   registerInlineCompletion,
+  triggerEvent,
+  registerAndConnectView,
+  connectedViews,
 } from './api';
 import { ModelServiceFactory } from './services/languageModel';
 import { VoiceServiceFactory } from './services/voice';
@@ -29,8 +23,6 @@ let extensionContext: vscode.ExtensionContext | undefined = undefined;
 
 export const activate = async (ctx: vscode.ExtensionContext) => {
   extensionContext = ctx;
-
-  const connectedViews: Partial<Record<ViewKey, vscode.WebviewView>> = {};
   const settingsManager = SettingsManager.getInstance(ctx);
   const historyManager = new HistoryManager(ctx);
 
@@ -43,24 +35,6 @@ export const activate = async (ctx: vscode.ExtensionContext) => {
   const voiceServices = voiceServiceFactory.createVoiceServices(
     AVAILABLE_VOICE_SERVICES,
   );
-
-  /**
-   * Trigger an event on all connected views
-   * @param key - The event key
-   * @param params - The event parameters
-   */
-  const triggerEvent = <E extends keyof ViewEvents>(
-    key: E,
-    ...params: Parameters<ViewEvents[E]>
-  ) => {
-    Object.values(connectedViews).forEach((view) => {
-      view.webview.postMessage({
-        type: 'event',
-        key,
-        value: params,
-      } as ViewApiEvent<E>);
-    });
-  };
 
   /**
    * Register and connect views to the extension
@@ -290,62 +264,8 @@ export const activate = async (ctx: vscode.ExtensionContext) => {
     },
   };
 
-  const isViewApiRequest = <K extends keyof ViewApi>(
-    msg: unknown,
-  ): msg is ViewApiRequest<K> =>
-    msg != null &&
-    typeof msg === 'object' &&
-    'type' in msg &&
-    msg.type === 'request';
-
-  const registerAndConnectView = async <V extends ViewKey>(key: V) => {
-    const webviewOptions: vscode.WebviewOptions = {
-      enableScripts: true,
-    };
-    const retainContextWhenHidden = settingsManager.get(
-      'retainContextWhenHidden',
-    );
-    const view = await viewRegistration(
-      ctx,
-      key,
-      webviewOptions,
-      retainContextWhenHidden,
-    );
-    connectedViews[key] = view;
-    const onMessage = async (msg: Record<string, unknown>) => {
-      if (!isViewApiRequest(msg)) {
-        return;
-      }
-      try {
-        // @ts-expect-error
-        const val = await api[msg.key](...msg.params);
-        const res: ViewApiResponse = {
-          type: 'response',
-          id: msg.id,
-          value: val,
-        };
-        view.webview.postMessage(res);
-      } catch (e: unknown) {
-        const err: ViewApiError = {
-          type: 'error',
-          id: msg.id,
-          value:
-            e instanceof Error ? e.message : 'An unexpected error occurred',
-        };
-        view.webview.postMessage(err);
-      }
-    };
-
-    view.webview.onDidReceiveMessage(onMessage);
-  };
-
-  registerAndConnectView('chatActivityBar').catch((e) => {
-    console.error(e);
-  });
-  registerAndConnectView('workPanel').catch((e) => {
-    console.error(e);
-  });
-
+  void registerAndConnectView(ctx, settingsManager, 'chatActivityBar', api);
+  void registerAndConnectView(ctx, settingsManager, 'workPanel', api);
   registerInlineCompletion(ctx, settingsManager, connectedViews);
 };
 

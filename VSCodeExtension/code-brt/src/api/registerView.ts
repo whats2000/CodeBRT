@@ -1,10 +1,29 @@
-import * as vscode from 'vscode';
-import { randomBytes } from 'crypto';
 import path from 'node:path';
 
-import { ViewKey } from '../views';
+import * as vscode from 'vscode';
+import { randomBytes } from 'crypto';
+
+import type {
+  ViewApi,
+  ViewApiRequest,
+  ViewApiResponse,
+  ViewApiError,
+  ViewEvents,
+} from '../types';
+import type { ViewKey } from '../views';
+import { SettingsManager } from '../api';
 
 const DEV_SERVER_HOST = 'http://localhost:18080';
+
+export const connectedViews: Partial<Record<string, vscode.WebviewView>> = {};
+
+const isViewApiRequest = <K extends keyof ViewApi>(
+  msg: unknown,
+): msg is ViewApiRequest<K> =>
+  msg != null &&
+  typeof msg === 'object' &&
+  'type' in msg &&
+  msg.type === 'request';
 
 const template = (params: {
   csp: string;
@@ -113,7 +132,7 @@ const setViewHtml = <V extends ViewKey>(
   return webview;
 };
 
-export const viewRegistration = async <V extends ViewKey>(
+const viewRegistration = async <V extends ViewKey>(
   ctx: vscode.ExtensionContext,
   viewId: V,
   options?: vscode.WebviewOptions,
@@ -122,4 +141,79 @@ export const viewRegistration = async <V extends ViewKey>(
   const view = await createView(ctx, viewId, options, retainContextWhenHidden);
   setViewHtml(ctx, viewId, view.webview);
   return view;
+};
+
+/**
+ * Trigger an event on all connected views
+ * @param key - The event key
+ * @param params - The event parameters
+ */
+export const triggerEvent = <E extends keyof ViewEvents>(
+  key: E,
+  ...params: Parameters<ViewEvents[E]>
+) => {
+  Object.values(connectedViews).forEach((view) => {
+    view?.webview.postMessage({
+      type: 'event',
+      key,
+      value: params,
+    });
+  });
+};
+
+/**
+ * Register a view and connect it to the provided API
+ * @param ctx - The extension context
+ * @param settingsManager - The settings register
+ * @param key - The view key
+ * @param api - The API to connect to the view
+ */
+export const registerAndConnectView = async <V extends ViewKey>(
+  ctx: vscode.ExtensionContext,
+  settingsManager: SettingsManager,
+  key: V,
+  api: ViewApi,
+) => {
+  try {
+    const webviewOptions: vscode.WebviewOptions = {
+      enableScripts: true,
+    };
+    const retainContextWhenHidden = settingsManager.get(
+      'retainContextWhenHidden',
+    );
+    const view = await viewRegistration(
+      ctx,
+      key,
+      webviewOptions,
+      retainContextWhenHidden,
+    );
+    connectedViews[key] = view;
+    const onMessage = async (msg: Record<string, unknown>) => {
+      if (!isViewApiRequest(msg)) {
+        return;
+      }
+      try {
+        // @ts-expect-error
+        const val = await api[msg.key](...msg.params);
+        const res: ViewApiResponse = {
+          type: 'response',
+          id: msg.id,
+          value: val,
+        };
+        view.webview.postMessage(res);
+      } catch (e: unknown) {
+        const err: ViewApiError = {
+          type: 'error',
+          id: msg.id,
+          value:
+            e instanceof Error ? e.message : 'An unexpected error occurred',
+        };
+        view.webview.postMessage(err);
+      }
+    };
+
+    view.webview.onDidReceiveMessage(onMessage);
+  } catch (err: unknown) {
+    console.error(err);
+  }
 };

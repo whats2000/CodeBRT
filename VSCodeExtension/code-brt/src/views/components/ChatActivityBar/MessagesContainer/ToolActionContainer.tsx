@@ -12,13 +12,12 @@ import {
   GlobalOutlined,
   LinkOutlined,
 } from '@ant-design/icons';
-import {
+
+import type {
   ConversationEntry,
   WorkspaceToolType,
   NonWorkspaceToolType,
 } from '../../../../types';
-
-const { Panel } = Collapse;
 
 // Mapping tool names to Antd icons
 const MAP_TOOL_NAME_TO_ICON: {
@@ -54,7 +53,7 @@ export const ToolActionContainer = React.memo<ToolActionContainerProps>(
             key={toolCall.id}
             defaultActiveKey={showActionButtons ? '1' : undefined}
           >
-            <Panel
+            <Collapse.Panel
               header={
                 <Space wrap={true}>
                   {MAP_TOOL_NAME_TO_ICON[
@@ -97,7 +96,7 @@ export const ToolActionContainer = React.memo<ToolActionContainerProps>(
                   </Button>
                 </Space>
               )}
-            </Panel>
+            </Collapse.Panel>
           </Collapse>
         ))}
       </div>
