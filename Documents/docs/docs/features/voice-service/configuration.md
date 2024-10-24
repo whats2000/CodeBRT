@@ -8,8 +8,8 @@ This guide will walk you through configuring the voice service, which includes b
   - [GPT-SoVits](#gpt-sovits-configuration)
 - [Voice-to-Text Configuration](#voice-to-text-configuration)
   - [OpenAI](#openai-voice-to-text-configuration)
-  - [Groq](#groq-voice-to-text-configuration)
-  - [VSCode Built-In](#vscode-built-in-voice-to-text-configuration)
+  - [Groq](#groq-configuration)
+  - [VSCode Built-In](#vscode-built-in-configuration)
 
 ---
 
@@ -76,7 +76,20 @@ By following these steps, you'll be able to properly configure GPT-SoVits and cr
 ## Voice-to-Text Configuration
 ### OpenAI Voice-to-Text Configuration
 To configure OpenAI for Voice-to-Text, follow the same steps(1&2) as described for the [Text-to-Voice configuration](#openai-text-to-voice-configuration), ensuring that your **OpenAI API key is properly set** in the setting panel.
+
 ### Groq Configuration
+**1. Check if SoX is Installed and Configured**
+
+Before running Groq, it's essential to ensure that SoX (Sound eXchange) is already installed and properly configured in your system environment. you can verify it by running:
+  ```bash
+  sox --version
+  ```  
+
+**2. Running Groq voice-to-text service**
+
+Once SoX is installed and properly configured, Groq can be executed. If SoX is not correctly set up, Groq will likely display an error message related to audio processing.  
+If you encounter any errors during SoX installation or while running Groq, and need further assistance, please check [SoX installation](./installation.md#sox-installation) first.
+
 ### VSCode Built-In Configuration
 To use VSCode Built-In for Voice-to-Text, follow these steps:
 

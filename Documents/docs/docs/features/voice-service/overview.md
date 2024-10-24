@@ -10,7 +10,7 @@ By pressing the speaker button on the right-upper corner , the application will 
 And there are two methods available for Text to Voice conversion:
 
 - **OpenAI**: Uses OpenAI’s API to generate the voice.
-- **GPT-SoVits**: Uses GPT-SoVits for generating voice output.
+- **GPT-SoVits**: Uses GPT-SoVits for generating voice output. With this service, you can use local audio tracks to customize voice templates.
 
 ## Voice to Text
 The Voice to Text functionality enables the application to transcribe spoken words into text. After recording, the voice input will be processed and converted into text.  
@@ -22,7 +22,7 @@ By pressing the recorder button, the application starts recording the user's voi
 And there are three available methods for Voice to Text transcription:
 
 - **OpenAI**: Utilizes OpenAI’s API for speech-to-text conversion.
-- **Groq**: Uses Groq technology for voice-to-text processing.
+- **Groq**: Uses Groq technology for voice-to-text processing.(Need to install SoX)
 - **VSCode Built-In**: Leverages the built-in capabilities of VSCode for transcribing voice inputs. We use VS Code Speech to convert.
 
 :::tip

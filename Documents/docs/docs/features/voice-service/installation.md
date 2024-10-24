@@ -2,6 +2,79 @@
 
 This guide will help you set up all the necessary packages and tools required to use Voice Service on your system.
 
+## SoX Installation
+
+This guide provides instructions on how to install **SoX (Sound eXchange)** on various operating systems.
+
+### Windows
+
+1. Download the latest SoX installer from the [SoX official website](http://sox.sourceforge.net/).
+2. Run the installer and follow the on-screen instructions to complete the installation.
+3. Once installed, you need to add the SoX installation directory to your `PATH` environment variable to use `sox` from any command line.
+
+#### Adding SoX to PATH:
+
+1. **Right-click** on "This PC" or "My Computer" and select **Properties**.
+2. Click on **Advanced system settings**.
+![advanced-system-settings](/img/voice-service/installation/advanced-system-settings.png)
+3. In the System Properties window, click on the **Environment Variables** button.
+![advanced-system-environment-variables](/img/voice-service/installation/advanced-system-environment-variables.png)
+4. In the **System Variables** section, find and select the `Path` variable, then click **Edit**.
+![environment-variables](/img/voice-service/installation/environment-variables.png)
+5. Click **New** and enter the path to the SoX installation directory (e.g., `C:\Program Files (x86)\sox\`).
+6. Click **OK** to save the changes.
+
+#### Verify Installation:
+- After adding to the `PATH`, open **Command Prompt** and run:
+
+  ```bash
+  sox --version
+  ```
+
+
+### macOS
+
+1. Open the Terminal.
+2. Install SoX by running the following command:
+   ```bash
+   brew install sox
+   ```
+3. Once installation is complete, verify it by running:
+   ```bash
+   sox --version
+   ```
+4. If the version information appears, SoX is successfully installed.
+
+### Linux
+
+1. Open a terminal.
+2. To install SoX on a Linux system, the process can vary depending on the specific 
+Linux distribution you are using. Below are instructions for some of the most common 
+Linux distributions.
+
+    **Run the following commands to install SoX:**
+
+- Ubuntu / Debian
+   ```bash
+   sudo apt-get update
+   sudo apt-get install sox
+- Fedora
+   ```bash
+   sudo dnf install sox
+- Arch Linux
+   ```bash
+   sudo pacman -S sox
+- CentOS
+   ```bash
+   sudo yum install sox
+3. Once SoX is installed, you can verify it by running:
+   ```bash
+   sox --version
+   ```
+4. If everything is set up correctly, it will display the installed version of SoX.
+
+
+
 ## GPT-SoVits installation
 
 To configure GPT-SoVits for Text-to-Voice conversion, follow these steps:
