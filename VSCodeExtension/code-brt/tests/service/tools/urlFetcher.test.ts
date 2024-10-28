@@ -1,5 +1,5 @@
 import axios from 'axios';
-import { extractTextFromWebpage } from '../../../src/utils';
+import { extractTextFromWebpage } from '../../../src/services/tools/utils';
 import { urlFetcherTool } from '../../../src/services/tools/urlFetcher';
 
 jest.mock('axios');

@@ -39,7 +39,7 @@ describe('ToolServiceProvider Full Class Test', () => {
   });
 
   it('should return invalid if the parameter types are incorrect', () => {
-    // Set a wrong type for the 'query' parameter in the entry
+    // Set the wrong type for the 'query' parameter in the entry
     toolCallEntry.parameters = { query: 12345 };
 
     const result = ToolServiceProvider.isViableToolCall(toolCallEntry);

@@ -1,4 +1,4 @@
-import { ToolService } from '../../../src/services/tools';
+import { ToolServiceProvider } from '../../../src/services/tools';
 import { ToolServicesApi } from '../../../src/types';
 
 describe('ToolService', () => {
@@ -6,7 +6,7 @@ describe('ToolService', () => {
     const query = 'OpenAI';
     const mockUpdateStatus = jest.fn();
 
-    const webSearch = ToolService.getTool(
+    const webSearch = ToolServiceProvider.getTool(
       'webSearch',
     ) as ToolServicesApi['webSearch'];
     expect(webSearch).toBeDefined();
@@ -38,7 +38,7 @@ describe('ToolService', () => {
   }, 30000);
 
   it('should return undefined for unregistered tool', () => {
-    const tool = ToolService.getTool('nonExistentTool');
+    const tool = ToolServiceProvider.getTool('nonExistentTool');
     expect(tool).toBeUndefined();
   });
 
@@ -46,7 +46,7 @@ describe('ToolService', () => {
     const query = 'Gemini';
     const mockUpdateStatus = jest.fn();
 
-    const webSearch = ToolService.getTool(
+    const webSearch = ToolServiceProvider.getTool(
       'webSearch',
     ) as ToolServicesApi['webSearch'];
     expect(webSearch).toBeDefined();
@@ -81,7 +81,7 @@ describe('ToolService', () => {
     const query = 'Claude';
     const mockUpdateStatus = jest.fn();
 
-    const webSearch = ToolService.getTool(
+    const webSearch = ToolServiceProvider.getTool(
       'webSearch',
     ) as ToolServicesApi['webSearch'];
     expect(webSearch).toBeDefined();
