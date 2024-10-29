@@ -269,6 +269,7 @@ export const activate = async (ctx: vscode.ExtensionContext) => {
       });
     },
     rejectToolCall: async (_entry) => {},
+    confirmToolCall: async (_entry) => {},
   };
 
   void registerAndConnectView(ctx, settingsManager, 'chatActivityBar', api);

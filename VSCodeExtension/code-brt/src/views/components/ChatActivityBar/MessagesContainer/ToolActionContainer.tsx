@@ -66,7 +66,10 @@ export const ToolActionContainer = React.memo<ToolActionContainerProps>(
       const newToolCallResponseEntry = await callApi('addConversationEntry', {
         parentID: entry.id,
         role: 'tool',
-        message: '',
+        message:
+          toolCallResponse.status === 'success'
+            ? 'The tool call was executed successfully'
+            : toolCallResponse,
         toolResponses: [toolCallResponse],
       } as AddConversationEntryParams);
       dispatch(replaceTempEntry(newToolCallResponseEntry));

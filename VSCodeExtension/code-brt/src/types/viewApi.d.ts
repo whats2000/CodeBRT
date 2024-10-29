@@ -336,6 +336,12 @@ export type ViewApi = {
    * @param modelServiceType - The type of the model service to reject the tool call for.
    */
   rejectToolCall: (entry: ConversationEntry) => Promise<void>;
+
+  /**
+   * Confirm the tool call.
+   * @param entry - The conversation entry to confirm the tool call for.
+   */
+  confirmToolCall: (entry: ConversationEntry) => Promise<void>;
 };
 
 /**

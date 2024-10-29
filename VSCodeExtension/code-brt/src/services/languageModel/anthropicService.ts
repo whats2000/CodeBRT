@@ -134,7 +134,7 @@ export class AnthropicService extends AbstractLanguageModelService {
 
     while (currentEntry) {
       result.unshift({
-        role: currentEntry.role === 'user' ? 'user' : 'assistant',
+        role: currentEntry.role === 'AI' ? 'assistant' : 'user',
         content: [
           {
             type: 'text',
