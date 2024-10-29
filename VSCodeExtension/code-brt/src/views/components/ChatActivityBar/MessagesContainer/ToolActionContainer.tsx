@@ -75,65 +75,71 @@ export const ToolActionContainer = React.memo<ToolActionContainerProps>(
     const onReject = (_entry: ConversationEntry) => {};
 
     return (
-      <div style={{ marginTop: 10 }}>
+      <div style={{ margin: '10px 0' }}>
         {entry.toolCalls?.map((toolCall) => (
-          <Collapse
+          <Space
+            direction={'vertical'}
             key={toolCall.id}
-            defaultActiveKey={showActionButtons ? '1' : undefined}
+            style={{ width: '100%' }}
           >
-            <Collapse.Panel
-              header={
-                <Space wrap={true}>
-                  {MAP_TOOL_NAME_TO_ICON[
-                    toolCall.toolName as
-                      | WorkspaceToolType
-                      | NonWorkspaceToolType
-                  ] ?? <span>Unknown Tool</span>}
-                  <span
-                    style={{
-                      textOverflow: 'ellipsis',
-                    }}
-                  >
-                    {toolCall.toolName.charAt(0).toUpperCase() +
-                      toolCall.toolName.slice(1)}
-                  </span>
-                </Space>
-              }
-              key='1'
+            <Collapse
+              defaultActiveKey={showActionButtons ? '1' : undefined}
+              style={{ width: '100%' }}
             >
-              <Descriptions column={1} size='small'>
-                {Object.entries(toolCall.parameters).map(([key, value]) => (
-                  <Descriptions.Item key={key} label={key}>
-                    <Typography.Paragraph
-                      ellipsis={{
-                        rows: 2,
-                        expandable: 'collapsible',
+              <Collapse.Panel
+                header={
+                  <Space wrap={true}>
+                    {MAP_TOOL_NAME_TO_ICON[
+                      toolCall.toolName as
+                        | WorkspaceToolType
+                        | NonWorkspaceToolType
+                    ] ?? <span>Unknown Tool</span>}
+                    <span
+                      style={{
+                        textOverflow: 'ellipsis',
                       }}
                     >
-                      {JSON.stringify(value)}
-                    </Typography.Paragraph>
-                  </Descriptions.Item>
-                ))}
-              </Descriptions>
+                      {toolCall.toolName.charAt(0).toUpperCase() +
+                        toolCall.toolName.slice(1)}
+                    </span>
+                  </Space>
+                }
+                key='1'
+              >
+                <Descriptions column={1} size='small'>
+                  {Object.entries(toolCall.parameters).map(([key, value]) => (
+                    <Descriptions.Item key={key} label={key}>
+                      <Typography.Paragraph
+                        ellipsis={{
+                          rows: 2,
+                          expandable: 'collapsible',
+                        }}
+                      >
+                        {JSON.stringify(value)}
+                      </Typography.Paragraph>
+                    </Descriptions.Item>
+                  ))}
+                </Descriptions>
+              </Collapse.Panel>
+            </Collapse>
 
-              {/* Add Approve and Reject buttons */}
-              {showActionButtons && (
-                <Space wrap={true} style={{ marginTop: 16 }}>
-                  <Button
-                    type='primary'
-                    ghost={true}
-                    onClick={() => onApprove(entry)}
-                    loading={isToolCallPending}
-                  >
-                    Approve
-                  </Button>
-                  <Button type='default' danger onClick={() => onReject(entry)}>
-                    Reject
-                  </Button>
-                </Space>
-              )}
-            </Collapse.Panel>
-          </Collapse>
+            {/* Add Approve and Reject buttons */}
+            {showActionButtons && (
+              <Space wrap={true}>
+                <Button
+                  type='primary'
+                  ghost={true}
+                  onClick={() => onApprove(entry)}
+                  loading={isToolCallPending}
+                >
+                  Approve
+                </Button>
+                <Button type='default' danger onClick={() => onReject(entry)}>
+                  Reject
+                </Button>
+              </Space>
+            )}
+          </Space>
         ))}
       </div>
     );

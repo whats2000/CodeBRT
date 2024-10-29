@@ -53,7 +53,7 @@ export const webSearchTool: ToolServicesApi['webSearch'] = async ({
   });
 
   try {
-    updateStatus?.(`[INFO] Searching Web with keyword "${term}"`);
+    updateStatus?.(`[processing] Searching Web with keyword "${term}"`);
     const resp = await session.get('https://www.google.com/search', {
       params: { q: term, num: numResults, udm: 14 },
       timeout: 5000,
@@ -65,7 +65,7 @@ export const webSearchTool: ToolServicesApi['webSearch'] = async ({
       const linkElement = $(result).find('a[href]').first();
       const link = linkElement.attr('href');
       const title = $(result).find('h3').text();
-      updateStatus?.(`[INFO] Reading page "${title}" from ${link}`);
+      updateStatus?.(`[processing] Reading page "${title}" from ${link}`);
       if (!link) {
         continue;
       }
