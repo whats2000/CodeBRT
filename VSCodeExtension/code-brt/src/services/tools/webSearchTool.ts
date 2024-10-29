@@ -53,7 +53,7 @@ export const webSearchTool: ToolServicesApi['webSearch'] = async ({
   });
 
   try {
-    updateStatus?.(`[Searching] Searching Web with keyword "${term}"`);
+    updateStatus?.(`[INFO] Searching Web with keyword "${term}"`);
     const resp = await session.get('https://www.google.com/search', {
       params: { q: term, num: numResults, udm: 14 },
       timeout: 5000,
@@ -65,6 +65,7 @@ export const webSearchTool: ToolServicesApi['webSearch'] = async ({
       const linkElement = $(result).find('a[href]').first();
       const link = linkElement.attr('href');
       const title = $(result).find('h3').text();
+      updateStatus?.(`[INFO] Reading page "${title}" from ${link}`);
       if (!link) {
         continue;
       }
@@ -88,6 +89,6 @@ export const webSearchTool: ToolServicesApi['webSearch'] = async ({
     console.error('Failed to search the web:', error);
   }
 
-  updateStatus?.('[Info] Generating Response Based on Search Results');
+  updateStatus?.('');
   return postProcessResults(allResults, format);
 };

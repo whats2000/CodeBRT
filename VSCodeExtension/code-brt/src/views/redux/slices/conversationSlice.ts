@@ -2,7 +2,11 @@ import { createAsyncThunk, PayloadAction } from '@reduxjs/toolkit';
 import { createSlice } from '@reduxjs/toolkit';
 import { v4 as uuidV4 } from 'uuid';
 
-import type { ConversationEntry, ConversationHistory } from '../../../types';
+import type {
+  ConversationEntry,
+  ConversationEntryRole,
+  ConversationHistory,
+} from '../../../types';
 import type { CallAPI } from '../../WebviewContext';
 import type { RootState } from '../store';
 import { updateAndSaveSetting } from './settingsSlice';
@@ -156,11 +160,14 @@ const conversationSlice = createSlice({
         state.top.push(newEntry.id);
       }
     },
-    addTempAIResponseEntry(state, action: PayloadAction<{ parentId: string }>) {
+    addTempResponseEntry(
+      state,
+      action: PayloadAction<{ parentId: string; role: ConversationEntryRole }>,
+    ) {
       const tempId = `temp-${uuidV4()}`;
       state.entries[tempId] = {
         id: tempId,
-        role: 'AI',
+        role: action.payload.role,
         message: '',
         parent: action.payload.parentId,
         children: [],
@@ -212,7 +219,7 @@ export const {
   setConversationHistory,
   handleStreamResponse,
   addEntry,
-  addTempAIResponseEntry,
+  addTempResponseEntry,
   replaceTempEntry,
   updateEntryMessage,
   updateCurrentEntry,

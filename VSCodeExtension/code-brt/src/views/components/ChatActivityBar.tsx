@@ -10,7 +10,7 @@ import type { AppDispatch, RootState } from '../redux';
 import { UPLOADED_FILES_KEY } from '../../constants';
 import {
   addEntry,
-  addTempAIResponseEntry,
+  addTempResponseEntry,
   handleStreamResponse,
   initLoadHistory,
   replaceTempEntry,
@@ -171,7 +171,7 @@ export const ChatActivityBar = () => {
     } as AddConversationEntryParams);
 
     dispatch(addEntry(userEntry));
-    dispatch(addTempAIResponseEntry({ parentId: userEntry.id }));
+    dispatch(addTempResponseEntry({ parentId: userEntry.id, role: 'AI' }));
 
     callApi(
       'getLanguageModelResponse',

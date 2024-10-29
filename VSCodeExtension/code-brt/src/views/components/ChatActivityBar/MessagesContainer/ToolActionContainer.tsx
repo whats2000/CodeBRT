@@ -1,5 +1,5 @@
 import React, { useContext } from 'react';
-import { Collapse, Descriptions, Space, Button } from 'antd';
+import { Collapse, Descriptions, Space, Button, Typography } from 'antd';
 import {
   PlayCircleOutlined,
   FileOutlined,
@@ -21,7 +21,10 @@ import type {
 } from '../../../../types';
 import { WebviewContext } from '../../../WebviewContext';
 import { useDispatch } from 'react-redux';
-import { addEntry } from '../../../redux/slices/conversationSlice';
+import {
+  addTempResponseEntry,
+  replaceTempEntry,
+} from '../../../redux/slices/conversationSlice';
 
 // Mapping tool names to Antd icons
 const MAP_TOOL_NAME_TO_ICON: {
@@ -58,6 +61,7 @@ export const ToolActionContainer = React.memo<ToolActionContainerProps>(
         return;
       }
       setIsToolCallPending(true);
+      dispatch(addTempResponseEntry({ parentId: entry.id, role: 'tool' }));
       const toolCallResponse = await callApi('approveToolCall', toolCall);
       const newToolCallResponseEntry = await callApi('addConversationEntry', {
         parentID: entry.id,
@@ -65,7 +69,7 @@ export const ToolActionContainer = React.memo<ToolActionContainerProps>(
         message: '',
         toolResponses: [toolCallResponse],
       } as AddConversationEntryParams);
-      dispatch(addEntry(newToolCallResponseEntry));
+      dispatch(replaceTempEntry(newToolCallResponseEntry));
       setIsToolCallPending(false);
     };
     const onReject = (_entry: ConversationEntry) => {};
@@ -100,7 +104,14 @@ export const ToolActionContainer = React.memo<ToolActionContainerProps>(
               <Descriptions column={1} size='small'>
                 {Object.entries(toolCall.parameters).map(([key, value]) => (
                   <Descriptions.Item key={key} label={key}>
-                    {JSON.stringify(value)}
+                    <Typography.Paragraph
+                      ellipsis={{
+                        rows: 2,
+                        expandable: 'collapsible',
+                      }}
+                    >
+                      {JSON.stringify(value)}
+                    </Typography.Paragraph>
                   </Descriptions.Item>
                 ))}
               </Descriptions>

@@ -2,18 +2,21 @@ import React from 'react';
 import { Collapse, Tag, Descriptions, Typography, Space } from 'antd';
 
 import type { ConversationEntry } from '../../../../types';
+import { ToolStatusBlock } from '../../common/ToolStatusBlock';
 
 const { Panel } = Collapse;
 
 type ToolResponseContainerProps = {
   entry: ConversationEntry;
+  toolStatus: string;
 };
 
 export const ToolResponseContainer: React.FC<ToolResponseContainerProps> = ({
   entry,
+  toolStatus,
 }) => {
   return (
-    <div>
+    <>
       {entry.toolResponses?.map((response) => (
         <Collapse defaultActiveKey={[]}>
           <Panel
@@ -35,7 +38,14 @@ export const ToolResponseContainer: React.FC<ToolResponseContainerProps> = ({
             <Descriptions column={1} size='small'>
               <Descriptions.Item label='Result'>
                 {typeof response.result === 'string' ? (
-                  <Typography.Text>{response.result}</Typography.Text>
+                  <Typography.Paragraph
+                    ellipsis={{
+                      rows: 2,
+                      expandable: 'collapsible',
+                    }}
+                  >
+                    {response.result}
+                  </Typography.Paragraph>
                 ) : (
                   <pre>{JSON.stringify(response.result, null, 2)}</pre>
                 )}
@@ -44,6 +54,7 @@ export const ToolResponseContainer: React.FC<ToolResponseContainerProps> = ({
           </Panel>
         </Collapse>
       ))}
-    </div>
+      <ToolStatusBlock status={toolStatus} />
+    </>
   );
 };
