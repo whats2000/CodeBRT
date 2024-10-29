@@ -158,96 +158,102 @@ export const TopToolBar: React.FC<MessagesTopToolBarProps> = ({
       <RespondCharacter $user={entry.role} theme={token}>
         {displayRole}
       </RespondCharacter>
-      <Flex gap={1} wrap={true} justify={'flex-end'}>
-        {parent && siblingCount > 1 && (
-          <>
-            <Button
-              onClick={() => handleGoForward(entry, 'prev')}
-              type={'text'}
-              disabled={currentIndex === 1 || isProcessing}
-            >
-              <ArrowLeftOutlined />
-            </Button>
-            <Button type={'text'}>
-              {currentIndex}/{siblingCount}
-            </Button>
-            <Button
-              onClick={() => handleGoForward(entry, 'next')}
-              type={'text'}
-              disabled={currentIndex === siblingCount || isProcessing}
-            >
-              <ArrowRightOutlined />
-            </Button>
-          </>
-        )}
-        {topCount > 1 && index === 0 && (
-          <>
-            <Button
-              onClick={() => handleSwitchRoot(conversationHistory, 'prev')}
-              type={'text'}
-              disabled={topIndex === 0 || isProcessing}
-            >
-              <ArrowLeftOutlined />
-            </Button>
-            <Button type={'text'}>
-              {topIndex + 1}/{topCount}
-            </Button>
-            <Button
-              onClick={() => handleSwitchRoot(conversationHistory, 'next')}
-              type={'text'}
-              disabled={topIndex === topCount - 1 || isProcessing}
-            >
-              <ArrowRightOutlined />
-            </Button>
-          </>
-        )}
-        <Tooltip
-          title={
-            isAudioPlaying
-              ? 'Stop audio, these will take a few seconds in current version'
-              : ''
-          }
-        >
-          <Button
-            icon={
-              isStopAudio ? (
-                <LoadingOutlined spin={true} />
-              ) : isAudioPlaying ? (
-                <CancelOutlined />
-              ) : (
-                <SoundOutlined />
-              )
+      {entry.role !== 'tool' && (
+        <Flex gap={1} wrap={true} justify={'flex-end'}>
+          {parent && siblingCount > 1 && (
+            <>
+              <Button
+                onClick={() => handleGoForward(entry, 'prev')}
+                type={'text'}
+                disabled={currentIndex === 1 || isProcessing}
+              >
+                <ArrowLeftOutlined />
+              </Button>
+              <Button type={'text'}>
+                {currentIndex}/{siblingCount}
+              </Button>
+              <Button
+                onClick={() => handleGoForward(entry, 'next')}
+                type={'text'}
+                disabled={currentIndex === siblingCount || isProcessing}
+              >
+                <ArrowRightOutlined />
+              </Button>
+            </>
+          )}
+          {topCount > 1 && index === 0 && (
+            <>
+              <Button
+                onClick={() => handleSwitchRoot(conversationHistory, 'prev')}
+                type={'text'}
+                disabled={topIndex === 0 || isProcessing}
+              >
+                <ArrowLeftOutlined />
+              </Button>
+              <Button type={'text'}>
+                {topIndex + 1}/{topCount}
+              </Button>
+              <Button
+                onClick={() => handleSwitchRoot(conversationHistory, 'next')}
+                type={'text'}
+                disabled={topIndex === topCount - 1 || isProcessing}
+              >
+                <ArrowRightOutlined />
+              </Button>
+            </>
+          )}
+          <Tooltip
+            title={
+              isAudioPlaying
+                ? 'Stop audio, these will take a few seconds in current version'
+                : ''
             }
-            type={'text'}
-            onClick={() => handleConvertTextToVoice(entry.message)}
-            disabled={isStopAudio}
-          />
-        </Tooltip>
-        {entry.role === 'AI' && (
+          >
+            <Button
+              icon={
+                isStopAudio ? (
+                  <LoadingOutlined spin={true} />
+                ) : isAudioPlaying ? (
+                  <CancelOutlined />
+                ) : (
+                  <SoundOutlined />
+                )
+              }
+              type={'text'}
+              onClick={() => handleConvertTextToVoice(entry.message)}
+              disabled={isStopAudio}
+            />
+          </Tooltip>
+          {entry.role === 'AI' && (
+            <Button
+              icon={
+                isProcessing ? (
+                  <LoadingOutlined spin={true} />
+                ) : (
+                  <RedoOutlined />
+                )
+              }
+              type={'text'}
+              disabled={isProcessing}
+              onClick={() => handleRedo(entry.id)}
+            />
+          )}
           <Button
-            icon={
-              isProcessing ? <LoadingOutlined spin={true} /> : <RedoOutlined />
-            }
+            icon={<EditOutlined />}
             type={'text'}
-            disabled={isProcessing}
-            onClick={() => handleRedo(entry.id)}
+            onClick={() =>
+              editingEntryId === entry.id
+                ? handleCancelEdit()
+                : handleEdit(entry.id, entry.message)
+            }
           />
-        )}
-        <Button
-          icon={<EditOutlined />}
-          type={'text'}
-          onClick={() =>
-            editingEntryId === entry.id
-              ? handleCancelEdit()
-              : handleEdit(entry.id, entry.message)
-          }
-        />
-        <Button
-          icon={copied[entry.id] ? <CopyFilled /> : <CopyOutlined />}
-          onClick={() => handleCopy(entry.message, entry.id)}
-          type={'text'}
-        />
-      </Flex>
+          <Button
+            icon={copied[entry.id] ? <CopyFilled /> : <CopyOutlined />}
+            onClick={() => handleCopy(entry.message, entry.id)}
+            type={'text'}
+          />
+        </Flex>
+      )}
     </Flex>
   );
 };

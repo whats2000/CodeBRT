@@ -14,6 +14,7 @@ import { TextContainer } from './TextContainer';
 import { ImageContainer } from './ImageContainer';
 import { MessageFloatButton } from './MessageFloatButton';
 import { ToolActionContainer } from './ToolActionContainer';
+import { ToolResponseContainer } from './ToolResponseContainer';
 
 const MessageBubbleWrapper = styled.div<{
   $paddingBottom: boolean;
@@ -29,7 +30,7 @@ const MessageBubble = styled.div<{
   display: flex;
   flex-direction: column;
   background-color: ${({ $user, $token }) =>
-    $user === 'user' ? $token.colorBgLayout : $token.colorBgElevated};
+    $user !== 'AI' ? $token.colorBgLayout : $token.colorBgElevated};
   border-radius: 15px;
   border: 1px solid ${({ $token }) => $token.colorBorder};
   padding: 8px 15px;
@@ -127,6 +128,41 @@ export const MessageItem = React.memo<MessageItemProps>(
       setEditingEntryId(null);
     };
 
+    const renderContainer = () => {
+      if (entry.role === 'tool') {
+        return <ToolResponseContainer entry={entry} />;
+      }
+      if (entry.id === editingEntryId) {
+        return (
+          <TextEditContainer
+            entry={entry}
+            isProcessing={isProcessing}
+            editedMessage={editedMessage}
+            setEditedMessage={setEditedMessage}
+            handleSaveEdit={handleSaveEdit}
+            handleCancelEdit={handleCancelEdit}
+          />
+        );
+      }
+      return (
+        <div>
+          <TextContainer
+            entry={entry}
+            conversationHistoryCurrent={conversationHistory.current}
+            isProcessing={isProcessing}
+            hljsTheme={settings.hljsTheme}
+            setHljsTheme={setHljsTheme}
+            toolStatus={toolStatus}
+          />
+          <ImageContainer entry={entry} />
+          <ToolActionContainer
+            entry={entry}
+            showActionButtons={conversationHistory.current === entry.id}
+          />
+        </div>
+      );
+    };
+
     return (
       <>
         <MessageBubbleWrapper
@@ -154,33 +190,7 @@ export const MessageItem = React.memo<MessageItemProps>(
               handleRedo={handleRedo}
               isProcessing={isProcessing}
             />
-
-            {entry.id === editingEntryId ? (
-              <TextEditContainer
-                entry={entry}
-                isProcessing={isProcessing}
-                editedMessage={editedMessage}
-                setEditedMessage={setEditedMessage}
-                handleSaveEdit={handleSaveEdit}
-                handleCancelEdit={handleCancelEdit}
-              />
-            ) : (
-              <div>
-                <TextContainer
-                  entry={entry}
-                  conversationHistoryCurrent={conversationHistory.current}
-                  isProcessing={isProcessing}
-                  hljsTheme={settings.hljsTheme}
-                  setHljsTheme={setHljsTheme}
-                  toolStatus={toolStatus}
-                />
-                <ImageContainer entry={entry} />
-                <ToolActionContainer
-                  entry={entry}
-                  showActionButtons={conversationHistory.current === entry.id}
-                />
-              </div>
-            )}
+            {renderContainer()}
           </MessageBubble>
         </MessageBubbleWrapper>
         {hoveredBubble && showFloatButtons && (

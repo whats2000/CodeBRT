@@ -24,31 +24,31 @@ export class ToolServiceProvider {
     urlFetcher: urlFetcherTool,
     agentTools: {
       executeCommand: () => {
-        return Promise.resolve('Not implemented');
+        throw new Error('Not implemented');
       },
       readFile: () => {
-        return Promise.resolve('Not implemented');
+        throw new Error('Not implemented');
       },
       writeToFile: () => {
-        return Promise.resolve('Not implemented');
+        throw new Error('Not implemented');
       },
       searchFiles: () => {
-        return Promise.resolve('Not implemented');
+        throw new Error('Not implemented');
       },
       listFiles: () => {
-        return Promise.resolve('Not implemented');
+        throw new Error('Not implemented');
       },
       listCodeDefinitionNames: () => {
-        return Promise.resolve('Not implemented');
+        throw new Error('Not implemented');
       },
       inspectSite: () => {
-        return Promise.resolve('Not implemented');
+        throw new Error('Not implemented');
       },
       askFollowUpQuestion: () => {
-        return Promise.resolve('Not implemented');
+        throw new Error('Not implemented');
       },
       attemptCompletion: () => {
-        return Promise.resolve('Not implemented');
+        throw new Error('Not implemented');
       },
     },
   };
