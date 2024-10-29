@@ -4,6 +4,8 @@ import {
   ConversationHistory,
   ConversationHistoryIndexList,
   ConversationModelAdvanceSettings,
+  ToolCallEntry,
+  ToolCallResponse,
 } from './conversationHistory';
 import {
   AddConversationEntryParams,
@@ -54,7 +56,7 @@ export type ViewApiEvent<K extends keyof ViewEvents = keyof ViewEvents> = {
  */
 export type ViewApi = {
   /**
-   * Get the contents of the pdf file.
+   * Get the contents of the PDF file.
    */
   extractPdfText: (filePath: string) => Promise<string>;
 
@@ -323,11 +325,10 @@ export type ViewApi = {
 
   /**
    * Approve the tool call.
-   * @param entry - The conversation entry to approve the tool call for.
-   * @param modelServiceType - The type of the model service to approve the tool call for.
+   * @param toolCall - The tool call to approve.
    * @returns The response of the tool call.
    */
-  approveToolCall: (entry: ConversationEntry) => Promise<string>;
+  approveToolCall: (toolCall: ToolCallEntry) => Promise<ToolCallResponse>;
 
   /**
    * Reject the tool call.

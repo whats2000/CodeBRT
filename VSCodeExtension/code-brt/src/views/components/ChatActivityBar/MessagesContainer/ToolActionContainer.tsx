@@ -17,8 +17,11 @@ import type {
   ConversationEntry,
   WorkspaceToolType,
   NonWorkspaceToolType,
+  AddConversationEntryParams,
 } from '../../../../types';
 import { WebviewContext } from '../../../WebviewContext';
+import { useDispatch } from 'react-redux';
+import { addEntry } from '../../../redux/slices/conversationSlice';
 
 // Mapping tool names to Antd icons
 const MAP_TOOL_NAME_TO_ICON: {
@@ -45,14 +48,24 @@ type ToolActionContainerProps = {
 export const ToolActionContainer = React.memo<ToolActionContainerProps>(
   ({ entry, showActionButtons }) => {
     const { callApi } = useContext(WebviewContext);
+    const dispatch = useDispatch();
 
-    const [toolCallResponse, setToolCallResponse] = React.useState('');
     const [isToolCallPending, setIsToolCallPending] = React.useState(false);
 
     const onApprove = async (entry: ConversationEntry) => {
+      const toolCall = entry.toolCalls?.[0];
+      if (isToolCallPending || !toolCall) {
+        return;
+      }
       setIsToolCallPending(true);
-      const response = await callApi('approveToolCall', entry);
-      setToolCallResponse(response);
+      const toolCallResponse = await callApi('approveToolCall', toolCall);
+      const newToolCallResponseEntry = await callApi('addConversationEntry', {
+        parentID: entry.id,
+        role: 'tool',
+        message: '',
+        toolResponses: [toolCallResponse],
+      } as AddConversationEntryParams);
+      dispatch(addEntry(newToolCallResponseEntry));
       setIsToolCallPending(false);
     };
     const onReject = (_entry: ConversationEntry) => {};
@@ -111,15 +124,6 @@ export const ToolActionContainer = React.memo<ToolActionContainerProps>(
             </Collapse.Panel>
           </Collapse>
         ))}
-
-        {/* Display the tool call response */}
-        {toolCallResponse !== '' && (
-          <Collapse>
-            <Collapse.Panel header='Tool Call Response' key='1'>
-              <pre>{toolCallResponse}</pre>
-            </Collapse.Panel>
-          </Collapse>
-        )}
       </div>
     );
   },

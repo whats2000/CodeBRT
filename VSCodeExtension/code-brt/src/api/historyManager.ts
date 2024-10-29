@@ -216,6 +216,7 @@ export class HistoryManager implements IHistoryManager {
       modelServiceType,
       modelName,
       toolCalls,
+      toolResponses,
     } = entry;
     const newID = uuidV4();
     const newEntry: ConversationEntry = {
@@ -225,6 +226,7 @@ export class HistoryManager implements IHistoryManager {
       images: images,
       modelName: modelName,
       toolCalls: toolCalls,
+      toolResponses: toolResponses,
       parent: parentID,
       children: [],
     };

@@ -24,7 +24,7 @@ export type ToolCallEntry = {
  */
 export type ToolCallResponse = {
   id: string;
-  toolCallId: string;
+  toolCallName: string;
   result: Record<string, any> | string;
   status: 'success' | 'error';
   create_time: number;

@@ -7,7 +7,7 @@ import axios from 'axios';
 import * as cheerio from 'cheerio';
 
 import type { ToolServicesApi } from './types';
-import { extractTextFromWebpage } from './utils';
+import { convertHtmlToMarkdown } from './utils';
 
 const postProcessResults = (
   results: { title: string; url: string; snippet: string }[],
@@ -18,11 +18,11 @@ const postProcessResults = (
   }
 
   return (
-    '#####\nWeb Search Results is at below, please answer and provide reference links:\n\n' +
+    'Web Search Results is at below, please answer and provide reference links:\n\n' +
     results
       .map(
         (result) =>
-          `**Title**:\n${result.title}\n**URL**:\n${result.url}\n**Snippet**:\n${result.snippet}\n`,
+          `# Title\n${result.title}\n## Source URL:\n${result.url}\n##Snippet:\n${result.snippet}\n`,
       )
       .join('\n')
   );
@@ -32,7 +32,7 @@ export const webSearchTool: ToolServicesApi['webSearch'] = async ({
   query,
   numResults = 4,
   maxCharsPerPage = 6000,
-  format = 'text',
+  format = 'json',
   updateStatus,
 }) => {
   const term = query;
@@ -70,7 +70,7 @@ export const webSearchTool: ToolServicesApi['webSearch'] = async ({
       }
       try {
         const webpage = await session.get(link, { timeout: 5000 });
-        const visibleText = extractTextFromWebpage(webpage.data);
+        const visibleText = convertHtmlToMarkdown(webpage.data);
         const truncatedText =
           visibleText.length > maxCharsPerPage
             ? visibleText.substring(0, maxCharsPerPage)

@@ -10,7 +10,7 @@ import { getToolSchema, getToolSchemaWithoutWorkspace } from '../utils';
 import { webSearchTool } from '../webSearchTool';
 import { urlFetcherTool } from '../urlFetcher';
 import vscode from 'vscode';
-import { ToolCallEntry } from '../../../types';
+import { ToolCallEntry, ToolCallResponse } from '../../../types';
 
 export class ToolServiceProvider {
   private static readonly toolServices: {
@@ -68,12 +68,12 @@ export class ToolServiceProvider {
       return toolSchema[toolName as NonWorkspaceToolType];
     }
 
-    // For WorkspaceToolType we need to check if the tool exists in the agentTools
+    // For WorkspaceToolType, we need to check if the tool exists in the agentTools
     if (toolSchema.agentTools && toolName in toolSchema.agentTools) {
       return toolSchema.agentTools[toolName as WorkspaceToolType];
     }
 
-    // Otherwise the schema does not exist
+    // Otherwise, the schema doesn't exist
     return undefined;
   }
 
@@ -173,18 +173,38 @@ export class ToolServiceProvider {
   public static async executeToolCall(
     ToolCallEntry: ToolCallEntry,
     updateStatus: (status: string) => void,
-  ): Promise<string> {
+  ): Promise<ToolCallResponse> {
     try {
       const tool = this.getTool(ToolCallEntry.toolName);
 
       if (!tool) {
-        return 'The tool does not exist';
+        return {
+          id: ToolCallEntry.id,
+          toolCallName: ToolCallEntry.toolName,
+          result: 'The tool does not exist',
+          status: 'error',
+          create_time: Date.now(),
+        };
       }
 
       const args = { ...ToolCallEntry.parameters, updateStatus };
-      return tool(args as any);
+      const result = await tool(args as any);
+      return {
+        id: ToolCallEntry.id,
+        toolCallName: ToolCallEntry.toolName,
+        result: result,
+        status: 'success',
+        create_time: Date.now(),
+      };
     } catch (error) {
-      return 'There was an error executing the tool, please report this issue';
+      return {
+        id: ToolCallEntry.id,
+        toolCallName: ToolCallEntry.toolName,
+        result:
+          'There was an error executing the tool, please report this issue',
+        status: 'error',
+        create_time: Date.now(),
+      };
     }
   }
 }

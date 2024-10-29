@@ -263,11 +263,7 @@ export const activate = async (ctx: vscode.ExtensionContext) => {
         extensionId,
       );
     },
-    approveToolCall: async (entry) => {
-      const toolCall = entry.toolCalls?.[0];
-      if (!toolCall) {
-        return 'No tool call found';
-      }
+    approveToolCall: async (toolCall) => {
       return await ToolServiceProvider.executeToolCall(toolCall, (status) => {
         triggerEvent('updateStatus', status);
       });

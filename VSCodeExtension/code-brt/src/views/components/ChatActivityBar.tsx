@@ -5,7 +5,8 @@ import { ConfigProvider, FloatButton } from 'antd';
 import { ControlOutlined, LoadingOutlined } from '@ant-design/icons';
 import { useSelector, useDispatch } from 'react-redux';
 
-import { AppDispatch, RootState } from '../redux';
+import type { AddConversationEntryParams } from '../../types';
+import type { AppDispatch, RootState } from '../redux';
 import { UPLOADED_FILES_KEY } from '../../constants';
 import {
   addEntry,
@@ -167,8 +168,7 @@ export const ChatActivityBar = () => {
       role: 'user',
       message,
       images: files,
-      modelServiceType: activeModelService,
-    });
+    } as AddConversationEntryParams);
 
     dispatch(addEntry(userEntry));
     dispatch(addTempAIResponseEntry({ parentId: userEntry.id }));
@@ -198,7 +198,7 @@ export const ChatActivityBar = () => {
           toolCalls: responseWithAction.toolCall
             ? [responseWithAction.toolCall]
             : undefined,
-        });
+        } as AddConversationEntryParams);
 
         dispatch(replaceTempEntry(aiEntry));
 

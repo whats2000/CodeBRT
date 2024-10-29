@@ -131,15 +131,32 @@ export const TopToolBar: React.FC<MessagesTopToolBarProps> = ({
     }
   };
 
+  let displayRole = '';
+  switch (entry.role) {
+    case 'user':
+      displayRole = 'You';
+      break;
+    case 'AI':
+      displayRole = entry.modelName
+        ? entry.modelName.charAt(0).toUpperCase() + entry.modelName.slice(1)
+        : activeModelService.charAt(0).toUpperCase() +
+          activeModelService.slice(1);
+      break;
+    case 'tool':
+      displayRole = entry.toolResponses?.[0].toolCallName
+        ? entry.toolResponses[0].toolCallName.charAt(0).toUpperCase() +
+          entry.toolResponses[0].toolCallName.slice(1)
+        : 'Tool';
+      break;
+    default:
+      displayRole = entry.role;
+      break;
+  }
+
   return (
     <Flex align={'center'} justify={'space-between'}>
       <RespondCharacter $user={entry.role} theme={token}>
-        {entry.role !== 'AI'
-          ? 'You'
-          : entry.modelName
-            ? entry.modelName.charAt(0).toUpperCase() + entry.modelName.slice(1)
-            : activeModelService.charAt(0).toUpperCase() +
-              activeModelService.slice(1)}
+        {displayRole}
       </RespondCharacter>
       <Flex gap={1} wrap={true} justify={'flex-end'}>
         {parent && siblingCount > 1 && (
