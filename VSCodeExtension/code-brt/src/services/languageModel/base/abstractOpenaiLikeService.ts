@@ -126,6 +126,7 @@ export abstract class AbstractOpenaiLikeService extends AbstractLanguageModelSer
     responseText: string,
     streamResponse: StreamCompletionOpenaiLike,
     sendStreamResponse: (text: string) => void,
+    updateStatus?: (status: string) => void,
   ): Promise<{
     responseText: string;
     responseToolCall?: ChatCompletionMessageToolCallOpenaiLike;
@@ -147,6 +148,7 @@ export abstract class AbstractOpenaiLikeService extends AbstractLanguageModelSer
       }
 
       if (!chunk.choices[0]?.delta.tool_calls) {
+        updateStatus && updateStatus(`[processing] I'm creating an action...`);
         const partText = chunk.choices[0]?.delta?.content || '';
         sendStreamResponse(partText);
         responseText += partText;
@@ -245,6 +247,7 @@ export abstract class AbstractOpenaiLikeService extends AbstractLanguageModelSer
     disableTools: boolean | undefined,
     generationConfig: Partial<ChatCompletionCreateParamsBaseOpenaiLike>,
     sendStreamResponse: ((message: string) => void) | undefined,
+    updateStatus?: (status: string) => void,
   ): Promise<ResponseWithAction> {
     const MAX_RETRIES = 5;
     let retryCount = 0;
@@ -272,6 +275,7 @@ export abstract class AbstractOpenaiLikeService extends AbstractLanguageModelSer
           responseText,
           streamResponse,
           sendStreamResponse,
+          updateStatus,
         );
 
         responseText = responseObject.responseText;

@@ -205,6 +205,7 @@ export class CohereService extends AbstractLanguageModelService {
       images,
       currentEntryID,
       sendStreamResponse,
+      updateStatus,
       selectedModelName,
       disableTools,
     } = options;
@@ -242,6 +243,7 @@ export class CohereService extends AbstractLanguageModelService {
     let responseText = '';
     let responseToolCall: ToolCall | undefined = undefined;
     let toolResults: ToolResult[] = [];
+    updateStatus && updateStatus('');
 
     try {
       while (retryCount < MAX_RETRIES) {
@@ -275,6 +277,8 @@ export class CohereService extends AbstractLanguageModelService {
               sendStreamResponse(partText);
               responseText += partText;
             } else if (item.eventType === 'tool-calls-generation') {
+              updateStatus &&
+                updateStatus(`[processing] I'm creating an action...`);
               responseToolCall = item.toolCalls?.[0];
               break;
             }
@@ -331,6 +335,7 @@ export class CohereService extends AbstractLanguageModelService {
       return this.handleGetResponseError(error, 'cohere');
     } finally {
       this.stopStreamFlag = false;
+      updateStatus && updateStatus('');
     }
   }
 

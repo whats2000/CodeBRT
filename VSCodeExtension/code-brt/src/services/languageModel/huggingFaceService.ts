@@ -217,6 +217,7 @@ export class HuggingFaceService extends AbstractLanguageModelService {
       images,
       currentEntryID,
       sendStreamResponse,
+      updateStatus,
       selectedModelName,
       disableTools,
     } = options;
@@ -250,6 +251,7 @@ export class HuggingFaceService extends AbstractLanguageModelService {
     const MAX_RETRIES = 5;
     let retryCount = 0;
     let responseText = '';
+    updateStatus && updateStatus('');
     try {
       while (retryCount < MAX_RETRIES) {
         if (!sendStreamResponse) {
@@ -300,6 +302,8 @@ export class HuggingFaceService extends AbstractLanguageModelService {
             }
 
             // Collect tool calls delta from the stream response delta
+            updateStatus &&
+              updateStatus(`[processing] I'm creating an action...`);
             completeToolCallsString +=
               chunk.choices[0]?.delta.tool_calls.function.arguments;
           }
@@ -355,6 +359,7 @@ export class HuggingFaceService extends AbstractLanguageModelService {
       return this.handleGetResponseError(error, 'huggingFace');
     } finally {
       this.stopStreamFlag = false;
+      updateStatus && updateStatus('');
     }
   }
 

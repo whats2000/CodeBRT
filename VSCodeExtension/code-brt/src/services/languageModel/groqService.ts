@@ -106,6 +106,7 @@ export class GroqService extends AbstractOpenaiLikeService {
       images,
       currentEntryID,
       sendStreamResponse,
+      updateStatus,
       selectedModelName,
       disableTools,
     } = options;
@@ -132,6 +133,7 @@ export class GroqService extends AbstractOpenaiLikeService {
       });
     }
 
+    updateStatus && updateStatus('');
     try {
       return await this.getResponseWithRetry(
         conversationHistory,
@@ -139,11 +141,13 @@ export class GroqService extends AbstractOpenaiLikeService {
         disableTools,
         generationConfig,
         sendStreamResponse,
+        updateStatus,
       );
     } catch (error) {
       return this.handleGetResponseError(error, 'groq');
     } finally {
       this.stopStreamFlag = false;
+      updateStatus && updateStatus('');
     }
   }
 

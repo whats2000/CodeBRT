@@ -320,6 +320,7 @@ export class AnthropicService extends AbstractLanguageModelService {
       images,
       currentEntryID,
       sendStreamResponse,
+      updateStatus,
       selectedModelName,
       disableTools,
     } = options;
@@ -342,6 +343,7 @@ export class AnthropicService extends AbstractLanguageModelService {
     let retryCount = 0;
     let responseText = '';
     let response;
+    updateStatus && updateStatus('');
 
     try {
       while (retryCount < MAX_RETRIES) {
@@ -366,6 +368,10 @@ export class AnthropicService extends AbstractLanguageModelService {
             .stream({
               ...requestPayload,
               stream: true,
+            })
+            .on('inputJson', () => {
+              updateStatus &&
+                updateStatus(`[processing] I'm creating an action...`);
             })
             .on('text', (partText) => {
               sendStreamResponse(partText);
@@ -420,6 +426,8 @@ export class AnthropicService extends AbstractLanguageModelService {
       return { textResponse: responseText };
     } catch (error) {
       return this.handleGetResponseError(error, 'anthropic');
+    } finally {
+      updateStatus && updateStatus('');
     }
   }
 
