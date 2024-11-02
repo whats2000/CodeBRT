@@ -46,10 +46,6 @@ export const ToolResponseContainer: React.FC<ToolResponseContainerProps> = ({
     tempIdRef.current = conversationHistory.tempId;
   }, [conversationHistory.tempId]);
 
-  const onRetry = (_entry: ConversationEntry) => {
-    console.log('Retrying tool call');
-  };
-
   const onContinue = async (entry: ConversationEntry) => {
     if (activeModelService === 'loading...') {
       return;
@@ -98,7 +94,7 @@ export const ToolResponseContainer: React.FC<ToolResponseContainerProps> = ({
   };
 
   return (
-    <>
+    <div style={{ margin: '10px 0' }}>
       {entry.toolResponses?.map((response) => (
         <Collapse defaultActiveKey={[]}>
           <Panel
@@ -136,35 +132,42 @@ export const ToolResponseContainer: React.FC<ToolResponseContainerProps> = ({
           </Panel>
         </Collapse>
       ))}
-      <ToolStatusBlock status={toolStatus} />
 
-      <Space wrap={true}>
-        {/* Add Confirm and Rollback buttons */}
-        {showActionButtons && entry.toolResponses?.[0].status === 'success' && (
-          <>
-            <Button
-              type='primary'
-              ghost={true}
-              onClick={() => onContinue(entry)}
-            >
-              Continue
-            </Button>
-            <Button type='default' danger onClick={() => onRollBack(entry)}>
-              Rollback
-            </Button>
-          </>
-        )}
-        <Button type='dashed' onClick={() => onRetry(entry)}>
-          Retry
-        </Button>
-        {showActionButtons && entry.toolResponses?.[0].status === 'error' && (
-          <>
-            <Button type='default' danger onClick={() => onRollBack(entry)}>
-              Cancel
-            </Button>
-          </>
-        )}
-      </Space>
-    </>
+      {!entry.toolResponses && <ToolStatusBlock status={toolStatus} />}
+
+      {showActionButtons && (
+        <>
+          {/* Add Confirm and Rollback buttons */}
+          {entry.toolResponses?.[0].status === 'success' && (
+            <Space wrap={true} style={{ marginTop: 10 }}>
+              <Button
+                type='primary'
+                ghost={true}
+                onClick={() => onContinue(entry)}
+              >
+                Continue
+              </Button>
+              <Button type='default' danger onClick={() => onRollBack(entry)}>
+                Rollback
+              </Button>
+            </Space>
+          )}
+          {entry.toolResponses?.[0].status === 'error' && (
+            <Space wrap={true} style={{ marginTop: 10 }}>
+              <Button
+                type='primary'
+                ghost={true}
+                onClick={() => onContinue(entry)}
+              >
+                Fix it
+              </Button>
+              <Button type='default' danger onClick={() => onRollBack(entry)}>
+                Cancel
+              </Button>
+            </Space>
+          )}
+        </>
+      )}
+    </div>
   );
 };

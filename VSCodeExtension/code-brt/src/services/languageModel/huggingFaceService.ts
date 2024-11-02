@@ -12,6 +12,7 @@ import type {
   GetResponseOptions,
   NonWorkspaceToolType,
   ResponseWithAction,
+  ToolCallResponse,
 } from '../../types';
 import { AbstractLanguageModelService } from './base';
 import { HistoryManager, SettingsManager } from '../../api';
@@ -107,15 +108,48 @@ export class HuggingFaceService extends AbstractLanguageModelService {
     entries: { [key: string]: ConversationEntry },
     query: string,
     historyManager: HistoryManager,
+    toolCallResponse?: ToolCallResponse,
   ): ChatCompletionInputMessage[] {
     const result: ChatCompletionInputMessage[] = [];
     let currentEntry = entries[historyManager.getCurrentHistory().current];
 
     while (currentEntry) {
-      result.unshift({
-        role: currentEntry.role === 'user' ? 'user' : 'assistant',
-        content: currentEntry.message,
-      });
+      switch (currentEntry.role) {
+        case 'AI':
+          const toolCall = currentEntry.toolCalls?.[0];
+          result.unshift({
+            role: 'assistant',
+            content: toolCall
+              ? JSON.stringify({
+                  id: toolCall.id,
+                  function: {
+                    name: toolCall.toolName,
+                    arguments: toolCall.parameters,
+                  },
+                })
+              : currentEntry.message,
+          });
+          break;
+        case 'user':
+          result.unshift({
+            role: 'user',
+            content: currentEntry.message,
+          });
+          break;
+        case 'tool':
+          const toolCallResponse = currentEntry.toolResponses?.[0];
+          if (!toolCallResponse) {
+            throw new Error('Tool call response not found');
+          }
+          result.unshift({
+            role: 'user',
+            content: JSON.stringify({
+              error: toolCallResponse.status === 'error',
+              result: toolCallResponse.result,
+            }),
+          });
+          break;
+      }
 
       if (currentEntry.parent) {
         currentEntry = entries[currentEntry.parent];
@@ -128,7 +162,12 @@ export class HuggingFaceService extends AbstractLanguageModelService {
     if (result[result.length - 1]?.role !== 'user') {
       result.push({
         role: 'user',
-        content: query,
+        content: toolCallResponse
+          ? JSON.stringify({
+              error: toolCallResponse.status === 'error',
+              result: toolCallResponse.result,
+            })
+          : query,
       });
     }
 
@@ -220,6 +259,7 @@ export class HuggingFaceService extends AbstractLanguageModelService {
       updateStatus,
       selectedModelName,
       disableTools,
+      toolCallResponse,
     } = options;
 
     if (images && images.length > 0) {
@@ -236,6 +276,7 @@ export class HuggingFaceService extends AbstractLanguageModelService {
       historyManager.getHistoryBeforeEntry(currentEntryID).entries,
       query,
       historyManager,
+      toolCallResponse,
     );
 
     const { systemPrompt, generationConfig } =

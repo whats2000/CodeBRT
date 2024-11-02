@@ -9,6 +9,7 @@ import type {
   GetResponseOptions,
   NonWorkspaceToolType,
   ResponseWithAction,
+  ToolCallResponse,
 } from '../../types';
 import { MODEL_SERVICE_CONSTANTS } from '../../constants';
 import { ParseToolCallUtils } from './utils';
@@ -108,15 +109,51 @@ export class OllamaService extends AbstractLanguageModelService {
     query: string,
     historyManager: HistoryManager,
     images?: string[],
+    toolCallResponse?: ToolCallResponse,
   ): Promise<Message[]> {
     const result: Message[] = [];
     let currentEntry = entries[historyManager.getCurrentHistory().current];
 
     while (currentEntry) {
-      result.unshift({
-        role: currentEntry.role === 'user' ? 'user' : 'assistant',
-        content: currentEntry.message,
-      });
+      switch (currentEntry.role) {
+        case 'AI':
+          const newEntry: Message = {
+            role: 'assistant',
+            content: currentEntry.message,
+          };
+          const toolCall = currentEntry.toolCalls?.[0];
+          if (toolCall) {
+            newEntry.tool_calls = [
+              {
+                function: {
+                  name: toolCall.toolName,
+                  arguments: toolCall.parameters,
+                },
+              },
+            ];
+          }
+          result.unshift(newEntry);
+          break;
+        case 'user':
+          result.unshift({
+            role: currentEntry.role,
+            content: currentEntry.message,
+          });
+          break;
+        case 'tool':
+          const toolCallResponse = currentEntry.toolResponses?.[0];
+          if (!toolCallResponse) {
+            throw new Error('Tool call response not found');
+          }
+          result.unshift({
+            role: 'user',
+            content: JSON.stringify({
+              error: toolCallResponse.status === 'error',
+              response: toolCallResponse.result,
+            }),
+          });
+          break;
+      }
 
       if (currentEntry.parent) {
         currentEntry = entries[currentEntry.parent];
@@ -129,7 +166,12 @@ export class OllamaService extends AbstractLanguageModelService {
     if (result[result.length - 1]?.role !== 'user') {
       result.push({
         role: 'user',
-        content: query,
+        content: toolCallResponse
+          ? JSON.stringify({
+              error: toolCallResponse.status === 'error',
+              response: toolCallResponse.result,
+            })
+          : query,
       });
     }
 
@@ -203,6 +245,7 @@ export class OllamaService extends AbstractLanguageModelService {
     currentEntryID?: string,
     images?: string[],
     selectedModelName?: string,
+    toolCallResponse?: ToolCallResponse,
   ): Promise<{
     client: Ollama;
     conversationHistory: Message[];
@@ -217,6 +260,7 @@ export class OllamaService extends AbstractLanguageModelService {
       query,
       historyManager,
       images,
+      toolCallResponse,
     );
 
     let model = selectedModelName ?? this.currentModel;
@@ -285,6 +329,7 @@ export class OllamaService extends AbstractLanguageModelService {
       sendStreamResponse,
       selectedModelName,
       disableTools,
+      toolCallResponse,
     } = options;
     const { client, conversationHistory, model } = await this.initModel(
       query,
@@ -292,6 +337,7 @@ export class OllamaService extends AbstractLanguageModelService {
       currentEntryID,
       images,
       selectedModelName,
+      toolCallResponse,
     );
 
     if (model === '') {

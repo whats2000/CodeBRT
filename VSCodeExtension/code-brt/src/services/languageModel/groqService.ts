@@ -109,6 +109,7 @@ export class GroqService extends AbstractOpenaiLikeService {
       updateStatus,
       selectedModelName,
       disableTools,
+      toolCallResponse,
     } = options;
 
     if (images && images.length > 0) {
@@ -121,6 +122,8 @@ export class GroqService extends AbstractOpenaiLikeService {
       historyManager.getHistoryBeforeEntry(currentEntryID).entries,
       query,
       historyManager,
+      undefined,
+      toolCallResponse,
     );
 
     const { systemPrompt, generationConfig } =

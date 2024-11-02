@@ -3,6 +3,7 @@ import fs from 'fs';
 import {
   Content,
   FunctionCall,
+  FunctionResponsePart,
   GenerationConfig,
   InlineDataPart,
   Part,
@@ -177,15 +178,61 @@ export class GeminiService extends AbstractLanguageModelService {
       [key: string]: ConversationEntry;
     },
     historyManager: HistoryManager,
-  ): Content[] {
+  ): {
+    conversationHistory: Content[];
+    functionResponses: FunctionResponsePart[];
+  } {
     let result: Content[] = [];
     let currentEntry = entries[historyManager.getCurrentHistory().current];
 
     while (currentEntry) {
-      result.unshift({
-        role: currentEntry.role === 'AI' ? 'model' : 'user',
-        parts: [{ text: currentEntry.message }],
-      });
+      switch (currentEntry.role) {
+        case 'AI':
+          const newEntry: Content = {
+            role: 'model',
+            parts: [
+              {
+                text: currentEntry.message,
+              },
+            ],
+          };
+          const toolCall = currentEntry.toolCalls?.[0];
+          if (toolCall) {
+            newEntry.parts.push({
+              functionCall: {
+                name: toolCall.toolName,
+                args: toolCall.parameters,
+              },
+            });
+          }
+          result.unshift(newEntry);
+          break;
+        case 'user':
+          result.unshift({
+            role: 'user',
+            parts: [{ text: currentEntry.message }],
+          });
+          break;
+        case 'tool':
+          const toolCallResponse = currentEntry.toolResponses?.[0];
+          if (!toolCallResponse) {
+            throw new Error('Tool call response not found');
+          }
+          result.unshift({
+            role: 'function',
+            parts: [
+              {
+                functionResponse: {
+                  name: toolCallResponse.toolCallName,
+                  response: {
+                    error: toolCallResponse.status === 'error',
+                    result: toolCallResponse.result,
+                  },
+                },
+              },
+            ],
+          });
+      }
 
       if (currentEntry.parent) {
         currentEntry = entries[currentEntry.parent];
@@ -198,8 +245,21 @@ export class GeminiService extends AbstractLanguageModelService {
     if (result.length > 0 && result[result.length - 1].role === 'user') {
       result.pop();
     }
+    if (result.length > 0 && result[result.length - 1].role === 'function') {
+      const lastToolResult = result.pop() as {
+        role: 'function';
+        parts: FunctionResponsePart[];
+      };
+      return {
+        conversationHistory: result,
+        functionResponses: lastToolResult.parts,
+      };
+    }
 
-    return result;
+    return {
+      conversationHistory: result,
+      functionResponses: [],
+    };
   }
 
   private createQueryParts(query: string, images?: string[]): Part[] {
@@ -309,12 +369,17 @@ export class GeminiService extends AbstractLanguageModelService {
       model: selectedModelName ?? this.currentModel,
     });
 
-    const conversationHistory = this.conversationHistoryToContent(
-      historyManager.getHistoryBeforeEntry(currentEntryID).entries,
-      historyManager,
-    );
+    const { conversationHistory, functionResponses } =
+      this.conversationHistoryToContent(
+        historyManager.getHistoryBeforeEntry(currentEntryID).entries,
+        historyManager,
+      );
 
     let queryParts = this.createQueryParts(query, images);
+
+    if (functionResponses.length > 0) {
+      queryParts = functionResponses;
+    }
 
     const { systemPrompt, generationConfig } =
       this.getAdvanceSettings(historyManager);

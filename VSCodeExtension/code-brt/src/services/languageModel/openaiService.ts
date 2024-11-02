@@ -115,12 +115,14 @@ export class OpenAIService extends AbstractOpenaiLikeService {
       updateStatus,
       selectedModelName,
       disableTools,
+      toolCallResponse,
     } = options;
     const conversationHistory = await this.conversationHistoryToContent(
       historyManager.getHistoryBeforeEntry(currentEntryID).entries,
       query,
       historyManager,
       images,
+      toolCallResponse,
     );
 
     const { systemPrompt, generationConfig } =

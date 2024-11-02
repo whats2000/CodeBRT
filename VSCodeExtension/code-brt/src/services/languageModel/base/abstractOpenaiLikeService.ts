@@ -16,6 +16,7 @@ import {
   ResponseWithAction,
   StreamCompletionOpenaiLike,
   ToolCallEntry,
+  ToolCallResponse,
 } from '../../../types';
 import { HistoryManager } from '../../../api';
 import { AbstractLanguageModelService } from './abstractLanguageModelService';
@@ -189,23 +190,54 @@ export abstract class AbstractOpenaiLikeService extends AbstractLanguageModelSer
     query: string,
     historyManager: HistoryManager,
     images?: string[],
+    toolCallResponse?: ToolCallResponse,
   ): Promise<ChatCompletionMessageParamOpenaiLike[]> {
     const result: ChatCompletionMessageParamOpenaiLike[] = [];
     let currentEntry = entries[historyManager.getCurrentHistory().current];
 
     while (currentEntry) {
-      const messageParam: ChatCompletionMessageParamOpenaiLike =
-        currentEntry.role === 'user'
-          ? {
-              role: 'user',
-              content: [{ type: 'text', text: currentEntry.message }],
-            }
-          : {
-              role: 'assistant',
-              content: currentEntry.message,
-            };
-
-      result.unshift(messageParam);
+      switch (currentEntry.role) {
+        case 'AI':
+          const newEntry: ChatCompletionMessageParamOpenaiLike = {
+            role: 'assistant',
+            content: currentEntry.message,
+          };
+          const toolCall = currentEntry.toolCalls?.[0];
+          if (toolCall) {
+            newEntry.tool_calls = [
+              {
+                id: toolCall.id,
+                type: 'function',
+                function: {
+                  name: toolCall.toolName,
+                  arguments: JSON.stringify(toolCall.parameters),
+                },
+              },
+            ];
+          }
+          result.unshift(newEntry);
+          break;
+        case 'user':
+          result.unshift({
+            role: 'user',
+            content: [{ type: 'text', text: currentEntry.message }],
+          });
+          break;
+        case 'tool':
+          const toolCallResponse = currentEntry.toolResponses?.[0];
+          if (!toolCallResponse) {
+            throw new Error('Tool call response not found');
+          }
+          result.unshift({
+            role: 'tool',
+            tool_call_id: toolCallResponse.id,
+            content: JSON.stringify({
+              error: false,
+              result: toolCallResponse.result,
+            }),
+          });
+          break;
+      }
 
       if (currentEntry.parent) {
         currentEntry = entries[currentEntry.parent];
@@ -215,14 +247,28 @@ export abstract class AbstractOpenaiLikeService extends AbstractLanguageModelSer
     }
 
     // OpenAI like APIs require the query message at the end of the history
-    if (result[result.length - 1]?.role !== 'user') {
-      result.push({
-        role: 'user',
-        content: [{ type: 'text', text: query }],
-      });
+    if (
+      result[result.length - 1]?.role !== 'user' &&
+      result[result.length - 1]?.role !== 'tool'
+    ) {
+      if (toolCallResponse) {
+        result.push({
+          role: 'tool',
+          tool_call_id: toolCallResponse.id,
+          content: JSON.stringify({
+            error: false,
+            result: toolCallResponse.result,
+          }),
+        });
+      } else {
+        result.push({
+          role: 'user',
+          content: [{ type: 'text', text: query }],
+        });
+      }
     }
 
-    if (images && images.length > 0) {
+    if (images && images.length > 0 && !toolCallResponse) {
       const imageParts = images
         .map((image) => {
           const mimeType = `image/${path.extname(image).slice(1)}`;

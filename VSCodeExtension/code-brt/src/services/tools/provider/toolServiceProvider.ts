@@ -189,6 +189,17 @@ export class ToolServiceProvider {
 
       const args = { ...ToolCallEntry.parameters, updateStatus };
       const result = await tool(args as any);
+
+      if (result === '[]' || result === '') {
+        return {
+          id: ToolCallEntry.id,
+          toolCallName: ToolCallEntry.toolName,
+          result: 'The result is empty, maybe try a different parameter',
+          status: 'error',
+          create_time: Date.now(),
+        };
+      }
+
       return {
         id: ToolCallEntry.id,
         toolCallName: ToolCallEntry.toolName,
