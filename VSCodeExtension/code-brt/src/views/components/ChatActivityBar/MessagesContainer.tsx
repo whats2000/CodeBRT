@@ -280,6 +280,7 @@ export const MessagesContainer = React.memo<MessagesContainerProps>(
           handleConvertTextToVoice={handleConvertTextToVoice}
           floatButtonsXPosition={floatButtonsXPosition}
           showFloatButtons={showFloatButtons}
+          tempIdRef={tempIdRef}
         />
       );
     };

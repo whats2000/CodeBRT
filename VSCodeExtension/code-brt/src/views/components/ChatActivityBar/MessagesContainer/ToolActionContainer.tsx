@@ -19,10 +19,12 @@ import type {
   NonWorkspaceToolType,
   AddConversationEntryParams,
 } from '../../../../types';
+import type { AppDispatch } from '../../../redux';
 import { WebviewContext } from '../../../WebviewContext';
 import { useDispatch } from 'react-redux';
 import {
   addTempResponseEntry,
+  processMessage,
   replaceTempEntry,
 } from '../../../redux/slices/conversationSlice';
 
@@ -45,13 +47,14 @@ const MAP_TOOL_NAME_TO_ICON: {
 
 type ToolActionContainerProps = {
   entry: ConversationEntry;
+  tempIdRef: React.MutableRefObject<string | null>;
   showActionButtons?: boolean;
 };
 
 export const ToolActionContainer = React.memo<ToolActionContainerProps>(
-  ({ entry, showActionButtons }) => {
+  ({ entry, tempIdRef, showActionButtons }) => {
     const { callApi } = useContext(WebviewContext);
-    const dispatch = useDispatch();
+    const dispatch = useDispatch<AppDispatch>();
 
     const [isToolCallPending, setIsToolCallPending] = React.useState(false);
 
@@ -75,7 +78,15 @@ export const ToolActionContainer = React.memo<ToolActionContainerProps>(
       dispatch(replaceTempEntry(newToolCallResponseEntry));
       setIsToolCallPending(false);
     };
-    const onReject = (_entry: ConversationEntry) => {};
+    const onReject = (entry: ConversationEntry) => {
+      dispatch(
+        processMessage({
+          message: `I reject the ${entry.toolCalls?.[0].toolName} tool call that was made`,
+          parentId: entry.id,
+          tempIdRef,
+        }),
+      );
+    };
 
     return (
       <div style={{ margin: '10px 0' }}>

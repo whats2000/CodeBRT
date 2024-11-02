@@ -68,6 +68,7 @@ type MessageItemProps = {
   handleConvertTextToVoice: (text: string) => void;
   floatButtonsXPosition: number;
   showFloatButtons: boolean;
+  tempIdRef: React.MutableRefObject<string | null>;
 };
 
 export const MessageItem = React.memo<MessageItemProps>(
@@ -89,6 +90,7 @@ export const MessageItem = React.memo<MessageItemProps>(
     handleConvertTextToVoice,
     floatButtonsXPosition,
     showFloatButtons,
+    tempIdRef,
   }) => {
     const token = theme.useToken();
     const entry = conversationHistoryEntries[index];
@@ -169,6 +171,7 @@ export const MessageItem = React.memo<MessageItemProps>(
           <ImageContainer entry={entry} />
           <ToolActionContainer
             entry={entry}
+            tempIdRef={tempIdRef}
             showActionButtons={conversationHistory.current === entry.id}
           />
         </div>
