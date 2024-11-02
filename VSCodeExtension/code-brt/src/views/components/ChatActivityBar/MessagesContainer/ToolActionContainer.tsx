@@ -1,5 +1,13 @@
-import React, { useContext } from 'react';
-import { Collapse, Descriptions, Space, Button, Typography } from 'antd';
+import React, { useContext, useState } from 'react';
+import {
+  Collapse,
+  Descriptions,
+  Space,
+  Button,
+  Typography,
+  Dropdown,
+  MenuProps,
+} from 'antd';
 import {
   PlayCircleOutlined,
   FileOutlined,
@@ -45,6 +53,14 @@ const MAP_TOOL_NAME_TO_ICON: {
   urlFetcher: <LinkOutlined />,
 };
 
+const REJECTION_REASONS = [
+  'Incorrect parameters',
+  'Select wrong tool',
+  'Unnecessary tool usage',
+  'Security concern',
+  'Other',
+];
+
 type ToolActionContainerProps = {
   entry: ConversationEntry;
   tempIdRef: React.MutableRefObject<string | null>;
@@ -56,7 +72,13 @@ export const ToolActionContainer = React.memo<ToolActionContainerProps>(
     const { callApi } = useContext(WebviewContext);
     const dispatch = useDispatch<AppDispatch>();
 
-    const [isToolCallPending, setIsToolCallPending] = React.useState(false);
+    const [isToolCallPending, setIsToolCallPending] = useState(false);
+
+    const shouldShowActionButtons =
+      showActionButtons &&
+      entry.toolCalls &&
+      entry.toolCalls?.[0].toolName !== 'askFollowUpQuestion' &&
+      entry.toolCalls?.[0].toolName !== 'attemptCompletion';
 
     const onApprove = async (entry: ConversationEntry) => {
       const toolCall = entry.toolCalls?.[0];
@@ -78,15 +100,23 @@ export const ToolActionContainer = React.memo<ToolActionContainerProps>(
       dispatch(replaceTempEntry(newToolCallResponseEntry));
       setIsToolCallPending(false);
     };
-    const onReject = (entry: ConversationEntry) => {
+
+    const onReject = (reason: string, entry: ConversationEntry) => {
       dispatch(
         processMessage({
-          message: `I reject the ${entry.toolCalls?.[0].toolName} tool call that was made`,
+          message: `I reject the ${entry.toolCalls?.[0].toolName} tool call that was made. Reason: ${reason}`,
           parentId: entry.id,
           tempIdRef,
         }),
       );
     };
+
+    const rejectionMenu: Required<MenuProps>['items'][number][] =
+      REJECTION_REASONS.map((reason) => ({
+        key: reason,
+        label: reason,
+        onClick: () => onReject(reason, entry),
+      }));
 
     return (
       <div style={{ margin: '10px 0' }}>
@@ -108,11 +138,7 @@ export const ToolActionContainer = React.memo<ToolActionContainerProps>(
                         | WorkspaceToolType
                         | NonWorkspaceToolType
                     ] ?? <span>Unknown Tool</span>}
-                    <span
-                      style={{
-                        textOverflow: 'ellipsis',
-                      }}
-                    >
+                    <span style={{ textOverflow: 'ellipsis' }}>
                       {toolCall.toolName.charAt(0).toUpperCase() +
                         toolCall.toolName.slice(1)}
                     </span>
@@ -124,10 +150,7 @@ export const ToolActionContainer = React.memo<ToolActionContainerProps>(
                   {Object.entries(toolCall.parameters).map(([key, value]) => (
                     <Descriptions.Item key={key} label={key}>
                       <Typography.Paragraph
-                        ellipsis={{
-                          rows: 2,
-                          expandable: 'collapsible',
-                        }}
+                        ellipsis={{ rows: 2, expandable: true }}
                       >
                         {JSON.stringify(value)}
                       </Typography.Paragraph>
@@ -137,8 +160,8 @@ export const ToolActionContainer = React.memo<ToolActionContainerProps>(
               </Collapse.Panel>
             </Collapse>
 
-            {/* Add Approve and Reject buttons */}
-            {showActionButtons && (
+            {/* Approve and Reject buttons */}
+            {shouldShowActionButtons && (
               <Space wrap={true}>
                 <Button
                   type='primary'
@@ -148,9 +171,11 @@ export const ToolActionContainer = React.memo<ToolActionContainerProps>(
                 >
                   Approve
                 </Button>
-                <Button type='default' danger onClick={() => onReject(entry)}>
-                  Reject
-                </Button>
+                <Dropdown menu={{ items: rejectionMenu }} trigger={['hover']}>
+                  <Button type='default' danger>
+                    Reject
+                  </Button>
+                </Dropdown>
               </Space>
             )}
           </Space>

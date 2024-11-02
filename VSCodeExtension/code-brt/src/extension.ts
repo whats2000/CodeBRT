@@ -261,7 +261,6 @@ export const activate = async (ctx: vscode.ExtensionContext) => {
         triggerEvent('updateStatus', status);
       });
     },
-    rejectToolCallResponse: async (_entry) => {},
     continueWithToolCallResponse: async (_entry) => {},
   };
 

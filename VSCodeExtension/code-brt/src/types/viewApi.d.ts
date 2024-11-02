@@ -347,13 +347,6 @@ export type ViewApi = {
   approveToolCall: (toolCall: ToolCallEntry) => Promise<ToolCallResponse>;
 
   /**
-   * Reject the action made by the tool call.
-   * @param entry - The conversation entry to reject the tool call for.
-   * @param modelServiceType - The type of the model service to reject the tool call for.
-   */
-  rejectToolCallResponse: (entry: ConversationEntry) => Promise<void>;
-
-  /**
    * Continue with the action made by the tool call.
    * And let the model continue.
    * @param entry - The conversation entry to confirm the tool call for.
