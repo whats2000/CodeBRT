@@ -8,6 +8,7 @@ import type {
   ConversationEntryRole,
   ConversationHistory,
   GetLanguageModelResponseParams,
+  ToolCallEntry,
 } from '../../../types';
 import type { CallAPI } from '../../WebviewContext';
 import type { RootState } from '../store';
@@ -214,6 +215,97 @@ export const processMessage = createAsyncThunk<
       setTimeout(() => {
         dispatch(finishProcessing());
       }, 1000);
+    }
+  },
+);
+
+export const processToolCall = createAsyncThunk<
+  Promise<void>,
+  { toolCall: ToolCallEntry; entry: ConversationEntry },
+  {
+    state: RootState;
+    extra: {
+      callApi: CallAPI;
+    };
+  }
+>(
+  'conversation/processToolAction',
+  async ({ toolCall, entry }, { dispatch, getState, extra: { callApi } }) => {
+    if (getState().conversation.isProcessing) {
+      return;
+    }
+    dispatch(startProcessing());
+    dispatch(addTempResponseEntry({ parentId: entry.id, role: 'tool' }));
+    const toolCallResponse = await callApi('approveToolCall', toolCall);
+    const newToolCallResponseEntry = await callApi('addConversationEntry', {
+      parentID: entry.id,
+      role: 'tool',
+      message:
+        toolCallResponse.status === 'success'
+          ? 'The tool call was executed successfully'
+          : toolCallResponse,
+      toolResponses: [toolCallResponse],
+    } as AddConversationEntryParams);
+    dispatch(replaceTempEntry(newToolCallResponseEntry));
+    dispatch(finishProcessing());
+  },
+);
+
+export const processToolResponse = createAsyncThunk<
+  Promise<void>,
+  {
+    entry: ConversationEntry;
+    tempIdRef: React.MutableRefObject<string | null>;
+  },
+  {
+    state: RootState;
+    extra: {
+      callApi: CallAPI;
+    };
+  }
+>(
+  'conversation/processToolResponse',
+  async ({ entry, tempIdRef }, { dispatch, getState, extra: { callApi } }) => {
+    const { activeModelService, selectedModel } = getState().modelService;
+    if (activeModelService === 'loading...') {
+      return;
+    }
+
+    dispatch(startProcessing());
+    dispatch(addTempResponseEntry({ parentId: entry.id, role: 'AI' }));
+    try {
+      const responseWithAction = await callApi('getLanguageModelResponse', {
+        modelServiceType: activeModelService,
+        query: '',
+        useStream: true,
+        showStatus: true,
+        toolCallResponse: entry.toolResponses?.[0],
+      } as GetLanguageModelResponseParams);
+
+      if (!tempIdRef.current) {
+        return;
+      }
+
+      const aiEntry = await callApi('addConversationEntry', {
+        parentID: entry.id,
+        role: 'AI',
+        message: responseWithAction.textResponse,
+        modelServiceType: activeModelService,
+        modelName: selectedModel,
+        toolCalls: responseWithAction.toolCall
+          ? [responseWithAction.toolCall]
+          : undefined,
+      } as AddConversationEntryParams);
+
+      dispatch(replaceTempEntry(aiEntry));
+    } catch (error) {
+      callApi(
+        'alertMessage',
+        `Failed to get response: ${error}`,
+        'error',
+      ).catch(console.error);
+    } finally {
+      dispatch(finishProcessing());
     }
   },
 );

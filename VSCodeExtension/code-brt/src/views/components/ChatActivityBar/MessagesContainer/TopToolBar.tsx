@@ -67,6 +67,7 @@ export const TopToolBar: React.FC<MessagesTopToolBarProps> = ({
   const topCount = top.length;
   const topIndex = top.indexOf(conversationHistoryEntries[0]?.id);
 
+  const isTemp = entry.id.startsWith('temp-');
   const parent = entry.parent
     ? conversationHistory.entries[entry.parent]
     : null;
@@ -170,7 +171,9 @@ export const TopToolBar: React.FC<MessagesTopToolBarProps> = ({
                 <ArrowLeftOutlined />
               </Button>
               <Button type={'text'}>
-                {currentIndex}/{siblingCount}
+                {isTemp
+                  ? `${siblingCount + 1}/${siblingCount + 1}`
+                  : `${currentIndex}/${siblingCount}`}
               </Button>
               <Button
                 onClick={() => handleGoForward(entry, 'next')}

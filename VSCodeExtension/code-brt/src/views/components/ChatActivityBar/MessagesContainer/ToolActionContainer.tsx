@@ -1,4 +1,4 @@
-import React, { useContext, useState } from 'react';
+import React from 'react';
 import {
   Collapse,
   Descriptions,
@@ -25,15 +25,12 @@ import type {
   ConversationEntry,
   WorkspaceToolType,
   NonWorkspaceToolType,
-  AddConversationEntryParams,
 } from '../../../../types';
-import type { AppDispatch } from '../../../redux';
-import { WebviewContext } from '../../../WebviewContext';
-import { useDispatch } from 'react-redux';
+import type { AppDispatch, RootState } from '../../../redux';
+import { useDispatch, useSelector } from 'react-redux';
 import {
-  addTempResponseEntry,
   processMessage,
-  replaceTempEntry,
+  processToolCall,
 } from '../../../redux/slices/conversationSlice';
 
 // Mapping tool names to Antd icons
@@ -69,10 +66,11 @@ type ToolActionContainerProps = {
 
 export const ToolActionContainer = React.memo<ToolActionContainerProps>(
   ({ entry, tempIdRef, showActionButtons }) => {
-    const { callApi } = useContext(WebviewContext);
     const dispatch = useDispatch<AppDispatch>();
 
-    const [isToolCallPending, setIsToolCallPending] = useState(false);
+    const { isProcessing } = useSelector(
+      (state: RootState) => state.conversation,
+    );
 
     const shouldShowActionButtons =
       showActionButtons &&
@@ -82,23 +80,10 @@ export const ToolActionContainer = React.memo<ToolActionContainerProps>(
 
     const onApprove = async (entry: ConversationEntry) => {
       const toolCall = entry.toolCalls?.[0];
-      if (isToolCallPending || !toolCall) {
+      if (isProcessing || !toolCall) {
         return;
       }
-      setIsToolCallPending(true);
-      dispatch(addTempResponseEntry({ parentId: entry.id, role: 'tool' }));
-      const toolCallResponse = await callApi('approveToolCall', toolCall);
-      const newToolCallResponseEntry = await callApi('addConversationEntry', {
-        parentID: entry.id,
-        role: 'tool',
-        message:
-          toolCallResponse.status === 'success'
-            ? 'The tool call was executed successfully'
-            : toolCallResponse,
-        toolResponses: [toolCallResponse],
-      } as AddConversationEntryParams);
-      dispatch(replaceTempEntry(newToolCallResponseEntry));
-      setIsToolCallPending(false);
+      dispatch(processToolCall({ toolCall, entry }));
     };
 
     const onReject = (reason: string, entry: ConversationEntry) => {
@@ -167,7 +152,7 @@ export const ToolActionContainer = React.memo<ToolActionContainerProps>(
                   type='primary'
                   ghost={true}
                   onClick={() => onApprove(entry)}
-                  loading={isToolCallPending}
+                  loading={isProcessing}
                 >
                   Approve
                 </Button>

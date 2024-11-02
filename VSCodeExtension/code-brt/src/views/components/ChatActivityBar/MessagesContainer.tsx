@@ -10,6 +10,7 @@ import type { ConversationEntry } from '../../../types';
 import type { AppDispatch, RootState } from '../../redux';
 import {
   processMessage,
+  processToolResponse,
   updateEntryMessage,
 } from '../../redux/slices/conversationSlice';
 import { WebviewContext } from '../../WebviewContext';
@@ -206,8 +207,14 @@ export const MessagesContainer = React.memo<MessagesContainerProps>(
       if (role === 'user') {
         await handleEditUserMessageSave(entryId, editedMessage);
       } else if (role === 'tool') {
-        callApi('alertMessage', 'Cannot edit tool responses.', 'error').catch(
-          console.error,
+        const toolCallResult =
+          conversationHistory.entries[entryId].toolResponses?.[0];
+        if (!toolCallResult) return;
+        dispatch(
+          processToolResponse({
+            entry: conversationHistory.entries[entryId],
+            tempIdRef,
+          }),
         );
       } else {
         callApi('editLanguageModelConversationHistory', entryId, editedMessage)
