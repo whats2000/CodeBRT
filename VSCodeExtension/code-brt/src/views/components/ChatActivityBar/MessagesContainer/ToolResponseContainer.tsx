@@ -17,8 +17,12 @@ export const ToolResponseContainer: React.FC<ToolResponseContainerProps> = ({
   toolStatus,
   showActionButtons = true,
 }) => {
-  const onConfirm = (_entry: ConversationEntry) => {
-    console.log('Confirming changes');
+  const onRetry = (_entry: ConversationEntry) => {
+    console.log('Retrying tool call');
+  };
+
+  const onContinue = (_entry: ConversationEntry) => {
+    console.log('Continuing with changes');
   };
 
   const onRollBack = (_entry: ConversationEntry) => {
@@ -67,13 +71,23 @@ export const ToolResponseContainer: React.FC<ToolResponseContainerProps> = ({
       <ToolStatusBlock status={toolStatus} />
 
       {/* Add Confirm and Rollback buttons */}
-      {showActionButtons && (
+      {showActionButtons && entry.toolResponses?.[0].status === 'success' && (
         <Space wrap={true}>
-          <Button type='primary' ghost={true} onClick={() => onConfirm(entry)}>
-            Confirm
+          <Button type='primary' ghost={true} onClick={() => onContinue(entry)}>
+            Continue
           </Button>
           <Button type='default' danger onClick={() => onRollBack(entry)}>
             Rollback
+          </Button>
+        </Space>
+      )}
+      {showActionButtons && entry.toolResponses?.[0].status === 'error' && (
+        <Space wrap={true}>
+          <Button type='primary' onClick={() => onRetry(entry)}>
+            Retry
+          </Button>
+          <Button type='default' danger onClick={() => onRollBack(entry)}>
+            Cancel
           </Button>
         </Space>
       )}

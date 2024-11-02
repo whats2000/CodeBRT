@@ -1,7 +1,7 @@
 import axios from 'axios';
 
 import type { ToolServicesApi } from './types';
-import { extractTextFromWebpage } from './utils';
+import { convertHtmlToMarkdown } from './utils';
 
 const postProcessUrlContent = (
   content: string,
@@ -36,7 +36,7 @@ export const urlFetcherTool: ToolServicesApi['urlFetcher'] = async ({
   try {
     updateStatus?.(`[Fetching] Fetching content from URL "${url}"`);
     const resp = await session.get(url, { timeout: 5000 });
-    const visibleText = extractTextFromWebpage(resp.data);
+    const visibleText = convertHtmlToMarkdown(resp.data);
     const truncatedText =
       visibleText.length > maxCharsPerPage
         ? visibleText.substring(0, maxCharsPerPage)
