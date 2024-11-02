@@ -3,13 +3,17 @@ import { createSlice } from '@reduxjs/toolkit';
 import { v4 as uuidV4 } from 'uuid';
 
 import type {
+  AddConversationEntryParams,
   ConversationEntry,
   ConversationEntryRole,
   ConversationHistory,
+  GetLanguageModelResponseParams,
 } from '../../../types';
 import type { CallAPI } from '../../WebviewContext';
 import type { RootState } from '../store';
 import { updateAndSaveSetting } from './settingsSlice';
+import { clearUploadedFiles } from './fileUploadSlice';
+import React from 'react';
 
 const initialState: ConversationHistory & {
   tempId: string | null;
@@ -120,6 +124,96 @@ export const switchHistory = createAsyncThunk<
         'error',
       ).catch(console.error);
       dispatch(finishLoading());
+    }
+  },
+);
+
+export const processMessage = createAsyncThunk<
+  Promise<void>,
+  {
+    message: string;
+    parentId: string;
+    tempIdRef: React.MutableRefObject<string | null>;
+    files?: string[];
+    isEdited?: boolean;
+  },
+  {
+    state: RootState;
+    extra: {
+      callApi: CallAPI;
+    };
+  }
+>(
+  'conversation/processMessage',
+  async (
+    { message, parentId, tempIdRef, files = [], isEdited = false },
+    { getState, dispatch, extra: { callApi } },
+  ) => {
+    const conversationHistory = getState().conversation;
+    const { activeModelService, selectedModel } = getState().modelService;
+    if (
+      conversationHistory.isProcessing ||
+      activeModelService === 'loading...' ||
+      !message.trim()
+    ) {
+      return;
+    }
+    dispatch(startProcessing());
+
+    // TODO: Support PDF Extractor at later version current only pass the images
+    files = files.filter((file: string) => !file.endsWith('.pdf'));
+
+    const userEntry = await callApi('addConversationEntry', {
+      parentID: parentId,
+      role: 'user',
+      message,
+      images: files,
+    } as AddConversationEntryParams);
+
+    dispatch(addEntry(userEntry));
+    dispatch(addTempResponseEntry({ parentId: userEntry.id, role: 'AI' }));
+
+    try {
+      const responseWithAction = await callApi('getLanguageModelResponse', {
+        modelServiceType: activeModelService,
+        query: message,
+        images: files.length > 0 ? files : undefined,
+        currentEntryID: isEdited ? userEntry.id : undefined,
+        useStream: true,
+        showStatus: true,
+      } as GetLanguageModelResponseParams);
+
+      if (!tempIdRef.current) {
+        dispatch(finishProcessing());
+        return;
+      }
+
+      const aiEntry = await callApi('addConversationEntry', {
+        parentID: userEntry.id,
+        role: 'AI',
+        message: responseWithAction.textResponse,
+        modelServiceType: activeModelService,
+        modelName: selectedModel,
+        toolCalls: responseWithAction.toolCall
+          ? [responseWithAction.toolCall]
+          : undefined,
+      } as AddConversationEntryParams);
+
+      dispatch(replaceTempEntry(aiEntry));
+
+      if (!isEdited) {
+        dispatch(clearUploadedFiles());
+      }
+    } catch (error) {
+      callApi(
+        'alertMessage',
+        `Failed to get response: ${error}`,
+        'error',
+      ).catch(console.error);
+    } finally {
+      setTimeout(() => {
+        dispatch(finishProcessing());
+      }, 1000);
     }
   },
 );

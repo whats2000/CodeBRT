@@ -93,6 +93,10 @@ export const ToolResponseContainer: React.FC<ToolResponseContainerProps> = ({
     console.log('Rolling back changes');
   };
 
+  const onRerun = (_entry: ConversationEntry) => {
+    console.log('Rerunning the tool');
+  };
+
   return (
     <div style={{ margin: '10px 0' }}>
       {entry.toolResponses?.map((response) => (
@@ -161,8 +165,8 @@ export const ToolResponseContainer: React.FC<ToolResponseContainerProps> = ({
               >
                 Fix it
               </Button>
-              <Button type='default' danger onClick={() => onRollBack(entry)}>
-                Cancel
+              <Button type='default' danger onClick={() => onRerun(entry)}>
+                Retry
               </Button>
             </Space>
           )}

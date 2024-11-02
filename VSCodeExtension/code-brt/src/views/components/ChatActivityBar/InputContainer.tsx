@@ -19,6 +19,7 @@ import {
 } from '../../redux/slices/fileUploadSlice';
 import { CancelOutlined } from '../../icons';
 import { INPUT_MESSAGE_KEY } from 'src/constants';
+import { processMessage } from '../../redux/slices/conversationSlice';
 
 const StyledInputContainer = styled.div`
   display: flex;
@@ -38,22 +39,12 @@ const StyledUpload = styled(Upload)`
 `;
 
 type InputContainerProps = {
+  tempIdRef: React.MutableRefObject<string | null>;
   inputContainerRef: React.RefObject<HTMLDivElement>;
-  processMessage: ({
-    message,
-    parentId,
-    files,
-    isEdited,
-  }: {
-    message: string;
-    parentId: string;
-    files?: string[];
-    isEdited?: boolean;
-  }) => Promise<void>;
 };
 
 export const InputContainer = React.memo<InputContainerProps>(
-  ({ inputContainerRef, processMessage }) => {
+  ({ tempIdRef, inputContainerRef }) => {
     const { callApi } = useContext(WebviewContext);
     const [enterPressCount, setEnterPressCount] = useState(0);
     const [previewOpen, setPreviewOpen] = useState(false);
@@ -103,11 +94,14 @@ export const InputContainer = React.memo<InputContainerProps>(
         return;
       }
 
-      await processMessage({
-        message: inputMessage,
-        parentId: conversationHistory.current,
-        files: uploadedFiles,
-      }).then(() => {
+      dispatch(
+        processMessage({
+          message: inputMessage,
+          parentId: conversationHistory.current,
+          tempIdRef,
+          files: uploadedFiles,
+        }),
+      ).then(() => {
         setInputMessage('');
         localStorage.setItem(INPUT_MESSAGE_KEY, '');
       });

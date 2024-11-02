@@ -66,7 +66,6 @@ type MessageItemProps = {
   isAudioPlaying: boolean;
   isStopAudio: boolean;
   handleConvertTextToVoice: (text: string) => void;
-  handleRedo: (entryId: string) => void;
   floatButtonsXPosition: number;
   showFloatButtons: boolean;
 };
@@ -88,7 +87,6 @@ export const MessageItem = React.memo<MessageItemProps>(
     isAudioPlaying,
     isStopAudio,
     handleConvertTextToVoice,
-    handleRedo,
     floatButtonsXPosition,
     showFloatButtons,
   }) => {
@@ -112,6 +110,13 @@ export const MessageItem = React.memo<MessageItemProps>(
     useEffect(() => {
       setEditedMessage(entry.message);
     }, [entry.id]);
+
+    const handleRedo = (entryId: string) => {
+      const previousMessageId = conversationHistory.entries[entryId].parent;
+      if (!previousMessageId) return;
+      const previousMessage = conversationHistory.entries[previousMessageId];
+      handleSaveEdit(previousMessage.id, previousMessage.message);
+    };
 
     const handleMouseEnter = (
       e: React.MouseEvent<HTMLDivElement>,

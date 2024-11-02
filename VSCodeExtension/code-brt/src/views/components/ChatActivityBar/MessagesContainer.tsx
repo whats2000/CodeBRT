@@ -7,8 +7,11 @@ import { VirtuosoHandle } from 'react-virtuoso';
 import { Virtuoso } from 'react-virtuoso';
 
 import type { ConversationEntry } from '../../../types';
-import type { RootState } from '../../redux';
-import { updateEntryMessage } from '../../redux/slices/conversationSlice';
+import type { AppDispatch, RootState } from '../../redux';
+import {
+  processMessage,
+  updateEntryMessage,
+} from '../../redux/slices/conversationSlice';
 import { WebviewContext } from '../../WebviewContext';
 import { useWindowSize } from '../../hooks';
 import { traverseHistory } from '../../utils';
@@ -46,21 +49,11 @@ const StyledMessagesContainer = styled.div<{
 `;
 
 type MessagesContainerProps = {
-  processMessage: ({
-    message,
-    parentId,
-    files,
-    isEdited,
-  }: {
-    message: string;
-    parentId: string;
-    files?: string[];
-    isEdited?: boolean;
-  }) => Promise<void>;
+  tempIdRef: React.MutableRefObject<string | null>;
 };
 
 export const MessagesContainer = React.memo<MessagesContainerProps>(
-  ({ processMessage }) => {
+  ({ tempIdRef }) => {
     const { callApi, addListener, removeListener } = useContext(WebviewContext);
     const token = theme.useToken().token;
 
@@ -83,7 +76,7 @@ export const MessagesContainer = React.memo<MessagesContainerProps>(
     const virtualListRef = useRef<VirtuosoHandle>(null);
     const messagesContainerRef = useRef<HTMLDivElement>(null);
 
-    const dispatch = useDispatch();
+    const dispatch = useDispatch<AppDispatch>();
     const conversationHistory = useSelector(
       (state: RootState) => state.conversation,
     );
@@ -180,12 +173,15 @@ export const MessagesContainer = React.memo<MessagesContainerProps>(
       editedMessage: string,
     ) => {
       const entry = conversationHistory.entries[entryId];
-      await processMessage({
-        message: editedMessage,
-        parentId: entry.parent ?? '',
-        files: entry.images,
-        isEdited: true,
-      });
+      dispatch(
+        processMessage({
+          message: editedMessage,
+          parentId: entry.parent ?? '',
+          tempIdRef,
+          files: entry.images,
+          isEdited: true,
+        }),
+      );
     };
 
     const handleUpdateStatus = (status: string) => {
@@ -263,17 +259,6 @@ export const MessagesContainer = React.memo<MessagesContainerProps>(
         .catch((err) => console.error('Failed to copy text: ', err));
     };
 
-    // When click redo the AI message mean the user want to re-generate the AI response,
-    // We simply remove the AI message and re-generate it by editing exactly and save the same user message
-    const handleRedo = (entryId: string) => {
-      const previousMessageId = conversationHistory.entries[entryId].parent;
-      if (!previousMessageId) return;
-      const previousMessage = conversationHistory.entries[previousMessageId];
-      handleSaveEdit(previousMessage.id, previousMessage.message).catch(
-        console.error,
-      );
-    };
-
     const renderMessage = (index: number) => {
       return (
         <MessageItem
@@ -293,7 +278,6 @@ export const MessagesContainer = React.memo<MessagesContainerProps>(
           isAudioPlaying={isAudioPlaying}
           isStopAudio={isStopAudio}
           handleConvertTextToVoice={handleConvertTextToVoice}
-          handleRedo={handleRedo}
           floatButtonsXPosition={floatButtonsXPosition}
           showFloatButtons={showFloatButtons}
         />

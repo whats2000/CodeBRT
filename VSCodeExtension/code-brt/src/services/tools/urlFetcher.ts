@@ -34,7 +34,7 @@ export const urlFetcherTool: ToolServicesApi['urlFetcher'] = async ({
   });
 
   try {
-    updateStatus?.(`[Fetching] Fetching content from URL "${url}"`);
+    updateStatus?.(`[processing] Fetching content from URL "${url}"`);
     const resp = await session.get(url, { timeout: 5000 });
     const visibleText = convertHtmlToMarkdown(resp.data);
     const truncatedText =
@@ -42,7 +42,7 @@ export const urlFetcherTool: ToolServicesApi['urlFetcher'] = async ({
         ? visibleText.substring(0, maxCharsPerPage)
         : visibleText;
 
-    updateStatus?.('[Info] Generating Response Based on Extracted Content');
+    updateStatus?.('');
     return postProcessUrlContent(truncatedText, format);
   } catch (error) {
     console.error('Failed to fetch the URL:', error);

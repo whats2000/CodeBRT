@@ -5,20 +5,11 @@ import { ConfigProvider, FloatButton } from 'antd';
 import { ControlOutlined, LoadingOutlined } from '@ant-design/icons';
 import { useSelector, useDispatch } from 'react-redux';
 
-import type {
-  AddConversationEntryParams,
-  GetLanguageModelResponseParams,
-} from '../../types';
 import type { AppDispatch, RootState } from '../redux';
 import { UPLOADED_FILES_KEY } from '../../constants';
 import {
-  addEntry,
-  addTempResponseEntry,
-  finishProcessing,
   handleStreamResponse,
   initLoadHistory,
-  replaceTempEntry,
-  startProcessing,
 } from '../redux/slices/conversationSlice';
 import { WebviewContext } from '../WebviewContext';
 import { useDragAndDrop, useThemeConfig } from '../hooks';
@@ -27,10 +18,7 @@ import { InputContainer } from './ChatActivityBar/InputContainer';
 import { MessagesContainer } from './ChatActivityBar/MessagesContainer';
 import { ToolActivateFloatButtons } from './ChatActivityBar/ToolActivateFloatButtons';
 import { ModelAdvanceSettingBar } from './ChatActivityBar/ModelAdvanceSettingBar';
-import {
-  handleFilesUpload,
-  clearUploadedFiles,
-} from '../redux/slices/fileUploadSlice';
+import { handleFilesUpload } from '../redux/slices/fileUploadSlice';
 import { initModelService } from '../redux/slices/modelServiceSlice';
 import { fetchSettings } from '../redux/slices/settingsSlice';
 
@@ -44,7 +32,7 @@ const Container = styled(Content)`
 `;
 
 export const ChatActivityBar = () => {
-  const { callApi, addListener, removeListener } = useContext(WebviewContext);
+  const { addListener, removeListener } = useContext(WebviewContext);
 
   const [floatButtonBaseYPosition, setFloatButtonBaseYPosition] = useState(60);
   const [isModelAdvanceSettingBarOpen, setIsModelAdvanceSettingBarOpen] =
@@ -58,9 +46,6 @@ export const ChatActivityBar = () => {
 
   const conversationHistory = useSelector(
     (state: RootState) => state.conversation,
-  );
-  const { activeModelService, selectedModel } = useSelector(
-    (state: RootState) => state.modelService,
   );
   const uploadedFiles = useSelector(
     (state: RootState) => state.fileUpload.uploadedFiles,
@@ -144,83 +129,6 @@ export const ChatActivityBar = () => {
     tempIdRef.current = conversationHistory.tempId;
   }, [conversationHistory.tempId]);
 
-  const processMessage = async ({
-    message,
-    parentId,
-    files = [],
-    isEdited = false,
-  }: {
-    message: string;
-    parentId: string;
-    files?: string[];
-    isEdited?: boolean;
-  }): Promise<void> => {
-    if (
-      conversationHistory.isProcessing ||
-      activeModelService === 'loading...' ||
-      !message.trim()
-    ) {
-      return;
-    }
-    dispatch(startProcessing());
-
-    // TODO: Support PDF Extractor at later version current only pass the images
-    files = files.filter((file: string) => !file.endsWith('.pdf'));
-
-    const userEntry = await callApi('addConversationEntry', {
-      parentID: parentId,
-      role: 'user',
-      message,
-      images: files,
-    } as AddConversationEntryParams);
-
-    dispatch(addEntry(userEntry));
-    dispatch(addTempResponseEntry({ parentId: userEntry.id, role: 'AI' }));
-
-    try {
-      const responseWithAction = await callApi('getLanguageModelResponse', {
-        modelServiceType: activeModelService,
-        query: message,
-        images: files.length > 0 ? files : undefined,
-        currentEntryID: isEdited ? userEntry.id : undefined,
-        useStream: true,
-        showStatus: true,
-      } as GetLanguageModelResponseParams);
-
-      if (!tempIdRef.current) {
-        dispatch(finishProcessing());
-        return;
-      }
-
-      const aiEntry = await callApi('addConversationEntry', {
-        parentID: userEntry.id,
-        role: 'AI',
-        message: responseWithAction.textResponse,
-        modelServiceType: activeModelService,
-        modelName: selectedModel,
-        toolCalls: responseWithAction.toolCall
-          ? [responseWithAction.toolCall]
-          : undefined,
-      } as AddConversationEntryParams);
-
-      dispatch(replaceTempEntry(aiEntry));
-
-      if (!isEdited) {
-        dispatch(clearUploadedFiles());
-      }
-    } catch (error) {
-      callApi(
-        'alertMessage',
-        `Failed to get response: ${error}`,
-        'error',
-      ).catch(console.error);
-    } finally {
-      setTimeout(() => {
-        dispatch(finishProcessing());
-      }, 1000);
-    }
-  };
-
   const openModelAdvanceSettingBar = () => {
     if (conversationHistory.isLoading || isLoading) return;
     setIsModelAdvanceSettingBarOpen(true);
@@ -230,10 +138,10 @@ export const ChatActivityBar = () => {
     <ConfigProvider theme={theme}>
       <Container ref={dropRef}>
         <Toolbar setTheme={setTheme} />
-        <MessagesContainer processMessage={processMessage} />
+        <MessagesContainer tempIdRef={tempIdRef} />
         <InputContainer
+          tempIdRef={tempIdRef}
           inputContainerRef={inputContainerRef}
-          processMessage={processMessage}
         />
       </Container>
       <FloatButton
