@@ -41,7 +41,6 @@ const MessageBubble = styled.div<{
 type MessageItemProps = {
   index: number;
   conversationHistoryEntries: ConversationEntry[];
-  isProcessing: boolean;
   hoveredBubble: {
     current: HTMLDivElement | null;
     entry: ConversationEntry | null;
@@ -76,7 +75,6 @@ export const MessageItem = React.memo<MessageItemProps>(
   ({
     index,
     conversationHistoryEntries,
-    isProcessing,
     hoveredBubble,
     setHoveredBubble,
     setShowFloatButtons,
@@ -145,7 +143,7 @@ export const MessageItem = React.memo<MessageItemProps>(
         return (
           <TextEditContainer
             entry={entry}
-            isProcessing={isProcessing}
+            isProcessing={conversationHistory.isProcessing}
             editedMessage={editedMessage}
             setEditedMessage={setEditedMessage}
             handleSaveEdit={handleSaveEdit}
@@ -157,8 +155,8 @@ export const MessageItem = React.memo<MessageItemProps>(
         <div>
           <TextContainer
             entry={entry}
+            isProcessing={conversationHistory.isProcessing}
             conversationHistoryCurrent={conversationHistory.current}
-            isProcessing={isProcessing}
             hljsTheme={settings.hljsTheme}
             setHljsTheme={setHljsTheme}
             toolStatus={toolStatus}
@@ -176,7 +174,8 @@ export const MessageItem = React.memo<MessageItemProps>(
       <>
         <MessageBubbleWrapper
           $paddingBottom={
-            index === conversationHistoryEntries.length - 1 && isProcessing
+            index === conversationHistoryEntries.length - 1 &&
+            conversationHistory.isProcessing
           }
         >
           <MessageBubble
@@ -197,7 +196,6 @@ export const MessageItem = React.memo<MessageItemProps>(
               copied={copied}
               handleCopy={handleCopy}
               handleRedo={handleRedo}
-              isProcessing={isProcessing}
             />
             {renderContainer()}
           </MessageBubble>

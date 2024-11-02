@@ -37,7 +37,6 @@ const StyledMessagesContainer = styled.div<{
   $token: GlobalToken;
 }>`
   flex-grow: 1;
-  overflow-y: auto;
   padding: 10px 0 10px 10px;
   border-top: 1px solid ${({ $token }) => $token.colorBorder};
   border-bottom: 1px solid ${({ $token }) => $token.colorBorder};
@@ -47,7 +46,6 @@ const StyledMessagesContainer = styled.div<{
 `;
 
 type MessagesContainerProps = {
-  isProcessing: boolean;
   processMessage: ({
     message,
     parentId,
@@ -62,7 +60,7 @@ type MessagesContainerProps = {
 };
 
 export const MessagesContainer = React.memo<MessagesContainerProps>(
-  ({ isProcessing, processMessage }) => {
+  ({ processMessage }) => {
     const { callApi, addListener, removeListener } = useContext(WebviewContext);
     const token = theme.useToken().token;
 
@@ -139,11 +137,11 @@ export const MessagesContainer = React.memo<MessagesContainerProps>(
     }, [hoveredBubble]);
 
     useEffect(() => {
-      if (isAutoScroll && isProcessing) {
+      if (isAutoScroll && conversationHistory.isProcessing) {
         scrollToBottom();
       }
     }, [
-      isProcessing,
+      conversationHistory.isProcessing,
       conversationHistoryEntries[conversationHistoryEntries.length - 1]
         ?.message,
       isAutoScroll,
@@ -208,9 +206,13 @@ export const MessagesContainer = React.memo<MessagesContainerProps>(
 
     const handleSaveEdit = async (entryId: string, editedMessage: string) => {
       if (activeModelService === 'loading...') return;
-
-      if (conversationHistory.entries[entryId].role === 'user') {
+      const role = conversationHistory.entries[entryId].role;
+      if (role === 'user') {
         await handleEditUserMessageSave(entryId, editedMessage);
+      } else if (role === 'tool') {
+        callApi('alertMessage', 'Cannot edit tool responses.', 'error').catch(
+          console.error,
+        );
       } else {
         callApi('editLanguageModelConversationHistory', entryId, editedMessage)
           .then(() => {
@@ -277,7 +279,6 @@ export const MessagesContainer = React.memo<MessagesContainerProps>(
         <MessageItem
           index={index}
           conversationHistoryEntries={conversationHistoryEntries}
-          isProcessing={isProcessing}
           hoveredBubble={hoveredBubble}
           setHoveredBubble={setHoveredBubble}
           setShowFloatButtons={setShowFloatButtons}
@@ -325,6 +326,7 @@ export const MessagesContainer = React.memo<MessagesContainerProps>(
             followOutput={'smooth'}
             atBottomThreshold={100}
             atBottomStateChange={handleAtBottomStateChange}
+            style={{ overflowY: 'scroll' }}
           />
         </StyledMessagesContainer>
       </>

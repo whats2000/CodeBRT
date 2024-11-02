@@ -108,7 +108,7 @@ export class CohereService extends AbstractLanguageModelService {
       });
     };
 
-    if (!enabledTools.agentTools?.active && agentTools) {
+    if (enabledTools.agentTools?.active && agentTools) {
       for (const [_key, tool] of Object.entries(agentTools)) {
         addTool(tool);
       }
@@ -124,20 +124,79 @@ export class CohereService extends AbstractLanguageModelService {
     return tools.length > 0 ? tools : undefined;
   }
 
+  private convertToolCallResponse(
+    toolCallResponseEntry: ConversationEntry,
+    entries: {
+      [key: string]: ConversationEntry;
+    },
+  ): ToolResult {
+    const toolCallResponse = toolCallResponseEntry.toolResponses?.[0];
+
+    if (!toolCallResponse || !toolCallResponseEntry.parent) {
+      throw new Error('Invalid tool call response entry');
+    }
+
+    const toolCallEntry = entries[toolCallResponseEntry.parent];
+    const toolCall = toolCallEntry.toolCalls?.[0];
+
+    if (!toolCall) {
+      throw new Error('Cannot find the corresponding tool call');
+    }
+
+    return {
+      call: {
+        name: toolCall.toolName,
+        parameters: toolCall.parameters,
+      },
+      outputs: [
+        {
+          error: false,
+          result: toolCallResponse.result,
+        },
+      ],
+    };
+  }
+
   private conversationHistoryToContent(
     entries: {
       [key: string]: ConversationEntry;
     },
     historyManager: HistoryManager,
-  ): Message[] {
+  ): { conversationHistory: Message[]; toolResults: ToolResult[] } {
     let result: Message[] = [];
     let currentEntry = entries[historyManager.getCurrentHistory().current];
 
     while (currentEntry) {
-      result.unshift({
-        role: currentEntry.role === 'AI' ? 'CHATBOT' : 'USER',
-        message: currentEntry.message,
-      });
+      switch (currentEntry.role) {
+        case 'AI':
+          const newEntry: Message = {
+            role: 'CHATBOT',
+            message: currentEntry.message,
+          };
+          const toolCall = currentEntry.toolCalls?.[0];
+          if (toolCall) {
+            newEntry.toolCalls = [
+              {
+                name: toolCall.toolName,
+                parameters: toolCall.parameters,
+              },
+            ];
+          }
+          result.unshift(newEntry);
+          break;
+        case 'user':
+          result.unshift({
+            role: 'USER',
+            message: currentEntry.message,
+          });
+          break;
+        case 'tool':
+          result.unshift({
+            role: 'TOOL',
+            toolResults: [this.convertToolCallResponse(currentEntry, entries)],
+          });
+          break;
+      }
 
       if (currentEntry.parent) {
         currentEntry = entries[currentEntry.parent];
@@ -150,8 +209,18 @@ export class CohereService extends AbstractLanguageModelService {
     if (result.length > 0 && result[result.length - 1].role === 'USER') {
       result.pop();
     }
+    if (result.length > 0 && result[result.length - 1].role === 'TOOL') {
+      const lastToolResult = result.pop() as Message.Tool;
+      return {
+        conversationHistory: result,
+        toolResults: lastToolResult.toolResults ?? [],
+      };
+    }
 
-    return result;
+    return {
+      conversationHistory: result,
+      toolResults: [],
+    };
   }
 
   public async getLatestAvailableModelNames(): Promise<string[]> {
@@ -220,10 +289,11 @@ export class CohereService extends AbstractLanguageModelService {
       token: this.settingsManager.get('cohereApiKey'),
     });
 
-    let conversationHistory = this.conversationHistoryToContent(
-      historyManager.getHistoryBeforeEntry(currentEntryID).entries,
-      historyManager,
-    );
+    let { conversationHistory, toolResults } =
+      this.conversationHistoryToContent(
+        historyManager.getHistoryBeforeEntry(currentEntryID).entries,
+        historyManager,
+      );
 
     const { systemPrompt, generationConfig } =
       this.getAdvanceSettings(historyManager);
@@ -242,7 +312,7 @@ export class CohereService extends AbstractLanguageModelService {
     let retryCount = 0;
     let responseText = '';
     let responseToolCall: ToolCall | undefined = undefined;
-    let toolResults: ToolResult[] = [];
+
     updateStatus && updateStatus('');
 
     try {

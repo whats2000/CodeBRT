@@ -1,8 +1,21 @@
-import React from 'react';
+import React, { useContext, useEffect, useRef } from 'react';
 import { Collapse, Tag, Descriptions, Typography, Space, Button } from 'antd';
+import { useDispatch, useSelector } from 'react-redux';
 
-import type { ConversationEntry } from '../../../../types';
+import type {
+  AddConversationEntryParams,
+  ConversationEntry,
+  GetLanguageModelResponseParams,
+} from '../../../../types';
+import { WebviewContext } from '../../../WebviewContext';
 import { ToolStatusBlock } from '../../common/ToolStatusBlock';
+import {
+  addTempResponseEntry,
+  finishProcessing,
+  replaceTempEntry,
+  startProcessing,
+} from '../../../redux/slices/conversationSlice';
+import type { RootState } from '../../../redux';
 
 const { Panel } = Collapse;
 
@@ -17,12 +30,67 @@ export const ToolResponseContainer: React.FC<ToolResponseContainerProps> = ({
   toolStatus,
   showActionButtons = true,
 }) => {
+  const { callApi } = useContext(WebviewContext);
+  const dispatch = useDispatch();
+
+  const { activeModelService, selectedModel } = useSelector(
+    (state: RootState) => state.modelService,
+  );
+  const conversationHistory = useSelector(
+    (state: RootState) => state.conversation,
+  );
+
+  const tempIdRef = useRef<string | null>(null);
+
+  useEffect(() => {
+    tempIdRef.current = conversationHistory.tempId;
+  }, [conversationHistory.tempId]);
+
   const onRetry = (_entry: ConversationEntry) => {
     console.log('Retrying tool call');
   };
 
-  const onContinue = (_entry: ConversationEntry) => {
-    console.log('Continuing with changes');
+  const onContinue = async (entry: ConversationEntry) => {
+    if (activeModelService === 'loading...') {
+      return;
+    }
+
+    dispatch(startProcessing());
+    dispatch(addTempResponseEntry({ parentId: entry.id, role: 'AI' }));
+    try {
+      const responseWithAction = await callApi('getLanguageModelResponse', {
+        modelServiceType: activeModelService,
+        query: '',
+        useStream: true,
+        showStatus: true,
+        toolCallResponse: entry.toolResponses?.[0],
+      } as GetLanguageModelResponseParams);
+
+      if (!tempIdRef.current) {
+        return;
+      }
+
+      const aiEntry = await callApi('addConversationEntry', {
+        parentID: entry.id,
+        role: 'AI',
+        message: responseWithAction.textResponse,
+        modelServiceType: activeModelService,
+        modelName: selectedModel,
+        toolCalls: responseWithAction.toolCall
+          ? [responseWithAction.toolCall]
+          : undefined,
+      } as AddConversationEntryParams);
+
+      dispatch(replaceTempEntry(aiEntry));
+    } catch (error) {
+      callApi(
+        'alertMessage',
+        `Failed to get response: ${error}`,
+        'error',
+      ).catch(console.error);
+    } finally {
+      dispatch(finishProcessing());
+    }
   };
 
   const onRollBack = (_entry: ConversationEntry) => {
@@ -70,27 +138,33 @@ export const ToolResponseContainer: React.FC<ToolResponseContainerProps> = ({
       ))}
       <ToolStatusBlock status={toolStatus} />
 
-      {/* Add Confirm and Rollback buttons */}
-      {showActionButtons && entry.toolResponses?.[0].status === 'success' && (
-        <Space wrap={true}>
-          <Button type='primary' ghost={true} onClick={() => onContinue(entry)}>
-            Continue
-          </Button>
-          <Button type='default' danger onClick={() => onRollBack(entry)}>
-            Rollback
-          </Button>
-        </Space>
-      )}
-      {showActionButtons && entry.toolResponses?.[0].status === 'error' && (
-        <Space wrap={true}>
-          <Button type='primary' onClick={() => onRetry(entry)}>
-            Retry
-          </Button>
-          <Button type='default' danger onClick={() => onRollBack(entry)}>
-            Cancel
-          </Button>
-        </Space>
-      )}
+      <Space wrap={true}>
+        {/* Add Confirm and Rollback buttons */}
+        {showActionButtons && entry.toolResponses?.[0].status === 'success' && (
+          <>
+            <Button
+              type='primary'
+              ghost={true}
+              onClick={() => onContinue(entry)}
+            >
+              Continue
+            </Button>
+            <Button type='default' danger onClick={() => onRollBack(entry)}>
+              Rollback
+            </Button>
+          </>
+        )}
+        <Button type='dashed' onClick={() => onRetry(entry)}>
+          Retry
+        </Button>
+        {showActionButtons && entry.toolResponses?.[0].status === 'error' && (
+          <>
+            <Button type='default' danger onClick={() => onRollBack(entry)}>
+              Cancel
+            </Button>
+          </>
+        )}
+      </Space>
     </>
   );
 };

@@ -37,7 +37,6 @@ type MessagesTopToolBarProps = {
   copied: Record<string, boolean>;
   handleCopy: (text: string, entryId: string) => void;
   handleRedo: (entryId: string) => void;
-  isProcessing: boolean;
 };
 
 export const TopToolBar: React.FC<MessagesTopToolBarProps> = ({
@@ -52,7 +51,6 @@ export const TopToolBar: React.FC<MessagesTopToolBarProps> = ({
   copied,
   handleCopy,
   handleRedo,
-  isProcessing,
 }) => {
   const { token } = theme.useToken();
 
@@ -131,7 +129,7 @@ export const TopToolBar: React.FC<MessagesTopToolBarProps> = ({
     }
   };
 
-  let displayRole = '';
+  let displayRole: string;
   switch (entry.role) {
     case 'user':
       displayRole = 'You';
@@ -165,7 +163,9 @@ export const TopToolBar: React.FC<MessagesTopToolBarProps> = ({
               <Button
                 onClick={() => handleGoForward(entry, 'prev')}
                 type={'text'}
-                disabled={currentIndex === 1 || isProcessing}
+                disabled={
+                  currentIndex === 1 || conversationHistory.isProcessing
+                }
               >
                 <ArrowLeftOutlined />
               </Button>
@@ -175,7 +175,10 @@ export const TopToolBar: React.FC<MessagesTopToolBarProps> = ({
               <Button
                 onClick={() => handleGoForward(entry, 'next')}
                 type={'text'}
-                disabled={currentIndex === siblingCount || isProcessing}
+                disabled={
+                  currentIndex === siblingCount ||
+                  conversationHistory.isProcessing
+                }
               >
                 <ArrowRightOutlined />
               </Button>
@@ -186,7 +189,7 @@ export const TopToolBar: React.FC<MessagesTopToolBarProps> = ({
               <Button
                 onClick={() => handleSwitchRoot(conversationHistory, 'prev')}
                 type={'text'}
-                disabled={topIndex === 0 || isProcessing}
+                disabled={topIndex === 0 || conversationHistory.isProcessing}
               >
                 <ArrowLeftOutlined />
               </Button>
@@ -196,7 +199,9 @@ export const TopToolBar: React.FC<MessagesTopToolBarProps> = ({
               <Button
                 onClick={() => handleSwitchRoot(conversationHistory, 'next')}
                 type={'text'}
-                disabled={topIndex === topCount - 1 || isProcessing}
+                disabled={
+                  topIndex === topCount - 1 || conversationHistory.isProcessing
+                }
               >
                 <ArrowRightOutlined />
               </Button>
@@ -227,14 +232,14 @@ export const TopToolBar: React.FC<MessagesTopToolBarProps> = ({
           {entry.role === 'AI' && (
             <Button
               icon={
-                isProcessing ? (
+                conversationHistory.isProcessing ? (
                   <LoadingOutlined spin={true} />
                 ) : (
                   <RedoOutlined />
                 )
               }
               type={'text'}
-              disabled={isProcessing}
+              disabled={conversationHistory.isProcessing}
               onClick={() => handleRedo(entry.id)}
             />
           )}

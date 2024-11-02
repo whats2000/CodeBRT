@@ -50,11 +50,10 @@ type InputContainerProps = {
     files?: string[];
     isEdited?: boolean;
   }) => Promise<void>;
-  isProcessing: boolean;
 };
 
 export const InputContainer = React.memo<InputContainerProps>(
-  ({ inputContainerRef, processMessage, isProcessing }) => {
+  ({ inputContainerRef, processMessage }) => {
     const { callApi } = useContext(WebviewContext);
     const [enterPressCount, setEnterPressCount] = useState(0);
     const [previewOpen, setPreviewOpen] = useState(false);
@@ -95,7 +94,15 @@ export const InputContainer = React.memo<InputContainerProps>(
 
     const resetEnterPressCount = () => setEnterPressCount(0);
 
+    const isToolResponse =
+      conversationHistory.entries[conversationHistory.current]?.role === 'tool';
+
     const sendMessage = async () => {
+      // If current entry is a tool response, we need to prevent sending message from the input
+      if (isToolResponse) {
+        return;
+      }
+
       await processMessage({
         message: inputMessage,
         parentId: conversationHistory.current,
@@ -109,7 +116,7 @@ export const InputContainer = React.memo<InputContainerProps>(
     const handleKeyDown = async (
       event: React.KeyboardEvent<HTMLTextAreaElement>,
     ) => {
-      if (isProcessing) {
+      if (conversationHistory.isProcessing) {
         return;
       }
 
@@ -127,7 +134,7 @@ export const InputContainer = React.memo<InputContainerProps>(
         }
         setEnterPressCount((prev) => prev + 1);
 
-        if (enterPressCount + 1 >= 2 && !isProcessing) {
+        if (enterPressCount + 1 >= 2 && !conversationHistory.isProcessing) {
           await sendMessage();
           resetEnterPressCount();
         }
@@ -243,7 +250,7 @@ export const InputContainer = React.memo<InputContainerProps>(
         )}
         <UploadedImageContainer>
           <StyledUpload
-            fileList={isProcessing ? [] : fileList}
+            fileList={conversationHistory.isProcessing ? [] : fileList}
             listType='picture-card'
             onRemove={handleRemove}
             onPreview={handlePreview}
@@ -255,7 +262,7 @@ export const InputContainer = React.memo<InputContainerProps>(
             type={'text'}
             icon={<UploadOutlined />}
             onClick={handleUploadButtonClick}
-            disabled={isProcessing}
+            disabled={conversationHistory.isProcessing}
           />
           <input
             type='file'
@@ -269,20 +276,34 @@ export const InputContainer = React.memo<InputContainerProps>(
             type={'text'}
             icon={isRecording ? <LoadingOutlined /> : <AudioOutlined />}
             onClick={handleVoiceInput}
-            disabled={isProcessing}
+            disabled={conversationHistory.isProcessing}
           />
           <Input.TextArea
             value={inputMessage}
             onChange={handleInputMessageChange}
             onKeyDown={handleKeyDown}
             placeholder={innerWidth > 520 ? 'Paste images...' : 'Ask...'}
-            disabled={isProcessing}
-            autoSize={{ minRows: 1, maxRows: isProcessing ? 2 : 10 }}
+            disabled={conversationHistory.isProcessing || isToolResponse}
+            autoSize={{
+              minRows: 1,
+              maxRows: conversationHistory.isProcessing ? 2 : 10,
+            }}
             allowClear
           />
           <Flex vertical={true}>
-            <Button onClick={isProcessing ? handleCancelResponse : sendMessage}>
-              {isProcessing ? <CancelOutlined /> : <SendOutlined />}
+            <Button
+              onClick={
+                conversationHistory.isProcessing
+                  ? handleCancelResponse
+                  : sendMessage
+              }
+              disabled={isToolResponse}
+            >
+              {conversationHistory.isProcessing ? (
+                <CancelOutlined />
+              ) : (
+                <SendOutlined />
+              )}
             </Button>
             {inputMessage.length > 100 && (
               <Tag

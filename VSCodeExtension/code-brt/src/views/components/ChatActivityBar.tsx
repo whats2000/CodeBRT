@@ -5,15 +5,20 @@ import { ConfigProvider, FloatButton } from 'antd';
 import { ControlOutlined, LoadingOutlined } from '@ant-design/icons';
 import { useSelector, useDispatch } from 'react-redux';
 
-import type { AddConversationEntryParams } from '../../types';
+import type {
+  AddConversationEntryParams,
+  GetLanguageModelResponseParams,
+} from '../../types';
 import type { AppDispatch, RootState } from '../redux';
 import { UPLOADED_FILES_KEY } from '../../constants';
 import {
   addEntry,
   addTempResponseEntry,
+  finishProcessing,
   handleStreamResponse,
   initLoadHistory,
   replaceTempEntry,
+  startProcessing,
 } from '../redux/slices/conversationSlice';
 import { WebviewContext } from '../WebviewContext';
 import { useDragAndDrop, useThemeConfig } from '../hooks';
@@ -41,7 +46,6 @@ const Container = styled(Content)`
 export const ChatActivityBar = () => {
   const { callApi, addListener, removeListener } = useContext(WebviewContext);
 
-  const [isProcessing, setIsProcessing] = useState(false);
   const [floatButtonBaseYPosition, setFloatButtonBaseYPosition] = useState(60);
   const [isModelAdvanceSettingBarOpen, setIsModelAdvanceSettingBarOpen] =
     useState(false);
@@ -152,13 +156,13 @@ export const ChatActivityBar = () => {
     isEdited?: boolean;
   }): Promise<void> => {
     if (
-      isProcessing ||
+      conversationHistory.isProcessing ||
       activeModelService === 'loading...' ||
       !message.trim()
     ) {
       return;
     }
-    setIsProcessing(true);
+    dispatch(startProcessing());
 
     // TODO: Support PDF Extractor at later version current only pass the images
     files = files.filter((file: string) => !file.endsWith('.pdf'));
@@ -173,51 +177,48 @@ export const ChatActivityBar = () => {
     dispatch(addEntry(userEntry));
     dispatch(addTempResponseEntry({ parentId: userEntry.id, role: 'AI' }));
 
-    callApi(
-      'getLanguageModelResponse',
-      activeModelService,
-      message,
-      files.length > 0 ? files : undefined,
-      isEdited ? userEntry.id : undefined,
-      true,
-      true,
-    )
-      .then(async (response) => {
-        const responseWithAction = await response;
-        if (!tempIdRef.current) {
-          setIsProcessing(false);
-          return;
-        }
+    try {
+      const responseWithAction = await callApi('getLanguageModelResponse', {
+        modelServiceType: activeModelService,
+        query: message,
+        images: files.length > 0 ? files : undefined,
+        currentEntryID: isEdited ? userEntry.id : undefined,
+        useStream: true,
+        showStatus: true,
+      } as GetLanguageModelResponseParams);
 
-        const aiEntry = await callApi('addConversationEntry', {
-          parentID: userEntry.id,
-          role: 'AI',
-          message: responseWithAction.textResponse,
-          modelServiceType: activeModelService,
-          modelName: selectedModel,
-          toolCalls: responseWithAction.toolCall
-            ? [responseWithAction.toolCall]
-            : undefined,
-        } as AddConversationEntryParams);
+      if (!tempIdRef.current) {
+        dispatch(finishProcessing());
+        return;
+      }
 
-        dispatch(replaceTempEntry(aiEntry));
+      const aiEntry = await callApi('addConversationEntry', {
+        parentID: userEntry.id,
+        role: 'AI',
+        message: responseWithAction.textResponse,
+        modelServiceType: activeModelService,
+        modelName: selectedModel,
+        toolCalls: responseWithAction.toolCall
+          ? [responseWithAction.toolCall]
+          : undefined,
+      } as AddConversationEntryParams);
 
-        if (!isEdited) {
-          dispatch(clearUploadedFiles());
-        }
+      dispatch(replaceTempEntry(aiEntry));
 
-        setTimeout(() => {
-          setIsProcessing(false);
-        }, 1000);
-      })
-      .catch((error) => {
-        callApi(
-          'alertMessage',
-          `Failed to get response: ${error}`,
-          'error',
-        ).catch(console.error);
-        setIsProcessing(false);
-      });
+      if (!isEdited) {
+        dispatch(clearUploadedFiles());
+      }
+    } catch (error) {
+      callApi(
+        'alertMessage',
+        `Failed to get response: ${error}`,
+        'error',
+      ).catch(console.error);
+    } finally {
+      setTimeout(() => {
+        dispatch(finishProcessing());
+      }, 1000);
+    }
   };
 
   const openModelAdvanceSettingBar = () => {
@@ -229,14 +230,10 @@ export const ChatActivityBar = () => {
     <ConfigProvider theme={theme}>
       <Container ref={dropRef}>
         <Toolbar setTheme={setTheme} />
-        <MessagesContainer
-          isProcessing={isProcessing}
-          processMessage={processMessage}
-        />
+        <MessagesContainer processMessage={processMessage} />
         <InputContainer
           inputContainerRef={inputContainerRef}
           processMessage={processMessage}
-          isProcessing={isProcessing}
         />
       </Container>
       <FloatButton

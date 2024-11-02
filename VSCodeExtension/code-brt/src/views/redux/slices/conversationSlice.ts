@@ -14,6 +14,7 @@ import { updateAndSaveSetting } from './settingsSlice';
 const initialState: ConversationHistory & {
   tempId: string | null;
   isLoading: boolean;
+  isProcessing: boolean;
 } = {
   create_time: 0,
   update_time: 0,
@@ -32,6 +33,7 @@ const initialState: ConversationHistory & {
   entries: {},
   tempId: null,
   isLoading: false,
+  isProcessing: false,
 };
 
 export const initLoadHistory = createAsyncThunk<
@@ -132,8 +134,19 @@ const conversationSlice = createSlice({
     finishLoading(state) {
       state.isLoading = false;
     },
-    setConversationHistory(_state, action: PayloadAction<ConversationHistory>) {
-      return { ...action.payload, tempId: null, isLoading: false };
+    startProcessing(state) {
+      state.isProcessing = true;
+    },
+    finishProcessing(state) {
+      state.isProcessing = false;
+    },
+    setConversationHistory(state, action: PayloadAction<ConversationHistory>) {
+      return {
+        ...action.payload,
+        tempId: null,
+        isLoading: false,
+        isProcessing: state.isProcessing,
+      };
     },
     handleStreamResponse(state, action: PayloadAction<string>) {
       const { tempId, entries } = state;
@@ -216,6 +229,8 @@ const conversationSlice = createSlice({
 export const {
   startLoading,
   finishLoading,
+  startProcessing,
+  finishProcessing,
   setConversationHistory,
   handleStreamResponse,
   addEntry,

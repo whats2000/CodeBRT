@@ -1,6 +1,6 @@
 import * as vscode from 'vscode';
 
-import type { ViewApi } from './types';
+import type { GetLanguageModelResponseParams, ViewApi } from './types';
 import {
   AVAILABLE_MODEL_SERVICES,
   AVAILABLE_VOICE_SERVICES,
@@ -83,24 +83,17 @@ export const activate = async (ctx: vscode.ExtensionContext) => {
         });
     },
     getLanguageModelResponse: async (
-      modelServiceType,
-      query,
-      images?,
-      currentEntryID?,
-      useStream?,
-      showStatus?,
+      options: GetLanguageModelResponseParams,
     ) => {
-      return await models[modelServiceType].service.getResponse({
-        query,
+      return await models[options.modelServiceType].service.getResponse({
+        ...options,
         historyManager,
-        images,
-        currentEntryID,
-        sendStreamResponse: useStream
+        sendStreamResponse: options.useStream
           ? (msg) => {
               triggerEvent('streamResponse', msg);
             }
           : undefined,
-        updateStatus: showStatus
+        updateStatus: options.showStatus
           ? (status) => {
               triggerEvent('updateStatus', status);
             }
@@ -268,8 +261,8 @@ export const activate = async (ctx: vscode.ExtensionContext) => {
         triggerEvent('updateStatus', status);
       });
     },
-    rejectToolCall: async (_entry) => {},
-    confirmToolCall: async (_entry) => {},
+    rejectToolCallResponse: async (_entry) => {},
+    continueWithToolCallResponse: async (_entry) => {},
   };
 
   void registerAndConnectView(ctx, settingsManager, 'chatActivityBar', api);

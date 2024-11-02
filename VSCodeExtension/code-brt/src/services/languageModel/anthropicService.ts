@@ -23,6 +23,7 @@ import {
   GetResponseOptions,
   NonWorkspaceToolType,
   ResponseWithAction,
+  ToolCallResponse,
 } from '../../types';
 import { HistoryManager, SettingsManager } from '../../api';
 import { AbstractLanguageModelService } from './base';
@@ -128,20 +129,63 @@ export class AnthropicService extends AbstractLanguageModelService {
     entries: { [key: string]: ConversationEntry },
     query: string,
     historyManager: HistoryManager,
+    toolCallResponse?: ToolCallResponse,
   ): MessageParam[] {
     const result: MessageParam[] = [];
     let currentEntry = entries[historyManager.getCurrentHistory().current];
 
     while (currentEntry) {
-      result.unshift({
-        role: currentEntry.role === 'AI' ? 'assistant' : 'user',
-        content: [
-          {
-            type: 'text',
-            text: currentEntry.message,
-          },
-        ],
-      });
+      switch (currentEntry.role) {
+        case 'AI':
+          const newEntry: MessageParam = {
+            role: 'assistant',
+            content: [
+              {
+                type: 'text',
+                text: currentEntry.message,
+              },
+            ],
+          };
+          const toolCall = currentEntry.toolCalls?.[0];
+          if (toolCall && typeof newEntry.content !== 'string') {
+            newEntry.content.push({
+              type: 'tool_use',
+              id: toolCall.id,
+              name: toolCall.toolName,
+              input: toolCall.parameters,
+            });
+          }
+          result.unshift(newEntry);
+          break;
+        case 'user':
+          result.unshift({
+            role: 'user',
+            content: [
+              {
+                type: 'text',
+                text: currentEntry.message,
+              },
+            ],
+          });
+          break;
+        case 'tool':
+          const toolCallResponse = currentEntry.toolResponses?.[0];
+          if (!toolCallResponse) {
+            throw new Error('Tool call response not found');
+          }
+          result.unshift({
+            role: 'user',
+            content: [
+              {
+                type: 'tool_result',
+                tool_use_id: toolCallResponse.id,
+                content: JSON.stringify(toolCallResponse.result),
+                is_error: toolCallResponse.status === 'error',
+              },
+            ],
+          });
+          break;
+      }
 
       if (currentEntry.parent) {
         currentEntry = entries[currentEntry.parent];
@@ -152,7 +196,7 @@ export class AnthropicService extends AbstractLanguageModelService {
 
     // Anthropic's API requires the query message at the end of the history
     if (result[result.length - 1]?.role !== 'user') {
-      result.push({
+      const newEntry: MessageParam = {
         role: 'user',
         content: [
           {
@@ -160,7 +204,16 @@ export class AnthropicService extends AbstractLanguageModelService {
             text: query,
           },
         ],
-      });
+      };
+      if (toolCallResponse && typeof newEntry.content !== 'string') {
+        newEntry.content.push({
+          type: 'tool_result',
+          tool_use_id: toolCallResponse.id,
+          content: JSON.stringify(toolCallResponse.result),
+          is_error: toolCallResponse.status === 'error',
+        });
+      }
+      result.push(newEntry);
     }
 
     return result;
@@ -190,6 +243,7 @@ export class AnthropicService extends AbstractLanguageModelService {
     historyManager: HistoryManager,
     currentEntryID?: string,
     images?: string[],
+    toolCallResponse?: ToolCallResponse,
   ): {
     anthropic: Anthropic;
     conversationHistory: MessageParam[];
@@ -215,6 +269,7 @@ export class AnthropicService extends AbstractLanguageModelService {
       historyManager.getHistoryBeforeEntry(currentEntryID).entries,
       query,
       historyManager,
+      toolCallResponse,
     );
 
     if (!images) {
@@ -323,6 +378,7 @@ export class AnthropicService extends AbstractLanguageModelService {
       updateStatus,
       selectedModelName,
       disableTools,
+      toolCallResponse,
     } = options;
 
     const { anthropic, conversationHistory, errorMessage } = this.initModel(
@@ -330,6 +386,7 @@ export class AnthropicService extends AbstractLanguageModelService {
       historyManager,
       currentEntryID,
       images,
+      toolCallResponse,
     );
 
     if (errorMessage) {
