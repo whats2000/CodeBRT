@@ -150,7 +150,7 @@ export const ToolActionContainer = React.memo<ToolActionContainerProps>(
                   {Object.entries(toolCall.parameters).map(([key, value]) => (
                     <Descriptions.Item key={key} label={key}>
                       <Typography.Paragraph
-                        ellipsis={{ rows: 2, expandable: true }}
+                        ellipsis={{ rows: 2, expandable: 'collapsible' }}
                       >
                         {JSON.stringify(value)}
                       </Typography.Paragraph>
