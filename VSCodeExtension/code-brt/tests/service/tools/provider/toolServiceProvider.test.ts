@@ -6,7 +6,7 @@ jest.mock('../../../../src/services/tools/webSearchTool', () => ({
   webSearchTool: jest.fn().mockResolvedValue('Search results'),
 }));
 
-jest.mock('../../../../src/services/tools/urlFetcher', () => ({
+jest.mock('../../../../src/services/tools/urlFetcherTool', () => ({
   urlFetcherTool: jest.fn().mockResolvedValue('Fetched URL content'),
 }));
 

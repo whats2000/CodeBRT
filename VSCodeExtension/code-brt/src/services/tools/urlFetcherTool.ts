@@ -1,17 +1,31 @@
 import axios from 'axios';
 
-import type { ToolServicesApi } from './types';
+import type { ToolResponseFromToolFunction, ToolServicesApi } from './types';
 import { convertHtmlToMarkdown } from './utils';
 
 const postProcessUrlContent = (
+  url: string,
   content: string,
   format: 'text' | 'json',
-): string => {
+): ToolResponseFromToolFunction => {
   if (format === 'json') {
-    return JSON.stringify({ content }, null, 2);
+    return {
+      status: 'success',
+      result: JSON.stringify(
+        {
+          message: `Here is the content retrieved from the URL "${url}". Use this information to answer the previously asked question.`,
+          content: content,
+        },
+        null,
+        2,
+      ),
+    };
   }
 
-  return '#####\nExtracted Content from URL:\n\n' + content;
+  return {
+    status: 'success',
+    result: `Content retrieved from the URL "${url}". Please use this information to answer the previously asked question:\n\n${content}`,
+  };
 };
 
 export const urlFetcherTool: ToolServicesApi['urlFetcher'] = async ({
@@ -42,10 +56,13 @@ export const urlFetcherTool: ToolServicesApi['urlFetcher'] = async ({
         ? visibleText.substring(0, maxCharsPerPage)
         : visibleText;
 
-    return postProcessUrlContent(truncatedText, format);
+    return postProcessUrlContent(url, truncatedText, format);
   } catch (error) {
     console.error('Failed to fetch the URL:', error);
-    return '';
+    return {
+      status: 'error',
+      result: 'Failed to fetch the URL.',
+    };
   } finally {
     updateStatus?.('');
   }

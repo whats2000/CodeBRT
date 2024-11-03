@@ -6,30 +6,48 @@
 import axios from 'axios';
 import * as cheerio from 'cheerio';
 
-import type { ToolServicesApi } from './types';
+import type { ToolResponseFromToolFunction, ToolServicesApi } from './types';
 import { convertHtmlToMarkdown } from './utils';
 
 const postProcessResults = (
   results: { title: string; url: string; snippet: string }[],
   format: 'text' | 'json',
-): string => {
+): ToolResponseFromToolFunction => {
   if (results.length === 0) {
-    return '';
+    return {
+      status: 'error',
+      result: 'No search results found.',
+    };
   }
 
   if (format === 'json') {
-    return JSON.stringify(results, null, 2);
+    return {
+      status: 'success',
+      result: JSON.stringify(
+        {
+          message: `Use the following search results to answer the previously asked question. Reference each source by its [URL] when relevant:`,
+          content: results,
+        },
+        null,
+        2,
+      ),
+    };
   }
 
-  return (
-    'Web Search Results is at below, please answer and provide reference links with markdown:\n\n' +
-    results
-      .map(
-        (result) =>
-          `# Title\n${result.title}\n## Source URL:\n${result.url}\n##Snippet:\n${result.snippet}\n`,
-      )
-      .join('\n')
-  );
+  // Assemble the prompt content with structured result details
+  const resultContent = results
+    .map(
+      (result) =>
+        `[TITLE] ${result.title}\n[URL] ${result.url}\n[CONTENT] ${result.snippet}`,
+    )
+    .join('\n\n'); // Adds spacing between entries for readability
+
+  return {
+    status: 'success',
+    result:
+      'Use the following search results to answer the previously asked question. Reference each source by its [URL] when relevant:\\n\\n' +
+      resultContent,
+  };
 };
 
 export const webSearchTool: ToolServicesApi['webSearch'] = async ({
@@ -85,7 +103,8 @@ export const webSearchTool: ToolServicesApi['webSearch'] = async ({
         allResults.push({
           title,
           url: link,
-          snippet: 'This page does not allow web scraping.',
+          snippet:
+            'Scraping is restricted. Use `urlFetcher` with the provided URL instead.',
         });
       }
     }

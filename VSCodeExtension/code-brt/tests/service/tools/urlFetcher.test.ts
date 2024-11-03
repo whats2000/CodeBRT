@@ -1,6 +1,6 @@
 import axios from 'axios';
 import { extractTextFromWebpage } from '../../../src/services/tools/utils';
-import { urlFetcherTool } from '../../../src/services/tools/urlFetcher';
+import { urlFetcherTool } from '../../../src/services/tools/urlFetcherTool';
 
 jest.mock('axios');
 jest.mock('../../../src/utils');

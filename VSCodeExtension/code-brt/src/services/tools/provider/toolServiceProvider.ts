@@ -1,3 +1,5 @@
+import vscode from 'vscode';
+
 import type {
   NonWorkspaceToolType,
   ToolFunction,
@@ -5,12 +7,11 @@ import type {
   ToolServicesApi,
   WorkspaceToolType,
 } from '../types';
-
+import type { ToolCallEntry, ToolCallResponse } from '../../../types';
 import { getToolSchema, getToolSchemaWithoutWorkspace } from '../utils';
 import { webSearchTool } from '../webSearchTool';
-import { urlFetcherTool } from '../urlFetcher';
-import vscode from 'vscode';
-import { ToolCallEntry, ToolCallResponse } from '../../../types';
+import { urlFetcherTool } from '../urlFetcherTool';
+import { listFilesTool } from '../listFilesTool';
 
 export class ToolServiceProvider {
   private static readonly toolServices: {
@@ -35,9 +36,7 @@ export class ToolServiceProvider {
       searchFiles: () => {
         throw new Error('Not implemented');
       },
-      listFiles: () => {
-        throw new Error('Not implemented');
-      },
+      listFiles: listFilesTool,
       listCodeDefinitionNames: () => {
         throw new Error('Not implemented');
       },
@@ -190,11 +189,11 @@ export class ToolServiceProvider {
       const args = { ...ToolCallEntry.parameters, updateStatus };
       const result = await tool(args as any);
 
-      if (result === '[]' || result === '') {
+      if (result.status === 'error') {
         return {
           id: ToolCallEntry.id,
           toolCallName: ToolCallEntry.toolName,
-          result: 'The result is empty, maybe try a different parameter',
+          result: result.result,
           status: 'error',
           create_time: Date.now(),
         };

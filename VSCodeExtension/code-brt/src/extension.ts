@@ -5,7 +5,7 @@ import {
   AVAILABLE_MODEL_SERVICES,
   AVAILABLE_VOICE_SERVICES,
 } from './constants';
-import { FileUtils } from './utils';
+import { FileOperationsProvider } from './utils';
 import {
   connectedViews,
   HistoryManager,
@@ -174,11 +174,19 @@ export const activate = async (ctx: vscode.ExtensionContext) => {
       ].service.getLatestAvailableModelNames();
     },
     uploadFile: async (base64Data, originalFileName) => {
-      return FileUtils.uploadFile(ctx, base64Data, originalFileName);
+      return FileOperationsProvider.uploadFile(
+        ctx,
+        base64Data,
+        originalFileName,
+      );
     },
-    deleteFile: FileUtils.deleteFile,
+    deleteFile: FileOperationsProvider.deleteFile,
     getWebviewUri: async (absolutePath: string) => {
-      return await FileUtils.getWebviewUri(ctx, connectedViews, absolutePath);
+      return await FileOperationsProvider.getWebviewUri(
+        ctx,
+        connectedViews,
+        absolutePath,
+      );
     },
     convertTextToVoice: async (text) => {
       const voiceServiceType = settingsManager.get(

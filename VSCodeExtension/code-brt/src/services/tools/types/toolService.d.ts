@@ -1,4 +1,11 @@
-export type ToolFunction = (...args: any[]) => Promise<string>;
+export type ToolResponseFromToolFunction = {
+  status: 'success' | 'error';
+  result: string;
+};
+
+export type ToolFunction = (
+  ...args: any[]
+) => Promise<ToolResponseFromToolFunction>;
 
 export type ToolServicesApi = {
   /**
@@ -32,7 +39,7 @@ export type ToolServicesApi = {
     maxCharsPerPage?: number | string;
     format?: 'text' | 'json';
     updateStatus?: (status: string) => void;
-  }) => Promise<string>;
+  }) => Promise<ToolResponseFromToolFunction>;
 
   /**
    * Fetch the content of a URL and return it.
@@ -48,5 +55,20 @@ export type ToolServicesApi = {
     maxCharsPerPage?: number | string;
     format?: 'text' | 'json';
     updateStatus?: (status: string) => void;
-  }) => Promise<string>;
+  }) => Promise<ToolResponseFromToolFunction>;
+
+  /**
+   * List files and directories within the specified directory.
+   * @param args.path The path of the directory to list contents for.
+   * @param args.recursive Whether to list files recursively.
+   * @param args.limit The maximum number of files to list.
+   * @param args.updateStatus A function to update the status of the listing.
+   * @returns The list of files and directories as a string.
+   */
+  listFiles: (args: {
+    path: string;
+    recursive?: boolean;
+    limit?: number;
+    updateStatus?: (status: string) => void;
+  }) => Promise<ToolResponseFromToolFunction>;
 };
