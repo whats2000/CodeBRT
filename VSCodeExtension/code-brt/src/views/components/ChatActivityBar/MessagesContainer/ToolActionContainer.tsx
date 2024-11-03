@@ -28,10 +28,7 @@ import type {
 } from '../../../../types';
 import type { AppDispatch, RootState } from '../../../redux';
 import { useDispatch, useSelector } from 'react-redux';
-import {
-  processMessage,
-  processToolCall,
-} from '../../../redux/slices/conversationSlice';
+import { processToolCall } from '../../../redux/slices/conversationSlice';
 
 // Mapping tool names to Antd icons
 const MAP_TOOL_NAME_TO_ICON: {
@@ -51,6 +48,7 @@ const MAP_TOOL_NAME_TO_ICON: {
 };
 
 const REJECTION_REASONS = [
+  'Today is ' + new Date().toLocaleDateString(),
   'Incorrect parameters',
   'Select wrong tool',
   'Unnecessary tool usage',
@@ -60,12 +58,12 @@ const REJECTION_REASONS = [
 
 type ToolActionContainerProps = {
   entry: ConversationEntry;
-  tempIdRef: React.MutableRefObject<string | null>;
   showActionButtons?: boolean;
+  tempIdRef: React.MutableRefObject<string | null>;
 };
 
 export const ToolActionContainer = React.memo<ToolActionContainerProps>(
-  ({ entry, tempIdRef, showActionButtons }) => {
+  ({ entry, showActionButtons, tempIdRef }) => {
     const dispatch = useDispatch<AppDispatch>();
 
     const { isProcessing } = useSelector(
@@ -86,11 +84,16 @@ export const ToolActionContainer = React.memo<ToolActionContainerProps>(
       dispatch(processToolCall({ toolCall, entry }));
     };
 
-    const onReject = (reason: string, entry: ConversationEntry) => {
+    const onReject = async (reason: string, entry: ConversationEntry) => {
+      if (isProcessing || !entry.toolCalls?.[0]) {
+        return;
+      }
+
       dispatch(
-        processMessage({
-          message: `I reject the ${entry.toolCalls?.[0].toolName} tool call that was made. Reason: ${reason}`,
-          parentId: entry.id,
+        processToolCall({
+          toolCall: entry.toolCalls?.[0],
+          entry,
+          rejectByUserMessage: `I reject the ${entry.toolCalls?.[0].toolName} tool call that was made. Reason: ${reason}`,
           tempIdRef,
         }),
       );

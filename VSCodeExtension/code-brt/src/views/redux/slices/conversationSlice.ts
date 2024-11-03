@@ -9,6 +9,7 @@ import type {
   ConversationHistory,
   GetLanguageModelResponseParams,
   ToolCallEntry,
+  ToolCallResponse,
 } from '../../../types';
 import type { CallAPI } from '../../WebviewContext';
 import type { RootState } from '../store';
@@ -221,7 +222,12 @@ export const processMessage = createAsyncThunk<
 
 export const processToolCall = createAsyncThunk<
   Promise<void>,
-  { toolCall: ToolCallEntry; entry: ConversationEntry },
+  {
+    toolCall: ToolCallEntry;
+    entry: ConversationEntry;
+    rejectByUserMessage?: string;
+    tempIdRef?: React.MutableRefObject<string | null>;
+  },
   {
     state: RootState;
     extra: {
@@ -230,13 +236,24 @@ export const processToolCall = createAsyncThunk<
   }
 >(
   'conversation/processToolAction',
-  async ({ toolCall, entry }, { dispatch, getState, extra: { callApi } }) => {
+  async (
+    { toolCall, entry, rejectByUserMessage, tempIdRef },
+    { dispatch, getState, extra: { callApi } },
+  ) => {
     if (getState().conversation.isProcessing) {
       return;
     }
     dispatch(startProcessing());
     dispatch(addTempResponseEntry({ parentId: entry.id, role: 'tool' }));
-    const toolCallResponse = await callApi('approveToolCall', toolCall);
+    const toolCallResponse: ToolCallResponse = !rejectByUserMessage
+      ? await callApi('approveToolCall', toolCall)
+      : {
+          id: toolCall.id,
+          toolCallName: toolCall.toolName,
+          status: 'rejectByUser',
+          result: rejectByUserMessage,
+          create_time: Date.now(),
+        };
     const newToolCallResponseEntry = await callApi('addConversationEntry', {
       parentID: entry.id,
       role: 'tool',
@@ -247,7 +264,19 @@ export const processToolCall = createAsyncThunk<
       toolResponses: [toolCallResponse],
     } as AddConversationEntryParams);
     dispatch(replaceTempEntry(newToolCallResponseEntry));
-    dispatch(finishProcessing());
+
+    if (!rejectByUserMessage || !tempIdRef) {
+      dispatch(finishProcessing());
+      return;
+    }
+
+    // Automatically process the next response if the user rejected the tool call
+    dispatch(
+      processToolResponse({
+        entry: newToolCallResponseEntry,
+        tempIdRef,
+      }),
+    );
   },
 );
 

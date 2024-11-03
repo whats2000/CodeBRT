@@ -76,41 +76,63 @@ export const ToolResponseContainer: React.FC<ToolResponseContainerProps> = ({
   return (
     <div style={{ margin: '10px 0' }}>
       {entry.toolResponses?.map((response) => (
-        <Collapse defaultActiveKey={[]}>
-          <Panel
-            header={
-              <Space wrap={true}>
-                <span>
-                  <Tag color={response.status === 'success' ? 'green' : 'red'}>
-                    {response.status.toUpperCase()}
-                  </Tag>
-                  {response.toolCallName}
-                </span>
+        <>
+          {response.status === 'rejectByUser' ? (
+            <Space direction={'vertical'}>
+              <div>
+                <Tag color='warning'>Rejected by user</Tag>
                 <Typography.Text type='secondary'>
                   {new Date(response.create_time).toLocaleString()}
                 </Typography.Text>
-              </Space>
-            }
-            key='1'
-          >
-            <Descriptions column={1} size='small'>
-              <Descriptions.Item label='Result'>
+              </div>
+              <Typography.Paragraph>
                 {typeof response.result === 'string' ? (
-                  <Typography.Paragraph
-                    ellipsis={{
-                      rows: 2,
-                      expandable: 'collapsible',
-                    }}
-                  >
-                    {response.result}
-                  </Typography.Paragraph>
+                  response.result
                 ) : (
                   <pre>{JSON.stringify(response.result, null, 2)}</pre>
                 )}
-              </Descriptions.Item>
-            </Descriptions>
-          </Panel>
-        </Collapse>
+              </Typography.Paragraph>
+            </Space>
+          ) : (
+            <Collapse defaultActiveKey={[]}>
+              <Panel
+                header={
+                  <Space wrap={true}>
+                    <span>
+                      <Tag
+                        color={response.status === 'success' ? 'green' : 'red'}
+                      >
+                        {response.status.toUpperCase()}
+                      </Tag>
+                      {response.toolCallName}
+                    </span>
+                    <Typography.Text type='secondary'>
+                      {new Date(response.create_time).toLocaleString()}
+                    </Typography.Text>
+                  </Space>
+                }
+                key='1'
+              >
+                <Descriptions column={1} size='small'>
+                  <Descriptions.Item label='Result'>
+                    {typeof response.result === 'string' ? (
+                      <Typography.Paragraph
+                        ellipsis={{
+                          rows: 2,
+                          expandable: 'collapsible',
+                        }}
+                      >
+                        {response.result}
+                      </Typography.Paragraph>
+                    ) : (
+                      <pre>{JSON.stringify(response.result, null, 2)}</pre>
+                    )}
+                  </Descriptions.Item>
+                </Descriptions>
+              </Panel>
+            </Collapse>
+          )}
+        </>
       ))}
 
       {!entry.toolResponses && <ToolStatusBlock status={toolStatus} />}

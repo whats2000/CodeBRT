@@ -26,7 +26,7 @@ export type ToolCallResponse = {
   id: string;
   toolCallName: string;
   result: Record<string, any> | string;
-  status: 'success' | 'error';
+  status: 'success' | 'error' | 'rejectByUser';
   create_time: number;
 };
 
