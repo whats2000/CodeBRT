@@ -340,10 +340,13 @@ export class AnthropicService extends AbstractLanguageModelService {
 
       const latestModels: string[] = [];
       rows.each((_index, row) => {
-        const modelCode = htmlData(row).find('td:nth-child(2) code').text();
-        if (modelCode) {
-          latestModels.push(modelCode);
-        }
+        const modelCodes = htmlData(row).find('td:nth-child(2) code');
+        modelCodes.each((_codeIndex, codeElement) => {
+          const modelCode = htmlData(codeElement).text().trim();
+          if (modelCode) {
+            latestModels.push(modelCode);
+          }
+        });
       });
 
       // Filter the invalid models from the available models

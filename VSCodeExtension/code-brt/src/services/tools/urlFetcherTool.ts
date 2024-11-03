@@ -8,6 +8,13 @@ const postProcessUrlContent = (
   content: string,
   format: 'text' | 'json',
 ): ToolResponseFromToolFunction => {
+  if (content.length === 0) {
+    return {
+      status: 'error',
+      result: 'No content found at the URL. Might need to try a different URL.',
+    };
+  }
+
   if (format === 'json') {
     return {
       status: 'success',
