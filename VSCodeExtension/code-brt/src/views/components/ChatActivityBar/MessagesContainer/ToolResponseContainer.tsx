@@ -1,10 +1,21 @@
 import React, { useEffect, useRef } from 'react';
-import { Collapse, Tag, Descriptions, Typography, Space, Button } from 'antd';
+import {
+  Collapse,
+  Tag,
+  Descriptions,
+  Typography,
+  Space,
+  Button,
+  Popover,
+} from 'antd';
 import { useDispatch, useSelector } from 'react-redux';
 
 import type { ConversationEntry } from '../../../../types';
 import { ToolStatusBlock } from '../../common/ToolStatusBlock';
-import { processToolResponse } from '../../../redux/slices/conversationSlice';
+import {
+  processToolCall,
+  processToolResponse,
+} from '../../../redux/slices/conversationSlice';
 import type { AppDispatch, RootState } from '../../../redux';
 
 const { Panel } = Collapse;
@@ -45,8 +56,21 @@ export const ToolResponseContainer: React.FC<ToolResponseContainerProps> = ({
     console.log('Rolling back changes');
   };
 
-  const onRerun = (_entry: ConversationEntry) => {
-    console.log('Rerunning the tool');
+  const onRerun = (entry: ConversationEntry) => {
+    if (!entry.parent) {
+      return;
+    }
+    const previousEntry = conversationHistory.entries[entry.parent];
+    const previousToolCall = previousEntry?.toolCalls?.[0];
+    if (!previousToolCall) {
+      return;
+    }
+    dispatch(
+      processToolCall({
+        toolCall: previousToolCall,
+        entry: previousEntry,
+      }),
+    );
   };
 
   return (
@@ -103,9 +127,13 @@ export const ToolResponseContainer: React.FC<ToolResponseContainerProps> = ({
               >
                 Continue
               </Button>
-              <Button type='default' danger onClick={() => onRollBack(entry)}>
-                Rollback
-              </Button>
+              <Popover
+                title={'This feature will be add after agent is implemented'}
+              >
+                <Button type='default' danger onClick={() => onRollBack(entry)}>
+                  Rollback
+                </Button>
+              </Popover>
             </Space>
           )}
           {entry.toolResponses?.[0].status === 'error' && (

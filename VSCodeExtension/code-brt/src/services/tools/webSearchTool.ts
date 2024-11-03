@@ -13,12 +13,16 @@ const postProcessResults = (
   results: { title: string; url: string; snippet: string }[],
   format: 'text' | 'json',
 ): string => {
+  if (results.length === 0) {
+    return '';
+  }
+
   if (format === 'json') {
     return JSON.stringify(results, null, 2);
   }
 
   return (
-    'Web Search Results is at below, please answer and provide reference links:\n\n' +
+    'Web Search Results is at below, please answer and provide reference links with markdown:\n\n' +
     results
       .map(
         (result) =>
@@ -32,7 +36,7 @@ export const webSearchTool: ToolServicesApi['webSearch'] = async ({
   query,
   numResults = 4,
   maxCharsPerPage = 6000,
-  format = 'json',
+  format = 'text',
   updateStatus,
 }) => {
   const term = query;
@@ -87,8 +91,9 @@ export const webSearchTool: ToolServicesApi['webSearch'] = async ({
     }
   } catch (error) {
     console.error('Failed to search the web:', error);
+  } finally {
+    updateStatus?.('');
   }
 
-  updateStatus?.('');
   return postProcessResults(allResults, format);
 };

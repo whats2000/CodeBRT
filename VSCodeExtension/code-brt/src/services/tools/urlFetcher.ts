@@ -42,10 +42,11 @@ export const urlFetcherTool: ToolServicesApi['urlFetcher'] = async ({
         ? visibleText.substring(0, maxCharsPerPage)
         : visibleText;
 
-    updateStatus?.('');
     return postProcessUrlContent(truncatedText, format);
   } catch (error) {
     console.error('Failed to fetch the URL:', error);
-    return 'Failed to fetch the URL content.';
+    return '';
+  } finally {
+    updateStatus?.('');
   }
 };
