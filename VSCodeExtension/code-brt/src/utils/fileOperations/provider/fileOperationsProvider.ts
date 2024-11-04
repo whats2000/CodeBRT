@@ -1,10 +1,12 @@
 import vscode from 'vscode';
 
 import { ViewKey } from '../../../views';
-import { uploadFile } from '../uploadFile';
-import { getWebviewUri } from '../getWebviewUri';
 import { deleteFile } from '../deleteFile';
+import { getWebviewUri } from '../getWebviewUri';
 import { listFiles } from '../listFiles';
+import { uploadFile } from '../uploadFile';
+import { writeToFile } from '../writeToFIle';
+import { readFile } from '../readFile';
 
 export abstract class FileOperationsProvider {
   /**
@@ -55,5 +57,19 @@ export abstract class FileOperationsProvider {
     limit: number,
   ): Promise<{ limitReached: boolean; filesList: string[] }> {
     return listFiles(dirPath, recursive, limit);
+  }
+
+  static async writeToFile(
+    filePath: string,
+    content: string,
+    overwrite = false,
+  ): Promise<{ status: 'success' | 'error'; message: string }> {
+    return writeToFile(filePath, content, overwrite);
+  }
+
+  static async readFile(
+    filePath: string,
+  ): Promise<{ status: 'success' | 'error'; message: string }> {
+    return readFile(filePath);
   }
 }

@@ -12,6 +12,8 @@ import { getToolSchema, getToolSchemaWithoutWorkspace } from '../utils';
 import { webSearchTool } from '../webSearchTool';
 import { urlFetcherTool } from '../urlFetcherTool';
 import { listFilesTool } from '../listFilesTool';
+import { writeToFileTool } from '../writeToFileTool';
+import { readFileTool } from '../readFileTool';
 
 export class ToolServiceProvider {
   private static readonly toolServices: {
@@ -27,12 +29,8 @@ export class ToolServiceProvider {
       executeCommand: () => {
         throw new Error('Not implemented');
       },
-      readFile: () => {
-        throw new Error('Not implemented');
-      },
-      writeToFile: () => {
-        throw new Error('Not implemented');
-      },
+      readFile: readFileTool,
+      writeToFile: writeToFileTool,
       searchFiles: () => {
         throw new Error('Not implemented');
       },

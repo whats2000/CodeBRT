@@ -17,21 +17,6 @@ export type ToolServicesApi = {
    * Either 'text' as a document like or 'json' as JSON string.
    * @param args.updateStatus A function to update the status of the search.
    * @returns The search results as a string.
-   * @example Example response:
-   *
-   * **Title**:
-   * Example Title
-   * **URL**:
-   * https://example.com
-   * **Snippet**:
-   * This is an example snippet.
-   *
-   * **Title**:
-   * Another Example Title
-   * **URL**:
-   * https://example.com/another
-   * **Snippet**:
-   * This is another example snippet.
    */
   webSearch: (args: {
     query: string;
@@ -69,6 +54,29 @@ export type ToolServicesApi = {
     relativePath: string;
     recursive?: boolean;
     limit?: number;
+    updateStatus?: (status: string) => void;
+  }) => Promise<ToolResponseFromToolFunction>;
+
+  /**
+   * List the names of code definitions in the specified file.
+   * @param args.relativePath The relative path of the file to list code definitions from.
+   * @param args.updateStatus A function to update the status of the listing.
+   * @returns The list of code definitions as a string.
+   */
+  writeToFile: (args: {
+    relativePath: string;
+    content: string;
+    updateStatus?: (status: string) => void;
+  }) => Promise<ToolResponseFromToolFunction>;
+
+  /**
+   * Read the content of the specified file.
+   * @param args.relativeFilePath The relative path of the file to read content from.
+   * @param args.updateStatus A function to update the status of the reading.
+   * @returns The content of the file as a string.
+   */
+  readFile: (args: {
+    relativeFilePath: string;
     updateStatus?: (status: string) => void;
   }) => Promise<ToolResponseFromToolFunction>;
 };

@@ -3,14 +3,7 @@ import fs from 'node:fs/promises';
 
 import vscode from 'vscode';
 
-const fileExists = async (filePath: string): Promise<boolean> => {
-  try {
-    await fs.access(filePath);
-    return true;
-  } catch {
-    return false;
-  }
-};
+import { fileExists } from './utils';
 
 export const uploadFile = async (
   ctx: vscode.ExtensionContext,
