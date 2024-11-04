@@ -1,5 +1,4 @@
 import * as vscode from 'vscode';
-import fs from 'fs';
 import {
   Content,
   FunctionCall,
@@ -23,7 +22,7 @@ import type {
   ResponseWithAction,
   ToolSchema,
 } from '../../types';
-import { mapFunctionDeclarationSchemaType } from './utils';
+import { fileToBase64, mapFunctionDeclarationSchemaType } from './utils';
 import { AbstractLanguageModelService } from './base';
 import { HistoryManager, SettingsManager } from '../../api';
 import { ToolServiceProvider } from '../tools';
@@ -262,15 +261,19 @@ export class GeminiService extends AbstractLanguageModelService {
     };
   }
 
-  private createQueryParts(query: string, images?: string[]): Part[] {
+  private async createQueryParts(
+    query: string,
+    images?: string[],
+  ): Promise<Part[]> {
     let parts: Part[] = [{ text: query }];
 
     if (images) {
-      const imageParts = images
-        .map((image) =>
-          this.fileToGenerativePart(image, `image/${image.split('.').pop()}`),
-        )
-        .filter((part) => part !== undefined) as InlineDataPart[];
+      const imageParts = await Promise.all(
+        images.map(async (image) => await this.fileToGenerativePart(image)),
+      ).then(
+        (parts) =>
+          parts.filter((part) => part !== undefined) as InlineDataPart[],
+      );
 
       parts = [...parts, ...imageParts];
     }
@@ -278,15 +281,21 @@ export class GeminiService extends AbstractLanguageModelService {
     return parts;
   }
 
-  private fileToGenerativePart(
+  private async fileToGenerativePart(
     path: string,
-    mimeType: string,
-  ): InlineDataPart | undefined {
+  ): Promise<InlineDataPart | undefined> {
+    const result = await fileToBase64(path);
+
+    if (!result) {
+      return undefined;
+    }
+
+    const { base64Data, mimeType } = result;
+
     try {
-      const buffer = Buffer.from(fs.readFileSync(path)).toString('base64');
       return {
         inlineData: {
-          data: buffer,
+          data: base64Data,
           mimeType,
         },
       };
@@ -375,7 +384,7 @@ export class GeminiService extends AbstractLanguageModelService {
         historyManager,
       );
 
-    let queryParts = this.createQueryParts(query, images);
+    let queryParts = await this.createQueryParts(query, images);
 
     if (functionResponses.length > 0) {
       queryParts = functionResponses;

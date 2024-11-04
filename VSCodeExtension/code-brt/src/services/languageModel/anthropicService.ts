@@ -1,4 +1,3 @@
-import fs from 'fs';
 import path from 'path';
 
 import vscode from 'vscode';
@@ -28,6 +27,7 @@ import {
 import { HistoryManager, SettingsManager } from '../../api';
 import { AbstractLanguageModelService } from './base';
 import { ToolServiceProvider } from '../tools';
+import { fileToBase64 } from './utils';
 
 export class AnthropicService extends AbstractLanguageModelService {
   private currentStreamResponse: MessageStream | undefined;
@@ -219,12 +219,31 @@ export class AnthropicService extends AbstractLanguageModelService {
     return result;
   }
 
-  private fileToImagePart(
+  private async fileToImagePart(
     filePath: string,
-    mimeType: 'image/jpeg' | 'image/png' | 'image/gif' | 'image/webp',
-  ): ImageBlockParam | undefined {
+  ): Promise<ImageBlockParam | undefined> {
     try {
-      const base64Data = fs.readFileSync(filePath).toString('base64');
+      const result = await fileToBase64(filePath);
+
+      if (!result) {
+        return undefined;
+      }
+
+      const { base64Data, mimeType } = result;
+
+      if (
+        mimeType !== 'image/jpeg' &&
+        mimeType !== 'image/png' &&
+        mimeType !== 'image/gif' &&
+        mimeType !== 'image/webp'
+      ) {
+        void vscode.window.showErrorMessage(
+          `Unsupported image file type: ${mimeType}`,
+        );
+
+        return undefined;
+      }
+
       return {
         type: 'image',
         source: {
@@ -238,17 +257,17 @@ export class AnthropicService extends AbstractLanguageModelService {
     }
   }
 
-  private initModel(
+  private async initModel(
     query: string,
     historyManager: HistoryManager,
     currentEntryID?: string,
     images?: string[],
     toolCallResponse?: ToolCallResponse,
-  ): {
+  ): Promise<{
     anthropic: Anthropic;
     conversationHistory: MessageParam[];
     errorMessage?: string;
-  } {
+  }> {
     const anthropic = new Anthropic({
       apiKey: this.settingsManager.get('anthropicApiKey'),
     });
@@ -295,16 +314,17 @@ export class AnthropicService extends AbstractLanguageModelService {
     }
 
     // Append the images to last message
-    const imageParts = images
-      .map((image) => {
-        const mimeType = `image/${path.extname(image).slice(1)}` as
-          | 'image/jpeg'
-          | 'image/png'
-          | 'image/gif'
-          | 'image/webp';
-        return this.fileToImagePart(image, mimeType);
-      })
-      .filter((part) => part !== undefined) as ImageBlockParam[];
+    const imageParts = await Promise.all(
+      images.map(async (image) => {
+        const imagePart = await this.fileToImagePart(image);
+        if (!imagePart) {
+          return undefined;
+        }
+        return imagePart;
+      }),
+    ).then((parts) =>
+      parts.filter((part): part is ImageBlockParam => part !== undefined),
+    );
 
     (
       conversationHistory[conversationHistory.length - 1].content as (
@@ -384,13 +404,14 @@ export class AnthropicService extends AbstractLanguageModelService {
       toolCallResponse,
     } = options;
 
-    const { anthropic, conversationHistory, errorMessage } = this.initModel(
-      query,
-      historyManager,
-      currentEntryID,
-      images,
-      toolCallResponse,
-    );
+    const { anthropic, conversationHistory, errorMessage } =
+      await this.initModel(
+        query,
+        historyManager,
+        currentEntryID,
+        images,
+        toolCallResponse,
+      );
 
     if (errorMessage) {
       return { textResponse: errorMessage };

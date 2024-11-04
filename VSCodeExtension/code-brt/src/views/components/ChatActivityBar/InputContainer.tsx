@@ -93,11 +93,11 @@ export const InputContainer = React.memo<InputContainerProps>(
     const isToolResponse = currentEntry?.role === 'tool';
 
     const sendMessage = async () => {
-      // If current entry is a tool response, we need to prevent sending message from the input
+      // If the current entry is a tool response, we need to prevent a sending message from the input
       if (isToolResponse) {
         return;
       }
-      const toolCall = currentEntry.toolCalls?.[0];
+      const toolCall = currentEntry?.toolCalls?.[0];
 
       if (toolCall) {
         // If the current entry is a tool call.

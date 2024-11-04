@@ -1,6 +1,3 @@
-import path from 'path';
-import fs from 'fs';
-
 import vscode from 'vscode';
 
 import {
@@ -21,6 +18,7 @@ import {
 import { HistoryManager } from '../../../api';
 import { AbstractLanguageModelService } from './abstractLanguageModelService';
 import { ToolServiceProvider } from '../../tools';
+import { fileToBase64 } from '../utils';
 
 export abstract class AbstractOpenaiLikeService extends AbstractLanguageModelService {
   protected stopStreamFlag: boolean = false;
@@ -95,12 +93,17 @@ export abstract class AbstractOpenaiLikeService extends AbstractLanguageModelSer
     return tools.length > 0 ? tools : undefined;
   }
 
-  private fileToGenerativePart(
+  private async fileToContentPartImage(
     filePath: string,
-    mimeType: string,
-  ): ChatCompletionContentPartImageOpenaiLike | undefined {
+  ): Promise<ChatCompletionContentPartImageOpenaiLike | undefined> {
     try {
-      const base64Data = fs.readFileSync(filePath).toString('base64');
+      const result = await fileToBase64(filePath);
+
+      if (!result) {
+        return undefined;
+      }
+
+      const { base64Data, mimeType } = result;
       return {
         type: 'image_url',
         image_url: {
@@ -269,14 +272,13 @@ export abstract class AbstractOpenaiLikeService extends AbstractLanguageModelSer
     }
 
     if (images && images.length > 0 && !toolCallResponse) {
-      const imageParts = images
-        .map((image) => {
-          const mimeType = `image/${path.extname(image).slice(1)}`;
-          return this.fileToGenerativePart(image, mimeType);
-        })
-        .filter(
-          (part) => part !== undefined,
-        ) as ChatCompletionContentPartImageOpenaiLike[];
+      const imageParts = (await Promise.all(
+        images.map(async (image) => {
+          return await this.fileToContentPartImage(image);
+        }),
+      ).then((parts) =>
+        parts.filter((part) => part !== undefined),
+      )) as ChatCompletionContentPartImageOpenaiLike[];
 
       result[result.length - 1] = {
         role: 'user',
