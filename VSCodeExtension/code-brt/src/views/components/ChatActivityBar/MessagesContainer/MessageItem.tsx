@@ -2,12 +2,10 @@ import React, { useEffect, useState } from 'react';
 import type { GlobalToken } from 'antd';
 import { theme } from 'antd';
 import styled from 'styled-components';
-import { useDispatch, useSelector } from 'react-redux';
-import * as hljs from 'react-syntax-highlighter/dist/cjs/styles/hljs';
+import { useSelector } from 'react-redux';
 
 import type { ConversationEntry } from '../../../../types';
-import type { AppDispatch, RootState } from '../../../redux';
-import { updateAndSaveSetting } from '../../../redux/slices/settingsSlice';
+import type { RootState } from '../../../redux';
 import { TopToolBar } from './TopToolBar';
 import { TextEditContainer } from './TextEditContainer';
 import { TextContainer } from './TextContainer';
@@ -97,17 +95,9 @@ export const MessageItem = React.memo<MessageItemProps>(
 
     const [editedMessage, setEditedMessage] = useState(entry.message);
 
-    const dispatch = useDispatch<AppDispatch>();
     const conversationHistory = useSelector(
       (rootState: RootState) => rootState.conversation,
     );
-    const { settings } = useSelector(
-      (rootState: RootState) => rootState.settings,
-    );
-
-    const setHljsTheme = (theme: keyof typeof hljs) => {
-      dispatch(updateAndSaveSetting({ key: 'hljsTheme', value: theme }));
-    };
 
     useEffect(() => {
       setEditedMessage(entry.message);
@@ -164,8 +154,6 @@ export const MessageItem = React.memo<MessageItemProps>(
             entry={entry}
             isProcessing={conversationHistory.isProcessing}
             conversationHistoryCurrent={conversationHistory.current}
-            hljsTheme={settings.hljsTheme}
-            setHljsTheme={setHljsTheme}
             toolStatus={toolStatus}
           />
           <ImageContainer entry={entry} />

@@ -1,21 +1,16 @@
 import React, { useEffect, useState } from 'react';
 import ReactMarkdown from 'react-markdown';
-import * as hljs from 'react-syntax-highlighter/dist/cjs/styles/hljs';
 
-import { RendererCode, RendererCodeProvider } from './RenderCode';
+import { RendererCode } from './RenderCode';
 
 type TypingAnimationProps = {
   message: string;
   isProcessing: boolean;
-  hljsTheme: keyof typeof hljs;
-  setHljsTheme: (theme: keyof typeof hljs) => void;
 };
 
 export const TypingAnimation: React.FC<TypingAnimationProps> = ({
   message,
   isProcessing,
-  hljsTheme,
-  setHljsTheme,
 }) => {
   const [displayedMessage, setDisplayedMessage] = useState(message);
 
@@ -41,10 +36,6 @@ export const TypingAnimation: React.FC<TypingAnimationProps> = ({
   }, [displayedMessage, message, isProcessing]);
 
   return (
-    <RendererCodeProvider value={{ hljsTheme, setHljsTheme }}>
-      <ReactMarkdown components={RendererCode}>
-        {displayedMessage}
-      </ReactMarkdown>
-    </RendererCodeProvider>
+    <ReactMarkdown components={RendererCode}>{displayedMessage}</ReactMarkdown>
   );
 };

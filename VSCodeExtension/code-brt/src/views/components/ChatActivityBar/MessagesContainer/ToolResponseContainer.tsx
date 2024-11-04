@@ -80,7 +80,7 @@ export const ToolResponseContainer: React.FC<ToolResponseContainerProps> = ({
           {response.status === 'rejectByUser' ? (
             <Space direction={'vertical'}>
               <div>
-                <Tag color='warning'>Rejected by user</Tag>
+                <Tag color='warning'>Feedback From User</Tag>
                 <Typography.Text type='secondary'>
                   {new Date(response.create_time).toLocaleString()}
                 </Typography.Text>

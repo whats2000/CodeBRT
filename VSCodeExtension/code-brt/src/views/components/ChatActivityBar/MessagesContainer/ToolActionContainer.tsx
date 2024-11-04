@@ -25,10 +25,13 @@ import type {
   ConversationEntry,
   WorkspaceToolType,
   NonWorkspaceToolType,
+  ToolCallEntry,
 } from '../../../../types';
 import type { AppDispatch, RootState } from '../../../redux';
 import { useDispatch, useSelector } from 'react-redux';
 import { processToolCall } from '../../../redux/slices/conversationSlice';
+import ReactMarkdown from 'react-markdown';
+import { RendererCode } from '../../common/RenderCode';
 
 // Mapping tool names to Antd icons
 const MAP_TOOL_NAME_TO_ICON: {
@@ -106,6 +109,23 @@ export const ToolActionContainer = React.memo<ToolActionContainerProps>(
         onClick: () => onReject(reason, entry),
       }));
 
+    const warpWithCode = (
+      toolCall: ToolCallEntry,
+      key: string,
+      renderString: string,
+    ) => {
+      if (toolCall.toolName !== 'writeToFile' || key !== 'content') {
+        return renderString;
+      }
+      const fileType = (toolCall.parameters['relativePath'] as string)
+        ?.split('.')
+        .pop();
+      if (!fileType) {
+        return renderString;
+      }
+      return `\`\`\`${fileType}\n${renderString}\n\`\`\``;
+    };
+
     return (
       <div style={{ margin: '10px 0' }}>
         {entry.toolCalls?.map((toolCall) => (
@@ -137,11 +157,19 @@ export const ToolActionContainer = React.memo<ToolActionContainerProps>(
                 <Descriptions column={1} size='small'>
                   {Object.entries(toolCall.parameters).map(([key, value]) => (
                     <Descriptions.Item key={key} label={key}>
-                      <Typography.Paragraph
-                        ellipsis={{ rows: 2, expandable: 'collapsible' }}
-                      >
-                        {JSON.stringify(value)}
-                      </Typography.Paragraph>
+                      {typeof value === 'string' ? (
+                        <div style={{ width: '100%' }}>
+                          <ReactMarkdown components={RendererCode}>
+                            {warpWithCode(toolCall, key, value)}
+                          </ReactMarkdown>
+                        </div>
+                      ) : (
+                        <Typography.Paragraph
+                          ellipsis={{ rows: 2, expandable: 'collapsible' }}
+                        >
+                          <pre>{JSON.stringify(value, null, 2)}</pre>
+                        </Typography.Paragraph>
+                      )}
                     </Descriptions.Item>
                   ))}
                 </Descriptions>

@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState } from 'react';
+import React, { useState } from 'react';
 import SyntaxHighlighter from 'react-syntax-highlighter';
 import * as hljs from 'react-syntax-highlighter/dist/cjs/styles/hljs';
 import { Button, Flex, Select } from 'antd';
@@ -6,6 +6,9 @@ import { BgColorsOutlined } from '@ant-design/icons';
 import styled from 'styled-components';
 
 import { CopyButton } from './CopyButton';
+import { updateAndSaveSetting } from '../../redux/slices/settingsSlice';
+import { AppDispatch, RootState } from '../../redux';
+import { useDispatch, useSelector } from 'react-redux';
 
 const CodeContainer = styled.div<{ $dynamicStyle: React.CSSProperties }>`
   border-radius: 4px !important;
@@ -48,35 +51,21 @@ const OtherCodeBlock = styled.code`
   overflow-x: scroll;
 `;
 
-type RenderCodeProviderProps = {
-  value: {
-    hljsTheme: keyof typeof hljs;
-    setHljsTheme: (theme: keyof typeof hljs) => void;
-  };
-  children: React.ReactNode;
-};
-
-const RendererCodeContext = createContext({
-  hljsTheme: 'darcula' as keyof typeof hljs,
-  setHljsTheme: (_theme: keyof typeof hljs) => {},
-});
-
-export const RendererCodeProvider: React.FC<RenderCodeProviderProps> = ({
-  value,
-  children,
-}) => {
-  return (
-    <RendererCodeContext.Provider value={value}>
-      {children}
-    </RendererCodeContext.Provider>
-  );
-};
-
 export const RendererCode: { [nodeType: string]: React.ElementType } = {
   code: ({ node, inline, className, children, ...props }) => {
     const [copied, setCopied] = useState(false);
     const [showSetting, setShowSetting] = useState(false);
-    const { hljsTheme, setHljsTheme } = useContext(RendererCodeContext);
+
+    const dispatch = useDispatch<AppDispatch>();
+
+    const setHljsTheme = (theme: keyof typeof hljs) => {
+      dispatch(updateAndSaveSetting({ key: 'hljsTheme', value: theme }));
+    };
+
+    const { hljsTheme } = useSelector(
+      (rootState: RootState) => rootState.settings.settings,
+    );
+
     const match = /language-(\w+)/.exec(className || '');
 
     const hljsStyle = hljs[hljsTheme];
