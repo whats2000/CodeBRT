@@ -14,6 +14,8 @@ export const writeToFileTool: ToolServicesApi['writeToFile'] = async ({
     true,
   );
 
+  updateStatus?.('');
+
   if (status === 'error') {
     return { status: 'error', result: message };
   }
