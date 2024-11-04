@@ -91,12 +91,12 @@ export const readFileSchema = (currentWorkspacePath: string): ToolSchema => ({
   inputSchema: {
     type: 'object',
     properties: {
-      filePath: {
+      relativeFilePath: {
         type: 'string',
         description: `The path of the file to read (relative to the current working directory ${currentWorkspacePath})`,
       },
     },
-    required: ['filePath'],
+    required: ['relativeFilePath'],
   },
 });
 
@@ -112,7 +112,7 @@ export const writeToFileSchema = (
   inputSchema: {
     type: 'object',
     properties: {
-      path: {
+      relativePath: {
         type: 'string',
         description: `The path of the file to write to (relative to the current working directory ${currentWorkspacePath})`,
       },
@@ -121,7 +121,7 @@ export const writeToFileSchema = (
         description: 'The full content to write to the file.',
       },
     },
-    required: ['path', 'content'],
+    required: ['relativePath', 'content'],
   },
 });
 
@@ -135,7 +135,7 @@ export const searchFilesSchema = (
   inputSchema: {
     type: 'object',
     properties: {
-      path: {
+      relativePath: {
         type: 'string',
         description:
           `The path of the directory to search in (relative to the current working directory ${currentWorkspacePath}). ` +
@@ -153,7 +153,7 @@ export const searchFilesSchema = (
           'If not provided, it will search all files (*).',
       },
     },
-    required: ['path', 'regex'],
+    required: ['relativePath', 'regex'],
   },
 });
 
@@ -191,12 +191,12 @@ export const listCodeDefinitionNamesSchema = (
   inputSchema: {
     type: 'object',
     properties: {
-      path: {
+      relativePath: {
         type: 'string',
         description: `The path of the directory (relative to the current working directory ${currentWorkspacePath}) to list top level source code definitions for`,
       },
     },
-    required: ['path'],
+    required: ['relativePath'],
   },
 });
 
