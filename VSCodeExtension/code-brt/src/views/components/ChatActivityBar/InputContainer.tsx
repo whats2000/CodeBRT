@@ -19,7 +19,10 @@ import {
 } from '../../redux/slices/fileUploadSlice';
 import { CancelOutlined } from '../../icons';
 import { INPUT_MESSAGE_KEY } from 'src/constants';
-import { processMessage } from '../../redux/slices/conversationSlice';
+import {
+  processMessage,
+  processToolCall,
+} from '../../redux/slices/conversationSlice';
 
 const StyledInputContainer = styled.div`
   display: flex;
@@ -85,12 +88,30 @@ export const InputContainer = React.memo<InputContainerProps>(
 
     const resetEnterPressCount = () => setEnterPressCount(0);
 
-    const isToolResponse =
-      conversationHistory.entries[conversationHistory.current]?.role === 'tool';
+    const currentEntry =
+      conversationHistory.entries[conversationHistory.current];
+    const isToolResponse = currentEntry?.role === 'tool';
 
     const sendMessage = async () => {
       // If current entry is a tool response, we need to prevent sending message from the input
       if (isToolResponse) {
+        return;
+      }
+      const toolCall = currentEntry.toolCalls?.[0];
+
+      if (toolCall) {
+        // If the current entry is a tool call.
+        // We use response for the tool call instead of the input message
+        dispatch(
+          processToolCall({
+            toolCall: toolCall,
+            entry: currentEntry,
+            rejectByUserMessage: `For the ${toolCall.toolName} tool call that was made. ${inputMessage}`,
+            tempIdRef,
+          }),
+        );
+        setInputMessage('');
+        localStorage.setItem(INPUT_MESSAGE_KEY, '');
         return;
       }
 
