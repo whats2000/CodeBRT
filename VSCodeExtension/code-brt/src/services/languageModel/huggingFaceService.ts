@@ -108,10 +108,12 @@ export class HuggingFaceService extends AbstractLanguageModelService {
     entries: { [key: string]: ConversationEntry },
     query: string,
     historyManager: HistoryManager,
+    currentEntryID?: string,
     toolCallResponse?: ToolCallResponse,
   ): ChatCompletionInputMessage[] {
     const result: ChatCompletionInputMessage[] = [];
-    let currentEntry = entries[historyManager.getCurrentHistory().current];
+    let currentEntry =
+      entries[currentEntryID ?? historyManager.getCurrentHistory().current];
 
     while (currentEntry) {
       switch (currentEntry.role) {
@@ -276,6 +278,7 @@ export class HuggingFaceService extends AbstractLanguageModelService {
       historyManager.getHistoryBeforeEntry(currentEntryID).entries,
       query,
       historyManager,
+      currentEntryID,
       toolCallResponse,
     );
 

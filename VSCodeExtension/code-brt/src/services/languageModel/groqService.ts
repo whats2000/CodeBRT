@@ -122,6 +122,7 @@ export class GroqService extends AbstractOpenaiLikeService {
       historyManager.getHistoryBeforeEntry(currentEntryID).entries,
       query,
       historyManager,
+      currentEntryID,
       undefined,
       toolCallResponse,
     );

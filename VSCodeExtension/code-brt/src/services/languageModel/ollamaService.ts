@@ -108,11 +108,13 @@ export class OllamaService extends AbstractLanguageModelService {
     },
     query: string,
     historyManager: HistoryManager,
+    currentEntryID?: string,
     images?: string[],
     toolCallResponse?: ToolCallResponse,
   ): Promise<Message[]> {
     const result: Message[] = [];
-    let currentEntry = entries[historyManager.getCurrentHistory().current];
+    let currentEntry =
+      entries[currentEntryID ?? historyManager.getCurrentHistory().current];
 
     while (currentEntry) {
       switch (currentEntry.role) {
@@ -207,7 +209,8 @@ export class OllamaService extends AbstractLanguageModelService {
           return recentlyModifiedModel;
         }
 
-        // As the ollama service will unload the model after 5 min, we use the last selected model as the running model
+        // As the ollama service will unload the model after 5 min,
+        // We use the last selected model as the running model
         return this.runningModel;
       })
       .catch((error) => {
@@ -259,6 +262,7 @@ export class OllamaService extends AbstractLanguageModelService {
       historyManager.getHistoryBeforeEntry(currentEntryID).entries,
       query,
       historyManager,
+      currentEntryID,
       images,
       toolCallResponse,
     );
@@ -288,7 +292,7 @@ export class OllamaService extends AbstractLanguageModelService {
         latestModels.some((model) => model.name === name),
       );
 
-      // Append the models to the available models if they are not already there
+      // Append the models to the available models if they aren't already there
       latestModels.forEach((model) => {
         if (newAvailableModelNames.includes(model.name)) return;
 

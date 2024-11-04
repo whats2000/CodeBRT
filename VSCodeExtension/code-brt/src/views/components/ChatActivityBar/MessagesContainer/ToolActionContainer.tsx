@@ -156,18 +156,21 @@ export const ToolActionContainer = React.memo<ToolActionContainerProps>(
               >
                 <Descriptions column={1} size='small'>
                   {Object.entries(toolCall.parameters).map(([key, value]) => (
-                    <Descriptions.Item key={key} label={key}>
-                      {typeof value === 'string' ? (
-                        <div style={{ width: '100%' }}>
-                          <ReactMarkdown components={RendererCode}>
-                            {warpWithCode(toolCall, key, value)}
-                          </ReactMarkdown>
-                        </div>
+                    <Descriptions.Item
+                      key={key}
+                      label={key}
+                      style={{ width: '100%' }}
+                    >
+                      {typeof value === 'string' &&
+                      (key == 'content' || key == 'question') ? (
+                        <ReactMarkdown components={RendererCode}>
+                          {warpWithCode(toolCall, key, value)}
+                        </ReactMarkdown>
                       ) : (
                         <Typography.Paragraph
                           ellipsis={{ rows: 2, expandable: 'collapsible' }}
                         >
-                          <pre>{JSON.stringify(value, null, 2)}</pre>
+                          {JSON.stringify(value, null, 2)}
                         </Typography.Paragraph>
                       )}
                     </Descriptions.Item>

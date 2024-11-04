@@ -300,6 +300,13 @@ export const processToolResponse = createAsyncThunk<
       return;
     }
 
+    if (!entry.toolResponses?.[0]) {
+      callApi('alertMessage', 'No tool response to process', 'error').catch(
+        console.error,
+      );
+      return;
+    }
+
     dispatch(startProcessing());
     dispatch(addTempResponseEntry({ parentId: entry.id, role: 'AI' }));
     try {
@@ -309,6 +316,7 @@ export const processToolResponse = createAsyncThunk<
         useStream: true,
         showStatus: true,
         toolCallResponse: entry.toolResponses?.[0],
+        currentEntryID: entry.id,
       } as GetLanguageModelResponseParams);
 
       if (!tempIdRef.current) {

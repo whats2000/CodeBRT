@@ -129,10 +129,12 @@ export class AnthropicService extends AbstractLanguageModelService {
     entries: { [key: string]: ConversationEntry },
     query: string,
     historyManager: HistoryManager,
+    currentEntryID?: string,
     toolCallResponse?: ToolCallResponse,
   ): MessageParam[] {
     const result: MessageParam[] = [];
-    let currentEntry = entries[historyManager.getCurrentHistory().current];
+    let currentEntry =
+      entries[currentEntryID ?? historyManager.getCurrentHistory().current];
 
     while (currentEntry) {
       switch (currentEntry.role) {
@@ -288,6 +290,7 @@ export class AnthropicService extends AbstractLanguageModelService {
       historyManager.getHistoryBeforeEntry(currentEntryID).entries,
       query,
       historyManager,
+      currentEntryID,
       toolCallResponse,
     );
 

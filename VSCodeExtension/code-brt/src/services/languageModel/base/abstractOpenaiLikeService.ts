@@ -192,11 +192,13 @@ export abstract class AbstractOpenaiLikeService extends AbstractLanguageModelSer
     entries: { [key: string]: ConversationEntry },
     query: string,
     historyManager: HistoryManager,
+    currentEntryID?: string,
     images?: string[],
     toolCallResponse?: ToolCallResponse,
   ): Promise<ChatCompletionMessageParamOpenaiLike[]> {
     const result: ChatCompletionMessageParamOpenaiLike[] = [];
-    let currentEntry = entries[historyManager.getCurrentHistory().current];
+    let currentEntry =
+      entries[currentEntryID ?? historyManager.getCurrentHistory().current];
 
     while (currentEntry) {
       switch (currentEntry.role) {

@@ -121,6 +121,7 @@ export class OpenAIService extends AbstractOpenaiLikeService {
       historyManager.getHistoryBeforeEntry(currentEntryID).entries,
       query,
       historyManager,
+      currentEntryID,
       images,
       toolCallResponse,
     );

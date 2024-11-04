@@ -162,9 +162,11 @@ export class CohereService extends AbstractLanguageModelService {
       [key: string]: ConversationEntry;
     },
     historyManager: HistoryManager,
+    currentEntryID?: string,
   ): { conversationHistory: Message[]; toolResults: ToolResult[] } {
     let result: Message[] = [];
-    let currentEntry = entries[historyManager.getCurrentHistory().current];
+    let currentEntry =
+      entries[currentEntryID ?? historyManager.getCurrentHistory().current];
 
     while (currentEntry) {
       switch (currentEntry.role) {
@@ -293,6 +295,7 @@ export class CohereService extends AbstractLanguageModelService {
       this.conversationHistoryToContent(
         historyManager.getHistoryBeforeEntry(currentEntryID).entries,
         historyManager,
+        currentEntryID,
       );
 
     const { systemPrompt, generationConfig } =

@@ -2,7 +2,11 @@ import React, { useState } from 'react';
 import SyntaxHighlighter from 'react-syntax-highlighter';
 import * as hljs from 'react-syntax-highlighter/dist/cjs/styles/hljs';
 import { Button, Flex, Select } from 'antd';
-import { BgColorsOutlined } from '@ant-design/icons';
+import {
+  ArrowsAltOutlined,
+  BgColorsOutlined,
+  ShrinkOutlined,
+} from '@ant-design/icons';
 import styled from 'styled-components';
 
 import { CopyButton } from './CopyButton';
@@ -51,11 +55,13 @@ const OtherCodeBlock = styled.code`
   overflow-x: scroll;
 `;
 
+const MAX_LINES = 10;
+
 export const RendererCode: { [nodeType: string]: React.ElementType } = {
   code: ({ node, inline, className, children, ...props }) => {
     const [copied, setCopied] = useState(false);
     const [showSetting, setShowSetting] = useState(false);
-
+    const [expanded, setExpanded] = useState(false);
     const dispatch = useDispatch<AppDispatch>();
 
     const setHljsTheme = (theme: keyof typeof hljs) => {
@@ -67,7 +73,6 @@ export const RendererCode: { [nodeType: string]: React.ElementType } = {
     );
 
     const match = /language-(\w+)/.exec(className || '');
-
     const hljsStyle = hljs[hljsTheme];
 
     const handleCopy = () => {
@@ -79,6 +84,12 @@ export const RendererCode: { [nodeType: string]: React.ElementType } = {
         })
         .catch((err) => console.error('Failed to copy text: ', err));
     };
+
+    const codeLines = String(children).split('\n');
+    const isExpandable = codeLines.length > MAX_LINES;
+    const displayedCode = expanded
+      ? codeLines.join('\n')
+      : codeLines.slice(0, MAX_LINES).join('\n');
 
     return !inline && match ? (
       <CodeContainer $dynamicStyle={hljsStyle.hljs}>
@@ -130,8 +141,17 @@ export const RendererCode: { [nodeType: string]: React.ElementType } = {
           PreTag='div'
           {...props}
         >
-          {String(children).replace(/\n$/, '')}
+          {displayedCode}
         </CodeBlock>
+        {isExpandable && (
+          <Button
+            icon={expanded ? <ShrinkOutlined /> : <ArrowsAltOutlined />}
+            type='text'
+            onClick={() => setExpanded(!expanded)}
+          >
+            {expanded ? 'Show Less' : 'Show More'}
+          </Button>
+        )}
       </CodeContainer>
     ) : children?.includes('\n') ? (
       <OtherCodeBlock className={className} {...props}>
