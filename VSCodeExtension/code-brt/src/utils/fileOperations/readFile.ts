@@ -5,7 +5,7 @@ import * as PdfJs from 'pdfjs-dist';
 import mammoth from 'mammoth';
 import { isBinaryFile } from 'isBinaryFile';
 
-import { fileExists } from './utils';
+import { filePathExists } from './utils';
 
 // Helper function to read PDF content
 const readPdfContent = async (
@@ -113,7 +113,7 @@ export const readFile = async (
     const absolutePath = path.resolve(filePath);
 
     // Check if the file exists
-    const isFileExists = await fileExists(absolutePath);
+    const isFileExists = await filePathExists(absolutePath);
     if (!isFileExists) {
       return {
         status: 'error',

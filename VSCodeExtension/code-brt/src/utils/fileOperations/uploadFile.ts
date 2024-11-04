@@ -3,7 +3,7 @@ import fs from 'node:fs/promises';
 
 import vscode from 'vscode';
 
-import { fileExists } from './utils';
+import { filePathExists } from './utils';
 
 export const uploadFile = async (
   ctx: vscode.ExtensionContext,
@@ -41,7 +41,7 @@ export const uploadFile = async (
   let counter = 1;
 
   // Check if a file with the same name already exists
-  while (await fileExists(fullPath)) {
+  while (await filePathExists(fullPath)) {
     fileName = `${path.basename(originalName, extension)}(${counter})${extension}`;
     fullPath = path.join(mediaDir, fileName);
     counter++;

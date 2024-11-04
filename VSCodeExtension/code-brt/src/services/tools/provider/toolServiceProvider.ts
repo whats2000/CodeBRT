@@ -14,6 +14,7 @@ import { urlFetcherTool } from '../urlFetcherTool';
 import { listFilesTool } from '../listFilesTool';
 import { writeToFileTool } from '../writeToFileTool';
 import { readFileTool } from '../readFileTool';
+import { searchFilesTool } from '../searchFilesTool';
 
 export class ToolServiceProvider {
   private static readonly toolServices: {
@@ -31,9 +32,7 @@ export class ToolServiceProvider {
       },
       readFile: readFileTool,
       writeToFile: writeToFileTool,
-      searchFiles: () => {
-        throw new Error('Not implemented');
-      },
+      searchFiles: searchFilesTool,
       listFiles: listFilesTool,
       listCodeDefinitionNames: () => {
         throw new Error('Not implemented');
@@ -60,12 +59,14 @@ export class ToolServiceProvider {
 
     const toolSchema = this.getToolSchema();
 
-    // For NonWorkspaceToolType we can directly return the schema
+    // For NonWorkspaceToolType,
+    // We can directly return the schema
     if (toolName in toolSchema && toolName !== 'agentTools') {
       return toolSchema[toolName as NonWorkspaceToolType];
     }
 
-    // For WorkspaceToolType, we need to check if the tool exists in the agentTools
+    // For WorkspaceToolType,
+    // We need to check if the tool exists in the agentTools
     if (toolSchema.agentTools && toolName in toolSchema.agentTools) {
       return toolSchema.agentTools[toolName as WorkspaceToolType];
     }

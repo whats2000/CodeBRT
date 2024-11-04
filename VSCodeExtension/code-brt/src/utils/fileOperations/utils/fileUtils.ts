@@ -1,6 +1,6 @@
 import fs from 'node:fs/promises';
 
-export const fileExists = async (filePath: string): Promise<boolean> => {
+export const filePathExists = async (filePath: string): Promise<boolean> => {
   try {
     await fs.access(filePath);
     return true;

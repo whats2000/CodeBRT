@@ -7,6 +7,7 @@ import { listFiles } from '../listFiles';
 import { uploadFile } from '../uploadFile';
 import { writeToFile } from '../writeToFIle';
 import { readFile } from '../readFile';
+import { searchFiles } from '../searchFiles';
 
 export abstract class FileOperationsProvider {
   /**
@@ -59,6 +60,12 @@ export abstract class FileOperationsProvider {
     return listFiles(dirPath, recursive, limit);
   }
 
+  /**
+   * Write content to a file.
+   * @param filePath - The path to the file.
+   * @param content - The content to write to the file.
+   * @param overwrite - Whether to overwrite the file if it already exists.
+   */
   static async writeToFile(
     filePath: string,
     content: string,
@@ -67,9 +74,34 @@ export abstract class FileOperationsProvider {
     return writeToFile(filePath, content, overwrite);
   }
 
+  /**
+   * Read content from a file.
+   * @param filePath - The path to the file.
+   */
   static async readFile(
     filePath: string,
   ): Promise<{ status: 'success' | 'error'; message: string }> {
     return readFile(filePath);
+  }
+
+  /**
+   * Searches for files in a specified directory with options for filtering by regex and file patterns.
+   * @param params - The parameters for the search, matching the schema.
+   * @param currentWorkspacePath - The workspace root path for relative paths.
+   * @returns The status and list of matched file paths or an error message.
+   */
+  static async searchFiles(
+    params: {
+      relativePath: string;
+      regex: string;
+      filePattern?: string;
+    },
+    currentWorkspacePath: string,
+  ): Promise<{
+    status: 'success' | 'error';
+    results?: string[];
+    message?: string;
+  }> {
+    return searchFiles(params, currentWorkspacePath);
   }
 }

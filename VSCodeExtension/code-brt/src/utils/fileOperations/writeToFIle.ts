@@ -1,7 +1,7 @@
 import * as fs from 'node:fs/promises';
 import * as path from 'node:path';
 
-import { fileExists } from './utils';
+import { filePathExists } from './utils';
 
 /**
  * Writes content to a file, with optional overwrite protection.
@@ -19,7 +19,7 @@ export const writeToFile = async (
     const absolutePath = path.resolve(filePath);
 
     // Check if the file exists
-    const isFileExists = await fileExists(absolutePath);
+    const isFileExists = await filePathExists(absolutePath);
 
     // If a file exists and overwrite is false, return an error message
     if (isFileExists && !overwrite) {

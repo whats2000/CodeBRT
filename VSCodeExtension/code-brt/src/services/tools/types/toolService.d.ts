@@ -79,4 +79,19 @@ export type ToolServicesApi = {
     relativeFilePath: string;
     updateStatus?: (status: string) => void;
   }) => Promise<ToolResponseFromToolFunction>;
+
+  /**
+   * Search for files in the specified directory with options for filtering by regex and file patterns.
+   * @param args.relativePath The relative path of the directory to search files in.
+   * @param args.regex The regular expression pattern to match file names against.
+   * @param args.filePattern The file pattern to match file names against.
+   * @param args.updateStatus A function to update the status of the search.
+   * @returns The list of matched file paths as a string.
+   */
+  searchFiles: (args: {
+    relativePath: string;
+    regex: string;
+    filePattern?: string;
+    updateStatus?: (status: string) => void;
+  }) => Promise<ToolResponseFromToolFunction>;
 };
