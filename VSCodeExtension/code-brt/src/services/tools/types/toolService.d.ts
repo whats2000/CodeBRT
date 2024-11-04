@@ -59,14 +59,14 @@ export type ToolServicesApi = {
 
   /**
    * List files and directories within the specified directory.
-   * @param args.path The path of the directory to list contents for.
+   * @param args.relativePath The relative path of the directory to list files from.
    * @param args.recursive Whether to list files recursively.
    * @param args.limit The maximum number of files to list.
    * @param args.updateStatus A function to update the status of the listing.
    * @returns The list of files and directories as a string.
    */
   listFiles: (args: {
-    path: string;
+    relativePath: string;
     recursive?: boolean;
     limit?: number;
     updateStatus?: (status: string) => void;

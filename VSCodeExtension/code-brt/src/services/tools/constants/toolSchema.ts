@@ -166,7 +166,7 @@ export const listFilesSchema = (currentWorkspacePath: string): ToolSchema => ({
   inputSchema: {
     type: 'object',
     properties: {
-      path: {
+      relativePath: {
         type: 'string',
         description: `The path of the directory to list contents for (relative to the current working directory ${currentWorkspacePath}).`,
       },
@@ -176,7 +176,7 @@ export const listFilesSchema = (currentWorkspacePath: string): ToolSchema => ({
           "Whether to list files recursively. Use 'true' for recursive listing, 'false' or omit for top-level only.",
       },
     },
-    required: ['path'],
+    required: ['relativePath'],
   },
 });
 

@@ -76,7 +76,7 @@ export const ToolResponseContainer: React.FC<ToolResponseContainerProps> = ({
   return (
     <div style={{ margin: '10px 0' }}>
       {entry.toolResponses?.map((response) => (
-        <>
+        <div key={response.id}>
           {response.status === 'rejectByUser' ? (
             <Space direction={'vertical'}>
               <div>
@@ -132,7 +132,7 @@ export const ToolResponseContainer: React.FC<ToolResponseContainerProps> = ({
               </Panel>
             </Collapse>
           )}
-        </>
+        </div>
       ))}
 
       {!entry.toolResponses && <ToolStatusBlock status={toolStatus} />}
