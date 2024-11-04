@@ -1,12 +1,27 @@
 import type { ToolServicesApi } from './types';
 import { FileOperationsProvider } from '../../utils';
+import vscode from 'vscode';
+import path from 'path';
 
 export const readFileTool: ToolServicesApi['readFile'] = async ({
   relativeFilePath,
   updateStatus,
 }) => {
+  const workspaceFolders = vscode.workspace.workspaceFolders?.[0];
+  if (!workspaceFolders) {
+    updateStatus?.('[error] No workspace folders found.');
+    return {
+      status: 'error',
+      result: 'No workspace folders found. Tell the user to open a workspace.',
+    };
+  }
+
   updateStatus?.('[processing] Reading file...');
-  const result = await FileOperationsProvider.readFile(relativeFilePath);
+
+  const filePath = path.resolve(workspaceFolders.uri.fsPath, relativeFilePath);
+
+  const result = await FileOperationsProvider.readFile(filePath);
+
   updateStatus?.('');
 
   if (result.status === 'error') {

@@ -46,7 +46,7 @@ export const listFilesTool: ToolServicesApi['listFiles'] = async ({
     updateStatus?.('[error] Failed to list files.');
     return {
       status: 'error',
-      result: `Error listing files in directory: ${dirPath}. ${error instanceof Error ? error.message : 'Unknown error.'}`,
+      result: `Error listing files in directory: "${relativePath}". ${error instanceof Error ? error.message : 'Unknown error.'}`,
     };
   }
 };

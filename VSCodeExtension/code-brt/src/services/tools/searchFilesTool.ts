@@ -9,17 +9,18 @@ export const searchFilesTool: ToolServicesApi['searchFiles'] = async ({
   filePattern,
   updateStatus,
 }) => {
-  const currentWorkspacePath =
-    vscode.workspace.workspaceFolders?.[0].uri.fsPath;
-
-  if (!currentWorkspacePath) {
+  const workspaceFolders = vscode.workspace.workspaceFolders?.[0];
+  if (!workspaceFolders) {
+    updateStatus?.('[error] No workspace folders found.');
     return {
       status: 'error',
-      result: 'No workspace folder found, tell user to open a workspace.',
+      result: 'No workspace folders found. Tell the user to open a workspace.',
     };
   }
 
   updateStatus?.('[processing] Searching for files...');
+
+  const currentWorkspacePath = workspaceFolders.uri.fsPath;
 
   const result = await FileOperationsProvider.searchFiles(
     {
