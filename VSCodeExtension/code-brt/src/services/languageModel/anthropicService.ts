@@ -141,15 +141,20 @@ export class AnthropicService extends AbstractLanguageModelService {
         case 'AI':
           const newEntry: MessageParam = {
             role: 'assistant',
-            content: [
-              {
-                type: 'text',
-                text: currentEntry.message,
-              },
-            ],
+            content: [],
           };
+          if (typeof newEntry.content === 'string') {
+            break;
+          }
+          // Anthropic's API requires non-empty messages
+          if (currentEntry.message !== '') {
+            newEntry.content.push({
+              type: 'text',
+              text: currentEntry.message,
+            });
+          }
           const toolCall = currentEntry.toolCalls?.[0];
-          if (toolCall && typeof newEntry.content !== 'string') {
+          if (toolCall) {
             newEntry.content.push({
               type: 'tool_use',
               id: toolCall.id,

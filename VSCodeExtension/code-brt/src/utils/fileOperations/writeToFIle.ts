@@ -17,6 +17,10 @@ export const writeToFile = async (
 ): Promise<{ status: 'success' | 'error'; message: string }> => {
   try {
     const absolutePath = path.resolve(filePath);
+    const dirPath = path.dirname(absolutePath);
+
+    // Ensure the directory exists
+    await fs.mkdir(dirPath, { recursive: true });
 
     // Check if the file exists
     const isFileExists = await filePathExists(absolutePath);

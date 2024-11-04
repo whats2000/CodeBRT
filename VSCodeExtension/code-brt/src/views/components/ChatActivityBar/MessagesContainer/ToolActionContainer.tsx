@@ -162,10 +162,14 @@ export const ToolActionContainer = React.memo<ToolActionContainerProps>(
                       style={{ width: '100%' }}
                     >
                       {typeof value === 'string' &&
-                      (key == 'content' || key == 'question') ? (
-                        <ReactMarkdown components={RendererCode}>
-                          {warpWithCode(toolCall, key, value)}
-                        </ReactMarkdown>
+                      (key == 'content' ||
+                        key == 'question' ||
+                        key == 'result') ? (
+                        <div style={{ width: '100%' }}>
+                          <ReactMarkdown components={RendererCode}>
+                            {warpWithCode(toolCall, key, value)}
+                          </ReactMarkdown>
+                        </div>
                       ) : (
                         <Typography.Paragraph
                           ellipsis={{ rows: 2, expandable: 'collapsible' }}
