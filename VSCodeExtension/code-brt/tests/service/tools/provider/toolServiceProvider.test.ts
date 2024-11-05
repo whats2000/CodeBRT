@@ -35,7 +35,9 @@ describe('ToolServiceProvider Full Class Test', () => {
     const result = ToolServiceProvider.isViableToolCall(toolCallEntry);
 
     expect(result.isValid).toBe(false);
-    expect(result.feedback).toBe('The tool "nonExistingTool" does not exist.');
+    expect(result.feedback).toBe(
+      'The tool "nonExistingTool" does not exist. Check the tool name and try again.',
+    );
   });
 
   it('should return invalid if the parameter types are incorrect', () => {
@@ -46,7 +48,7 @@ describe('ToolServiceProvider Full Class Test', () => {
 
     expect(result.isValid).toBe(false);
     expect(result.feedback).toBe(
-      'The parameter "query" of the tool "webSearch" is invalid. Expected type "string" but received type "number".',
+      'The parameter "query" of the tool "webSearch" is invalid. Please provide the correct parameter type and try again.',
     );
   });
 
@@ -59,7 +61,7 @@ describe('ToolServiceProvider Full Class Test', () => {
 
     expect(result.isValid).toBe(false);
     expect(result.feedback).toBe(
-      'The tool "webSearch" requires the parameter "numResults".',
+      'The tool "webSearch" requires the parameter "numResults". Please provide the parameter and try again.',
     );
   });
 });

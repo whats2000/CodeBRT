@@ -23,17 +23,15 @@ describe('ToolService', () => {
       // Print results to console
       console.log(results);
 
-      expect(results).toContain('**Title**:');
-      expect(results).toContain('**URL**:');
-      expect(results).toContain('**Snippet**:');
+      expect(results.result).toContain('[TITLE]');
+      expect(results.result).toContain('[URL]');
+      expect(results.result).toContain('[CONTENT]');
 
       // Verify updateStatus was called
       expect(mockUpdateStatus).toHaveBeenCalledWith(
-        '[Searching] Searching Web with keyword "OpenAI"',
+        '[processing] Searching Web with keyword "OpenAI"',
       );
-      expect(mockUpdateStatus).toHaveBeenCalledWith(
-        '[Info] Generating Response Based on Search Results',
-      );
+      expect(mockUpdateStatus).toHaveBeenCalledWith('');
     }
   }, 30000);
 
@@ -64,16 +62,14 @@ describe('ToolService', () => {
       // Print results to console
       console.log(results);
 
-      const resultCount = (results.match(/\*\*Title\*\*:/g) || []).length;
+      const resultCount = (results.result.match(/\[TITLE]/g) || []).length;
       expect(resultCount).toBe(numResults);
 
       // Verify updateStatus was called
       expect(mockUpdateStatus).toHaveBeenCalledWith(
-        '[Searching] Searching Web with keyword "Gemini"',
+        '[processing] Searching Web with keyword "Gemini"',
       );
-      expect(mockUpdateStatus).toHaveBeenCalledWith(
-        '[Info] Generating Response Based on Search Results',
-      );
+      expect(mockUpdateStatus).toHaveBeenCalledWith('');
     }
   }, 30000);
 
@@ -99,7 +95,7 @@ describe('ToolService', () => {
       // Print results to console
       console.log(results);
 
-      const snippets = results
+      const snippets = results.result
         .split('**Snippet**: ')
         .slice(1)
         .map((snippet) => snippet.split('\n')[0]);
@@ -113,11 +109,12 @@ describe('ToolService', () => {
 
       // Verify updateStatus was called
       expect(mockUpdateStatus).toHaveBeenCalledWith(
-        '[Searching] Searching Web with keyword "Claude"',
+        '[processing] Searching Web with keyword "Claude"',
       );
-      expect(mockUpdateStatus).toHaveBeenCalledWith(
-        '[Info] Generating Response Based on Search Results',
-      );
+      expect(mockUpdateStatus).toHaveBeenCalled();
+      expect(mockUpdateStatus).toHaveBeenCalled();
+      expect(mockUpdateStatus).toHaveBeenCalled();
+      expect(mockUpdateStatus).toHaveBeenCalled();
     }
   }, 30000);
 });

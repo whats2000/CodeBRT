@@ -1,9 +1,9 @@
 import axios from 'axios';
-import { extractTextFromWebpage } from '../../../src/services/tools/utils';
 import { urlFetcherTool } from '../../../src/services/tools/urlFetcherTool';
+import { convertHtmlToMarkdown } from '../../../src/services/tools/utils';
 
 jest.mock('axios');
-jest.mock('../../../src/utils');
+jest.mock('../../../src/services/tools/utils');
 
 describe('urlFetcherTool', () => {
   beforeEach(() => {
@@ -21,7 +21,7 @@ describe('urlFetcherTool', () => {
       get: jest.fn().mockResolvedValue({ data: mockResponseData }),
     });
 
-    (extractTextFromWebpage as jest.Mock).mockReturnValue(mockVisibleText);
+    (convertHtmlToMarkdown as jest.Mock).mockReturnValue(mockVisibleText);
 
     const result = await urlFetcherTool({
       url,
@@ -33,16 +33,15 @@ describe('urlFetcherTool', () => {
     // Print results to console
     console.log(result);
 
-    expect(result).toContain('Extracted Content from URL:');
-    expect(result).toContain(mockVisibleText);
+    expect(result.result).toBe(
+      'Content retrieved from the URL "https://example.com". Please use this information to answer the previously asked question:\n\nExample Content',
+    );
 
     // Verify updateStatus was called
     expect(mockUpdateStatus).toHaveBeenCalledWith(
-      `[Fetching] Fetching content from URL "${url}"`,
+      `[processing] Fetching content from URL "${url}"`,
     );
-    expect(mockUpdateStatus).toHaveBeenCalledWith(
-      '[Info] Generating Response Based on Extracted Content',
-    );
+    expect(mockUpdateStatus).toHaveBeenCalledWith('');
   }, 30000);
 
   it('should handle maxCharsPerPage correctly', async () => {
@@ -56,26 +55,25 @@ describe('urlFetcherTool', () => {
       get: jest.fn().mockResolvedValue({ data: mockResponseData }),
     });
 
-    (extractTextFromWebpage as jest.Mock).mockReturnValue(mockVisibleText);
+    (convertHtmlToMarkdown as jest.Mock).mockReturnValue(mockVisibleText);
 
     const maxCharsPerPage = 6000;
-    const result = await urlFetcherTool({
+    const { result } = await urlFetcherTool({
       url,
       updateStatus: mockUpdateStatus,
       maxCharsPerPage,
       format: 'text',
     });
 
-    const extractedContent = result.split('Extracted Content from URL:\n\n')[1];
-    expect(extractedContent.length).toBeLessThanOrEqual(maxCharsPerPage);
+    const countOfA = result.split('A').length - 1;
+
+    expect(countOfA).toBeLessThanOrEqual(maxCharsPerPage);
 
     // Verify updateStatus was called
     expect(mockUpdateStatus).toHaveBeenCalledWith(
-      `[Fetching] Fetching content from URL "${url}"`,
+      `[processing] Fetching content from URL "${url}"`,
     );
-    expect(mockUpdateStatus).toHaveBeenCalledWith(
-      '[Info] Generating Response Based on Extracted Content',
-    );
+    expect(mockUpdateStatus).toHaveBeenCalledWith('');
   }, 30000);
 
   it('should return error message on fetch failure', async () => {
@@ -93,14 +91,9 @@ describe('urlFetcherTool', () => {
       format: 'text',
     });
 
-    // Print results to console
-    console.log(result);
-
-    expect(result).toBe('Failed to fetch the URL content.');
+    expect(result.result).toBe('Failed to fetch the URL.');
 
     // Verify updateStatus was called
-    expect(mockUpdateStatus).toHaveBeenCalledWith(
-      `[Fetching] Fetching content from URL "${url}"`,
-    );
+    expect(mockUpdateStatus).toHaveBeenCalledWith('');
   }, 30000);
 });
