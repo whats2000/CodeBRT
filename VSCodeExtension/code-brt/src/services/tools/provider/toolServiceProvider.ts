@@ -15,6 +15,9 @@ import { listFilesTool } from '../listFilesTool';
 import { writeToFileTool } from '../writeToFileTool';
 import { readFileTool } from '../readFileTool';
 import { searchFilesTool } from '../searchFilesTool';
+import { executeCommandTool } from '../executeCommandTool';
+import { listCodeDefinitionNamesTool } from '../listCodeDefinitionNamesTool';
+import { inspectSiteTool } from '../inspectSiteTool';
 
 export class ToolServiceProvider {
   private static readonly toolServices: {
@@ -27,19 +30,13 @@ export class ToolServiceProvider {
     webSearch: webSearchTool,
     urlFetcher: urlFetcherTool,
     agentTools: {
-      executeCommand: () => {
-        throw new Error('Not implemented');
-      },
+      executeCommand: executeCommandTool,
       readFile: readFileTool,
       writeToFile: writeToFileTool,
       searchFiles: searchFilesTool,
       listFiles: listFilesTool,
-      listCodeDefinitionNames: () => {
-        throw new Error('Not implemented');
-      },
-      inspectSite: () => {
-        throw new Error('Not implemented');
-      },
+      listCodeDefinitionNames: listCodeDefinitionNamesTool,
+      inspectSite: inspectSiteTool,
       askFollowUpQuestion: () => {
         throw new Error('Not implemented');
       },

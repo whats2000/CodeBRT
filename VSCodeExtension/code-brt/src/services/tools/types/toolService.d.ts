@@ -43,6 +43,17 @@ export type ToolServicesApi = {
   }) => Promise<ToolResponseFromToolFunction>;
 
   /**
+   * Execute a command in the terminal and return the output.
+   * @param args.command The command to execute.
+   * @param args.updateStatus A function to update the status of the command execution.
+   * @returns The output of the command run result as a string.
+   */
+  executeCommand: (args: {
+    command: string;
+    updateStatus?: (status: string) => void;
+  }) => Promise<ToolResponseFromToolFunction>;
+
+  /**
    * List files and directories within the specified directory.
    * @param args.relativePath The relative path of the directory to list files from.
    * @param args.recursive Whether to list files recursively.
@@ -92,6 +103,27 @@ export type ToolServicesApi = {
     relativePath: string;
     regex: string;
     filePattern?: string;
+    updateStatus?: (status: string) => void;
+  }) => Promise<ToolResponseFromToolFunction>;
+
+  /**
+   * List the names of code definitions in the specified file.
+   * @param args.relativePath The relative path of the file to list code definitions from.
+   * @param args.updateStatus A function to update the status of the listing.
+   * @returns The list of code definitions as a string.
+   */
+  listCodeDefinitionNames: (args: {
+    relativePath: string;
+    updateStatus?: (status: string) => void;
+  }) => Promise<ToolResponseFromToolFunction>;
+
+  /**
+   * Inspect a website and return information about it.
+   * @param args.url The URL of the website to inspect.
+   * @param args.updateStatus A function to update the status of the inspection.
+   */
+  inspectSite: (args: {
+    url: string;
     updateStatus?: (status: string) => void;
   }) => Promise<ToolResponseFromToolFunction>;
 };
