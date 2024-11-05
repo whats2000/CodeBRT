@@ -18,7 +18,6 @@ import {
 import type {
   ConversationEntry,
   GetResponseOptions,
-  NonWorkspaceToolType,
   ResponseWithAction,
   ToolSchema,
 } from '../../types';
@@ -154,20 +153,25 @@ export class GeminiService extends AbstractLanguageModelService {
       });
     };
 
-    const { agentTools, ...toolsSchema } = ToolServiceProvider.getToolSchema();
+    // TODO: Use multiple tools when Gemini supports it
+    // At this moment Gemini doesn't support multiple tools
+    // const { agentTools, ...toolsSchema } = ToolServiceProvider.getToolSchema();
+    //
+    // if (enabledTools.agentTools?.active && agentTools) {
+    //   for (const [_key, tool] of Object.entries(agentTools)) {
+    //     addTool(tool);
+    //   }
+    // }
+    //
+    // for (const [key, tool] of Object.entries(toolsSchema)) {
+    //   if (!enabledTools[key as NonWorkspaceToolType]?.active) {
+    //     continue;
+    //   }
+    //   addTool(tool);
+    // }
 
-    if (enabledTools.agentTools?.active && agentTools) {
-      for (const [_key, tool] of Object.entries(agentTools)) {
-        addTool(tool);
-      }
-    }
-
-    for (const [key, tool] of Object.entries(toolsSchema)) {
-      if (!enabledTools[key as NonWorkspaceToolType]?.active) {
-        continue;
-      }
-      addTool(tool);
-    }
+    // We use the all-in-one tool schema for now
+    addTool(ToolServiceProvider.getAllInOneToolSchema(enabledTools));
 
     return tools.length > 0 ? tools : undefined;
   }
@@ -445,12 +449,40 @@ export class GeminiService extends AbstractLanguageModelService {
           return { textResponse: responseText };
         }
 
-        const toolCall = {
-          id: Date.now().toString(),
-          toolName: responseToolCall.name,
-          parameters: responseToolCall.args,
-          create_time: Date.now(),
-        };
+        const toolCall =
+          responseToolCall.name === 'name'
+            ? {
+                id: Date.now().toString(),
+                toolName:
+                  (
+                    responseToolCall.args as {
+                      name: string;
+                      args: string;
+                    }
+                  ).name ?? '',
+                parameters: (() => {
+                  try {
+                    return JSON.parse(
+                      (
+                        responseToolCall.args as {
+                          name: string;
+                          args: string;
+                        }
+                      ).args ?? '{}',
+                    );
+                  } catch (e) {
+                    console.error('Invalid JSON in parameters:', e);
+                    return {};
+                  }
+                })(),
+                create_time: Date.now(),
+              }
+            : {
+                id: Date.now().toString(),
+                toolName: responseToolCall.name,
+                parameters: responseToolCall.args,
+                create_time: Date.now(),
+              };
 
         const validation = ToolServiceProvider.isViableToolCall(toolCall);
         // Return the response if the tool call is valid

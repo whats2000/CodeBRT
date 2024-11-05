@@ -269,3 +269,105 @@ export const attemptCompletionSchema: ToolSchema = {
     required: ['result'],
   },
 };
+
+export const allInOneToolSchema: (enabledTools: {
+  webSearch: {
+    active: boolean;
+  };
+  urlFetcher: {
+    active: boolean;
+  };
+  agentTools: {
+    active: boolean;
+  };
+}) => ToolSchema = (enabledTools) => {
+  let availableToolsInstructions = '';
+  const enabledOperation: string[] = [];
+
+  if (enabledTools.webSearch?.active) {
+    enabledOperation.push('webSearch');
+    availableToolsInstructions +=
+      '  - **webSearch**: { "query": string, "maxCharsPerPage"?: number (default: 6000), "numResults"?: number (default: 4) }\n' +
+      '    - Purpose: Retrieve current web information. **Required**: "query"\n';
+  }
+
+  if (enabledTools.urlFetcher?.active) {
+    enabledOperation.push('urlFetcher');
+    availableToolsInstructions +=
+      '- **urlFetcher**: { "url": string, "maxCharsPerPage"?: number (default: 6000) }\n' +
+      '  - Purpose: Fetch and extract content from a specified URL. **Required**: "url"\n';
+  }
+
+  if (enabledTools.agentTools?.active) {
+    enabledOperation.push(
+      ...[
+        'executeCommand',
+        'readFile',
+        'writeToFile',
+        'searchFiles',
+        'listFiles',
+        'listCodeDefinitionNames',
+        'inspectSite',
+        'askFollowUpQuestion',
+        'attemptCompletion',
+      ],
+    );
+    availableToolsInstructions += `- **executeCommand**: { "command": string }
+  - Purpose: Execute a CLI command in the current working directory. **Required**: "command"
+
+- **readFile**: { "relativeFilePath": string }
+  - Purpose: Read content from a file at a specified path. **Required**: "relativeFilePath"
+
+- **writeToFile**: { "relativePath": string, "content": string }
+  - Purpose: Write specified content to a file, creating directories if needed. **Required**: "relativePath", "content"
+
+- **searchFiles**: { "relativePath": string, "regex": string, "filePattern"?: string (default: "*") }
+  - Purpose: Search for a regex pattern in files within the specified directory. **Required**: "relativePath", "regex"
+
+- **listFiles**: { "relativePath": string, "recursive"?: boolean (default: false) }
+  - Purpose: List files and directories in the specified path. **Required**: "relativePath"
+
+- **listCodeDefinitionNames**: { "relativePath": string }
+  - Purpose: List top-level code definitions (e.g., functions, classes) in the directory. **Required**: "relativePath"
+
+- **inspectSite**: { "url": string }
+  - Purpose: Capture a website’s initial state, including a screenshot and console logs. **Required**: "url"
+
+- **askFollowUpQuestion**: { "question": string }
+  - Purpose: Ask a follow-up question for further clarification. **Required**: "question"
+
+- **attemptCompletion**: { "result": string, "command"?: string }
+  - Purpose: Complete a task and optionally demonstrate with a command. **Required**: "result"
+`;
+  }
+
+  return {
+    name: 'allInOneTool',
+    description: `A single, unified tool for multiple operations. Specify the "operation" to perform the task, with "parameters" provided as a JSON string. **Only one tool can be used per call.** 
+
+Available operations and parameters:
+  
+${availableToolsInstructions}
+
+Specify each operation with necessary parameters for precise execution.
+`,
+
+    inputSchema: {
+      type: 'object',
+      properties: {
+        name: {
+          type: 'string',
+          description:
+            'The name of the operation to invoke, the string must match one of the following: ' +
+            `${enabledOperation.join(', ')}.`,
+        },
+        args: {
+          type: 'string',
+          description:
+            'A JSON string containing the parameters for the specified operation. Refer to the description for required fields for each operation.',
+        },
+      },
+      required: ['operation', 'parameters'],
+    },
+  };
+};

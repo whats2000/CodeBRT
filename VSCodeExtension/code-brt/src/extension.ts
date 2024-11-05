@@ -17,7 +17,6 @@ import {
 import { ModelServiceFactory } from './services/languageModel';
 import { VoiceServiceFactory } from './services/voice';
 import { GptSoVitsApiService } from './services/voice/gptSoVitsService';
-import { convertPdfToMarkdown } from './utils/pdfConverter';
 import { ToolServiceProvider } from './services/tools';
 
 let extensionContext: vscode.ExtensionContext | undefined = undefined;
@@ -42,9 +41,6 @@ export const activate = async (ctx: vscode.ExtensionContext) => {
    * This uses for communication messages channel
    */
   const api: ViewApi = {
-    extractPdfText: async (filePath) => {
-      return await convertPdfToMarkdown(filePath);
-    },
     setSettingByKey: async (key, value) => {
       await settingsManager.set(key, value);
     },

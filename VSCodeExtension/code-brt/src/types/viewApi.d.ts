@@ -76,11 +76,6 @@ export type GetLanguageModelResponseParams = {
  */
 export type ViewApi = {
   /**
-   * Get the contents of the PDF file.
-   */
-  extractPdfText: (filePath: string) => Promise<string>;
-
-  /**
    * Set the target setting of the extension.
    * @param key - The key of the setting to set.
    * @param value - The new value of the setting.

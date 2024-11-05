@@ -18,6 +18,7 @@ import { searchFilesTool } from '../searchFilesTool';
 import { executeCommandTool } from '../executeCommandTool';
 import { listCodeDefinitionNamesTool } from '../listCodeDefinitionNamesTool';
 import { inspectSiteTool } from '../inspectSiteTool';
+import { allInOneToolSchema } from '../constants';
 
 export class ToolServiceProvider {
   private static readonly toolServices: {
@@ -103,6 +104,20 @@ export class ToolServiceProvider {
 
     return getToolSchema(currentWorkspacePath);
   };
+
+  public static getAllInOneToolSchema(enabledTools: {
+    webSearch: {
+      active: boolean;
+    };
+    urlFetcher: {
+      active: boolean;
+    };
+    agentTools: {
+      active: boolean;
+    };
+  }): ToolSchema {
+    return allInOneToolSchema(enabledTools);
+  }
 
   public static isViableToolCall(toolCallEntry: ToolCallEntry): {
     isValid: boolean;
