@@ -115,6 +115,7 @@ describe('ToolService', () => {
       expect(mockUpdateStatus).toHaveBeenCalled();
       expect(mockUpdateStatus).toHaveBeenCalled();
       expect(mockUpdateStatus).toHaveBeenCalled();
+      expect(mockUpdateStatus).toHaveBeenCalledWith('');
     }
   }, 30000);
 });
