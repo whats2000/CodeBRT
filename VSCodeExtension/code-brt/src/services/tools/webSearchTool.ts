@@ -7,7 +7,7 @@ import axios from 'axios';
 import * as cheerio from 'cheerio';
 
 import type { ToolResponseFromToolFunction, ToolServicesApi } from './types';
-import { convertHtmlToMarkdown } from './utils';
+import { extractTextFromWebResponse } from './utils/extractTextFromWebResponse';
 
 const postProcessResults = (
   results: { title: string; url: string; snippet: string }[],
@@ -34,18 +34,17 @@ const postProcessResults = (
     };
   }
 
-  // Assemble the prompt content with structured result details
   const resultContent = results
     .map(
       (result) =>
         `[TITLE] ${result.title}\n[URL] ${result.url}\n[CONTENT] ${result.snippet}`,
     )
-    .join('\n\n'); // Adds spacing between entries for readability
+    .join('\n\n');
 
   return {
     status: 'success',
     result:
-      'Use the following search results to answer the previously asked question. Reference each source by its [URL] when relevant:\\n\\n' +
+      'Use the following search results to answer the previously asked question. Reference each source by its [URL] when relevant:\n\n' +
       resultContent,
   };
 };
@@ -61,7 +60,7 @@ export const webSearchTool: ToolServicesApi['webSearch'] = async ({
   try {
     maxCharsPerPage = Number(maxCharsPerPage);
     numResults = Number(numResults);
-  } catch (error) {
+  } catch {
     maxCharsPerPage = 6000;
     numResults = 4;
   }
@@ -88,12 +87,17 @@ export const webSearchTool: ToolServicesApi['webSearch'] = async ({
       const link = linkElement.attr('href');
       const title = $(result).find('h3').text();
       updateStatus?.(`[processing] Reading page "${title}" from ${link}`);
-      if (!link) {
-        continue;
-      }
+
+      if (!link) continue;
+
       try {
         const webpage = await session.get(link, { timeout: 5000 });
-        const visibleText = convertHtmlToMarkdown(webpage.data);
+        const contentType = webpage.headers['content-type'];
+        const visibleText = await extractTextFromWebResponse(
+          webpage.data,
+          contentType,
+        );
+
         const truncatedText =
           visibleText.length > maxCharsPerPage
             ? visibleText.substring(0, maxCharsPerPage)

@@ -1,7 +1,8 @@
 import * as fs from 'node:fs/promises';
 import path from 'path';
 
-import * as PdfJs from 'pdfjs-dist';
+// @ts-ignore
+import pdf from 'pdf-parse/lib/pdf-parse';
 import mammoth from 'mammoth';
 import { isBinaryFile } from 'isBinaryFile';
 
@@ -16,24 +17,7 @@ const readPdfContent = async (
 }> => {
   try {
     const pdfData = await fs.readFile(filePath);
-
-    const pdf = await PdfJs.getDocument({
-      data: new Uint8Array(
-        pdfData.buffer,
-        pdfData.byteOffset,
-        pdfData.byteLength,
-      ),
-      useSystemFonts: true,
-    }).promise;
-
-    let textContent = '';
-    const numPages = pdf.numPages;
-    for (let i = 1; i <= numPages; i++) {
-      const page = await pdf.getPage(i);
-      const text = await page.getTextContent();
-      const pageText = text.items.map((item: any) => item.str).join(' ');
-      textContent += `[PAGE ${i}]:\n${pageText}\n\n`;
-    }
+    const textContent = (await pdf(pdfData)).text;
 
     return {
       status: 'success',
