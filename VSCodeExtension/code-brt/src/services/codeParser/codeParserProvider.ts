@@ -47,6 +47,74 @@ export class CodeParserProvider {
   }
 
   /**
+   * Extracts a structured representation of the code, excluding private methods/properties.
+   * @param tree - The syntax tree of the code.
+   * @param query - The query to capture relevant syntax nodes.
+   * @param code - The original code content.
+   * @returns A formatted string summarizing the code structure.
+   */
+  private static extractCodeStructure(
+    tree: Parser.Tree,
+    query: Query,
+    code: string,
+  ): string {
+    const captures = query.captures(tree.rootNode);
+    const elements: string[] = [];
+    const lines = code.split('\n');
+
+    captures.sort(
+      (a, b) => a.node.startPosition.row - b.node.startPosition.row,
+    );
+
+    let lastLine = -1;
+    captures.forEach((capture) => {
+      const { node, name } = capture;
+      const startLine = node.startPosition.row;
+      const endLine = node.endPosition.row;
+
+      // Skip private definitions
+      if (lines[startLine].trim().startsWith('private')) return;
+
+      // Add separator for new definitions
+      if (name.includes('definition') && startLine > lastLine + 1) {
+        elements.push('|----');
+      }
+
+      // If the capture is a function or method name, extract the full signature including multi-line parameters
+      if (name.includes('name')) {
+        let definitionLines = '';
+        let openParens = 0;
+        let closedParens = 0;
+        let lineIndex = startLine;
+
+        // Continue to capture lines until parentheses are balanced
+        while (lineIndex <= endLine || openParens !== closedParens) {
+          const line = lines[lineIndex].trim();
+
+          // Count parentheses
+          for (const char of line) {
+            if (char === '(') openParens++;
+            else if (char === ')') closedParens++;
+          }
+
+          // Add line to definition and increment line index
+          definitionLines += `│ ${line}\n`;
+          lineIndex++;
+
+          // If balanced parentheses are achieved and we're at the end of a definition, break out of the loop
+          if (openParens === closedParens && openParens > 0) break;
+        }
+
+        elements.push(definitionLines.trim());
+      }
+
+      lastLine = endLine;
+    });
+
+    return elements.length ? `|----\n${elements.join('\n')}\n|----` : '';
+  }
+
+  /**
    * Generate a structured context summary of code in a directory.
    * @param directoryPath - The directory containing code files.
    * @returns An array of CodeContext objects summarizing code structure.
@@ -74,7 +142,7 @@ export class CodeParserProvider {
       const tree = parser.parse(code);
 
       if (tree) {
-        const structure = this.extractCodeStructure(tree, query);
+        const structure = this.extractCodeStructure(tree, query, code);
         codeContexts.push({
           fileName: path.relative(directoryPath, file),
           structure,
@@ -82,43 +150,5 @@ export class CodeParserProvider {
       }
     }
     return codeContexts;
-  }
-
-  /**
-   * Extracts a structured representation of the code using the query.
-   * @param tree - The syntax tree of the code.
-   * @param query - The query to capture relevant syntax nodes.
-   * @returns A formatted string summarizing the code structure.
-   */
-  private static extractCodeStructure(tree: Parser.Tree, query: Query): string {
-    const captures = query.captures(tree.rootNode);
-    const elements: string[] = [];
-
-    // Sort captures by start position for sequential output
-    captures.sort(
-      (a, b) => a.node.startPosition.row - b.node.startPosition.row,
-    );
-
-    // Track last processed line to add separators where needed
-    let lastLine = -1;
-    captures.forEach((capture) => {
-      const { node, name } = capture;
-      const startLine = node.startPosition.row;
-
-      // Only include relevant definitions
-      if (name.includes('definition') && startLine > lastLine + 1) {
-        elements.push('|----');
-      }
-
-      if (name.includes('name') || name.includes('definition')) {
-        const elementType = name.split('.')[1];
-        const definitionText = `${elementType}: ${node.text.trim()}`;
-        elements.push(`│ ${definitionText}`);
-      }
-
-      lastLine = startLine;
-    });
-
-    return elements.length ? `|----\n${elements.join('\n')}\n|----` : '';
   }
 }
