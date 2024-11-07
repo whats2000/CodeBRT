@@ -12,7 +12,6 @@ export const writeToFileTool: ToolServicesApi['writeToFile'] = async ({
 }) => {
   const workspaceFolders = vscode.workspace.workspaceFolders?.[0];
   if (!workspaceFolders) {
-    updateStatus?.('[error] No workspace folders found.');
     return {
       status: 'error',
       result: 'No workspace folders found. Tell the user to open a workspace.',

@@ -1,13 +1,13 @@
 import vscode from 'vscode';
 
-import { ViewKey } from '../../../views';
-import { deleteFile } from '../deleteFile';
-import { getWebviewUri } from '../getWebviewUri';
-import { listFiles } from '../listFiles';
-import { uploadFile } from '../uploadFile';
-import { writeToFile } from '../writeToFIle';
-import { readFile } from '../readFile';
-import { searchFiles } from '../searchFiles';
+import { ViewKey } from '../../views';
+import { deleteFile } from './deleteFile';
+import { getWebviewUri } from './getWebviewUri';
+import { listFiles } from './listFiles';
+import { uploadFile } from './uploadFile';
+import { writeToFile } from './writeToFIle';
+import { readFile } from './readFile';
+import { searchFiles } from './searchFiles';
 
 export abstract class FileOperationsProvider {
   /**

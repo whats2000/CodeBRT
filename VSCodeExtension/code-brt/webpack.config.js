@@ -5,6 +5,34 @@ const CopyWebpackPlugin = require('copy-webpack-plugin');
 
 module.exports = (env, { mode }) => {
   const isDev = mode === 'development';
+  const treeWasmDir = path.join('node_modules', 'web-tree-sitter');
+  const languageWasmDir = path.join(
+    __dirname,
+    'node_modules',
+    'tree-sitter-wasms',
+    'out',
+  );
+  const treeWasmTargetDir = path.join('');
+  const wasmTargetDir = path.join('trees');
+
+  // List of languages to support
+  const languages = [
+    'c',
+    'cpp',
+    'c_sharp',
+    'go',
+    'java',
+    'javascript',
+    'kotlin',
+    'php',
+    'python',
+    'ruby',
+    'rust',
+    'swift',
+    'tsx',
+    'typescript',
+    'vue',
+  ];
 
   return {
     target: 'node',
@@ -54,6 +82,14 @@ module.exports = (env, { mode }) => {
             from: 'package.json',
             to: 'package.json',
           },
+          {
+            from: path.join(treeWasmDir, 'tree-sitter.wasm'),
+            to: path.join(treeWasmTargetDir, 'tree-sitter.wasm'),
+          },
+          ...languages.map((lang) => ({
+            from: path.join(languageWasmDir, `tree-sitter-${lang}.wasm`),
+            to: path.join(wasmTargetDir, `tree-sitter-${lang}.wasm`),
+          })),
         ].filter(Boolean),
       }),
     ].filter(Boolean),

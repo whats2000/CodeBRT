@@ -40,6 +40,13 @@ export const searchFilesTool: ToolServicesApi['searchFiles'] = async ({
     };
   }
 
+  if (result.results?.length === 0) {
+    return {
+      status: 'success',
+      result: `No files found in directory: "${relativePath}".`,
+    };
+  }
+
   return {
     status: 'success',
     result:

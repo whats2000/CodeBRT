@@ -118,10 +118,12 @@
     "styled-components": "^6.1.13",
     "swc-loader": "^0.2.6",
     "terminate": "^2.8.0",
+    "tree-sitter-wasms": "^0.1.12",
     "ts-jest": "^29.2.5",
     "ts-node": "^10.9.2",
     "typescript": "^5.6.3",
     "uuid": "^11.0.2",
+    "web-tree-sitter": "^0.24.3",
     "webpack": "^5.95.0",
     "webpack-cli": "^5.1.4",
     "webpack-dev-server": "^5.1.0"

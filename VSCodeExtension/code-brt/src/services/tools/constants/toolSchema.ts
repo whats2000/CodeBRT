@@ -367,7 +367,7 @@ Specify each operation with necessary parameters for precise execution.
             'A JSON string containing the parameters for the specified operation. Refer to the description for required fields for each operation.',
         },
       },
-      required: ['operation', 'parameters'],
+      required: ['name', 'args'],
     },
   };
 };

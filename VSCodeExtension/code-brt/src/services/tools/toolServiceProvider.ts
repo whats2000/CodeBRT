@@ -6,19 +6,19 @@ import type {
   ToolSchema,
   ToolServicesApi,
   WorkspaceToolType,
-} from '../types';
-import type { ToolCallEntry, ToolCallResponse } from '../../../types';
-import { getToolSchema, getToolSchemaWithoutWorkspace } from '../utils';
-import { webSearchTool } from '../webSearchTool';
-import { urlFetcherTool } from '../urlFetcherTool';
-import { listFilesTool } from '../listFilesTool';
-import { writeToFileTool } from '../writeToFileTool';
-import { readFileTool } from '../readFileTool';
-import { searchFilesTool } from '../searchFilesTool';
-import { executeCommandTool } from '../executeCommandTool';
-import { listCodeDefinitionNamesTool } from '../listCodeDefinitionNamesTool';
-import { inspectSiteTool } from '../inspectSiteTool';
-import { allInOneToolSchema } from '../constants';
+} from './types';
+import type { ToolCallEntry, ToolCallResponse } from '../../types';
+import { getToolSchema, getToolSchemaWithoutWorkspace } from './utils';
+import { webSearchTool } from './webSearchTool';
+import { urlFetcherTool } from './urlFetcherTool';
+import { listFilesTool } from './listFilesTool';
+import { writeToFileTool } from './writeToFileTool';
+import { readFileTool } from './readFileTool';
+import { searchFilesTool } from './searchFilesTool';
+import { executeCommandTool } from './executeCommandTool';
+import { listCodeDefinitionNamesTool } from './listCodeDefinitionNamesTool';
+import { inspectSiteTool } from './inspectSiteTool';
+import { allInOneToolSchema } from './constants';
 
 export class ToolServiceProvider {
   private static readonly toolServices: {

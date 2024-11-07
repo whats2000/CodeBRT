@@ -10,16 +10,16 @@ export const listFilesTool: ToolServicesApi['listFiles'] = async ({
   updateStatus,
 }) => {
   // Start by updating the status to indicate the file listing has begun.
-  updateStatus?.('[processing] Listing files...');
 
   const workspaceFolders = vscode.workspace.workspaceFolders?.[0];
   if (!workspaceFolders) {
-    updateStatus?.('[error] No workspace folders found.');
     return {
       status: 'error',
       result: 'No workspace folders found. Tell the user to open a workspace.',
     };
   }
+
+  updateStatus?.('[processing] Listing files...');
 
   const dirPath = path.resolve(workspaceFolders.uri.fsPath, relativePath);
 
@@ -35,6 +35,13 @@ export const listFilesTool: ToolServicesApi['listFiles'] = async ({
     updateStatus?.('');
 
     // Return the results in a structured format.
+    if (filesList.length === 0) {
+      return {
+        status: 'success',
+        result: `No files found in directory: "${relativePath}".`,
+      };
+    }
+
     return {
       status: 'success',
       result: limitReached
