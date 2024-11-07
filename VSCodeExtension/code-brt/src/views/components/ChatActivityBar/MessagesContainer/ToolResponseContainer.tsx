@@ -73,6 +73,41 @@ export const ToolResponseContainer: React.FC<ToolResponseContainerProps> = ({
     );
   };
 
+  const formatResult = (result: string | Record<string, any>) => {
+    if (typeof result === 'string') {
+      return (
+        <Typography.Paragraph
+          ellipsis={{
+            rows: 2,
+            expandable: 'collapsible',
+          }}
+          style={{ whiteSpace: 'pre-wrap' }}
+        >
+          {result}
+        </Typography.Paragraph>
+      );
+    }
+
+    // If there's a key 'result' in the object, then return the value of that key
+    if (result.result) {
+      // As there might be '\n' in the result, we need to replace it with <br> to display it properly
+      return (
+        <Typography.Paragraph
+          ellipsis={{
+            rows: 2,
+            expandable: 'collapsible',
+          }}
+          style={{ whiteSpace: 'pre-wrap' }}
+        >
+          {result.result}
+        </Typography.Paragraph>
+      );
+    }
+
+    // If there's no key 'result' in the object, then return the entire object
+    return <pre>{JSON.stringify(result, null, 2)}</pre>;
+  };
+
   return (
     <div style={{ margin: '10px 0' }}>
       {entry.toolResponses?.map((response) => (
@@ -115,18 +150,7 @@ export const ToolResponseContainer: React.FC<ToolResponseContainerProps> = ({
               >
                 <Descriptions column={1} size='small'>
                   <Descriptions.Item label='Result'>
-                    {typeof response.result === 'string' ? (
-                      <Typography.Paragraph
-                        ellipsis={{
-                          rows: 2,
-                          expandable: 'collapsible',
-                        }}
-                      >
-                        {response.result}
-                      </Typography.Paragraph>
-                    ) : (
-                      <pre>{JSON.stringify(response.result, null, 2)}</pre>
-                    )}
+                    {formatResult(response.result)}
                   </Descriptions.Item>
                 </Descriptions>
               </Panel>
