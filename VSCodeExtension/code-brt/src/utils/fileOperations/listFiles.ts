@@ -9,27 +9,9 @@
 import { globby, Options } from 'globby';
 import os from 'os';
 import * as path from 'path';
-import { arePathsEqual } from './utils';
 
-// Define ignored directories
-const DIRS_TO_IGNORE = [
-  'node_modules',
-  '__pycache__',
-  'env',
-  'venv',
-  'target/dependency',
-  'build/dependencies',
-  'dist',
-  'out',
-  'bundle',
-  'vendor',
-  'tmp',
-  'temp',
-  'deps',
-  'pkg',
-  'Pods',
-  '.*', // Exclude hidden directories
-].map((dir) => `**/${dir}/**`);
+import { arePathsEqual } from './utils';
+import { DIRS_TO_IGNORE } from './constants';
 
 /**
  * Breadth-first level-by-level file listing up to a specified limit.

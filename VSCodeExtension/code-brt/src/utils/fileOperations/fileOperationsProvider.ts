@@ -8,6 +8,7 @@ import { uploadFile } from './uploadFile';
 import { writeToFile } from './writeToFIle';
 import { readFile } from './readFile';
 import { searchFiles } from './searchFiles';
+import type { SearchResult } from './types/SearchContext';
 
 export abstract class FileOperationsProvider {
   /**
@@ -85,23 +86,23 @@ export abstract class FileOperationsProvider {
   }
 
   /**
-   * Searches for files in a specified directory with options for filtering by regex and file patterns.
-   * @param params - The parameters for the search, matching the schema.
-   * @param currentWorkspacePath - The workspace root path for relative paths.
+   * Searches for files in a specified directory with options for filtering by regular expression filename patterns.
+   * @param dirPath - The directory path to search in.
+   * @param currentWorkspacePath - The path to the current workspace.
+   * @param regex - The regular expression to match file content.
+   * @param filePattern - The glob pattern which the file content should match.
    * @returns The status and list of matched file paths or an error message.
    */
   static async searchFiles(
-    params: {
-      relativePath: string;
-      regex: string;
-      filePattern?: string;
-    },
+    dirPath: string,
     currentWorkspacePath: string,
+    regex: string,
+    filePattern?: string,
   ): Promise<{
     status: 'success' | 'error';
-    results?: string[];
+    results?: SearchResult[];
     message?: string;
   }> {
-    return searchFiles(params, currentWorkspacePath);
+    return searchFiles(dirPath, currentWorkspacePath, regex, filePattern);
   }
 }
