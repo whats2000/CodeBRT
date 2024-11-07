@@ -113,10 +113,10 @@ Here’s an outline of the upcoming features and improvements for CodeBRT:
     - [x] Read File
     - [x] Write File
     - [x] Search File
-    - [x] List Files
+    - [x] List Files Usage Context
     - [ ] Execute Code
     - [ ] Website Inspector
-    - [ ] List Code Definitions
+    - [x] List Code Definitions
     - [ ] Image Generation
     - [ ] Code Interpreter
 - [ ] Show file difference after code completion
