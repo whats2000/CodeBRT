@@ -84,7 +84,7 @@ export const ToolActionContainer = React.memo<ToolActionContainerProps>(
       if (isProcessing || !toolCall) {
         return;
       }
-      dispatch(processToolCall({ toolCall, entry }));
+      dispatch(processToolCall({ toolCall, entry, tempIdRef }));
     };
 
     const onReject = async (reason: string, entry: ConversationEntry) => {

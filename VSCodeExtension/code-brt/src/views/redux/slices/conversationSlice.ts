@@ -17,6 +17,8 @@ import { updateAndSaveSetting } from './settingsSlice';
 import { clearUploadedFiles } from './fileUploadSlice';
 import React from 'react';
 
+const WAIT_FOR_USER_CONFIRM_TOOLS = ['writeToFile'];
+
 const initialState: ConversationHistory & {
   tempId: string | null;
   isLoading: boolean;
@@ -265,7 +267,24 @@ export const processToolCall = createAsyncThunk<
     } as AddConversationEntryParams);
     dispatch(replaceTempEntry(newToolCallResponseEntry));
 
-    if (!rejectByUserMessage || !tempIdRef) {
+    console.log(
+      !rejectByUserMessage,
+      WAIT_FOR_USER_CONFIRM_TOOLS.includes(toolCall.toolName),
+      toolCallResponse.status === 'error',
+      !tempIdRef,
+    );
+
+    // We will continue processing instead returning
+    // - Only when tempIdRef is set and one of the following conditions is met:
+    // - The user rejected the tool call as we do not need to confirm changes in this case
+    // - The tool is not needed to confirm changes (Some operation like read context)
+    const shouldContinueProcessing =
+      tempIdRef &&
+      (rejectByUserMessage ||
+        !WAIT_FOR_USER_CONFIRM_TOOLS.includes(toolCall.toolName)) &&
+      toolCallResponse.status !== 'error';
+
+    if (!shouldContinueProcessing) {
       dispatch(finishProcessing());
       return;
     }

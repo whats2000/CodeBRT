@@ -152,12 +152,13 @@ export abstract class AbstractOpenaiLikeService extends AbstractLanguageModelSer
       }
 
       if (!chunk.choices[0]?.delta.tool_calls) {
-        updateStatus && updateStatus(`[processing] I'm creating an action...`);
         const partText = chunk.choices[0]?.delta?.content || '';
         sendStreamResponse(partText);
         responseText += partText;
         continue;
       }
+
+      updateStatus && updateStatus(`[processing] I'm creating an action...`);
 
       chunk.choices[0].delta.tool_calls.forEach(
         (deltaToolCall: ChatCompletionChunkChoiceDeltaToolCallOpenaiLike) => {
