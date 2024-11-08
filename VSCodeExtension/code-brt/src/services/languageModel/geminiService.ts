@@ -487,6 +487,16 @@ export class GeminiService extends AbstractLanguageModelService {
         const validation = ToolServiceProvider.isViableToolCall(toolCall);
         // Return the response if the tool call is valid
         if (validation.isValid) {
+          // Fix the \\n back to \n
+          for (const key in toolCall.parameters) {
+            if (typeof toolCall.parameters[key] === 'string') {
+              toolCall.parameters[key] = toolCall.parameters[key].replace(
+                /\\n/g,
+                '\n',
+              );
+            }
+          }
+
           return {
             textResponse: responseText,
             toolCall,
