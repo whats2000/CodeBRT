@@ -267,13 +267,6 @@ export const processToolCall = createAsyncThunk<
     } as AddConversationEntryParams);
     dispatch(replaceTempEntry(newToolCallResponseEntry));
 
-    console.log(
-      !rejectByUserMessage,
-      WAIT_FOR_USER_CONFIRM_TOOLS.includes(toolCall.toolName),
-      toolCallResponse.status === 'error',
-      !tempIdRef,
-    );
-
     // We will continue processing instead returning
     // - Only when tempIdRef is set and one of the following conditions is met:
     // - The user rejected the tool call as we do not need to confirm changes in this case
