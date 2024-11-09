@@ -236,8 +236,6 @@ export abstract class AbstractVoiceService implements VoiceService {
       );
     }
 
-    vscode.window.showInformationMessage(`Recording started.`);
-
     let filePath: string;
 
     try {
@@ -262,8 +260,6 @@ export abstract class AbstractVoiceService implements VoiceService {
         });
       return '';
     }
-
-    vscode.window.showInformationMessage(`Recording finished.`);
 
     return this.sendVoiceToTextRequest(filePath);
   }

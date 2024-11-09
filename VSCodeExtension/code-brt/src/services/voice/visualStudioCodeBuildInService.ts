@@ -79,7 +79,6 @@ export class VisualStudioCodeBuiltInService extends AbstractVoiceService {
         await vscode.commands.executeCommand(
           'workbench.action.editorDictation.start',
         );
-        vscode.window.showInformationMessage('Voice dictation started.');
 
         this.setClosingTime(10000);
 
@@ -122,7 +121,6 @@ export class VisualStudioCodeBuiltInService extends AbstractVoiceService {
       await vscode.commands.executeCommand(
         'workbench.action.editorDictation.stop',
       );
-      vscode.window.showInformationMessage('Voice dictation stopped.');
       this.clearInterval();
 
       if (
