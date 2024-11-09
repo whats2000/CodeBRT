@@ -117,27 +117,21 @@ export class CodeParserProvider {
   /**
    * Generate a structured context summary of code in a directory.
    * @param directoryPath - The directory containing code files.
-   * @param workspacePath - The workspace path.
    * @returns An array of CodeContext objects summarizing code structure.
    */
   public static async generateCodeContext(
     directoryPath: string,
-    workspacePath: string,
   ): Promise<CodeContext[]> {
     const codeContexts: CodeContext[] = [];
-    const { filesList } = await FileOperationsProvider.listFiles(
+    const { absoluteFilesList } = await FileOperationsProvider.listFiles(
       directoryPath,
       true,
       200,
     );
 
-    // Convert relative file paths to absolute paths
-    const absoluteFilesList = filesList.map((file) =>
-      path.resolve(workspacePath, file),
-    );
-
     for (const file of absoluteFilesList) {
       const extension = path.extname(file).slice(1);
+      if (extension === '') continue;
       const { parser, query } =
         await this.getParserAndQueryForExtension(extension);
       if (!parser || !query) {

@@ -69,7 +69,11 @@ export const listFiles = async (
   dirPath: string,
   recursive: boolean,
   limit: number,
-): Promise<{ limitReached: boolean; filesList: string[] }> => {
+): Promise<{
+  limitReached: boolean;
+  filesList: string[];
+  absoluteFilesList: string[];
+}> => {
   const absolutePath = path.resolve(dirPath);
 
   // Restrict listing files in the root or home directory
@@ -79,7 +83,12 @@ export const listFiles = async (
     arePathsEqual(absolutePath, root) ||
     arePathsEqual(absolutePath, os.homedir())
   ) {
-    return { limitReached: false, filesList: [absolutePath] };
+    const relativePath = path.relative(root, absolutePath);
+    return {
+      limitReached: false,
+      filesList: [relativePath],
+      absoluteFilesList: [absolutePath],
+    };
   }
 
   // Set globby options based on whether recursive search is requested
@@ -103,5 +112,6 @@ export const listFiles = async (
   return {
     limitReached: relativeFiles.length >= limit,
     filesList: relativeFiles,
+    absoluteFilesList: files,
   };
 };

@@ -57,7 +57,11 @@ export abstract class FileOperationsProvider {
     dirPath: string,
     recursive: boolean,
     limit: number,
-  ): Promise<{ limitReached: boolean; filesList: string[] }> {
+  ): Promise<{
+    limitReached: boolean;
+    filesList: string[];
+    absoluteFilesList: string[];
+  }> {
     return listFiles(dirPath, recursive, limit);
   }
 

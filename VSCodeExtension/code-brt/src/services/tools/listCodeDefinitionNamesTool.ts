@@ -19,10 +19,7 @@ export const listCodeDefinitionNamesTool: ToolServicesApi['listCodeDefinitionNam
 
     const dirPath = path.resolve(workspaceFolders.uri.fsPath, relativePath);
 
-    const parseResult = await CodeParserProvider.generateCodeContext(
-      dirPath,
-      workspaceFolders.uri.fsPath,
-    );
+    const parseResult = await CodeParserProvider.generateCodeContext(dirPath);
 
     if (parseResult.length === 0) {
       return {
