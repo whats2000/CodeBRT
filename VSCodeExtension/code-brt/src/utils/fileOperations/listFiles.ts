@@ -98,5 +98,10 @@ export const listFiles = async (
     ? await globbyLevelByLevel(limit, options)
     : (await globby('*', options)).slice(0, limit);
 
-  return { limitReached: files.length >= limit, filesList: files };
+  const relativeFiles = files.map((file) => path.relative(dirPath, file));
+
+  return {
+    limitReached: relativeFiles.length >= limit,
+    filesList: relativeFiles,
+  };
 };

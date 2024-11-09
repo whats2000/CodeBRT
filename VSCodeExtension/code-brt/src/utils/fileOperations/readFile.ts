@@ -101,7 +101,7 @@ export const readFile = async (
     if (!isFileExists) {
       return {
         status: 'error',
-        message: `File does not exist at ${absolutePath}.`,
+        message: `File does not exist at ${filePath}.`,
       };
     }
 
@@ -120,7 +120,7 @@ export const readFile = async (
         if (await isBinaryFile(absolutePath)) {
           return {
             status: 'error',
-            message: `The file ${absolutePath} is a binary file and cannot be read as text.`,
+            message: `The file ${filePath} is a binary file and cannot be read as text.`,
           };
         }
 

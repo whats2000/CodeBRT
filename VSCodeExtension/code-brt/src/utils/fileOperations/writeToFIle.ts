@@ -29,7 +29,7 @@ export const writeToFile = async (
     if (isFileExists && !overwrite) {
       return {
         status: 'error',
-        message: `File already exists at ${absolutePath}. Use overwrite option to replace it.`,
+        message: `File already exists at ${filePath}. Use overwrite option to replace it.`,
       };
     }
 
@@ -37,7 +37,7 @@ export const writeToFile = async (
     await fs.writeFile(absolutePath, content);
     return {
       status: 'success',
-      message: `File successfully written to ${absolutePath}.`,
+      message: `File successfully written to ${filePath}.`,
     };
   } catch (error) {
     console.error(`Failed to write file at ${filePath}:`, error);
