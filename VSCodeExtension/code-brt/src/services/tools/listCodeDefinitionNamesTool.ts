@@ -21,6 +21,8 @@ export const listCodeDefinitionNamesTool: ToolServicesApi['listCodeDefinitionNam
 
     const parseResult = await CodeParserProvider.generateCodeContext(dirPath);
 
+    updateStatus?.('');
+
     if (parseResult.length === 0) {
       return {
         status: 'success',
