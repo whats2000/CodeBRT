@@ -66,7 +66,10 @@ export const executeCommandTool: ToolServicesApi['executeCommand'] = async ({
 
     return {
       status: hasError ? 'error' : 'success',
-      result: output.trim() || 'Command executed successfully.',
+      result:
+        output.trim() || hasError
+          ? 'Something went wrong'
+          : 'Execution successful',
     };
   } catch (error) {
     console.error('Command execution completely failed:', error);
