@@ -47,6 +47,7 @@ export type ToolServicesApi = {
   /**
    * Execute a command in the terminal and return the output.
    * @param args.command The command to execute.
+   * @param args.terminalManager The terminal manager to use for command execution.
    * @param args.updateStatus A function to update the status of the command execution.
    * @returns The output of the command run result as a string.
    */

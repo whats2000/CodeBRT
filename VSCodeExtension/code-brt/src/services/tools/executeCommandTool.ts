@@ -37,6 +37,7 @@ export const executeCommandTool: ToolServicesApi['executeCommand'] = async ({
     const terminalInfo = await terminalManager.getOrCreateTerminal(
       workspaceFolders.uri.fsPath,
     );
+    terminalInfo.terminal.show();
 
     let output = '';
     let hasError = false;
@@ -52,7 +53,16 @@ export const executeCommandTool: ToolServicesApi['executeCommand'] = async ({
       hasError = true;
     });
 
+    process.once('no_shell_integration', async () => {
+      await vscode.window.showWarningMessage(
+        'Shell integration is not available for the terminal.',
+      );
+    });
+
     await process;
+
+    // Delay to ensure the terminal has time to process the output
+    await new Promise((resolve) => setTimeout(resolve, 50));
 
     return {
       status: hasError ? 'error' : 'success',

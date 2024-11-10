@@ -52,7 +52,6 @@
     "format": "prettier 'src/**/*.js' 'src/**/*.jsx' 'src/**/*.ts' 'src/**/*.tsx' './package.json' '.swcrc' './*.js' --no-error-on-unmatched-pattern --write"
   },
   "devDependencies": {
-    "@algorithm.ts/lcs": "^4.0.5",
     "@ant-design/icons": "^5.5.1",
     "@anthropic-ai/sdk": "^0.32.0",
     "@babel/core": "^7.26.0",

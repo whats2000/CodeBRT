@@ -127,7 +127,7 @@ export class TerminalManager {
         e?.execution?.read();
       });
     } catch (error) {
-      // console.error("Error setting up onDidEndTerminalShellExecution", error)
+      console.error('Error setting up onDidEndTerminalShellExecution', error);
     }
     if (disposable) {
       this.disposables.push(disposable);
@@ -201,11 +201,12 @@ export class TerminalManager {
    */
   public async getOrCreateTerminal(cwd: string): Promise<TerminalInfo> {
     // Find available terminal from our pool first (created for this task)
-    const availableTerminal = TerminalRegistry.getAllTerminals().find((t) => {
+    const allTerminals = TerminalRegistry.getAllTerminals();
+    const availableTerminal = allTerminals.find((t) => {
       if (t.busy) {
         return false;
       }
-      const terminalCwd = t.terminal.shellIntegration?.cwd; // one of cline's commands could have changed the cwd of the terminal
+      const terminalCwd = t.terminal.shellIntegration?.cwd;
       if (!terminalCwd) {
         return false;
       }
@@ -260,9 +261,6 @@ export class TerminalManager {
    * Dispose all terminals and processes.
    */
   public disposeAll() {
-    // for (const info of this.terminals) {
-    // 	//info.terminal.dispose() // dont want to dispose terminals when a task is aborted
-    // }
     this.terminalIds.clear();
     this.processes.clear();
     this.disposables.forEach((disposable) => disposable.dispose());
