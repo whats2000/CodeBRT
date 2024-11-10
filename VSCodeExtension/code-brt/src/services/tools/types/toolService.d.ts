@@ -1,3 +1,5 @@
+import { TerminalManager } from '../../../integrations';
+
 export type ToolResponseFromToolFunction = {
   status: 'success' | 'error';
   result: string;
@@ -50,6 +52,7 @@ export type ToolServicesApi = {
    */
   executeCommand: (args: {
     command: string;
+    terminalManager: TerminalManager;
     updateStatus?: (status: string) => void;
   }) => Promise<ToolResponseFromToolFunction>;
 

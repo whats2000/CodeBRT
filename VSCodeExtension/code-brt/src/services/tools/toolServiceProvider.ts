@@ -19,6 +19,7 @@ import { executeCommandTool } from './executeCommandTool';
 import { listCodeDefinitionNamesTool } from './listCodeDefinitionNamesTool';
 import { inspectSiteTool } from './inspectSiteTool';
 import { allInOneToolSchema } from './constants';
+import { TerminalManager } from '../../integrations';
 
 export class ToolServiceProvider {
   private static readonly toolServices: {
@@ -181,29 +182,34 @@ export class ToolServiceProvider {
   }
 
   public static async executeToolCall(
-    ToolCallEntry: ToolCallEntry,
+    toolCallEntry: ToolCallEntry,
+    terminalManager: TerminalManager,
     updateStatus: (status: string) => void,
   ): Promise<ToolCallResponse> {
     try {
-      const tool = this.getTool(ToolCallEntry.toolName);
+      const tool = this.getTool(toolCallEntry.toolName);
 
       if (!tool) {
         return {
-          id: ToolCallEntry.id,
-          toolCallName: ToolCallEntry.toolName,
+          id: toolCallEntry.id,
+          toolCallName: toolCallEntry.toolName,
           result: 'The tool does not exist',
           status: 'error',
           create_time: Date.now(),
         };
       }
 
-      const args = { ...ToolCallEntry.parameters, updateStatus };
+      const args = {
+        ...toolCallEntry.parameters,
+        updateStatus,
+        terminalManager,
+      };
       const result = await tool(args as any);
 
       if (result.status === 'error') {
         return {
-          id: ToolCallEntry.id,
-          toolCallName: ToolCallEntry.toolName,
+          id: toolCallEntry.id,
+          toolCallName: toolCallEntry.toolName,
           result: result.result,
           status: 'error',
           create_time: Date.now(),
@@ -211,16 +217,16 @@ export class ToolServiceProvider {
       }
 
       return {
-        id: ToolCallEntry.id,
-        toolCallName: ToolCallEntry.toolName,
+        id: toolCallEntry.id,
+        toolCallName: toolCallEntry.toolName,
         result: result.result,
         status: 'success',
         create_time: Date.now(),
       };
     } catch (error) {
       return {
-        id: ToolCallEntry.id,
-        toolCallName: ToolCallEntry.toolName,
+        id: toolCallEntry.id,
+        toolCallName: toolCallEntry.toolName,
         result:
           'There was an error executing the tool, please report this issue',
         status: 'error',

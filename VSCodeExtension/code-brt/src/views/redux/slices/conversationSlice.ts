@@ -17,7 +17,7 @@ import { updateAndSaveSetting } from './settingsSlice';
 import { clearUploadedFiles } from './fileUploadSlice';
 import React from 'react';
 
-const WAIT_FOR_USER_CONFIRM_TOOLS = ['writeToFile'];
+const WAIT_FOR_USER_CONFIRM_TOOLS = ['writeToFile', 'executeCommand'];
 
 const initialState: ConversationHistory & {
   tempId: string | null;

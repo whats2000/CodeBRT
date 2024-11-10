@@ -18,6 +18,7 @@ import { ModelServiceFactory } from './services/languageModel';
 import { VoiceServiceFactory } from './services/voice';
 import { GptSoVitsApiService } from './services/voice/gptSoVitsService';
 import { ToolServiceProvider } from './services/tools';
+import { TerminalManager } from './integrations';
 
 let extensionContext: vscode.ExtensionContext | undefined = undefined;
 
@@ -25,6 +26,7 @@ export const activate = async (ctx: vscode.ExtensionContext) => {
   extensionContext = ctx;
   const settingsManager = SettingsManager.getInstance(ctx);
   const historyManager = new HistoryManager(ctx);
+  const terminalManager = new TerminalManager();
 
   // Create a model service factory instance
   const modelServiceFactory = new ModelServiceFactory(ctx, settingsManager);
@@ -261,9 +263,13 @@ export const activate = async (ctx: vscode.ExtensionContext) => {
       );
     },
     approveToolCall: async (toolCall) => {
-      return await ToolServiceProvider.executeToolCall(toolCall, (status) => {
-        triggerEvent('updateStatus', status);
-      });
+      return await ToolServiceProvider.executeToolCall(
+        toolCall,
+        terminalManager,
+        (status) => {
+          triggerEvent('updateStatus', status);
+        },
+      );
     },
     continueWithToolCallResponse: async (_entry) => {},
   };

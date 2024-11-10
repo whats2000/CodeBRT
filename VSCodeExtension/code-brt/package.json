@@ -98,6 +98,7 @@
     "node-mic": "^1.0.1",
     "ollama": "^0.5.9",
     "openai": "^4.71.0",
+    "p-wait-for": "^5.0.2",
     "pdf-parse": "^1.1.1",
     "pdfjs-dist": "^4.8.69",
     "prettier": "3.3.3",
