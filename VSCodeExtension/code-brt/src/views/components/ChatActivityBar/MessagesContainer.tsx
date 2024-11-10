@@ -73,6 +73,7 @@ export const MessagesContainer = React.memo<MessagesContainerProps>(
     const [showFloatButtons, setShowFloatButtons] = useState(false);
     const [toolStatus, setToolStatus] = useState<string>('');
     const [isAutoScroll, setIsAutoScroll] = useState(true);
+    const [isUserScrolling, setIsUserScrolling] = useState(true);
 
     const virtualListRef = useRef<VirtuosoHandle>(null);
     const messagesContainerRef = useRef<HTMLDivElement>(null);
@@ -131,7 +132,13 @@ export const MessagesContainer = React.memo<MessagesContainerProps>(
     }, [hoveredBubble]);
 
     useEffect(() => {
-      if (isAutoScroll && conversationHistory.isProcessing) {
+      // Only auto-scroll if isAutoScroll is true and not user scrolling,
+      // and there's a new message being processed
+      if (
+        isAutoScroll &&
+        !isUserScrolling &&
+        conversationHistory.isProcessing
+      ) {
         scrollToBottom();
       }
     }, [
@@ -139,6 +146,7 @@ export const MessagesContainer = React.memo<MessagesContainerProps>(
       conversationHistoryEntries[conversationHistoryEntries.length - 1]
         ?.message,
       isAutoScroll,
+      isUserScrolling,
     ]);
 
     const scrollToBottom = () => {
@@ -152,12 +160,15 @@ export const MessagesContainer = React.memo<MessagesContainerProps>(
     };
 
     // Disable auto-scroll if the user scrolls up
-    const handleUserScroll = (e: React.UIEvent) => {
+    const handleUserScroll = (e: React.UIEvent<HTMLDivElement>) => {
+      setIsUserScrolling(true);
+
       const scrollContainer = e.currentTarget;
       const currentScrollTop = scrollContainer.scrollTop;
       const scrollHeight = scrollContainer.scrollHeight;
       const clientHeight = scrollContainer.clientHeight;
 
+      // Disable auto-scroll if user has scrolled up significantly
       if (currentScrollTop + clientHeight < scrollHeight - 100) {
         setIsAutoScroll(false);
       }
@@ -166,6 +177,7 @@ export const MessagesContainer = React.memo<MessagesContainerProps>(
     const handleAtBottomStateChange = (atBottom: boolean) => {
       if (atBottom) {
         setIsAutoScroll(true);
+        setIsUserScrolling(false);
       }
     };
 
