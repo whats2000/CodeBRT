@@ -124,5 +124,13 @@ export const postProcessCompletion = (
     completion = completion.slice(1);
   }
 
+  // Check for duplication between the last line of the prefix and the start of the completion
+  const lastLineOfPrefix = prefix.split('\n').slice(-1)[0].trim();
+  if (completion.startsWith(lastLineOfPrefix)) {
+    completion = completion.slice(lastLineOfPrefix.length).trimStart();
+  }
+
+  console.log(lastLineOfPrefix, completion);
+
   return completion;
 };
