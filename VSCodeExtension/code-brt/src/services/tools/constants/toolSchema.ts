@@ -77,6 +77,13 @@ export const executeCommandSchema = (
           'The CLI command to execute. This should be valid for the current operating system. ' +
           'Ensure the command is properly formatted and does not contain any harmful instructions.',
       },
+      timeoutDuration: {
+        type: 'number',
+        description:
+          'The duration in milliseconds to wait for checking the command execution status. ' +
+          'If the command takes longer than this duration, the execution will be stopped. ' +
+          'Default is 10 seconds.',
+      },
     },
     required: ['command'],
   },

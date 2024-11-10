@@ -106,7 +106,7 @@ export const InputContainer = React.memo<InputContainerProps>(
           processToolCall({
             toolCall: toolCall,
             entry: currentEntry,
-            rejectByUserMessage: `For the ${toolCall.toolName} tool call that was made. ${inputMessage}`,
+            rejectByUserMessage: inputMessage,
             tempIdRef,
           }),
         );

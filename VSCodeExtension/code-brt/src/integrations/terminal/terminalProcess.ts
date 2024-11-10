@@ -104,7 +104,9 @@ export class TerminalProcess extends EventEmitter<TerminalProcessEvents> {
       let didEmitEmptyLine = false;
       for await (let data of stream) {
         // 1. Process chunk and remove artifacts
-        if (isFirstChunk) {
+        if (!isFirstChunk) {
+          data = stripAnsi(data);
+        } else {
           /**
            * The first chunk we get from this stream needs to be processed to be more human-readable,
            * i.e., remove vscode's custom escape sequences and identifiers,
@@ -165,8 +167,6 @@ export class TerminalProcess extends EventEmitter<TerminalProcessEvents> {
           // Join lines back
           data = lines.join('\n');
           isFirstChunk = false;
-        } else {
-          data = stripAnsi(data);
         }
 
         // The first few chunks could be the command being echoed back, so we must ignore
@@ -185,7 +185,11 @@ export class TerminalProcess extends EventEmitter<TerminalProcessEvents> {
           data = lines.join('\n');
         }
 
-        // FIXME: right now it seems that data chunks returned to us from the shell integration stream contains random commas, which from what I can tell is not the expected behavior. There has to be a better solution here than just removing all commas.
+        // FIXME:
+        //  Right now it seems that data chunks
+        //  Returned to us from the shell integration stream contains random commas,
+        //  Which from what I can tell is not the expected behavior.
+        //  There has to be a better solution here than just removing all commas.
         data = data.replace(/,/g, '');
 
         // 2. Set isHot depending on the command

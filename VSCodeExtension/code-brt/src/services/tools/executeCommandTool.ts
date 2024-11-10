@@ -2,6 +2,8 @@ import * as vscode from 'vscode';
 
 import type { ToolResponseFromToolFunction, ToolServicesApi } from './types';
 
+let output = '';
+
 /**
  * Execute a system command using the terminal manager.
  * Requires an open workspace folder.
@@ -11,10 +13,10 @@ import type { ToolResponseFromToolFunction, ToolServicesApi } from './types';
  */
 export const executeCommandTool: ToolServicesApi['executeCommand'] = async ({
   command,
+  timeoutDuration = 10000,
   updateStatus,
   terminalManager,
 }): Promise<ToolResponseFromToolFunction> => {
-  // Check workspace
   const workspaceFolders = vscode.workspace.workspaceFolders?.[0];
   if (!workspaceFolders) {
     return {
@@ -39,10 +41,29 @@ export const executeCommandTool: ToolServicesApi['executeCommand'] = async ({
     );
     terminalInfo.terminal.show();
 
-    let output = '';
+    output = '';
     let hasError = false;
+    let timedOut = false;
 
     const process = terminalManager.runCommand(terminalInfo, command);
+
+    const commandTimeout = setTimeout(async () => {
+      timedOut = true;
+      const userChoice = await vscode.window.showInformationMessage(
+        'The command is taking longer than expected. Would you like to extend the timeout?',
+        'Yes, extend by 20 seconds',
+        'Stop the command',
+      );
+
+      if (userChoice === 'Yes, extend by 20 seconds') {
+        // Extend timeout by another minute
+        timedOut = false;
+        setTimeout(() => commandTimeout, 20);
+      } else {
+        // Stop the command by sending an interrupt signal
+        terminalInfo.terminal.sendText('\x03');
+      }
+    }, timeoutDuration);
 
     process.on('line', (line) => {
       output += line + '\n';
@@ -51,6 +72,7 @@ export const executeCommandTool: ToolServicesApi['executeCommand'] = async ({
 
     process.on('error', () => {
       hasError = true;
+      clearTimeout(commandTimeout);
     });
 
     process.once('no_shell_integration', async () => {
@@ -61,15 +83,22 @@ export const executeCommandTool: ToolServicesApi['executeCommand'] = async ({
 
     await process;
 
-    // Delay to ensure the terminal has time to process the output
+    // Clear timeout on successful completion
+    clearTimeout(commandTimeout);
+
     await new Promise((resolve) => setTimeout(resolve, 50));
 
     return {
       status: hasError ? 'error' : 'success',
       result:
-        output.trim() || hasError
-          ? 'Something went wrong, tell user copy the failed command to help you debug'
-          : 'Execution successful, tell user what will expect to see at the terminal',
+        (timedOut
+          ? `Command timed out after ${timeoutDuration}ms. With output:\n${output.trim()}`
+          : output.trim()) ||
+        (hasError
+          ? 'Something went wrong. Please try running the command manually for more context.'
+          : timedOut
+            ? 'The command is still pending.'
+            : 'Execution successful.'),
     };
   } catch (error) {
     console.error('Command execution completely failed:', error);
