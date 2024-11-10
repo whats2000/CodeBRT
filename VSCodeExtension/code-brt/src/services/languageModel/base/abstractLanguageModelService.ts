@@ -86,13 +86,7 @@ export abstract class AbstractLanguageModelService
     if (this.availableModelNames.includes(newModel)) {
       this.currentModel = newModel;
       lastSelectedModel[this.serviceType] = newModel;
-      this.settingsManager
-        .set('lastSelectedModel', lastSelectedModel)
-        .then(() => {
-          void vscode.window.showInformationMessage(
-            `Switched to model: ${newModel}`,
-          );
-        });
+      void this.settingsManager.set('lastSelectedModel', lastSelectedModel);
     } else {
       void vscode.window.showErrorMessage(
         `Model ${newModel} is not available.`,

@@ -124,7 +124,5 @@ export class GptSoVitsApiService extends AbstractVoiceService {
       voiceName,
     );
     this.updateSettings(selectedVoice);
-
-    vscode.window.showInformationMessage(`Voice switched to ${voiceName}`);
   }
 }
