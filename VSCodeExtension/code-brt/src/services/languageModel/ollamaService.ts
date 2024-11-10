@@ -149,10 +149,7 @@ export class OllamaService extends AbstractLanguageModelService {
           }
           result.unshift({
             role: 'user',
-            content: JSON.stringify({
-              error: toolCallResponse.status === 'error',
-              response: toolCallResponse.result,
-            }),
+            content: JSON.stringify(toolCallResponse.result),
           });
           break;
       }
@@ -169,10 +166,7 @@ export class OllamaService extends AbstractLanguageModelService {
       result.push({
         role: 'user',
         content: toolCallResponse
-          ? JSON.stringify({
-              error: toolCallResponse.status === 'error',
-              response: toolCallResponse.result,
-            })
+          ? JSON.stringify(toolCallResponse.result)
           : query,
       });
     }

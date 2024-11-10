@@ -268,7 +268,7 @@ export const processToolCall = createAsyncThunk<
     dispatch(replaceTempEntry(newToolCallResponseEntry));
 
     // We will continue processing instead returning
-    // - Only when tempIdRef is set and one of the following conditions is met:
+    // - Only when tempIdRef is set, and one of the following conditions is met:
     // - The user rejected the tool call as we do not need to confirm changes in this case
     // - The tool is not needed to confirm changes (Some operation like read context)
     const shouldContinueProcessing =

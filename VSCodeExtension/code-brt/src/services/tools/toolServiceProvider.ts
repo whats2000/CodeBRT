@@ -213,7 +213,7 @@ export class ToolServiceProvider {
       return {
         id: ToolCallEntry.id,
         toolCallName: ToolCallEntry.toolName,
-        result: result,
+        result: result.result,
         status: 'success',
         create_time: Date.now(),
       };

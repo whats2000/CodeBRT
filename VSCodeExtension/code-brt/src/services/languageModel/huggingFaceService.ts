@@ -145,10 +145,7 @@ export class HuggingFaceService extends AbstractLanguageModelService {
           }
           result.unshift({
             role: 'user',
-            content: JSON.stringify({
-              error: toolCallResponse.status === 'error',
-              result: toolCallResponse.result,
-            }),
+            content: JSON.stringify(toolCallResponse.result),
           });
           break;
       }
@@ -165,10 +162,7 @@ export class HuggingFaceService extends AbstractLanguageModelService {
       result.push({
         role: 'user',
         content: toolCallResponse
-          ? JSON.stringify({
-              error: toolCallResponse.status === 'error',
-              result: toolCallResponse.result,
-            })
+          ? JSON.stringify(toolCallResponse.result)
           : query,
       });
     }
