@@ -34,6 +34,7 @@ import {
   saveSettings,
   updateLocalSetting,
 } from '../../../redux/slices/settingsSlice';
+import { QuestionCircleOutlined } from '@ant-design/icons';
 
 const StyledForm = styled(Form)`
   display: flex;
@@ -189,6 +190,19 @@ export const SettingsBar: React.FC<SettingSidebarProps> = ({
       placement='left'
       width={400}
       loading={isLoading}
+      extra={
+        <Button
+          type={'text'}
+          href={
+            'https://whats2000.github.io/CodeBRT/docs/getting-started/configuration'
+          }
+          target={'_blank'}
+          icon={<QuestionCircleOutlined />}
+          iconPosition={'end'}
+        >
+          <Typography.Text type='secondary'>Learn More</Typography.Text>
+        </Button>
+      }
     >
       {needsReload && (
         <Alert
@@ -313,6 +327,7 @@ export const SettingsBar: React.FC<SettingSidebarProps> = ({
                           >
                             <Typography.Link
                               type={'secondary'}
+                              underline={true}
                               onClick={() =>
                                 openModelServiceLink(
                                   MODEL_SERVICE_CONSTANTS[serviceKey].apiLink,
