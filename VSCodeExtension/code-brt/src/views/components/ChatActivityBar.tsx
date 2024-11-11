@@ -167,7 +167,7 @@ export const ChatActivityBar = () => {
         style={{
           position: 'absolute',
           insetInlineEnd: 40,
-          bottom: floatButtonBaseYPosition + 50,
+          bottom: floatButtonBaseYPosition + 55,
           height: 40,
           width: 40,
         }}
@@ -184,7 +184,7 @@ export const ChatActivityBar = () => {
         onClick={openModelAdvanceSettingBar}
         style={{
           insetInlineEnd: 40,
-          bottom: floatButtonBaseYPosition + 50,
+          bottom: floatButtonBaseYPosition + 55,
         }}
       />
       <ToolActivateFloatButtons
