@@ -531,7 +531,7 @@ export class GeminiService extends AbstractLanguageModelService {
       }
       return { textResponse: responseText };
     } catch (error) {
-      return this.handleGetResponseError(error, 'gemini');
+      return this.handleGetResponseError(error, 'gemini', responseText);
     } finally {
       this.stopStreamFlag = false;
     }

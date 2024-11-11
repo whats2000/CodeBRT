@@ -155,6 +155,8 @@ export const processMessage = createAsyncThunk<
   ) => {
     const conversationHistory = getState().conversation;
     const { activeModelService, selectedModel } = getState().modelService;
+
+    // Check if the conversation is processing or the message is empty
     if (
       conversationHistory.isProcessing ||
       activeModelService === 'loading...' ||
@@ -162,6 +164,32 @@ export const processMessage = createAsyncThunk<
     ) {
       return;
     }
+
+    // Check if the API not set
+    const settings = getState().settings.settings;
+    if (
+      activeModelService !== 'ollama' &&
+      activeModelService !== 'custom' &&
+      !settings[`${activeModelService}ApiKey`]
+    ) {
+      callApi(
+        'alertMessage',
+        `The API key of ${activeModelService} is not set, please configure it first`,
+        'error',
+        // Open the vscode settings with @code-brt as the extension id
+        [
+          {
+            text: 'Set API Key',
+            commandArgs: [
+              'workbench.action.openSettings',
+              `@code-brt:${activeModelService}ApiKey`,
+            ],
+          },
+        ],
+      ).catch(console.error);
+      return;
+    }
+
     dispatch(startProcessing());
 
     // TODO: Support PDF Extractor at later version current only pass the images

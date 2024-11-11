@@ -52,33 +52,31 @@ export const activate = async (ctx: vscode.ExtensionContext) => {
     getAllSettings: async () => {
       return await settingsManager.getAllSettings();
     },
-    alertMessage: (msg, type) => {
-      switch (type) {
-        case 'info':
-          vscode.window.showInformationMessage(msg);
-          break;
-        case 'warning':
-          vscode.window.showWarningMessage(msg);
-          break;
-        case 'error':
-          vscode.window.showErrorMessage(msg);
-          break;
-        default:
-          vscode.window.showInformationMessage(msg);
-      }
-    },
-    alertReload: (message) => {
-      vscode.window
-        .showInformationMessage(
-          message ??
-            'The setting will take effect after the extension is reloaded',
-          'Reload',
-        )
-        .then((selection) => {
-          if (selection === 'Reload') {
-            vscode.commands.executeCommand('workbench.action.reloadWindow');
+    alertMessage: async (msg, type, selections) => {
+      const showFunction = {
+        info: vscode.window.showInformationMessage,
+        warning: vscode.window.showWarningMessage,
+        error: vscode.window.showErrorMessage,
+      }[type];
+
+      const selectionOptions = selections?.map((selection) => selection.text);
+      if (selectionOptions) {
+        await showFunction(msg, ...selectionOptions).then((selection) => {
+          if (!selection) {
+            return;
           }
+          const commandArgs = selections?.find(
+            (s) => s.text === selection,
+          )?.commandArgs;
+          if (!commandArgs || commandArgs.length === 0) {
+            return;
+          }
+          vscode.commands.executeCommand(
+            commandArgs[0],
+            ...commandArgs.slice(1),
+          );
         });
+      }
     },
     getLanguageModelResponse: async (
       options: GetLanguageModelResponseParams,

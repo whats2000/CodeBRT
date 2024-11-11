@@ -405,7 +405,7 @@ export class CohereService extends AbstractLanguageModelService {
       }
       return { textResponse: responseText };
     } catch (error) {
-      return this.handleGetResponseError(error, 'cohere');
+      return this.handleGetResponseError(error, 'cohere', responseText);
     } finally {
       this.stopStreamFlag = false;
       updateStatus && updateStatus('');

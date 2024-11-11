@@ -105,13 +105,17 @@ export type ViewApi = {
    * Show an alert message.
    * @param msg - The message to show.
    * @param type - The type of the message in ["info", "warning", "error"]
+   * @param selections - The selections to show.
+   * And invoke the command when selected.
    */
-  alertMessage: (msg: string, type: 'info' | 'warning' | 'error') => void;
-
-  /**
-   * Tell use the action need to reload the extension.
-   */
-  alertReload: (msg?: string) => void;
+  alertMessage: (
+    msg: string,
+    type: 'info' | 'warning' | 'error',
+    selections?: {
+      text: string;
+      commandArgs: string[];
+    }[],
+  ) => void;
 
   /**
    * Get the response for a query.

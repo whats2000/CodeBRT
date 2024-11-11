@@ -516,7 +516,7 @@ export class AnthropicService extends AbstractLanguageModelService {
       }
       return { textResponse: responseText };
     } catch (error) {
-      return this.handleGetResponseError(error, 'anthropic');
+      return this.handleGetResponseError(error, 'anthropic', responseText);
     } finally {
       updateStatus && updateStatus('');
     }

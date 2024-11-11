@@ -26,6 +26,7 @@ export abstract class AbstractLanguageModelService
   protected handleGetResponseError(
     error: unknown,
     modelServiceType: ModelServiceType,
+    partialResponse?: string,
   ): ResponseWithAction {
     vscode.window
       .showErrorMessage(
@@ -35,6 +36,7 @@ export abstract class AbstractLanguageModelService
           ' Service: ' +
           error,
         'Get API Key',
+        'Troubleshooting',
       )
       .then((selection) => {
         if (selection === 'Get API Key') {
@@ -42,10 +44,20 @@ export abstract class AbstractLanguageModelService
             vscode.Uri.parse(MODEL_SERVICE_CONSTANTS[modelServiceType].apiLink),
           );
         }
+        if (selection === 'Troubleshooting') {
+          void vscode.env.openExternal(
+            vscode.Uri.parse(
+              'https://whats2000.github.io/CodeBRT/docs/troubleshooting/',
+            ),
+          );
+        }
       });
 
     return {
-      textResponse: 'Failed to connect to the language model service',
+      textResponse:
+        partialResponse === '' || !partialResponse
+          ? 'Failed to get response'
+          : partialResponse,
     };
   }
 
