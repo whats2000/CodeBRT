@@ -24,6 +24,7 @@ const sidebars: SidebarsConfig = {
           label: "Voice Service",
           collapsed: true,
           items: [
+            "docs/features/voice-service/installation",
             "docs/features/voice-service/configuration",
             "docs/features/voice-service/overview",
           ],
