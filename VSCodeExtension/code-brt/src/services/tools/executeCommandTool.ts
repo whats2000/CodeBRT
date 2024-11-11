@@ -1,6 +1,7 @@
 import * as vscode from 'vscode';
 
 import type { ToolResponseFromToolFunction, ToolServicesApi } from './types';
+import path from 'path';
 
 /**
  * Execute a system command using the terminal manager.
@@ -11,6 +12,7 @@ import type { ToolResponseFromToolFunction, ToolServicesApi } from './types';
  */
 export const executeCommandTool: ToolServicesApi['executeCommand'] = async ({
   command,
+  relativePath,
   timeoutDuration = 10000,
   updateStatus,
   terminalManager,
@@ -31,11 +33,15 @@ export const executeCommandTool: ToolServicesApi['executeCommand'] = async ({
     };
   }
 
+  const commandWithRelativePath = !relativePath
+    ? workspaceFolders.uri.fsPath
+    : path.resolve(workspaceFolders.uri.fsPath, relativePath);
+
   try {
     updateStatus?.(`[processing] Executing command: ${command}`);
 
     const terminalInfo = await terminalManager.getOrCreateTerminal(
-      workspaceFolders.uri.fsPath,
+      commandWithRelativePath,
     );
     terminalInfo.terminal.show();
 
@@ -113,7 +119,7 @@ export const executeCommandTool: ToolServicesApi['executeCommand'] = async ({
         'The terminal was closed by the user before the command completed.\n';
     }
     if (output.trim() !== '') {
-      // If have multiple lines of \n, we narrow it down to only 1 line
+      // If you have multiple lines of \n, we narrow it down to only 1 line
       const formattedOutput = output.trim().replace(/\n{2,}/g, '\n');
       result += 'With output:\n' + formattedOutput;
     } else {

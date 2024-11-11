@@ -77,6 +77,12 @@ export const executeCommandSchema = (
           'The CLI command to execute. This should be valid for the current operating system. ' +
           'Ensure the command is properly formatted and does not contain any harmful instructions.',
       },
+      relativePath: {
+        type: 'string',
+        description:
+          'The relative path to execute the command in. ' +
+          'If not provided, the command will be executed in the current working directory.',
+      },
       timeoutDuration: {
         type: 'number',
         description:
@@ -319,7 +325,7 @@ export const allInOneToolSchema: (enabledTools: {
         'attemptCompletion',
       ],
     );
-    availableToolsInstructions += `- **executeCommand**: { "command": string }
+    availableToolsInstructions += `- **executeCommand**: { "command": string, "relativePath"?: string, "timeoutDuration"?: number (default: 10000) }
   - Purpose: Execute a CLI command in the current working directory. **Required**: "command"
 
 - **readFile**: { "relativeFilePath": string }
@@ -350,10 +356,10 @@ export const allInOneToolSchema: (enabledTools: {
 
   return {
     name: 'allInOneTool',
-    description: `A single, unified tool for multiple operations. Specify the "operation" to perform the task, with "parameters" provided as a JSON string. **Only one tool can be used per call.** 
+    description: `A single, unified tool for multiple operations. Specify the "operation" to perform the task, with "parameters" provided as a JSON string. **Only one tool can be used per call.**
 
 Available operations and parameters:
-  
+
 ${availableToolsInstructions}
 
 Specify each operation with necessary parameters for precise execution.
