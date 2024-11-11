@@ -310,4 +310,18 @@ export class TerminalProcess extends EventEmitter<TerminalProcessEvents> {
     }
     return lines.join('\n').trimEnd();
   }
+
+  /**
+   * Forcefully stop the process, clearing listeners and marking it as completed.
+   */
+  public terminate() {
+    if (this.hotTimer) clearTimeout(this.hotTimer);
+    this.isHot = false;
+    this.isListening = false;
+
+    this.emitRemainingBufferIfListening();
+    this.emit('completed');
+    this.emit('continue');
+    this.removeAllListeners();
+  }
 }

@@ -2,8 +2,6 @@ import * as vscode from 'vscode';
 
 import type { ToolResponseFromToolFunction, ToolServicesApi } from './types';
 
-let output = '';
-
 /**
  * Execute a system command using the terminal manager.
  * Requires an open workspace folder.
@@ -41,27 +39,39 @@ export const executeCommandTool: ToolServicesApi['executeCommand'] = async ({
     );
     terminalInfo.terminal.show();
 
-    output = '';
+    let output = '';
     let hasError = false;
     let timedOut = false;
+    let isTerminalClosed = false;
 
     const process = terminalManager.runCommand(terminalInfo, command);
 
-    const commandTimeout = setTimeout(async () => {
-      timedOut = true;
-      const userChoice = await vscode.window.showInformationMessage(
-        'The command is taking longer than expected. Would you like to extend the timeout?',
-        'Yes, extend by 20 seconds',
-        'Stop the command',
-      );
+    // Listen for terminal closure
+    const terminalClosedListener = vscode.window.onDidCloseTerminal(
+      (closedTerminal) => {
+        if (closedTerminal === terminalInfo.terminal) {
+          isTerminalClosed = true;
+          clearTimeout(commandTimeout);
+          process.terminate();
+        }
+      },
+    );
 
-      if (userChoice === 'Yes, extend by 20 seconds') {
-        // Extend timeout by another minute
-        timedOut = false;
-        setTimeout(() => commandTimeout, 20);
-      } else {
-        // Stop the command by sending an interrupt signal
-        terminalInfo.terminal.sendText('\x03');
+    const commandTimeout = setTimeout(async () => {
+      if (!isTerminalClosed) {
+        timedOut = true;
+        const userChoice = await vscode.window.showInformationMessage(
+          'The command is taking longer than expected. Would you like to extend the timeout?',
+          'Yes, extend by 20 seconds',
+          'Stop the command',
+        );
+
+        if (userChoice === 'Yes, extend by 20 seconds') {
+          timedOut = false;
+          setTimeout(() => commandTimeout, 20000); // extend by 20 seconds
+        } else {
+          terminalInfo.terminal.sendText('\x03'); // Stop command
+        }
       }
     }, timeoutDuration);
 
@@ -83,22 +93,36 @@ export const executeCommandTool: ToolServicesApi['executeCommand'] = async ({
 
     await process;
 
-    // Clear timeout on successful completion
+    // Clean up
     clearTimeout(commandTimeout);
+    terminalClosedListener.dispose();
 
     await new Promise((resolve) => setTimeout(resolve, 50));
 
+    let result = '';
+
+    if (timedOut) {
+      result += `Command timed out after ${timeoutDuration}ms.\n`;
+    }
+    if (hasError) {
+      result +=
+        'Something went wrong while executing the command. Please check the command and try again.\n';
+    }
+    if (isTerminalClosed) {
+      result +=
+        'The terminal was closed by the user before the command completed.\n';
+    }
+    if (output.trim() !== '') {
+      // If have multiple lines of \n, we narrow it down to only 1 line
+      const formattedOutput = output.trim().replace(/\n{2,}/g, '\n');
+      result += 'With output:\n' + formattedOutput;
+    } else {
+      result += 'Without any output.';
+    }
+
     return {
-      status: hasError ? 'error' : 'success',
-      result:
-        (timedOut
-          ? `Command timed out after ${timeoutDuration}ms. With output:\n${output.trim()}`
-          : output.trim()) ||
-        (hasError
-          ? 'Something went wrong. Please try running the command manually for more context.'
-          : timedOut
-            ? 'The command is still pending.'
-            : 'Execution successful.'),
+      status: hasError || isTerminalClosed ? 'error' : 'success',
+      result: result,
     };
   } catch (error) {
     console.error('Command execution completely failed:', error);
