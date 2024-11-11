@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useRef } from 'react';
 import { Button, FloatButton, Space } from 'antd';
 import {
   FileSearchOutlined,
@@ -13,6 +13,7 @@ import { ToolServiceType } from '../../../types';
 import type { AppDispatch, RootState } from '../../redux';
 import { MagicWandOutlined } from '../../icons';
 import { updateAndSaveSetting } from '../../redux/slices/settingsSlice';
+import { addRef } from '../../redux/slices/tourSlice';
 
 const TOOLS_MAP: {
   [key in ToolServiceType]: {
@@ -60,6 +61,26 @@ export const ToolActivateFloatButtons: React.FC<
   const { isLoading: historyLoading } = useSelector(
     (state: RootState) => state.conversation,
   );
+  const quickStartTour = useSelector(
+    (state: RootState) => state.tour,
+  ).tours.find((tour) => tour.name === 'quickStart')!;
+
+  const toolFloatButtonsRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    dispatch(
+      addRef({
+        tourName: 'quickStart',
+        title: 'Activate Tools',
+        description:
+          'This can toggle to let the large language model to perform various tasks. ' +
+          'Such as web search, URL fetching, and control your IDE with agent tools. ' +
+          'Enable the tools you need to use.',
+        target: () => toolFloatButtonsRef.current as HTMLElement,
+        stepIndex: 3,
+      }),
+    );
+  }, [dispatch]);
 
   const handleSettingChange = (key: ToolServiceType) => {
     if (isLoading || historyLoading) return;
@@ -75,43 +96,57 @@ export const ToolActivateFloatButtons: React.FC<
     );
   };
 
-  return (
-    <FloatButton.Group
-      icon={
-        isLoading || historyLoading ? (
-          <LoadingOutlined />
-        ) : (
-          <MagicWandOutlined />
-        )
-      }
-      trigger='click'
-      tooltip={'Activate Tools'}
-      style={{
-        bottom: floatButtonBaseYPosition,
-        insetInlineEnd: 40,
-      }}
-    >
-      {(Object.keys(TOOLS_MAP) as ToolServiceType[]).map((toolKey) => {
-        const tool = TOOLS_MAP[toolKey];
-        const isActive = settings.enableTools[toolKey]?.active;
+  console.log(quickStartTour.currentStep);
 
-        return (
-          <FloatButton
-            key={toolKey}
-            icon={tool.icon}
-            tooltip={
-              <Space size={1}>
-                {isActive
-                  ? `Disable ${tool.tooltip}`
-                  : `Enable ${tool.tooltip}`}
-                {tool.moreInfo}
-              </Space>
-            }
-            type={isActive ? 'primary' : 'default'}
-            onClick={() => handleSettingChange(toolKey)}
-          />
-        );
-      })}
-    </FloatButton.Group>
+  return (
+    <>
+      <div
+        ref={toolFloatButtonsRef}
+        style={{
+          position: 'absolute',
+          bottom: floatButtonBaseYPosition,
+          insetInlineEnd: 40,
+          height: 40,
+          width: 40,
+        }}
+      />
+      <FloatButton.Group
+        icon={
+          isLoading || historyLoading ? (
+            <LoadingOutlined />
+          ) : (
+            <MagicWandOutlined />
+          )
+        }
+        trigger='click'
+        tooltip={'Activate Tools'}
+        style={{
+          bottom: floatButtonBaseYPosition,
+          insetInlineEnd: 40,
+        }}
+      >
+        {(Object.keys(TOOLS_MAP) as ToolServiceType[]).map((toolKey) => {
+          const tool = TOOLS_MAP[toolKey];
+          const isActive = settings.enableTools[toolKey]?.active;
+
+          return (
+            <FloatButton
+              key={toolKey}
+              icon={tool.icon}
+              tooltip={
+                <Space size={1}>
+                  {isActive
+                    ? `Disable ${tool.tooltip}`
+                    : `Enable ${tool.tooltip}`}
+                  {tool.moreInfo}
+                </Space>
+              }
+              type={isActive ? 'primary' : 'default'}
+              onClick={() => handleSettingChange(toolKey)}
+            />
+          );
+        })}
+      </FloatButton.Group>
+    </>
   );
 };

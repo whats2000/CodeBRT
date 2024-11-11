@@ -221,7 +221,7 @@
         },
         "code-brt.themePrimaryColor": {
           "type": "string",
-          "default": "#f0f0f0",
+          "default": "#007ACC",
           "description": "Primary color for the theme"
         },
         "code-brt.themeAlgorithm": {

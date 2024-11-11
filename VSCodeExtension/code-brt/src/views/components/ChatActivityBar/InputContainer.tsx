@@ -23,6 +23,7 @@ import {
   processMessage,
   processToolCall,
 } from '../../redux/slices/conversationSlice';
+import { addRef } from '../../redux/slices/tourSlice';
 
 const StyledInputContainer = styled.div`
   display: flex;
@@ -59,6 +60,9 @@ export const InputContainer = React.memo<InputContainerProps>(
     );
 
     const fileInputRef = useRef<HTMLInputElement>(null);
+    const uploadFileButtonRef = useRef<HTMLButtonElement>(null);
+    const voiceInputButtonRef = useRef<HTMLButtonElement>(null);
+    const inputMessageRef = useRef<HTMLDivElement>(null);
 
     const dispatch = useDispatch<AppDispatch>();
     const { uploadedFiles } = useSelector(
@@ -77,6 +81,38 @@ export const InputContainer = React.memo<InputContainerProps>(
     useClipboardFiles((files) => dispatch(handleFilesUpload(files)));
 
     const { innerWidth } = useWindowSize();
+
+    useEffect(() => {
+      dispatch(
+        addRef({
+          tourName: 'quickStart',
+          title: 'Upload Files',
+          description: 'Upload images. (Multiple images are supported)',
+          target: () => uploadFileButtonRef.current as HTMLElement,
+          stepIndex: 0,
+        }),
+      );
+      dispatch(
+        addRef({
+          tourName: 'quickStart',
+          title: 'Record Voice',
+          description: 'Record your voice. And convert it to text.',
+          target: () => voiceInputButtonRef.current as HTMLElement,
+          stepIndex: 1,
+        }),
+      );
+      dispatch(
+        addRef({
+          tourName: 'quickStart',
+          title: 'Text Input',
+          description:
+            'Write your message or Paste images from clipboard. ' +
+            'You can also drag and drop images with Shift key pressed (Required by VSCode)',
+          target: () => inputMessageRef.current as HTMLElement,
+          stepIndex: 2,
+        }),
+      );
+    }, [dispatch]);
 
     useEffect(() => {
       // Note: The link will break in vscode webview, so we need to remove the href attribute to prevent it.
@@ -272,8 +308,9 @@ export const InputContainer = React.memo<InputContainerProps>(
             supportServerRender={false}
           />
         </UploadedImageContainer>
-        <Flex gap={10}>
+        <Flex gap={10} wrap={innerWidth < 320}>
           <Button
+            ref={uploadFileButtonRef}
             type={'text'}
             icon={<UploadOutlined />}
             onClick={handleUploadButtonClick}
@@ -288,46 +325,49 @@ export const InputContainer = React.memo<InputContainerProps>(
             style={{ display: 'none' }}
           />
           <Button
+            ref={voiceInputButtonRef}
             type={'text'}
             icon={isRecording ? <LoadingOutlined /> : <AudioOutlined />}
             onClick={handleVoiceInput}
             disabled={conversationHistory.isProcessing}
           />
-          <Input.TextArea
-            value={inputMessage}
-            onChange={handleInputMessageChange}
-            onKeyDown={handleKeyDown}
-            placeholder={innerWidth > 520 ? 'Paste images...' : 'Ask...'}
-            disabled={conversationHistory.isProcessing || isToolResponse}
-            autoSize={{
-              minRows: 1,
-              maxRows: conversationHistory.isProcessing ? 2 : 10,
-            }}
-            allowClear
-          />
-          <Flex vertical={true}>
-            <Button
-              onClick={
-                conversationHistory.isProcessing
-                  ? handleCancelResponse
-                  : sendMessage
-              }
-              disabled={isToolResponse}
-            >
-              {conversationHistory.isProcessing ? (
-                <CancelOutlined />
-              ) : (
-                <SendOutlined />
-              )}
-            </Button>
-            {inputMessage.length > 100 && (
-              <Tag
-                color='warning'
-                style={{ marginTop: 5, width: '100%', textAlign: 'center' }}
+          <Flex gap={10} style={{ width: '100%' }} ref={inputMessageRef}>
+            <Input.TextArea
+              value={inputMessage}
+              onChange={handleInputMessageChange}
+              onKeyDown={handleKeyDown}
+              placeholder={innerWidth > 520 ? 'Paste images...' : 'Ask...'}
+              disabled={conversationHistory.isProcessing || isToolResponse}
+              autoSize={{
+                minRows: 1,
+                maxRows: conversationHistory.isProcessing ? 2 : 10,
+              }}
+              allowClear
+            />
+            <Flex vertical={true}>
+              <Button
+                onClick={
+                  conversationHistory.isProcessing
+                    ? handleCancelResponse
+                    : sendMessage
+                }
+                disabled={isToolResponse}
               >
-                {inputMessage.length}
-              </Tag>
-            )}
+                {conversationHistory.isProcessing ? (
+                  <CancelOutlined />
+                ) : (
+                  <SendOutlined />
+                )}
+              </Button>
+              {inputMessage.length > 100 && (
+                <Tag
+                  color='warning'
+                  style={{ marginTop: 5, width: '100%', textAlign: 'center' }}
+                >
+                  {inputMessage.length}
+                </Tag>
+              )}
+            </Flex>
           </Flex>
         </Flex>
       </StyledInputContainer>

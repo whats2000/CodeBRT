@@ -21,6 +21,8 @@ import { ModelAdvanceSettingBar } from './ChatActivityBar/ModelAdvanceSettingBar
 import { handleFilesUpload } from '../redux/slices/fileUploadSlice';
 import { initModelService } from '../redux/slices/modelServiceSlice';
 import { fetchSettings } from '../redux/slices/settingsSlice';
+import { UserGuildTours } from './ChatActivityBar/UserGuildTours';
+import { addRef } from '../redux/slices/tourSlice';
 
 const Container = styled(Content)`
   display: flex;
@@ -39,6 +41,7 @@ export const ChatActivityBar = () => {
     useState(false);
 
   const inputContainerRef = useRef<HTMLDivElement>(null);
+  const modelAdvanceSettingButtonRef = useRef<HTMLDivElement>(null);
 
   const dispatch = useDispatch<AppDispatch>();
 
@@ -70,6 +73,17 @@ export const ChatActivityBar = () => {
         dispatch(initLoadHistory());
       })
       .catch(console.error);
+
+    dispatch(
+      addRef({
+        tourName: 'quickStart',
+        stepIndex: 4,
+        title: 'Advance Settings of the Model',
+        description:
+          'Here contain System Prompt, Temperature, Max Tokens and more.',
+        target: () => modelAdvanceSettingButtonRef.current as HTMLElement,
+      }),
+    );
 
     // For receiving stream response
     const handleStreamResponseEvent = (responseFromMessage: string) => {
@@ -144,6 +158,16 @@ export const ChatActivityBar = () => {
           inputContainerRef={inputContainerRef}
         />
       </Container>
+      <div
+        ref={modelAdvanceSettingButtonRef}
+        style={{
+          position: 'absolute',
+          insetInlineEnd: 40,
+          bottom: floatButtonBaseYPosition + 50,
+          height: 40,
+          width: 40,
+        }}
+      />
       <FloatButton
         tooltip={'Model Advance Settings'}
         icon={
@@ -166,6 +190,7 @@ export const ChatActivityBar = () => {
         isOpen={isModelAdvanceSettingBarOpen}
         onClose={() => setIsModelAdvanceSettingBarOpen(false)}
       />
+      <UserGuildTours />
     </ConfigProvider>
   );
 };

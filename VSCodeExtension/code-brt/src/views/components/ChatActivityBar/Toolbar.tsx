@@ -1,4 +1,4 @@
-import React, { useContext, useEffect, useState } from 'react';
+import React, { useContext, useEffect, useRef, useState } from 'react';
 import { Flex, MenuProps, SelectProps, Tooltip } from 'antd';
 import { Select, Button, Space, Dropdown, Drawer } from 'antd';
 import {
@@ -8,6 +8,7 @@ import {
   MenuOutlined,
   AudioOutlined,
   PicRightOutlined,
+  RocketOutlined,
 } from '@ant-design/icons';
 import styled from 'styled-components';
 import { useDispatch, useSelector } from 'react-redux';
@@ -27,6 +28,7 @@ import { VoiceSettingsBar } from './Toolbar/VoiceSettingsBar';
 import { CodeCompletionSettingsBar } from './Toolbar/CodeCompletionSettingsBar';
 import { useWindowSize } from '../../hooks';
 import { AVAILABLE_MODEL_SERVICES } from '../../../constants';
+import { addRef, startTour } from '../../redux/slices/tourSlice';
 
 const StyledSpace = styled(Space)`
   display: flex;
@@ -63,6 +65,33 @@ export const Toolbar: React.FC<ToolbarProps> = ({ setTheme }) => {
     useSelector((state: RootState) => state.modelService);
 
   const { innerWidth } = useWindowSize();
+
+  const modelServiceSelectRef = useRef<HTMLDivElement>(null);
+  const modelSelectRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    dispatch(
+      addRef({
+        tourName: 'quickStart',
+        stepIndex: 5,
+        title: 'Service Provider',
+        description:
+          'We support multiple model services. You can switch the provider here.',
+        target: () => modelServiceSelectRef.current as HTMLElement,
+      }),
+    );
+    dispatch(
+      addRef({
+        tourName: 'quickStart',
+        stepIndex: 6,
+        title: 'Model List',
+        description:
+          'There is a edit model list button at the end of the model list. ' +
+          'Which can let you edit or update the model list for the latest models.',
+        target: () => modelSelectRef.current as HTMLElement,
+      }),
+    );
+  }, []);
 
   useEffect(() => {
     if (activeModelService === 'loading...' || isLoading) {
@@ -125,6 +154,12 @@ export const Toolbar: React.FC<ToolbarProps> = ({ setTheme }) => {
       onClick: () => setIsCodeCompletionSettingsOpen(true),
       label: 'Code Completion Settings',
       icon: <PicRightOutlined />,
+    },
+    {
+      key: 'quick guide',
+      onClick: () => dispatch(startTour({ tourName: 'quickStart' })),
+      label: 'Quick Start Guide',
+      icon: <RocketOutlined />,
     },
   ];
 
@@ -206,29 +241,32 @@ export const Toolbar: React.FC<ToolbarProps> = ({ setTheme }) => {
       </Drawer>
       <StyledSpace>
         <Space wrap>
-          <Flex justify={'space-between'} gap={10}>
+          <div ref={modelServiceSelectRef}>
             <Select
               showSearch
               value={activeModelService}
               onChange={handleModelServiceChange}
               style={{
-                width: innerWidth < 550 ? 200 : 125,
+                width: innerWidth >= 550 ? 125 : innerWidth >= 320 ? 200 : 125,
               }}
               loading={isLoading}
               options={modelServiceOptions}
             />
-          </Flex>
-          <Select
-            showSearch
-            value={isLoading ? 'Loading...' : selectedModel}
-            onChange={handleModelChange}
-            style={{
-              width: innerWidth < 550 ? 200 : '100%',
-              minWidth: 150,
-            }}
-            loading={isLoading}
-            options={modelOptions}
-          />
+          </div>
+          <div ref={modelSelectRef}>
+            <Select
+              showSearch
+              value={isLoading ? 'Loading...' : selectedModel}
+              onChange={handleModelChange}
+              style={{
+                width:
+                  innerWidth >= 550 ? '100%' : innerWidth >= 320 ? 200 : 125,
+                minWidth: 100,
+              }}
+              loading={isLoading}
+              options={modelOptions}
+            />
+          </div>
         </Space>
         {innerWidth < 400 ? (
           <Dropdown menu={{ items: settingMenuItemsSmallWidth }}>
