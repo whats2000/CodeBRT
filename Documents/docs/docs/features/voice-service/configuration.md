@@ -1,4 +1,4 @@
-
+# Configuration
 
 This guide will walk you through configuring the voice service, which includes both Text-to-Voice and Voice-to-Text settings. The available options for each service are listed below.
 

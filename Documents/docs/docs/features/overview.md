@@ -1,3 +1,5 @@
+# Overview of Features
+
 In this section we will discuss the installation and configuration of the CodeBRT features.
 
 Currently, the CodeBRT features include the following:

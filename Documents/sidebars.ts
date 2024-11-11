@@ -33,19 +33,29 @@ const sidebars: SidebarsConfig = {
           type: "category",
           label: "Image Service",
           collapsed: true,
-          items: ["docs/features/image-upload/image-upload"],
+          items: [
+            "docs/features/image-upload/image-upload",
+            "docs/features/image-upload/preview-image",
+            "docs/features/image-upload/delete-image",
+          ],
         },
         {
           type: "category",
           label: "Code Editor",
           collapsed: true,
-          items: ["docs/features/code-editor/code-editor"],
+          items: [
+            "docs/features/code-editor/configuration",
+            "docs/features/code-editor/code-completion",
+          ],
         },
         {
           type: "category",
           label: "Automated Tasks",
           collapsed: true,
-          items: ["docs/features/automated-tasks/automated-tasks"],
+          items: [
+            "docs/features/automated-tasks/configuration",
+            "docs/features/automated-tasks/agent-tools",
+          ],
         },
       ],
     },
