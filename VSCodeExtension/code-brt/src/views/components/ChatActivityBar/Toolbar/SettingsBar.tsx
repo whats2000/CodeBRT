@@ -15,6 +15,7 @@ import {
   Checkbox,
   Divider,
   Alert,
+  Tag,
 } from 'antd';
 import { useDispatch, useSelector } from 'react-redux';
 
@@ -44,6 +45,9 @@ const StyledForm = styled(Form)`
 const FormGroup = styled(Form.Item)`
   margin-bottom: 15px;
 `;
+
+const PAID_PLAN_ONLY = ['anthropic', 'openai'];
+const SUPPORTED_OFFLINE = ['ollama', 'gptSoVits'];
 
 // Define the desired order of settings
 const SETTINGS_GROUPS: { title: string; keys: (keyof ExtensionSettings)[] }[] =
@@ -313,7 +317,7 @@ export const SettingsBar: React.FC<SettingSidebarProps> = ({
                   <FormGroup
                     key={key}
                     label={
-                      <Space>
+                      <Space wrap={true}>
                         <span>
                           {MODEL_SERVICE_CONSTANTS[serviceKey]?.name || key}
                         </span>
@@ -339,6 +343,16 @@ export const SettingsBar: React.FC<SettingSidebarProps> = ({
                                 : 'Learn More'}
                             </Typography.Link>
                           </Tooltip>
+                        )}
+                        {!PAID_PLAN_ONLY.includes(serviceKey) && (
+                          <Tag color={'blue'} style={{ margin: 0 }}>
+                            Free
+                          </Tag>
+                        )}
+                        {SUPPORTED_OFFLINE.includes(serviceKey) && (
+                          <Tag color={'green'} style={{ margin: 0 }}>
+                            Supports Offline
+                          </Tag>
                         )}
                       </Space>
                     }
