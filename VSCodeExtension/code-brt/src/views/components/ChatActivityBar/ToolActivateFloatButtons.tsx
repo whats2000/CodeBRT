@@ -1,9 +1,10 @@
 import React from 'react';
-import { FloatButton } from 'antd';
+import { Button, FloatButton, Space } from 'antd';
 import {
   FileSearchOutlined,
   GlobalOutlined,
   LoadingOutlined,
+  QuestionCircleOutlined,
   RobotOutlined,
 } from '@ant-design/icons';
 import { useDispatch, useSelector } from 'react-redux';
@@ -17,6 +18,7 @@ const TOOLS_MAP: {
   [key in ToolServiceType]: {
     icon: React.ReactNode;
     tooltip: string;
+    moreInfo?: React.ReactNode;
   };
 } = {
   webSearch: {
@@ -30,6 +32,15 @@ const TOOLS_MAP: {
   agentTools: {
     icon: <RobotOutlined />,
     tooltip: 'Agent Tools',
+    moreInfo: (
+      <Button
+        icon={<QuestionCircleOutlined />}
+        type='text'
+        href={
+          'https://whats2000.github.io/CodeBRT/docs/features/automated-tasks/'
+        }
+      />
+    ),
   },
 };
 
@@ -89,7 +100,12 @@ export const ToolActivateFloatButtons: React.FC<
             key={toolKey}
             icon={tool.icon}
             tooltip={
-              isActive ? `Disable ${tool.tooltip}` : `Enable ${tool.tooltip}`
+              <Space size={1}>
+                {isActive
+                  ? `Disable ${tool.tooltip}`
+                  : `Enable ${tool.tooltip}`}
+                {tool.moreInfo}
+              </Space>
             }
             type={isActive ? 'primary' : 'default'}
             onClick={() => handleSettingChange(toolKey)}
