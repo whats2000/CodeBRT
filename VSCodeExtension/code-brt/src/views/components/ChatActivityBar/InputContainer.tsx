@@ -89,7 +89,7 @@ export const InputContainer = React.memo<InputContainerProps>(
           title: 'Upload Files',
           description: 'Upload images. (Multiple images are supported)',
           target: () => uploadFileButtonRef.current as HTMLElement,
-          stepIndex: 0,
+          stepIndex: 1,
         }),
       );
       dispatch(
@@ -98,7 +98,7 @@ export const InputContainer = React.memo<InputContainerProps>(
           title: 'Record Voice',
           description: 'Record your voice. And convert it to text.',
           target: () => voiceInputButtonRef.current as HTMLElement,
-          stepIndex: 1,
+          stepIndex: 2,
         }),
       );
       dispatch(
@@ -109,7 +109,7 @@ export const InputContainer = React.memo<InputContainerProps>(
             'Write your message or Paste images from clipboard. ' +
             'You can also drag and drop images with Shift key pressed (Required by VSCode)',
           target: () => inputMessageRef.current as HTMLElement,
-          stepIndex: 2,
+          stepIndex: 3,
         }),
       );
     }, [dispatch]);

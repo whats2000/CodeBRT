@@ -73,7 +73,7 @@ export const Toolbar: React.FC<ToolbarProps> = ({ setTheme }) => {
     dispatch(
       addRef({
         tourName: 'quickStart',
-        stepIndex: 5,
+        stepIndex: 6,
         title: 'Service Provider',
         description:
           'We support multiple model services. You can switch the provider here.',
@@ -83,7 +83,7 @@ export const Toolbar: React.FC<ToolbarProps> = ({ setTheme }) => {
     dispatch(
       addRef({
         tourName: 'quickStart',
-        stepIndex: 6,
+        stepIndex: 7,
         title: 'Model List',
         description:
           'There is a edit model list button at the end of the model list. ' +

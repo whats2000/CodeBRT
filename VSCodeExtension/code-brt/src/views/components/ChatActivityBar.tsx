@@ -22,7 +22,7 @@ import { handleFilesUpload } from '../redux/slices/fileUploadSlice';
 import { initModelService } from '../redux/slices/modelServiceSlice';
 import { fetchSettings } from '../redux/slices/settingsSlice';
 import { UserGuildTours } from './ChatActivityBar/UserGuildTours';
-import { addRef } from '../redux/slices/tourSlice';
+import { addRef, startTourForNewUser } from '../redux/slices/tourSlice';
 
 const Container = styled(Content)`
   display: flex;
@@ -72,12 +72,16 @@ export const ChatActivityBar = () => {
         // Load the lasted used conversation history
         dispatch(initLoadHistory());
       })
+      .then(() => {
+        // Check if the user is new and start the quick start tour
+        dispatch(startTourForNewUser());
+      })
       .catch(console.error);
 
     dispatch(
       addRef({
         tourName: 'quickStart',
-        stepIndex: 4,
+        stepIndex: 5,
         title: 'Advance Settings of the Model',
         description:
           'Here contain System Prompt, Temperature, Max Tokens and more.',

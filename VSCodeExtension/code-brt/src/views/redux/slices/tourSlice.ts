@@ -21,7 +21,13 @@ const initialState: TourState = {
       name: 'quickStart',
       currentStep: 0,
       tourVisible: false,
-      tourSteps: [],
+      tourSteps: [
+        {
+          title: 'Welcome to CodeBRT!',
+          description:
+            'This is a quick tour to help you get started with CodeBRT.',
+        },
+      ],
     },
   ],
 };
@@ -30,25 +36,23 @@ const tourSlice = createSlice({
   name: 'tour',
   initialState,
   reducers: {
+    startTourForNewUser(state) {
+      // Read the local storage to determine if the user is new
+      if (!localStorage.getItem('code-brt.visited')) {
+        state.tours.find((tour) => tour.name === 'quickStart')!.tourVisible =
+          true;
+      }
+    },
     // Start a tour
     startTour(state, action: PayloadAction<{ tourName: TourType }>) {
       const tourName = action.payload.tourName;
       state.tours.find((tour) => tour.name === tourName)!.tourVisible = true;
     },
-    // Move to the next step
-    nextStep(state, action: PayloadAction<{ tourName: TourType }>) {
-      const tourName = action.payload.tourName;
-      state.tours.find((tour) => tour.name === tourName)!.currentStep += 1;
-    },
-    // Move to the previous step
-    previousStep(state, action: PayloadAction<{ tourName: TourType }>) {
-      const tourName = action.payload.tourName;
-      state.tours.find((tour) => tour.name === tourName)!.currentStep -= 1;
-    },
     // End a tour
     endTour(state, action: PayloadAction<{ tourName: TourType }>) {
       const tourName = action.payload.tourName;
       state.tours.find((tour) => tour.name === tourName)!.tourVisible = false;
+      localStorage.setItem('code-brt.visited', 'true');
     },
     // Add a ref to a tour, using the order to determine the target
     addRef(
@@ -79,7 +83,7 @@ const tourSlice = createSlice({
   },
 });
 
-export const { startTour, nextStep, previousStep, endTour, addRef } =
+export const { startTourForNewUser, startTour, endTour, addRef } =
   tourSlice.actions;
 
 export const tourReducer = tourSlice.reducer;

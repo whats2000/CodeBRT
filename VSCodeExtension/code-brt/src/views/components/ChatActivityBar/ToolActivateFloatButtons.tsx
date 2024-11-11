@@ -77,7 +77,7 @@ export const ToolActivateFloatButtons: React.FC<
           'Such as web search, URL fetching, and control your IDE with agent tools. ' +
           'Enable the tools you need to use.',
         target: () => toolFloatButtonsRef.current as HTMLElement,
-        stepIndex: 3,
+        stepIndex: 4,
       }),
     );
   }, [dispatch]);
