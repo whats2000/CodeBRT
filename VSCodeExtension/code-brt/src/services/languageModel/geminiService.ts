@@ -450,7 +450,7 @@ export class GeminiService extends AbstractLanguageModelService {
         }
 
         const toolCall =
-          responseToolCall.name === 'name'
+          responseToolCall.name === 'allInOneTool'
             ? {
                 id: Date.now().toString(),
                 toolName:
