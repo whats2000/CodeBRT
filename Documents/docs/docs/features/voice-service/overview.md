@@ -2,9 +2,9 @@
 After completing the steps outlined in [installation](./installation.md) and [configuration](./configuration.md), the voice service will be ready for use within the application.   The voice service provides two key functionalities: **Text to Voice** and **Voice to Text**.
 
 ## Text to Voice
-The Text to Voice functionality allows the application to convert the text entered in the chatbox into speech.  
+The Text to Voice capability allows the app to convert the text entered the chat box into speech.  
 
-By pressing the speaker button on the right-upper corner , the application will play the audio corresponding to the words in the chatbox.   
+By pressing the speaker button on the right-upper corner, the application will play the audio corresponding to the words in the chatbox.   
 ![speaker-button](/img/voice-service/overview/speaker-button.png)  
 
 And there are two methods available for Text to Voice conversion:

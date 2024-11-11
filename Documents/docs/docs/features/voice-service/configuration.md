@@ -28,7 +28,9 @@ To use OpenAI for Text-to-Voice conversion, you must set the OpenAI API key.
 
 ![OpenAI-Voice-Selection](/img/voice-service/configuration/OpenAI-Voice-Selection.png)  
 
+:::note
 For more detailed instructions on how to access the configuration panel, please refer to the [Configuration Panel Access Guide](docs/docs/getting-started/configuration.md#configuring-the-model-service-api-key).
+:::
 
 ### GPT-SoVits Configuration
 
@@ -46,8 +48,8 @@ You can find instructions on how to build and configure the port in the [GPT-SoV
 
 Once the port is set up, follow these steps:
 
-1. Navigate to the **Voice Settings** menu in the application.
-2. Locate and click on the **GPT-SoVits Advanced Settings** option.  
+1. Navigate to the **Voice Settings** menu in the app.
+2. Locate and click the **GPT-SoVits Advanced Settings** option.  
 
 ![GPT-SoVits-Advanced-Settings](/img/voice-service/configuration/GPT-SoVits-Advanced-Settings.png)
 
@@ -60,7 +62,11 @@ After opening the **GPT-SoVits Advanced Settings**, you can create a new voice p
 - **Name**: The name which will be in the voice selection list later.
 - **Refer WAV Path**: Path to the reference voice file in `.wav` format. This file will be used to model the new voice.
 - **Refer Text**: A transcription of what is spoken in the reference WAV file.
-- **Prompt Language**: The language spoken in the reference WAV file (e.g., English, Spanish, etc.).
+- **Prompt Language**: The language spoken in the reference WAV file (e.g., English, Chinese, Japanese, etc.).
+
+:::tip
+If your reference WAV file is in Chinese, the transcription will work both in Chinese and English.
+:::
 
 After filling in these fields, save your new voice profile.
 
@@ -74,21 +80,24 @@ By following these steps, you'll be able to properly configure GPT-SoVits and cr
 --- 
 
 ## Voice-to-Text Configuration
-### OpenAI Voice-to-Text Configuration
-To configure OpenAI for Voice-to-Text, follow the same steps(1&2) as described for the [Text-to-Voice configuration](#openai-text-to-voice-configuration), ensuring that your **OpenAI API key is properly set** in the setting panel.
+### OpenAI and Groq Voice-to-Text Configuration
 
-### Groq Configuration
 **1. Check if SoX is Installed and Configured**
 
-Before running Groq, it's essential to ensure that SoX (Sound eXchange) is already installed and properly configured in your system environment. you can verify it by running:
+Before running Groq or OpenAI Voice-to-Text,
+it's essential to ensure that SoX (Sound eXchange)
+is already installed and properly configured in your system environment.
+you can verify it by running:
   ```bash
   sox --version
   ```  
 
-**2. Running Groq voice-to-text service**
+**2. Running Groq or OpenAI voice-to-text service**
 
-Once SoX is installed and properly configured, Groq can be executed. If SoX is not correctly set up, Groq will likely display an error message related to audio processing.  
-If you encounter any errors during SoX installation or while running Groq, and need further assistance, please check [SoX installation](./installation.md#sox-installation) first.
+Once SoX is installed and properly configured, Groq or OpenAI audio recording can be executed.
+If SoX is not correctly set up, Groq or OpenAI will likely display an error message related to audio processing.  
+If you encounter any errors during SoX installation or while running Groq or OpenAI, 
+and need further assistance, please check [SoX installation](./installation.md#sox-installation) first.
 
 ### VSCode Built-In Configuration
 To use VSCode Built-In for Voice-to-Text, follow these steps:
@@ -98,3 +107,7 @@ To use VSCode Built-In for Voice-to-Text, follow these steps:
 ![vscode-speech-installation](/img/voice-service/configuration/vscode-speech-installation.png)
 3. Install the extension by clicking on the "Install" button.
 4. After installation, configure the extension within your VSCode settings as needed.
+
+:::note
+Always ensures restart VS Code after installing the extension to apply the changes.
+:::
