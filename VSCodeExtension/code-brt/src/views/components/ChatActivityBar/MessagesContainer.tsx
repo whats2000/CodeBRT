@@ -306,15 +306,8 @@ export const MessagesContainer = React.memo<MessagesContainerProps>(
 
     return (
       <>
-        {isLoading && (
-          <Spin fullscreen={true} size={'large'}>
-            <span>Setting up the model...</span>
-          </Spin>
-        )}
-        {conversationHistory.isLoading && (
-          <Spin fullscreen={true} size={'large'}>
-            <span>Fetching conversation history...</span>
-          </Spin>
+        {(isLoading || conversationHistory.isLoading) && (
+          <Spin fullscreen={true} size={'large'} />
         )}
         <StyledMessagesContainer
           $isLoading={conversationHistory.isLoading}
