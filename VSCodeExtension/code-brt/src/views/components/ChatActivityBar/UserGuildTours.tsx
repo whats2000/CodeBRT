@@ -15,6 +15,7 @@ export const UserGuildTours: React.FC<UserGuildTourProps> = ({}) => {
     <>
       {tours.map((tour) => (
         <Tour
+          key={tour.name}
           open={tour.tourVisible}
           steps={tour.tourSteps}
           onClose={() => dispatch(endTour({ tourName: tour.name }))}
