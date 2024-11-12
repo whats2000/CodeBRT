@@ -22,13 +22,16 @@ export class BrowserIntegrationFactory {
 
   private static async ensurePlaywrightBrowsers(): Promise<void> {
     try {
-      vscode.window
+      await vscode.window
         .showInformationMessage(
           'This feature requires to install a chromium browser. Please install it if you want to use this feature.',
           'Install',
         )
         .then((selection) => {
           if (selection === 'Install') {
+            vscode.window.showInformationMessage(
+              'Installing chromium browser, please wait...',
+            );
             execSync('npx playwright install-deps', { stdio: 'ignore' });
             execSync('npx playwright install chromium', { stdio: 'ignore' });
             vscode.window.showInformationMessage(
@@ -42,7 +45,11 @@ export class BrowserIntegrationFactory {
     }
   }
 
-  static async createBrowserIntegration(
+  /**
+   * Create a browser integration instance
+   * @param type The type of browser integration to create, default is 'playwright'
+   */
+  public static async createBrowserIntegration(
     type: 'playwright' = 'playwright',
   ): Promise<BrowserIntegration> {
     switch (type) {
@@ -52,7 +59,6 @@ export class BrowserIntegrationFactory {
           // Check if Playwright browsers are installed
           if (!(await BrowserIntegrationFactory.checkBrowserAvailability())) {
             await BrowserIntegrationFactory.ensurePlaywrightBrowsers();
-            return Promise.reject('Playwright browsers are not installed');
           }
 
           // Dynamically import the Playwright module
