@@ -111,6 +111,10 @@ module.exports = (env, { mode }) => {
             from: path.join(languageWasmDir, `tree-sitter-${lang}.wasm`),
             to: path.join(wasmTargetDir, `tree-sitter-${lang}.wasm`),
           })),
+          {
+            from: 'node_modules/playwright-core',
+            to: 'node_modules/playwright-core',
+          },
         ].filter(Boolean),
       }),
       new webpack.DefinePlugin({

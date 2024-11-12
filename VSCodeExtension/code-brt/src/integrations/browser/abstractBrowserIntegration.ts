@@ -1,5 +1,5 @@
 import type { BrowserIntegration, BrowserInspectResult } from './types';
-import type { Browser, Page } from 'playwright';
+import type { Browser, Page } from 'playwright-core';
 
 export abstract class AbstractBrowserIntegration implements BrowserIntegration {
   protected browser?: Browser;
@@ -32,7 +32,7 @@ export abstract class AbstractBrowserIntegration implements BrowserIntegration {
     return {
       screenshot,
       consoleMessages,
-      pageUrl
+      pageUrl,
     };
   }
 }

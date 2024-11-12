@@ -62,6 +62,8 @@ export const inspectSiteTool: ToolServicesApi['inspectSite'] = async ({
   } catch (error) {
     updateStatus?.('');
 
+    console.log(error);
+
     const errorMessage = error instanceof Error ? error.message : String(error);
 
     if (errorMessage.includes("Cannot find module 'playwright'")) {
