@@ -66,18 +66,9 @@ export const inspectSiteTool: ToolServicesApi['inspectSite'] = async ({
 
     const errorMessage = error instanceof Error ? error.message : String(error);
 
-    if (errorMessage.includes("Cannot find module 'playwright'")) {
-      return {
-        status: 'error',
-        result:
-          `Currently this feature only works on CodeBRT Dev Mode.\n` +
-          `So tell the user inspect the ${url} on the browser manually.`,
-      };
-    }
-
     return {
       status: 'error',
-      result: `Error inspecting site: ${error instanceof Error ? error.message : String(error)}`,
+      result: `Error inspecting site: ${errorMessage}`,
     };
   }
 };
