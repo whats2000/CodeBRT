@@ -68,7 +68,7 @@ export const inspectSiteTool: ToolServicesApi['inspectSite'] = async ({
       return {
         status: 'error',
         result:
-          `Currently this feature only works on Dev mode. ` +
+          `Currently this feature only works on CodeBRT Dev Mode.\n` +
           `So tell the user inspect the ${url} on the browser manually.`,
       };
     }
