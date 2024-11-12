@@ -2,7 +2,7 @@
   "compilerOptions": {
     "jsx": "react-jsx",
     "outDir": "out",
-    "types": ["jest", "node"],
+    "types": ["jest", "node", "playwright"],
     "module": "CommonJS",
     "target": "ES2021",
     "moduleResolution": "node",
@@ -19,6 +19,10 @@
     "baseUrl": ".",
     "resolveJsonModule": true,
     "esModuleInterop": true,
+    "paths": {
+      "playwright": ["node_modules/playwright"],
+      "playwright-core": ["node_modules/playwright-core"]
+    }
   },
   "include": ["./**/*.ts", "./**/*.tsx"],
   "exclude": ["node_modules"]

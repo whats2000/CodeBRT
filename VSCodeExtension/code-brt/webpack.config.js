@@ -2,6 +2,7 @@
 
 const path = require('path');
 const CopyWebpackPlugin = require('copy-webpack-plugin');
+const webpack = require('webpack');
 
 module.exports = (env, { mode }) => {
   const isDev = mode === 'development';
@@ -51,10 +52,26 @@ module.exports = (env, { mode }) => {
     externals: {
       vs: 'vs',
       vscode: 'commonjs vscode',
+      electron: 'commonjs electron',
+      'playwright-core': 'commonjs playwright-core',
+      playwright: 'commonjs playwright',
     },
     resolve: {
       roots: [__dirname],
       extensions: ['.js', '.ts'],
+      fallback: {
+        electron: false,
+        fs: false,
+        net: false,
+        tls: false,
+      },
+      alias: {
+        playwright: path.resolve(__dirname, 'node_modules/playwright'),
+        'playwright-core': path.resolve(
+          __dirname,
+          'node_modules/playwright-core',
+        ),
+      },
     },
     optimization: {
       minimize: !isDev,
@@ -71,6 +88,10 @@ module.exports = (env, { mode }) => {
         {
           test: /\.css$/,
           use: ['css-loader'],
+        },
+        {
+          test: /playwright-core/,
+          use: 'null-loader',
         },
       ],
     },
@@ -91,6 +112,9 @@ module.exports = (env, { mode }) => {
             to: path.join(wasmTargetDir, `tree-sitter-${lang}.wasm`),
           })),
         ].filter(Boolean),
+      }),
+      new webpack.DefinePlugin({
+        'process.env.PLAYWRIGHT_BROWSERS_PATH': JSON.stringify('0'),
       }),
     ].filter(Boolean),
     devtool: isDev ? 'inline-cheap-module-source-map' : false,
