@@ -1,23 +1,10 @@
 import React, { useContext, useState, useEffect } from 'react';
-import {
-  Drawer,
-  InputNumber,
-  Input,
-  Button,
-  Row,
-  Col,
-  Typography,
-  Tooltip,
-  Space,
-  Form,
-  FloatButton,
-} from 'antd';
+import { Drawer, Button, Typography, Space, FloatButton } from 'antd';
 import {
   ClearOutlined,
   ControlOutlined,
   ImportOutlined,
   LoadingOutlined,
-  QuestionCircleFilled,
   SaveOutlined,
 } from '@ant-design/icons';
 import { useDispatch, useSelector } from 'react-redux';
@@ -30,6 +17,8 @@ import { SaveSystemPromptModal } from './ModelAdvanceSettingBar/SaveSystemPrompt
 import { LoadSystemPromptBar } from './ModelAdvanceSettingBar/LoadSystemPromptBar';
 import { setAdvanceSettings } from '../../redux/slices/conversationSlice';
 import { useRefs } from '../../context/RefContext';
+import { ModelAdvanceSettingFormItem } from './ModelAdvanceSettingBar/ModelAdvanceSettingFormItem';
+import { Entries } from 'type-fest';
 
 const DEFAULT_ADVANCE_SETTINGS: ConversationModelAdvanceSettings = {
   systemPrompt: 'You are a helpful assistant.',
@@ -100,9 +89,9 @@ export const ModelAdvanceSettingBar: React.FC<ModelAdvanceSettingsProps> = ({
     }
   };
 
-  const handleInputChange = (
-    field: keyof ConversationModelAdvanceSettings,
-    value: number | string | null,
+  const handleInputChange = <K extends keyof ConversationModelAdvanceSettings>(
+    field: K,
+    value: ConversationModelAdvanceSettings[K] | null,
   ) => {
     setNewAdvanceSettings((prev) => ({
       ...prev,
@@ -125,82 +114,6 @@ export const ModelAdvanceSettingBar: React.FC<ModelAdvanceSettingsProps> = ({
     if (conversationHistory.isLoading || isLoading) return;
     setIsOpen(true);
   };
-
-  const renderFormItem = (key: string, value: number | string | null) => (
-    <Form.Item
-      label={
-        <Space>
-          <span>
-            {key.charAt(0).toUpperCase() +
-              key.slice(1).replace(/([A-Z])/g, ' $1')}
-          </span>
-          <Tooltip title='Click to show more information'>
-            <Typography.Link
-              type={'secondary'}
-              onClick={() => handleMoreInfoToggle(key)}
-            >
-              <QuestionCircleFilled />
-            </Typography.Link>
-          </Tooltip>
-        </Space>
-      }
-      key={key}
-      layout={'vertical'}
-    >
-      {key === 'systemPrompt' ? (
-        <Input.TextArea
-          value={(value as string) || ''}
-          onChange={(e) =>
-            handleInputChange(
-              key as keyof ConversationModelAdvanceSettings,
-              e.target.value,
-            )
-          }
-          placeholder='Enter system prompt'
-          autoSize={{ minRows: 2, maxRows: 10 }}
-        />
-      ) : (
-        <Row gutter={8} align={'middle'}>
-          <Col flex={'auto'}>
-            <InputNumber
-              max={
-                MODEL_ADVANCE_SETTINGS[
-                  key as keyof ConversationModelAdvanceSettings
-                ].range.max
-              }
-              min={
-                MODEL_ADVANCE_SETTINGS[
-                  key as keyof ConversationModelAdvanceSettings
-                ].range.min
-              }
-              style={{ width: '100%' }}
-              value={value as number | null}
-              onChange={(val) =>
-                handleInputChange(
-                  key as keyof ConversationModelAdvanceSettings,
-                  val,
-                )
-              }
-              placeholder={`Enter ${key}`}
-              changeOnWheel={true}
-            />
-          </Col>
-          <Col>
-            <Tooltip title='Clear field' placement={'right'}>
-              <Button
-                type='text'
-                danger
-                icon={<ClearOutlined />}
-                onClick={() =>
-                  clearField(key as keyof ConversationModelAdvanceSettings)
-                }
-              />
-            </Tooltip>
-          </Col>
-        </Row>
-      )}
-    </Form.Item>
-  );
 
   return (
     <>
@@ -236,9 +149,19 @@ export const ModelAdvanceSettingBar: React.FC<ModelAdvanceSettingsProps> = ({
         onClose={() => setIsOpen(false)}
         open={isOpen}
       >
-        {Object.entries(newAdvanceSettings).map(([key, value]) => (
+        {(
+          Object.entries(
+            newAdvanceSettings,
+          ) as Entries<ConversationModelAdvanceSettings>
+        ).map(([key, value]) => (
           <React.Fragment key={key}>
-            {renderFormItem(key, value as number | string | null)}
+            <ModelAdvanceSettingFormItem
+              settingName={key}
+              value={value}
+              handleInputChange={handleInputChange}
+              clearField={clearField}
+              handleMoreInfoToggle={handleMoreInfoToggle}
+            />
             {key === 'systemPrompt' && (
               <Space
                 style={{
@@ -261,20 +184,10 @@ export const ModelAdvanceSettingBar: React.FC<ModelAdvanceSettingsProps> = ({
             )}
             {showMoreInfoSettingName === key && (
               <Typography.Paragraph type={'secondary'}>
-                {
-                  MODEL_ADVANCE_SETTINGS[
-                    key as keyof ConversationModelAdvanceSettings
-                  ].description
-                }{' '}
-                {MODEL_ADVANCE_SETTINGS[
-                  key as keyof ConversationModelAdvanceSettings
-                ].link && (
+                {MODEL_ADVANCE_SETTINGS[key].description}{' '}
+                {MODEL_ADVANCE_SETTINGS[key].link && (
                   <Typography.Link
-                    href={
-                      MODEL_ADVANCE_SETTINGS[
-                        key as keyof ConversationModelAdvanceSettings
-                      ].link
-                    }
+                    href={MODEL_ADVANCE_SETTINGS[key].link}
                     target='_blank'
                     rel='noreferrer'
                     type={'warning'}
