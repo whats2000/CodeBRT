@@ -12,6 +12,7 @@ import { useDispatch, useSelector } from 'react-redux';
 
 import type { AppDispatch, RootState } from '../../redux';
 import { WebviewContext } from '../../WebviewContext';
+import { useRefs } from '../../context/RefContext';
 import { useClipboardFiles, useWindowSize } from '../../hooks';
 import {
   deleteFile,
@@ -23,7 +24,7 @@ import {
   processMessage,
   processToolCall,
 } from '../../redux/slices/conversationSlice';
-import { addRef } from '../../redux/slices/tourSlice';
+import { setRefId } from '../../redux/slices/tourSlice';
 
 const StyledInputContainer = styled.div`
   display: flex;
@@ -50,6 +51,7 @@ type InputContainerProps = {
 export const InputContainer = React.memo<InputContainerProps>(
   ({ tempIdRef, inputContainerRef }) => {
     const { callApi } = useContext(WebviewContext);
+    const { registerRef } = useRefs();
     const [enterPressCount, setEnterPressCount] = useState(0);
     const [previewOpen, setPreviewOpen] = useState(false);
     const [previewImage, setPreviewImage] = useState('');
@@ -60,9 +62,9 @@ export const InputContainer = React.memo<InputContainerProps>(
     );
 
     const fileInputRef = useRef<HTMLInputElement>(null);
-    const uploadFileButtonRef = useRef<HTMLButtonElement>(null);
-    const voiceInputButtonRef = useRef<HTMLButtonElement>(null);
-    const inputMessageRef = useRef<HTMLDivElement>(null);
+    const uploadFileButtonRef = registerRef('uploadFileButton');
+    const voiceInputButtonRef = registerRef('voiceInputButton');
+    const inputMessageRef = registerRef('inputMessage');
 
     const dispatch = useDispatch<AppDispatch>();
     const { uploadedFiles } = useSelector(
@@ -84,31 +86,23 @@ export const InputContainer = React.memo<InputContainerProps>(
 
     useEffect(() => {
       dispatch(
-        addRef({
+        setRefId({
           tourName: 'quickStart',
-          title: 'Upload Files',
-          description: 'Upload images. (Multiple images are supported)',
-          target: () => uploadFileButtonRef.current as HTMLElement,
+          targetId: 'uploadFileButton',
           stepIndex: 1,
         }),
       );
       dispatch(
-        addRef({
+        setRefId({
           tourName: 'quickStart',
-          title: 'Record Voice',
-          description: 'Record your voice. And convert it to text.',
-          target: () => voiceInputButtonRef.current as HTMLElement,
+          targetId: 'voiceInputButton',
           stepIndex: 2,
         }),
       );
       dispatch(
-        addRef({
+        setRefId({
           tourName: 'quickStart',
-          title: 'Text Input',
-          description:
-            'Write your message or Paste images from clipboard. ' +
-            'You can also drag and drop images with Shift key pressed (Required by VSCode)',
-          target: () => inputMessageRef.current as HTMLElement,
+          targetId: 'inputMessage',
           stepIndex: 3,
         }),
       );

@@ -10,10 +10,13 @@ import {
   Tooltip,
   Space,
   Form,
+  FloatButton,
 } from 'antd';
 import {
   ClearOutlined,
+  ControlOutlined,
   ImportOutlined,
+  LoadingOutlined,
   QuestionCircleFilled,
   SaveOutlined,
 } from '@ant-design/icons';
@@ -26,6 +29,7 @@ import { MODEL_ADVANCE_SETTINGS } from '../../../constants';
 import { SaveSystemPromptModal } from './ModelAdvanceSettingBar/SaveSystemPromptModal';
 import { LoadSystemPromptBar } from './ModelAdvanceSettingBar/LoadSystemPromptBar';
 import { setAdvanceSettings } from '../../redux/slices/conversationSlice';
+import { useRefs } from '../../context/RefContext';
 
 const DEFAULT_ADVANCE_SETTINGS: ConversationModelAdvanceSettings = {
   systemPrompt: 'You are a helpful assistant.',
@@ -38,20 +42,20 @@ const DEFAULT_ADVANCE_SETTINGS: ConversationModelAdvanceSettings = {
 };
 
 export type ModelAdvanceSettingsProps = {
-  isOpen: boolean;
-  onClose: () => void;
+  floatButtonBaseYPosition: number;
 };
 
 export const ModelAdvanceSettingBar: React.FC<ModelAdvanceSettingsProps> = ({
-  isOpen,
-  onClose,
+  floatButtonBaseYPosition,
 }) => {
   const { callApi } = useContext(WebviewContext);
+  const { registerRef } = useRefs();
 
   const dispatch = useDispatch();
   const conversationHistory = useSelector(
     (state: RootState) => state.conversation,
   );
+  const { isLoading } = useSelector((state: RootState) => state.settings);
 
   const { advanceSettings } = conversationHistory;
 
@@ -62,6 +66,9 @@ export const ModelAdvanceSettingBar: React.FC<ModelAdvanceSettingsProps> = ({
   >(null);
   const [savePromptOpen, setSavePromptOpen] = useState(false);
   const [loadPromptOpen, setLoadPromptOpen] = useState(false);
+  const [isOpen, setIsOpen] = useState(false);
+
+  const modelAdvanceSettingButtonRef = registerRef('modelAdvanceSettingButton');
 
   useEffect(() => {
     if (isOpen) {
@@ -112,6 +119,11 @@ export const ModelAdvanceSettingBar: React.FC<ModelAdvanceSettingsProps> = ({
 
   const handleMoreInfoToggle = (key: string) => {
     setShowMoreInfoSettingName(showMoreInfoSettingName === key ? null : key);
+  };
+
+  const openModelAdvanceSettingBar = () => {
+    if (conversationHistory.isLoading || isLoading) return;
+    setIsOpen(true);
   };
 
   const renderFormItem = (key: string, value: number | string | null) => (
@@ -192,11 +204,36 @@ export const ModelAdvanceSettingBar: React.FC<ModelAdvanceSettingsProps> = ({
 
   return (
     <>
+      <div
+        ref={modelAdvanceSettingButtonRef}
+        style={{
+          position: 'absolute',
+          insetInlineEnd: 40,
+          bottom: floatButtonBaseYPosition + 55,
+          height: 40,
+          width: 40,
+        }}
+      />
+      <FloatButton
+        tooltip={'Model Advance Settings'}
+        icon={
+          conversationHistory.isLoading || isLoading ? (
+            <LoadingOutlined />
+          ) : (
+            <ControlOutlined />
+          )
+        }
+        onClick={openModelAdvanceSettingBar}
+        style={{
+          insetInlineEnd: 40,
+          bottom: floatButtonBaseYPosition + 55,
+        }}
+      />
       <Drawer
         title='Model Advance Settings'
         placement='left'
         closable={true}
-        onClose={onClose}
+        onClose={() => setIsOpen(false)}
         open={isOpen}
       >
         {Object.entries(newAdvanceSettings).map(([key, value]) => (
@@ -252,7 +289,7 @@ export const ModelAdvanceSettingBar: React.FC<ModelAdvanceSettingsProps> = ({
         <Button
           type='primary'
           ghost
-          onClick={onClose}
+          onClick={() => setIsOpen(false)}
           style={{ marginTop: 20, width: '100%' }}
         >
           Close and Save

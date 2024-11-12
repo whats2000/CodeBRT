@@ -1,14 +1,12 @@
-import type { WritableDraft } from 'immer';
-
 import { createSlice, PayloadAction } from '@reduxjs/toolkit';
-import { TourProps, TourStepProps } from 'antd';
+import { TourStepProps } from 'antd';
 
 type TourType = 'quickStart';
 type TourEntry = {
   name: TourType;
   currentStep: number;
   tourVisible: boolean;
-  tourSteps: TourProps['steps'];
+  tourSteps: (Omit<TourStepProps, 'target'> & { targetId?: string })[];
 };
 
 type TourState = {
@@ -27,6 +25,43 @@ const initialState: TourState = {
           description:
             'This is a quick tour to help you get started with CodeBRT.',
         },
+        {
+          title: 'Upload Files',
+          description: 'Upload images. (Multiple images are supported)',
+        },
+        {
+          title: 'Record Voice',
+          description: 'Record your voice. And convert it to text.',
+        },
+        {
+          title: 'Text Input',
+          description:
+            'Write your message or Paste images from clipboard. ' +
+            'You can also drag and drop images with Shift key pressed (Required by VSCode)',
+        },
+        {
+          title: 'Activate Tools',
+          description:
+            'This can toggle to let the large language model to perform various tasks. ' +
+            'Such as web search, URL fetching, and control your IDE with agent tools. ' +
+            'Enable the tools you need to use.',
+        },
+        {
+          title: 'Advance Settings of the Model',
+          description:
+            'Here contain System Prompt, Temperature, Max Tokens and more.',
+        },
+        {
+          title: 'Service Provider',
+          description:
+            'We support multiple model services. You can switch the provider here.',
+        },
+        {
+          title: 'Model List',
+          description:
+            'There is an edit model list button at the end of the model list. ' +
+            'Which can let you edit or update the model list for the latest models.',
+        },
       ],
     },
   ],
@@ -37,53 +72,39 @@ const tourSlice = createSlice({
   initialState,
   reducers: {
     startTourForNewUser(state) {
-      // Read the local storage to determine if the user is new
       if (!localStorage.getItem('code-brt.visited')) {
         state.tours.find((tour) => tour.name === 'quickStart')!.tourVisible =
           true;
       }
     },
-    // Start a tour
     startTour(state, action: PayloadAction<{ tourName: TourType }>) {
       const tourName = action.payload.tourName;
       state.tours.find((tour) => tour.name === tourName)!.tourVisible = true;
     },
-    // End a tour
     endTour(state, action: PayloadAction<{ tourName: TourType }>) {
       const tourName = action.payload.tourName;
       state.tours.find((tour) => tour.name === tourName)!.tourVisible = false;
       localStorage.setItem('code-brt.visited', 'true');
     },
-    // Add a ref to a tour, using the order to determine the target
-    addRef(
+    setRefId(
       state,
-      action: PayloadAction<
-        {
-          tourName: TourType;
-          stepIndex: number;
-        } & WritableDraft<TourStepProps>
-      >,
+      action: PayloadAction<{
+        tourName: TourType;
+        stepIndex: number;
+        targetId: string;
+      }>,
     ) {
-      const { tourName, stepIndex } = action.payload;
+      const { tourName, stepIndex, targetId } = action.payload;
       const tour = state.tours.find((tour) => tour.name === tourName);
-
-      if (!tour || !tour.tourSteps) {
-        return;
+      if (tour && tour.tourSteps) {
+        const tourStep = tour.tourSteps[stepIndex];
+        tourStep.targetId = targetId;
       }
-
-      // If already exists return
-      if (tour.tourSteps.find((step) => step.title === action.payload.title)) {
-        return;
-      }
-
-      tour.tourSteps.splice(stepIndex, 0, {
-        ...action.payload,
-      });
     },
   },
 });
 
-export const { startTourForNewUser, startTour, endTour, addRef } =
+export const { startTourForNewUser, startTour, endTour, setRefId } =
   tourSlice.actions;
 
 export const tourReducer = tourSlice.reducer;

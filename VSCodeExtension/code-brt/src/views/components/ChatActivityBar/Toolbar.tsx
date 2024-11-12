@@ -1,4 +1,4 @@
-import React, { useContext, useEffect, useRef, useState } from 'react';
+import React, { useContext, useEffect, useState } from 'react';
 import { Flex, MenuProps, SelectProps, Tooltip } from 'antd';
 import { Select, Button, Space, Dropdown, Drawer } from 'antd';
 import {
@@ -21,6 +21,7 @@ import {
   swapModel,
 } from '../../redux/slices/modelServiceSlice';
 import { WebviewContext } from '../../WebviewContext';
+import { useRefs } from '../../context/RefContext';
 import { EditModelListBar } from './Toolbar/EditModelListBar';
 import { HistorySidebar } from './Toolbar/HistorySidebar';
 import { SettingsBar } from './Toolbar/SettingsBar';
@@ -28,7 +29,7 @@ import { VoiceSettingsBar } from './Toolbar/VoiceSettingsBar';
 import { CodeCompletionSettingsBar } from './Toolbar/CodeCompletionSettingsBar';
 import { useWindowSize } from '../../hooks';
 import { AVAILABLE_MODEL_SERVICES } from '../../../constants';
-import { addRef, startTour } from '../../redux/slices/tourSlice';
+import { setRefId, startTour } from '../../redux/slices/tourSlice';
 
 const StyledSpace = styled(Space)`
   display: flex;
@@ -51,6 +52,7 @@ type ToolbarProps = {
 
 export const Toolbar: React.FC<ToolbarProps> = ({ setTheme }) => {
   const { callApi } = useContext(WebviewContext);
+  const { registerRef } = useRefs();
 
   const [isHistorySidebarOpen, setIsHistorySidebarOpen] = useState(false);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
@@ -66,29 +68,22 @@ export const Toolbar: React.FC<ToolbarProps> = ({ setTheme }) => {
 
   const { innerWidth } = useWindowSize();
 
-  const modelServiceSelectRef = useRef<HTMLDivElement>(null);
-  const modelSelectRef = useRef<HTMLDivElement>(null);
+  const modelServiceSelectRef = registerRef('modelServiceSelect');
+  const modelSelectRef = registerRef('modelSelect');
 
   useEffect(() => {
     dispatch(
-      addRef({
+      setRefId({
         tourName: 'quickStart',
         stepIndex: 6,
-        title: 'Service Provider',
-        description:
-          'We support multiple model services. You can switch the provider here.',
-        target: () => modelServiceSelectRef.current as HTMLElement,
+        targetId: 'modelServiceSelect',
       }),
     );
     dispatch(
-      addRef({
+      setRefId({
         tourName: 'quickStart',
         stepIndex: 7,
-        title: 'Model List',
-        description:
-          'There is a edit model list button at the end of the model list. ' +
-          'Which can let you edit or update the model list for the latest models.',
-        target: () => modelSelectRef.current as HTMLElement,
+        targetId: 'modelSelect',
       }),
     );
   }, []);

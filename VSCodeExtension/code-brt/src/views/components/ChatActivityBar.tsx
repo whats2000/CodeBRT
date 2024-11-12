@@ -1,8 +1,7 @@
 import { useContext, useState, useEffect, useRef } from 'react';
 import styled from 'styled-components';
 import { Content } from 'antd/es/layout/layout';
-import { ConfigProvider, FloatButton } from 'antd';
-import { ControlOutlined, LoadingOutlined } from '@ant-design/icons';
+import { ConfigProvider } from 'antd';
 import { useSelector, useDispatch } from 'react-redux';
 
 import type { AppDispatch, RootState } from '../redux';
@@ -12,6 +11,7 @@ import {
   initLoadHistory,
 } from '../redux/slices/conversationSlice';
 import { WebviewContext } from '../WebviewContext';
+import { RefProvider } from '../context/RefContext';
 import { useDragAndDrop, useThemeConfig } from '../hooks';
 import { Toolbar } from './ChatActivityBar/Toolbar';
 import { InputContainer } from './ChatActivityBar/InputContainer';
@@ -22,7 +22,7 @@ import { handleFilesUpload } from '../redux/slices/fileUploadSlice';
 import { initModelService } from '../redux/slices/modelServiceSlice';
 import { fetchSettings } from '../redux/slices/settingsSlice';
 import { UserGuildTours } from './ChatActivityBar/UserGuildTours';
-import { addRef, startTourForNewUser } from '../redux/slices/tourSlice';
+import { setRefId, startTourForNewUser } from '../redux/slices/tourSlice';
 
 const Container = styled(Content)`
   display: flex;
@@ -37,15 +37,10 @@ export const ChatActivityBar = () => {
   const { addListener, removeListener } = useContext(WebviewContext);
 
   const [floatButtonBaseYPosition, setFloatButtonBaseYPosition] = useState(60);
-  const [isModelAdvanceSettingBarOpen, setIsModelAdvanceSettingBarOpen] =
-    useState(false);
 
   const inputContainerRef = useRef<HTMLDivElement>(null);
-  const modelAdvanceSettingButtonRef = useRef<HTMLDivElement>(null);
 
   const dispatch = useDispatch<AppDispatch>();
-
-  const { isLoading } = useSelector((state: RootState) => state.settings);
 
   const conversationHistory = useSelector(
     (state: RootState) => state.conversation,
@@ -79,13 +74,10 @@ export const ChatActivityBar = () => {
       .catch(console.error);
 
     dispatch(
-      addRef({
+      setRefId({
         tourName: 'quickStart',
         stepIndex: 5,
-        title: 'Advance Settings of the Model',
-        description:
-          'Here contain System Prompt, Temperature, Max Tokens and more.',
-        target: () => modelAdvanceSettingButtonRef.current as HTMLElement,
+        targetId: 'modelAdvanceSettingButton',
       }),
     );
 
@@ -147,54 +139,25 @@ export const ChatActivityBar = () => {
     tempIdRef.current = conversationHistory.tempId;
   }, [conversationHistory.tempId]);
 
-  const openModelAdvanceSettingBar = () => {
-    if (conversationHistory.isLoading || isLoading) return;
-    setIsModelAdvanceSettingBarOpen(true);
-  };
-
   return (
     <ConfigProvider theme={theme}>
-      <Container ref={dropRef}>
-        <Toolbar setTheme={setTheme} />
-        <MessagesContainer tempIdRef={tempIdRef} />
-        <InputContainer
-          tempIdRef={tempIdRef}
-          inputContainerRef={inputContainerRef}
+      <RefProvider>
+        <Container ref={dropRef}>
+          <Toolbar setTheme={setTheme} />
+          <MessagesContainer tempIdRef={tempIdRef} />
+          <InputContainer
+            tempIdRef={tempIdRef}
+            inputContainerRef={inputContainerRef}
+          />
+        </Container>
+        <ModelAdvanceSettingBar
+          floatButtonBaseYPosition={floatButtonBaseYPosition}
         />
-      </Container>
-      <div
-        ref={modelAdvanceSettingButtonRef}
-        style={{
-          position: 'absolute',
-          insetInlineEnd: 40,
-          bottom: floatButtonBaseYPosition + 55,
-          height: 40,
-          width: 40,
-        }}
-      />
-      <FloatButton
-        tooltip={'Model Advance Settings'}
-        icon={
-          conversationHistory.isLoading || isLoading ? (
-            <LoadingOutlined />
-          ) : (
-            <ControlOutlined />
-          )
-        }
-        onClick={openModelAdvanceSettingBar}
-        style={{
-          insetInlineEnd: 40,
-          bottom: floatButtonBaseYPosition + 55,
-        }}
-      />
-      <ToolActivateFloatButtons
-        floatButtonBaseYPosition={floatButtonBaseYPosition}
-      />
-      <ModelAdvanceSettingBar
-        isOpen={isModelAdvanceSettingBarOpen}
-        onClose={() => setIsModelAdvanceSettingBarOpen(false)}
-      />
-      <UserGuildTours />
+        <ToolActivateFloatButtons
+          floatButtonBaseYPosition={floatButtonBaseYPosition}
+        />
+        <UserGuildTours />
+      </RefProvider>
     </ConfigProvider>
   );
 };

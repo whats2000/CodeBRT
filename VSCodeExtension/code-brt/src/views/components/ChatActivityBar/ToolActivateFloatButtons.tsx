@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect } from 'react';
 import { Button, FloatButton, Space } from 'antd';
 import {
   FileSearchOutlined,
@@ -9,11 +9,12 @@ import {
 } from '@ant-design/icons';
 import { useDispatch, useSelector } from 'react-redux';
 
-import { ToolServiceType } from '../../../types';
+import type { ToolServiceType } from '../../../types';
+import { useRefs } from '../../context/RefContext';
 import type { AppDispatch, RootState } from '../../redux';
 import { MagicWandOutlined } from '../../icons';
 import { updateAndSaveSetting } from '../../redux/slices/settingsSlice';
-import { addRef } from '../../redux/slices/tourSlice';
+import { setRefId } from '../../redux/slices/tourSlice';
 
 const TOOLS_MAP: {
   [key in ToolServiceType]: {
@@ -52,6 +53,8 @@ export interface ToolActivateFloatButtonsProps {
 export const ToolActivateFloatButtons: React.FC<
   ToolActivateFloatButtonsProps
 > = ({ floatButtonBaseYPosition }) => {
+  const { registerRef } = useRefs();
+
   const dispatch = useDispatch<AppDispatch>();
 
   const { isLoading, settings } = useSelector(
@@ -62,18 +65,13 @@ export const ToolActivateFloatButtons: React.FC<
     (state: RootState) => state.conversation,
   );
 
-  const toolFloatButtonsRef = useRef<HTMLDivElement>(null);
+  const toolFloatButtonsRef = registerRef('toolFloatButtons');
 
   useEffect(() => {
     dispatch(
-      addRef({
+      setRefId({
         tourName: 'quickStart',
-        title: 'Activate Tools',
-        description:
-          'This can toggle to let the large language model to perform various tasks. ' +
-          'Such as web search, URL fetching, and control your IDE with agent tools. ' +
-          'Enable the tools you need to use.',
-        target: () => toolFloatButtonsRef.current as HTMLElement,
+        targetId: 'toolFloatButtons',
         stepIndex: 4,
       }),
     );
