@@ -61,9 +61,6 @@ export const ToolActivateFloatButtons: React.FC<
   const { isLoading: historyLoading } = useSelector(
     (state: RootState) => state.conversation,
   );
-  const quickStartTour = useSelector(
-    (state: RootState) => state.tour,
-  ).tours.find((tour) => tour.name === 'quickStart')!;
 
   const toolFloatButtonsRef = useRef<HTMLDivElement>(null);
 
@@ -95,8 +92,6 @@ export const ToolActivateFloatButtons: React.FC<
       }),
     );
   };
-
-  console.log(quickStartTour.currentStep);
 
   return (
     <>
