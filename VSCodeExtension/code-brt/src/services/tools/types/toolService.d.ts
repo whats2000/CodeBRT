@@ -3,6 +3,7 @@ import { TerminalManager } from '../../../integrations';
 export type ToolResponseFromToolFunction = {
   status: 'success' | 'error';
   result: string;
+  images?: string[];
 };
 
 export type ToolFunction = (

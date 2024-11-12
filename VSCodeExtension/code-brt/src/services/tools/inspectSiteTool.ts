@@ -53,7 +53,8 @@ export const inspectSiteTool: ToolServicesApi['inspectSite'] = async ({
     // Return the inspection result
     return {
       status: 'success',
-      image: screenshot || null,
+      // TODO: Add the image back to the tool result
+      images: screenshot ? [screenshot] : undefined,
       result:
         `Website Inspection Results:\n` +
         `URL: ${result.pageUrl}\n` +
@@ -61,11 +62,8 @@ export const inspectSiteTool: ToolServicesApi['inspectSite'] = async ({
     };
   } catch (error) {
     updateStatus?.('');
-
     console.log(error);
-
     const errorMessage = error instanceof Error ? error.message : String(error);
-
     return {
       status: 'error',
       result: `Error inspecting site: ${errorMessage}`,
