@@ -24,12 +24,13 @@ export const inspectSiteTool: ToolServicesApi['inspectSite'] = async ({
 
     // Convert the screenshot to a base64 string
     const screenshot = result.screenshot?.toString('base64');
+    let screenshotPath: string | undefined;
 
     if (screenshot) {
       // Save the screenshot to the file system
       const workspacePath = vscode.workspace.workspaceFolders?.[0].uri.fsPath;
       if (workspacePath) {
-        const screenshotPath = `${workspacePath}/.vscode/screenshot.png`;
+        screenshotPath = `${workspacePath}/.vscode/screenshot.png`;
 
         // If the .vscode directory doesn't exist, create it
         await vscode.workspace.fs.createDirectory(
@@ -54,7 +55,7 @@ export const inspectSiteTool: ToolServicesApi['inspectSite'] = async ({
     return {
       status: 'success',
       // TODO: Add the image back to the tool result
-      images: screenshot ? [screenshot] : undefined,
+      images: screenshotPath ? [screenshotPath] : undefined,
       result:
         `Website Inspection Results:\n` +
         `URL: ${result.pageUrl}\n` +

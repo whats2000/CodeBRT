@@ -270,7 +270,12 @@ export class GeminiService extends AbstractLanguageModelService {
   private async createQueryParts(
     query: string,
     images?: string[],
+    functionResponses?: FunctionResponsePart[],
   ): Promise<Part[]> {
+    if (functionResponses && functionResponses.length > 0) {
+      return functionResponses;
+    }
+
     let parts: Part[] = [{ text: query }];
 
     if (images) {
@@ -391,11 +396,11 @@ export class GeminiService extends AbstractLanguageModelService {
         currentEntryID,
       );
 
-    let queryParts = await this.createQueryParts(query, images);
-
-    if (functionResponses.length > 0) {
-      queryParts = functionResponses;
-    }
+    let queryParts = await this.createQueryParts(
+      query,
+      images,
+      functionResponses,
+    );
 
     const { systemPrompt, generationConfig } =
       this.getAdvanceSettings(historyManager);

@@ -67,7 +67,8 @@ export const executeCommandSchema = (
     `Use this when you need to perform system operations or run specific commands to accomplish any step in the user's task. ` +
     `You must tailor your command to the user's system and provide a clear explanation of what the command does. ` +
     `Prefer to execute complex CLI commands over creating executable scripts, as they are more flexible and easier to run. ` +
-    `Commands will be executed in the current working directory: ${currentWorkspacePath}`,
+    `Commands will be executed in the current working directory: ${currentWorkspacePath}, ` +
+    `do not change the directory otherwise the captured output will be incorrect, use relativePath to execute in a different directory.`,
   inputSchema: {
     type: 'object',
     properties: {

@@ -8,6 +8,7 @@ import type {
   MessageParam,
   TextBlockParam,
   Tool,
+  ToolResultBlockParam,
   ToolUseBlock,
 } from '@anthropic-ai/sdk/src/resources';
 import type {
@@ -146,7 +147,9 @@ export class AnthropicService extends AbstractLanguageModelService {
               {
                 type: 'text',
                 text:
-                  currentEntry.message === ''
+                  // Message is empty or the message only contains '\n' characters
+                  currentEntry.message === '' ||
+                  /^\n+$/.test(currentEntry.message)
                     ? 'Let continue...'
                     : currentEntry.message,
               },
@@ -338,6 +341,7 @@ export class AnthropicService extends AbstractLanguageModelService {
 
     (
       conversationHistory[conversationHistory.length - 1].content as (
+        | ToolResultBlockParam
         | TextBlockParam
         | ImageBlockParam
       )[]

@@ -28,6 +28,7 @@ export type ToolCallResponse = {
   result: Record<string, any> | string;
   status: 'success' | 'error' | 'rejectByUser';
   create_time: number;
+  images?: string[];
 };
 
 /**

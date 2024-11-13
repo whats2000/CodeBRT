@@ -175,6 +175,19 @@ export class ToolServiceProvider {
       }
     }
 
+    // The command should not contain change directory command, otherwise it will have issues
+    if (toolCallEntry.toolName === 'executeCommand') {
+      const command = toolCallEntry.parameters.command as string;
+      if (command.startsWith('cd ')) {
+        return {
+          isValid: false,
+          feedback:
+            `The command "${command}" contains a change directory command. ` +
+            `Please use 'relativePath' parameter instead of the change directory command.`,
+        };
+      }
+    }
+
     return {
       isValid: true,
       feedback: '',
@@ -222,6 +235,7 @@ export class ToolServiceProvider {
         result: result.result,
         status: 'success',
         create_time: Date.now(),
+        images: result.images,
       };
     } catch (error) {
       return {

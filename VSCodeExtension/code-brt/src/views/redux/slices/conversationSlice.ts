@@ -353,6 +353,7 @@ export const processToolResponse = createAsyncThunk<
       const responseWithAction = await callApi('getLanguageModelResponse', {
         modelServiceType: activeModelService,
         query: '',
+        images: entry.toolResponses?.[0].images,
         useStream: true,
         showStatus: true,
         toolCallResponse: entry.toolResponses?.[0],
