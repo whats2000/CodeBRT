@@ -178,7 +178,8 @@ export class ToolServiceProvider {
     // The command should not contain change directory command, otherwise it will have issues
     if (toolCallEntry.toolName === 'executeCommand') {
       const command = toolCallEntry.parameters.command as string;
-      if (command.startsWith('cd ')) {
+      // Check for various directory change commands
+      if (/\b(cd|chdir|pushd|popd)\b/.test(command)) {
         return {
           isValid: false,
           feedback:

@@ -54,7 +54,6 @@ export const inspectSiteTool: ToolServicesApi['inspectSite'] = async ({
     // Return the inspection result
     return {
       status: 'success',
-      // TODO: Add the image back to the tool result
       images: screenshotPath ? [screenshotPath] : undefined,
       result:
         `Website Inspection Results:\n` +

@@ -270,12 +270,7 @@ export class GeminiService extends AbstractLanguageModelService {
   private async createQueryParts(
     query: string,
     images?: string[],
-    functionResponses?: FunctionResponsePart[],
   ): Promise<Part[]> {
-    if (functionResponses && functionResponses.length > 0) {
-      return functionResponses;
-    }
-
     let parts: Part[] = [{ text: query }];
 
     if (images) {
@@ -381,6 +376,7 @@ export class GeminiService extends AbstractLanguageModelService {
       sendStreamResponse,
       selectedModelName,
       disableTools,
+      toolCallResponse,
     } = options;
 
     const generativeModel = new GoogleGenerativeAI(
@@ -396,11 +392,30 @@ export class GeminiService extends AbstractLanguageModelService {
         currentEntryID,
       );
 
-    let queryParts = await this.createQueryParts(
-      query,
-      images,
-      functionResponses,
-    );
+    let queryParts;
+
+    if (functionResponses && functionResponses.length > 0) {
+      // As the gemini API doesn't support image tool responses, we add a model message to the
+      // conversation history ask for the follow up tool response image
+      if (!(toolCallResponse?.images && toolCallResponse.images.length > 0)) {
+        queryParts = functionResponses;
+      } else {
+        conversationHistory.push({
+          role: 'function',
+          parts: functionResponses,
+        });
+        conversationHistory.push({
+          role: 'model',
+          parts: [{ text: 'Please provide the follow-up tool response image' }],
+        });
+        queryParts = await this.createQueryParts(
+          'Now analyze the image which was a result of the previous tool call',
+          toolCallResponse.images,
+        );
+      }
+    } else {
+      queryParts = await this.createQueryParts(query, images);
+    }
 
     const { systemPrompt, generationConfig } =
       this.getAdvanceSettings(historyManager);
