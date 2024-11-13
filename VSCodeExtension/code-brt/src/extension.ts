@@ -1,38 +1,32 @@
 import * as vscode from 'vscode';
 
-import type {
-  ViewApi,
-  ViewApiError,
-  ViewApiEvent,
-  ViewApiRequest,
-  ViewApiResponse,
-  ViewEvents,
-} from './types';
+import type { GetLanguageModelResponseParams, ViewApi } from './types';
 import {
   AVAILABLE_MODEL_SERVICES,
   AVAILABLE_VOICE_SERVICES,
 } from './constants';
-import { FileUtils } from './utils';
-import { ViewKey } from './views';
+import { FileOperationsProvider } from './utils';
 import {
-  viewRegistration,
-  SettingsManager,
+  connectedViews,
   HistoryManager,
+  registerAndConnectView,
   registerInlineCompletion,
+  SettingsManager,
+  triggerEvent,
 } from './api';
 import { ModelServiceFactory } from './services/languageModel';
 import { VoiceServiceFactory } from './services/voice';
 import { GptSoVitsApiService } from './services/voice/gptSoVitsService';
-import { convertPdfToMarkdown } from './utils/pdfConverter';
+import { ToolServiceProvider } from './services/tools';
+import { TerminalManager } from './integrations';
 
 let extensionContext: vscode.ExtensionContext | undefined = undefined;
 
 export const activate = async (ctx: vscode.ExtensionContext) => {
   extensionContext = ctx;
-
-  const connectedViews: Partial<Record<ViewKey, vscode.WebviewView>> = {};
   const settingsManager = SettingsManager.getInstance(ctx);
   const historyManager = new HistoryManager(ctx);
+  const terminalManager = new TerminalManager();
 
   // Create a model service factory instance
   const modelServiceFactory = new ModelServiceFactory(ctx, settingsManager);
@@ -45,31 +39,10 @@ export const activate = async (ctx: vscode.ExtensionContext) => {
   );
 
   /**
-   * Trigger an event on all connected views
-   * @param key - The event key
-   * @param params - The event parameters
-   */
-  const triggerEvent = <E extends keyof ViewEvents>(
-    key: E,
-    ...params: Parameters<ViewEvents[E]>
-  ) => {
-    Object.values(connectedViews).forEach((view) => {
-      view.webview.postMessage({
-        type: 'event',
-        key,
-        value: params,
-      } as ViewApiEvent<E>);
-    });
-  };
-
-  /**
    * Register and connect views to the extension
    * This uses for communication messages channel
    */
   const api: ViewApi = {
-    extractPdfText: async (filePath) => {
-      return await convertPdfToMarkdown(filePath);
-    },
     setSettingByKey: async (key, value) => {
       await settingsManager.set(key, value);
     },
@@ -79,53 +52,44 @@ export const activate = async (ctx: vscode.ExtensionContext) => {
     getAllSettings: async () => {
       return await settingsManager.getAllSettings();
     },
-    alertMessage: (msg, type) => {
-      switch (type) {
-        case 'info':
-          vscode.window.showInformationMessage(msg);
-          break;
-        case 'warning':
-          vscode.window.showWarningMessage(msg);
-          break;
-        case 'error':
-          vscode.window.showErrorMessage(msg);
-          break;
-        default:
-          vscode.window.showInformationMessage(msg);
+    alertMessage: async (msg, type, selections) => {
+      const showFunction = {
+        info: vscode.window.showInformationMessage,
+        warning: vscode.window.showWarningMessage,
+        error: vscode.window.showErrorMessage,
+      }[type];
+
+      const selectionOptions = selections?.map((selection) => selection.text);
+      if (selectionOptions) {
+        await showFunction(msg, ...selectionOptions).then((selection) => {
+          if (!selection) {
+            return;
+          }
+          const commandArgs = selections?.find(
+            (s) => s.text === selection,
+          )?.commandArgs;
+          if (!commandArgs || commandArgs.length === 0) {
+            return;
+          }
+          vscode.commands.executeCommand(
+            commandArgs[0],
+            ...commandArgs.slice(1),
+          );
+        });
       }
     },
-    alertReload: (message) => {
-      vscode.window
-        .showInformationMessage(
-          message ??
-            'The setting will take effect after the extension is reloaded',
-          'Reload',
-        )
-        .then((selection) => {
-          if (selection === 'Reload') {
-            vscode.commands.executeCommand('workbench.action.reloadWindow');
-          }
-        });
-    },
     getLanguageModelResponse: async (
-      modelServiceType,
-      query,
-      images?,
-      currentEntryID?,
-      useStream?,
-      showStatus?,
+      options: GetLanguageModelResponseParams,
     ) => {
-      return await models[modelServiceType].service.getResponse({
-        query,
+      return await models[options.modelServiceType].service.getResponse({
+        ...options,
         historyManager,
-        images,
-        currentEntryID,
-        sendStreamResponse: useStream
+        sendStreamResponse: options.useStream
           ? (msg) => {
               triggerEvent('streamResponse', msg);
             }
           : undefined,
-        updateStatus: showStatus
+        updateStatus: options.showStatus
           ? (status) => {
               triggerEvent('updateStatus', status);
             }
@@ -168,20 +132,8 @@ export const activate = async (ctx: vscode.ExtensionContext) => {
         advanceSettings,
       );
     },
-    addConversationEntry: async (
-      parentID,
-      sender,
-      message,
-      images?,
-      modelServiceType?,
-    ) => {
-      return await historyManager.addConversationEntry(
-        parentID,
-        sender,
-        message,
-        images,
-        modelServiceType,
-      );
+    addConversationEntry: async (entry) => {
+      return await historyManager.addConversationEntry(entry);
     },
     getAvailableModels: (modelServiceType) => {
       if (modelServiceType === 'custom') {
@@ -218,11 +170,19 @@ export const activate = async (ctx: vscode.ExtensionContext) => {
       ].service.getLatestAvailableModelNames();
     },
     uploadFile: async (base64Data, originalFileName) => {
-      return FileUtils.uploadFile(ctx, base64Data, originalFileName);
+      return FileOperationsProvider.uploadFile(
+        ctx,
+        base64Data,
+        originalFileName,
+      );
     },
-    deleteFile: FileUtils.deleteFile,
+    deleteFile: FileOperationsProvider.deleteFile,
     getWebviewUri: async (absolutePath: string) => {
-      return await FileUtils.getWebviewUri(ctx, connectedViews, absolutePath);
+      return await FileOperationsProvider.getWebviewUri(
+        ctx,
+        connectedViews,
+        absolutePath,
+      );
     },
     convertTextToVoice: async (text) => {
       const voiceServiceType = settingsManager.get(
@@ -300,64 +260,20 @@ export const activate = async (ctx: vscode.ExtensionContext) => {
         extensionId,
       );
     },
+    approveToolCall: async (toolCall) => {
+      return await ToolServiceProvider.executeToolCall(
+        toolCall,
+        terminalManager,
+        (status) => {
+          triggerEvent('updateStatus', status);
+        },
+      );
+    },
+    continueWithToolCallResponse: async (_entry) => {},
   };
 
-  const isViewApiRequest = <K extends keyof ViewApi>(
-    msg: unknown,
-  ): msg is ViewApiRequest<K> =>
-    msg != null &&
-    typeof msg === 'object' &&
-    'type' in msg &&
-    msg.type === 'request';
-
-  const registerAndConnectView = async <V extends ViewKey>(key: V) => {
-    const webviewOptions: vscode.WebviewOptions = {
-      enableScripts: true,
-    };
-    const retainContextWhenHidden = settingsManager.get(
-      'retainContextWhenHidden',
-    );
-    const view = await viewRegistration(
-      ctx,
-      key,
-      webviewOptions,
-      retainContextWhenHidden,
-    );
-    connectedViews[key] = view;
-    const onMessage = async (msg: Record<string, unknown>) => {
-      if (!isViewApiRequest(msg)) {
-        return;
-      }
-      try {
-        // @ts-expect-error
-        const val = await api[msg.key](...msg.params);
-        const res: ViewApiResponse = {
-          type: 'response',
-          id: msg.id,
-          value: val,
-        };
-        view.webview.postMessage(res);
-      } catch (e: unknown) {
-        const err: ViewApiError = {
-          type: 'error',
-          id: msg.id,
-          value:
-            e instanceof Error ? e.message : 'An unexpected error occurred',
-        };
-        view.webview.postMessage(err);
-      }
-    };
-
-    view.webview.onDidReceiveMessage(onMessage);
-  };
-
-  registerAndConnectView('chatActivityBar').catch((e) => {
-    console.error(e);
-  });
-  registerAndConnectView('workPanel').catch((e) => {
-    console.error(e);
-  });
-
+  void registerAndConnectView(ctx, settingsManager, 'chatActivityBar', api);
+  void registerAndConnectView(ctx, settingsManager, 'workPanel', api);
   registerInlineCompletion(ctx, settingsManager, connectedViews);
 };
 

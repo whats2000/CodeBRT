@@ -7,12 +7,11 @@ import styled from 'styled-components';
 import rehypeKatex from 'rehype-katex';
 import remarkMath from 'remark-math';
 import remarkGfm from 'remark-gfm';
-import hljs from 'react-syntax-highlighter/dist/cjs/styles/hljs';
 
 import type { ConversationEntry } from '../../../../types';
 import { preprocessLaTeX } from '../../../utils';
 import { TypingAnimation } from '../../common/TypingAnimation';
-import { RendererCode, RendererCodeProvider } from '../../common/RenderCode';
+import { RendererCode } from '../../common/RenderCode';
 import { ToolStatusBlock } from '../../common/ToolStatusBlock';
 
 const MessageText = styled.span`
@@ -98,8 +97,6 @@ type MessageTextContainerProps = {
   entry: ConversationEntry;
   conversationHistoryCurrent: string;
   isProcessing: boolean;
-  hljsTheme: keyof typeof hljs;
-  setHljsTheme: (theme: keyof typeof hljs) => void;
   toolStatus: string;
 };
 
@@ -107,8 +104,6 @@ export const TextContainer: React.FC<MessageTextContainerProps> = ({
   entry,
   conversationHistoryCurrent,
   isProcessing,
-  hljsTheme,
-  setHljsTheme,
   toolStatus,
 }) => {
   return (
@@ -120,25 +115,16 @@ export const TextContainer: React.FC<MessageTextContainerProps> = ({
           <TypingAnimation
             message={entry.message}
             isProcessing={isProcessing}
-            hljsTheme={hljsTheme}
-            setHljsTheme={setHljsTheme}
           />
           {toolStatus !== '' && <ToolStatusBlock status={toolStatus} />}
         </>
       ) : (
-        <RendererCodeProvider
-          value={{
-            hljsTheme,
-            setHljsTheme,
-          }}
-        >
-          <ReactMarkdown
-            remarkPlugins={[remarkGfm, remarkMath]}
-            rehypePlugins={[rehypeKatex]}
-            components={markdownComponents}
-            children={preprocessLaTeX(entry.message)}
-          />
-        </RendererCodeProvider>
+        <ReactMarkdown
+          remarkPlugins={[remarkGfm, remarkMath]}
+          rehypePlugins={[rehypeKatex]}
+          components={markdownComponents}
+          children={preprocessLaTeX(entry.message)}
+        />
       )}
     </MessageText>
   );

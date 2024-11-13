@@ -6,9 +6,8 @@
  * The related file is located at:
  * https://github.com/continuedev/continue/blob/main/core/autocomplete/postprocessing.ts
  */
-import { lcs_dp } from '@algorithm.ts/lcs';
-
 import { isLineRepeated } from './lineUtils';
+import { longestCommonSubsequence } from '../../../utils';
 
 const MAX_REPETITION_FREQ_TO_CHECK = 3;
 
@@ -43,56 +42,29 @@ const isRewritesLineAbove = (completion: string, prefix: string): boolean => {
  * @returns {boolean} - Whether extreme repetition is detected
  */
 const isExtremeRepetition = (completion: string): boolean => {
-  const lines = completion.trim().split('\n');
+  const lines = completion.split('\n');
   if (lines.length < 6) {
     return false;
   }
-
-  // Check repetition between lines, by comparing line pairs
-  for (let freq = 1; freq <= MAX_REPETITION_FREQ_TO_CHECK; freq++) {
-    const line1 = lines[0].trim();
-    const line2 = lines[freq].trim();
-
-    // Find the LCS (longest common subsequence) between the first line and others
-    const lcsPairs = lcs_dp(
-      line1.length,
-      line2.length,
-      (i, j) => line1[i] === line2[j],
-    );
-
-    // If there is enough overlap, count repetition
-    if (lcsPairs.length > 5 || lcsPairs.length > line1.length * 0.5) {
+  for (let freq = 1; freq < MAX_REPETITION_FREQ_TO_CHECK; freq++) {
+    const lcs = longestCommonSubsequence(lines[0], lines[freq]);
+    if (lcs.length > 5 || lcs.length > lines[0].length * 0.5) {
       let matchCount = 0;
       for (let i = 0; i < lines.length; i += freq) {
-        const currentLine = lines[i].trim();
-
-        // Check how many LCS matches are in the current line
-        const matchingChars = lcsPairs.filter(
-          ([pos1, pos2]) =>
-            pos1 < currentLine.length && currentLine[pos2] === line1[pos1],
-        );
-
-        // If the matching characters are above the threshold, increment match count
-        if (
-          matchingChars.length > 5 ||
-          matchingChars.length > currentLine.length * 0.5
-        ) {
+        if (lines[i].includes(lcs)) {
           matchCount++;
         }
       }
-
-      // If repetition is extreme, return true
       if (matchCount * freq > 8 || (matchCount * freq) / lines.length > 0.8) {
         return true;
       }
     }
   }
-
   return false;
 };
 
 /**
- * Post process the completion result
+ * Post-process the completion result
  * @param completion - The raw completion result string
  * @param prefix - The preceding context string
  * @param suffix - The succeeding context string
@@ -142,7 +114,7 @@ export const postProcessCompletion = (
     return null;
   }
 
-  // If prefix ends with space and so does completion, then remove the space from completion
+  // If the prefix ends with space and so does completion, then remove the space from completion
   if (prefix.endsWith(' ') && completion.startsWith(' ')) {
     completion = completion.slice(1);
   }
@@ -151,6 +123,14 @@ export const postProcessCompletion = (
   if (modelName.toLowerCase().includes('qwen') && completion.startsWith(' ')) {
     completion = completion.slice(1);
   }
+
+  // Check for duplication between the last line of the prefix and the start of the completion
+  const lastLineOfPrefix = prefix.split('\n').slice(-1)[0].trim();
+  if (completion.startsWith(lastLineOfPrefix)) {
+    completion = completion.slice(lastLineOfPrefix.length).trimStart();
+  }
+
+  console.log(lastLineOfPrefix, completion);
 
   return completion;
 };

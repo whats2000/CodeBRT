@@ -5,13 +5,14 @@ import { CohereClient } from 'cohere-ai';
 import type {
   ConversationEntry,
   GetResponseOptions,
-  ToolServiceType,
+  NonWorkspaceToolType,
+  ResponseWithAction,
+  ToolSchema,
 } from '../../types';
-import { MODEL_SERVICE_CONSTANTS, toolsSchema } from '../../constants';
-import { mapTypeToPythonFormat } from '../../utils';
+import { mapTypeToPythonFormat } from './utils';
 import { AbstractLanguageModelService } from './base';
 import { HistoryManager, SettingsManager } from '../../api';
-import { ToolService } from '../tools';
+import { ToolServiceProvider } from '../tools';
 import { ChatRequest } from 'cohere-ai/api/client/requests/ChatRequest';
 
 export class CohereService extends AbstractLanguageModelService {
@@ -80,40 +81,80 @@ export class CohereService extends AbstractLanguageModelService {
     const enabledTools = this.settingsManager.get('enableTools');
     const tools: Tool[] = [];
 
-    for (const [key, tool] of Object.entries(toolsSchema)) {
-      if (!enabledTools[key as ToolServiceType].active) {
-        continue;
-      }
+    const { agentTools, ...toolsSchema } = ToolServiceProvider.getToolSchema();
 
-      const parameterDefinitions = Object.keys(
-        tool.inputSchema.properties,
-      ).reduce(
-        (acc, key) => {
-          const property = tool.inputSchema.properties[key];
-          acc[key] = {
-            description: property.description,
-            type: mapTypeToPythonFormat(property.type),
-            required: tool.inputSchema.required.includes(key),
-          };
-          return acc;
-        },
-        {} as {
-          [key: string]: {
-            description: string;
-            type: string;
-            required: boolean;
-          };
-        },
-      );
-
+    const addTool = (tool: ToolSchema) => {
       tools.push({
         name: tool.name,
         description: tool.description,
-        parameterDefinitions,
+        parameterDefinitions: Object.keys(tool.inputSchema.properties).reduce(
+          (acc, key) => {
+            const property = tool.inputSchema.properties[key];
+            acc[key] = {
+              description: property.description,
+              type: mapTypeToPythonFormat(property.type),
+              required: tool.inputSchema.required.includes(key),
+            };
+            return acc;
+          },
+          {} as {
+            [key: string]: {
+              description: string;
+              type: string;
+              required: boolean;
+            };
+          },
+        ),
       });
+    };
+
+    if (enabledTools.agentTools?.active && agentTools) {
+      for (const [_key, tool] of Object.entries(agentTools)) {
+        addTool(tool);
+      }
+    }
+
+    for (const [key, tool] of Object.entries(toolsSchema)) {
+      if (!enabledTools[key as NonWorkspaceToolType]?.active) {
+        continue;
+      }
+      addTool(tool);
     }
 
     return tools.length > 0 ? tools : undefined;
+  }
+
+  private convertToolCallResponse(
+    toolCallResponseEntry: ConversationEntry,
+    entries: {
+      [key: string]: ConversationEntry;
+    },
+  ): ToolResult {
+    const toolCallResponse = toolCallResponseEntry.toolResponses?.[0];
+
+    if (!toolCallResponse || !toolCallResponseEntry.parent) {
+      throw new Error('Invalid tool call response entry');
+    }
+
+    const toolCallEntry = entries[toolCallResponseEntry.parent];
+    const toolCall = toolCallEntry.toolCalls?.[0];
+
+    if (!toolCall) {
+      throw new Error('Cannot find the corresponding tool call');
+    }
+
+    return {
+      call: {
+        name: toolCall.toolName,
+        parameters: toolCall.parameters,
+      },
+      outputs: [
+        {
+          error: false,
+          result: toolCallResponse.result,
+        },
+      ],
+    };
   }
 
   private conversationHistoryToContent(
@@ -121,15 +162,43 @@ export class CohereService extends AbstractLanguageModelService {
       [key: string]: ConversationEntry;
     },
     historyManager: HistoryManager,
-  ): Message[] {
+    currentEntryID?: string,
+  ): { conversationHistory: Message[]; toolResults: ToolResult[] } {
     let result: Message[] = [];
-    let currentEntry = entries[historyManager.getCurrentHistory().current];
+    let currentEntry =
+      entries[currentEntryID ?? historyManager.getCurrentHistory().current];
 
     while (currentEntry) {
-      result.unshift({
-        role: currentEntry.role === 'AI' ? 'CHATBOT' : 'USER',
-        message: currentEntry.message,
-      });
+      switch (currentEntry.role) {
+        case 'AI':
+          const newEntry: Message = {
+            role: 'CHATBOT',
+            message: currentEntry.message,
+          };
+          const toolCall = currentEntry.toolCalls?.[0];
+          if (toolCall) {
+            newEntry.toolCalls = [
+              {
+                name: toolCall.toolName,
+                parameters: toolCall.parameters,
+              },
+            ];
+          }
+          result.unshift(newEntry);
+          break;
+        case 'user':
+          result.unshift({
+            role: 'USER',
+            message: currentEntry.message,
+          });
+          break;
+        case 'tool':
+          result.unshift({
+            role: 'TOOL',
+            toolResults: [this.convertToolCallResponse(currentEntry, entries)],
+          });
+          break;
+      }
 
       if (currentEntry.parent) {
         currentEntry = entries[currentEntry.parent];
@@ -142,58 +211,18 @@ export class CohereService extends AbstractLanguageModelService {
     if (result.length > 0 && result[result.length - 1].role === 'USER') {
       result.pop();
     }
-
-    return result;
-  }
-
-  private async handleFunctionCalls(
-    functionCalls: ToolCall[],
-    updateStatus?: (status: string) => void,
-  ): Promise<ToolResult[]> {
-    const functionCallResults: ToolResult[] = [];
-
-    for (const functionCall of functionCalls) {
-      const tool = ToolService.getTool(functionCall.name);
-      if (!tool) {
-        functionCallResults.push({
-          call: functionCall,
-          outputs: [
-            {
-              error: true,
-              message: `Failed to find tool with name: ${functionCall.name}`,
-            },
-          ],
-        });
-        continue;
-      }
-
-      try {
-        const result = await tool({
-          ...functionCall.parameters,
-          updateStatus,
-        } as any);
-        functionCallResults.push({
-          call: functionCall,
-          outputs: [
-            {
-              searchResults: result,
-            },
-          ],
-        });
-      } catch (error) {
-        functionCallResults.push({
-          call: functionCall,
-          outputs: [
-            {
-              error: true,
-              message: `Error executing tool ${functionCall.name}: ${error}`,
-            },
-          ],
-        });
-      }
+    if (result.length > 0 && result[result.length - 1].role === 'TOOL') {
+      const lastToolResult = result.pop() as Message.Tool;
+      return {
+        conversationHistory: result,
+        toolResults: lastToolResult.toolResults ?? [],
+      };
     }
 
-    return functionCallResults;
+    return {
+      conversationHistory: result,
+      toolResults: [],
+    };
   }
 
   public async getLatestAvailableModelNames(): Promise<string[]> {
@@ -228,12 +257,17 @@ export class CohereService extends AbstractLanguageModelService {
     return newAvailableModelNames;
   }
 
-  public async getResponse(options: GetResponseOptions): Promise<string> {
+  public async getResponse(
+    options: GetResponseOptions,
+  ): Promise<ResponseWithAction> {
     if (this.currentModel === '') {
       vscode.window.showErrorMessage(
         'Make sure the model is selected before sending a message. Open the model selection dropdown and configure the model.',
       );
-      return 'Missing model configuration. Check the model selection dropdown.';
+      return {
+        textResponse:
+          'Missing model configuration. Check the model selection dropdown.',
+      };
     }
 
     const {
@@ -257,14 +291,12 @@ export class CohereService extends AbstractLanguageModelService {
       token: this.settingsManager.get('cohereApiKey'),
     });
 
-    let conversationHistory = this.conversationHistoryToContent(
-      historyManager.getHistoryBeforeEntry(currentEntryID).entries,
-      historyManager,
-    );
-
-    let toolResults: ToolResult[] = [];
-    let functionCallCount = 0;
-    const MAX_FUNCTION_CALLS = 5;
+    let { conversationHistory, toolResults } =
+      this.conversationHistoryToContent(
+        historyManager.getHistoryBeforeEntry(currentEntryID).entries,
+        historyManager,
+        currentEntryID,
+      );
 
     const { systemPrompt, generationConfig } =
       this.getAdvanceSettings(historyManager);
@@ -279,102 +311,101 @@ export class CohereService extends AbstractLanguageModelService {
     // Determine whether the current model should use tools
     const shouldUseTools = !this.modelsWithoutTools.includes(this.currentModel);
 
+    const MAX_RETRIES = 5;
+    let retryCount = 0;
+    let responseText = '';
+    let responseToolCall: ToolCall | undefined = undefined;
+
+    updateStatus && updateStatus('');
+
     try {
-      if (!sendStreamResponse) {
-        while (functionCallCount < MAX_FUNCTION_CALLS) {
-          const response = await model.chat({
-            model: selectedModelName ?? this.currentModel,
-            message: toolResults.length > 0 ? '' : query,
-            chatHistory: conversationHistory,
-            tools:
-              disableTools || !shouldUseTools
-                ? undefined
-                : this.getEnabledTools(),
-            toolResults: toolResults.length > 0 ? toolResults : undefined,
-            ...generationConfig,
-          });
+      while (retryCount < MAX_RETRIES) {
+        responseToolCall = undefined;
 
-          if (response.chatHistory) {
-            conversationHistory = response.chatHistory;
-          }
-
-          const functionCalls = response.toolCalls;
-
-          if (!functionCalls) {
-            return response.text;
-          }
-
-          toolResults = await this.handleFunctionCalls(functionCalls);
-          functionCallCount++;
-        }
-        return 'Max function call limit reached.';
-      } else {
-        let responseText = '';
-
-        while (functionCallCount < MAX_FUNCTION_CALLS) {
-          if (this.stopStreamFlag) {
-            return responseText;
-          }
-
-          const streamResponse = await model.chatStream({
-            model: selectedModelName ?? this.currentModel,
-            message: toolResults.length > 0 ? '' : query,
-            chatHistory: conversationHistory,
-            tools:
-              disableTools || !shouldUseTools
-                ? undefined
-                : this.getEnabledTools(),
-            toolResults: toolResults.length > 0 ? toolResults : undefined,
-            ...generationConfig,
-          });
-
-          let functionCalls = null;
+        const requestPayload: ChatRequest = {
+          model: selectedModelName ?? this.currentModel,
+          message: toolResults.length > 0 ? '' : query,
+          chatHistory: conversationHistory,
+          toolResults: toolResults.length > 0 ? toolResults : undefined,
+          tools:
+            disableTools || !shouldUseTools
+              ? undefined
+              : this.getEnabledTools(),
+          ...generationConfig,
+        };
+        if (!sendStreamResponse) {
+          const response = await model.chat(requestPayload);
+          responseText = response.text;
+          responseToolCall = response.toolCalls?.[0];
+        } else {
+          const streamResponse = await model.chatStream(requestPayload);
 
           for await (const item of streamResponse) {
             if (this.stopStreamFlag) {
-              return responseText;
+              return { textResponse: responseText };
             }
 
-            if (item.eventType === 'stream-start') {
-              updateStatus && updateStatus('');
-            }
-            if (item.eventType === 'tool-calls-generation') {
-              functionCalls = item.toolCalls;
-              toolResults = await this.handleFunctionCalls(
-                functionCalls,
-                updateStatus,
-              );
-            }
             if (item.eventType === 'text-generation') {
               const partText = item.text;
               sendStreamResponse(partText);
               responseText += partText;
-            }
-            if (item.eventType === 'stream-end' && item.response.chatHistory) {
-              conversationHistory = item.response.chatHistory;
+            } else if (item.eventType === 'tool-calls-generation') {
+              updateStatus &&
+                updateStatus(`[processing] I'm creating an action...`);
+              responseToolCall = item.toolCalls?.[0];
+              break;
             }
           }
-          if (!functionCalls || functionCalls.length === 0) {
-            return responseText;
-          }
-          functionCallCount++;
         }
-        return responseText;
-      }
-    } catch (error) {
-      vscode.window
-        .showErrorMessage(
-          'Failed to get response from Cohere Service: ' + error,
-          'Get API Key',
-        )
-        .then((selection) => {
-          if (selection === 'Get API Key') {
-            vscode.env.openExternal(
-              vscode.Uri.parse(MODEL_SERVICE_CONSTANTS.cohere.apiLink),
-            );
-          }
+
+        if (!responseToolCall) {
+          return { textResponse: responseText };
+        }
+
+        const toolCall = {
+          id: Date.now().toString(),
+          toolName: responseToolCall.name,
+          parameters: responseToolCall.parameters,
+          create_time: Date.now(),
+        };
+
+        const validation = ToolServiceProvider.isViableToolCall(toolCall);
+        // Return the response if the tool call is valid
+        if (validation.isValid) {
+          return {
+            textResponse: responseText,
+            toolCall,
+          };
+        }
+
+        // Otherwise, add the tool call feedback to the conversation history and retry
+        conversationHistory.push({
+          role: 'USER',
+          message: query,
         });
-      return 'Failed to connect to the language model service.';
+
+        conversationHistory.push({
+          role: 'CHATBOT',
+          message: '',
+          toolCalls: [responseToolCall],
+        });
+
+        toolResults = [
+          {
+            call: responseToolCall,
+            outputs: [
+              {
+                error: true,
+                feedback: validation.feedback,
+              },
+            ],
+          },
+        ];
+        retryCount++;
+      }
+      return { textResponse: responseText };
+    } catch (error) {
+      return this.handleGetResponseError(error, 'cohere', responseText);
     } finally {
       this.stopStreamFlag = false;
       updateStatus && updateStatus('');

@@ -5,6 +5,7 @@ import { fileUploadReducer } from './slices/fileUploadSlice';
 import { modelServiceReducer } from './slices/modelServiceSlice';
 import { conversationIndexReducer } from './slices/conversationIndexSlice';
 import { settingsReducer } from './slices/settingsSlice';
+import { tourReducer } from './slices/tourSlice';
 
 export const rootReducer = combineReducers({
   conversationIndex: conversationIndexReducer,
@@ -12,4 +13,5 @@ export const rootReducer = combineReducers({
   fileUpload: fileUploadReducer,
   modelService: modelServiceReducer,
   settings: settingsReducer,
+  tour: tourReducer,
 });

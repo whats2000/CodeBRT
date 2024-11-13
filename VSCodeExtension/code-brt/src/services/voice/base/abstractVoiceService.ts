@@ -6,9 +6,9 @@ import * as vscode from 'vscode';
 import * as tokenizer from 'simple-text-tokenizer';
 import removeMarkdown from 'markdown-to-text';
 
-import type { VoiceService } from '../../../types';
+import type { VoiceService } from '../types';
 import { SettingsManager } from '../../../api';
-import { SoundPlay, AudioRecorder } from '../../../utils';
+import { SoundPlay, AudioRecorder } from '../utils';
 
 export abstract class AbstractVoiceService implements VoiceService {
   protected readonly context: vscode.ExtensionContext;
@@ -236,8 +236,6 @@ export abstract class AbstractVoiceService implements VoiceService {
       );
     }
 
-    vscode.window.showInformationMessage(`Recording started.`);
-
     let filePath: string;
 
     try {
@@ -262,8 +260,6 @@ export abstract class AbstractVoiceService implements VoiceService {
         });
       return '';
     }
-
-    vscode.window.showInformationMessage(`Recording finished.`);
 
     return this.sendVoiceToTextRequest(filePath);
   }

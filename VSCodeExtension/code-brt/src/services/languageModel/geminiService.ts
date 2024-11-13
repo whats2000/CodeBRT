@@ -1,5 +1,4 @@
 import * as vscode from 'vscode';
-import fs from 'fs';
 import {
   Content,
   FunctionCall,
@@ -19,13 +18,13 @@ import {
 import type {
   ConversationEntry,
   GetResponseOptions,
-  ToolServiceType,
+  ResponseWithAction,
+  ToolSchema,
 } from '../../types';
-import { MODEL_SERVICE_CONSTANTS, toolsSchema } from '../../constants';
-import { mapFunctionDeclarationSchemaType } from '../../utils';
+import { fileToBase64, mapFunctionDeclarationSchemaType } from './utils';
 import { AbstractLanguageModelService } from './base';
 import { HistoryManager, SettingsManager } from '../../api';
-import { ToolService } from '../tools';
+import { ToolServiceProvider } from '../tools';
 
 type GeminiModel = {
   name: string;
@@ -120,11 +119,7 @@ export class GeminiService extends AbstractLanguageModelService {
     const enabledTools = this.settingsManager.get('enableTools');
     const tools: Tool[] = [];
 
-    for (const [key, tool] of Object.entries(toolsSchema)) {
-      if (!enabledTools[key as ToolServiceType].active) {
-        continue;
-      }
-
+    const addTool = (tool: ToolSchema) => {
       const properties = Object.keys(tool.inputSchema.properties).reduce(
         (acc, key) => {
           const property = tool.inputSchema.properties[key];
@@ -156,7 +151,27 @@ export class GeminiService extends AbstractLanguageModelService {
           },
         ],
       });
-    }
+    };
+
+    // TODO: Use multiple tools when Gemini supports it
+    // At this moment Gemini doesn't support multiple tools
+    // const { agentTools, ...toolsSchema } = ToolServiceProvider.getToolSchema();
+    //
+    // if (enabledTools.agentTools?.active && agentTools) {
+    //   for (const [_key, tool] of Object.entries(agentTools)) {
+    //     addTool(tool);
+    //   }
+    // }
+    //
+    // for (const [key, tool] of Object.entries(toolsSchema)) {
+    //   if (!enabledTools[key as NonWorkspaceToolType]?.active) {
+    //     continue;
+    //   }
+    //   addTool(tool);
+    // }
+
+    // We use the all-in-one tool schema for now
+    addTool(ToolServiceProvider.getAllInOneToolSchema(enabledTools));
 
     return tools.length > 0 ? tools : undefined;
   }
@@ -166,15 +181,63 @@ export class GeminiService extends AbstractLanguageModelService {
       [key: string]: ConversationEntry;
     },
     historyManager: HistoryManager,
-  ): Content[] {
+    currentEntryID?: string,
+  ): {
+    conversationHistory: Content[];
+    functionResponses: FunctionResponsePart[];
+  } {
     let result: Content[] = [];
-    let currentEntry = entries[historyManager.getCurrentHistory().current];
+    let currentEntry =
+      entries[currentEntryID ?? historyManager.getCurrentHistory().current];
 
     while (currentEntry) {
-      result.unshift({
-        role: currentEntry.role === 'AI' ? 'model' : 'user',
-        parts: [{ text: currentEntry.message }],
-      });
+      switch (currentEntry.role) {
+        case 'AI':
+          const newEntry: Content = {
+            role: 'model',
+            parts: [
+              {
+                text: currentEntry.message,
+              },
+            ],
+          };
+          const toolCall = currentEntry.toolCalls?.[0];
+          if (toolCall) {
+            newEntry.parts.push({
+              functionCall: {
+                name: toolCall.toolName,
+                args: toolCall.parameters,
+              },
+            });
+          }
+          result.unshift(newEntry);
+          break;
+        case 'user':
+          result.unshift({
+            role: 'user',
+            parts: [{ text: currentEntry.message }],
+          });
+          break;
+        case 'tool':
+          const toolCallResponse = currentEntry.toolResponses?.[0];
+          if (!toolCallResponse) {
+            throw new Error('Tool call response not found');
+          }
+          result.unshift({
+            role: 'function',
+            parts: [
+              {
+                functionResponse: {
+                  name: toolCallResponse.toolCallName,
+                  response: {
+                    error: toolCallResponse.status === 'error',
+                    result: toolCallResponse.result,
+                  },
+                },
+              },
+            ],
+          });
+      }
 
       if (currentEntry.parent) {
         currentEntry = entries[currentEntry.parent];
@@ -187,19 +250,36 @@ export class GeminiService extends AbstractLanguageModelService {
     if (result.length > 0 && result[result.length - 1].role === 'user') {
       result.pop();
     }
+    if (result.length > 0 && result[result.length - 1].role === 'function') {
+      const lastToolResult = result.pop() as {
+        role: 'function';
+        parts: FunctionResponsePart[];
+      };
+      return {
+        conversationHistory: result,
+        functionResponses: lastToolResult.parts,
+      };
+    }
 
-    return result;
+    return {
+      conversationHistory: result,
+      functionResponses: [],
+    };
   }
 
-  private createQueryParts(query: string, images?: string[]): Part[] {
+  private async createQueryParts(
+    query: string,
+    images?: string[],
+  ): Promise<Part[]> {
     let parts: Part[] = [{ text: query }];
 
     if (images) {
-      const imageParts = images
-        .map((image) =>
-          this.fileToGenerativePart(image, `image/${image.split('.').pop()}`),
-        )
-        .filter((part) => part !== undefined) as InlineDataPart[];
+      const imageParts = await Promise.all(
+        images.map(async (image) => await this.fileToGenerativePart(image)),
+      ).then(
+        (parts) =>
+          parts.filter((part) => part !== undefined) as InlineDataPart[],
+      );
 
       parts = [...parts, ...imageParts];
     }
@@ -207,15 +287,21 @@ export class GeminiService extends AbstractLanguageModelService {
     return parts;
   }
 
-  private fileToGenerativePart(
+  private async fileToGenerativePart(
     path: string,
-    mimeType: string,
-  ): InlineDataPart | undefined {
+  ): Promise<InlineDataPart | undefined> {
+    const result = await fileToBase64(path);
+
+    if (!result) {
+      return undefined;
+    }
+
+    const { base64Data, mimeType } = result;
+
     try {
-      const buffer = Buffer.from(fs.readFileSync(path)).toString('base64');
       return {
         inlineData: {
-          data: buffer,
+          data: base64Data,
           mimeType,
         },
       };
@@ -269,58 +355,17 @@ export class GeminiService extends AbstractLanguageModelService {
     return newAvailableModelNames;
   }
 
-  private async handleFunctionCalls(
-    functionCalls: FunctionCall[],
-    updateStatus?: (status: string) => void,
-  ): Promise<FunctionResponsePart[]> {
-    const functionCallResults: FunctionResponsePart[] = [];
-
-    for (const functionCall of functionCalls) {
-      const tool = ToolService.getTool(functionCall.name);
-      if (!tool) {
-        functionCallResults.push({
-          functionResponse: {
-            name: functionCall.name,
-            response: {
-              error: `Failed to find tool with name: ${functionCall.name}`,
-            },
-          },
-        });
-        continue;
-      }
-
-      try {
-        const args = { ...functionCall.args, updateStatus };
-        const result = await tool(args as any);
-        functionCallResults.push({
-          functionResponse: {
-            name: functionCall.name,
-            response: {
-              searchResults: result,
-            },
-          },
-        });
-      } catch (error) {
-        functionCallResults.push({
-          functionResponse: {
-            name: functionCall.name,
-            response: {
-              error: `Error executing tool ${functionCall.name}: ${error}`,
-            },
-          },
-        });
-      }
-    }
-
-    return functionCallResults;
-  }
-
-  public async getResponse(options: GetResponseOptions): Promise<string> {
+  public async getResponse(
+    options: GetResponseOptions,
+  ): Promise<ResponseWithAction> {
     if (this.currentModel === '') {
       vscode.window.showErrorMessage(
         'Make sure the model is selected before sending a message. Open the model selection dropdown and configure the model.',
       );
-      return 'Missing model configuration. Check the model selection dropdown.';
+      return {
+        textResponse:
+          'Missing model configuration. Check the model selection dropdown.',
+      };
     }
 
     const {
@@ -329,9 +374,9 @@ export class GeminiService extends AbstractLanguageModelService {
       images,
       currentEntryID,
       sendStreamResponse,
-      updateStatus,
       selectedModelName,
       disableTools,
+      toolCallResponse,
     } = options;
 
     const generativeModel = new GoogleGenerativeAI(
@@ -340,14 +385,39 @@ export class GeminiService extends AbstractLanguageModelService {
       model: selectedModelName ?? this.currentModel,
     });
 
-    const conversationHistory = this.conversationHistoryToContent(
-      historyManager.getHistoryBeforeEntry(currentEntryID).entries,
-      historyManager,
-    );
+    const { conversationHistory, functionResponses } =
+      this.conversationHistoryToContent(
+        historyManager.getHistoryBeforeEntry(currentEntryID).entries,
+        historyManager,
+        currentEntryID,
+      );
 
-    let queryParts = this.createQueryParts(query, images);
-    let functionCallCount = 0;
-    const MAX_FUNCTION_CALLS = 5;
+    let queryParts;
+
+    if (functionResponses && functionResponses.length > 0) {
+      // As the gemini API doesn't support image tool responses, we add a model message to the
+      // conversation history ask for the follow up tool response image
+      if (!(toolCallResponse?.images && toolCallResponse.images.length > 0)) {
+        queryParts = functionResponses;
+      } else {
+        conversationHistory.push({
+          role: 'function',
+          parts: functionResponses,
+        });
+        conversationHistory.push({
+          role: 'model',
+          parts: [
+            { text: 'Please provide the follow-up tool response image.' },
+          ],
+        });
+        queryParts = await this.createQueryParts(
+          'Now analyze the image which was a result of the previous tool call',
+          toolCallResponse.images,
+        );
+      }
+    } else {
+      queryParts = await this.createQueryParts(query, images);
+    }
 
     const { systemPrompt, generationConfig } =
       this.getAdvanceSettings(historyManager);
@@ -358,119 +428,134 @@ export class GeminiService extends AbstractLanguageModelService {
         }
       : undefined;
 
+    const MAX_RETRIES = 5;
+    let retryCount = 0;
+    let responseText = '';
+    let responseToolCall: FunctionCall | undefined = undefined;
     try {
-      if (!sendStreamResponse) {
-        while (functionCallCount < MAX_FUNCTION_CALLS) {
-          const response = await generativeModel
-            .startChat({
-              systemInstruction: systemInstruction,
-              generationConfig: generationConfig,
-              safetySettings: this.safetySettings,
-              history: conversationHistory,
-              tools: disableTools ? undefined : this.getEnabledTools(),
-            })
-            .sendMessage(queryParts);
+      while (retryCount < MAX_RETRIES) {
+        responseToolCall = undefined;
 
-          const functionCalls = response.response.functionCalls();
+        const chatSession = generativeModel.startChat({
+          systemInstruction: systemInstruction,
+          generationConfig: generationConfig,
+          safetySettings: this.safetySettings,
+          history: conversationHistory,
+          tools: disableTools ? undefined : this.getEnabledTools(),
+        });
 
-          if (!functionCalls) {
-            return response.response.text();
-          }
-
-          const functionCallResults =
-            await this.handleFunctionCalls(functionCalls);
-
-          conversationHistory.push({
-            role: 'user',
-            parts: queryParts,
-          });
-
-          conversationHistory.push({
-            role: 'model',
-            parts: functionCalls.map((part) => ({
-              functionCall: part,
-            })),
-          });
-
-          queryParts = functionCallResults;
-
-          functionCallCount++;
-        }
-        return 'Max function call limit reached.';
-      } else {
-        let responseText = '';
-
-        while (functionCallCount < MAX_FUNCTION_CALLS) {
-          if (this.stopStreamFlag) {
-            return responseText;
-          }
-
-          const result = await generativeModel
-            .startChat({
-              systemInstruction: systemInstruction,
-              generationConfig: generationConfig,
-              safetySettings: this.safetySettings,
-              history: conversationHistory,
-              tools: disableTools ? undefined : this.getEnabledTools(),
-            })
-            .sendMessageStream(queryParts);
-
-          let functionCalls = null;
-          updateStatus && updateStatus('');
+        if (!sendStreamResponse) {
+          const response = await chatSession.sendMessage(queryParts);
+          responseText = response.response.text();
+          responseToolCall = response.response.functionCalls()?.[0];
+        } else {
+          const result = await chatSession.sendMessageStream(queryParts);
 
           for await (const item of result.stream) {
             if (this.stopStreamFlag) {
-              return responseText;
+              return { textResponse: responseText };
             }
 
-            functionCalls = item.functionCalls();
-            if (functionCalls) {
-              const functionCallResults = await this.handleFunctionCalls(
-                functionCalls,
-                updateStatus,
-              );
-              conversationHistory.push({
-                role: 'user',
-                parts: queryParts,
-              });
-              conversationHistory.push({
-                role: 'model',
-                parts: functionCalls.map((part) => ({
-                  functionCall: part,
-                })),
-              });
-              queryParts = functionCallResults;
+            responseToolCall = item.functionCalls()?.[0];
+            if (responseToolCall) {
               break;
             }
+
             const partText = item.text();
             sendStreamResponse(partText);
             responseText += partText;
           }
-
-          if (!functionCalls) {
-            return responseText;
-          }
-          functionCallCount++;
         }
-        return responseText;
-      }
-    } catch (error) {
-      vscode.window
-        .showErrorMessage(
-          'Failed to get response from Gemini Service: ' + error,
-          'Get API Key',
-        )
-        .then((selection) => {
-          if (selection === 'Get API Key') {
-            vscode.env.openExternal(
-              vscode.Uri.parse(MODEL_SERVICE_CONSTANTS.gemini.apiLink),
-            );
+
+        if (!responseToolCall) {
+          return { textResponse: responseText };
+        }
+
+        const toolCall =
+          responseToolCall.name === 'allInOneTool'
+            ? {
+                id: Date.now().toString(),
+                toolName:
+                  (
+                    responseToolCall.args as {
+                      name: string;
+                      args: string;
+                    }
+                  ).name ?? '',
+                parameters: (() => {
+                  try {
+                    return JSON.parse(
+                      (
+                        responseToolCall.args as {
+                          name: string;
+                          args: string;
+                        }
+                      ).args ?? '{}',
+                    );
+                  } catch (e) {
+                    console.error('Invalid JSON in parameters:', e);
+                    return {};
+                  }
+                })(),
+                create_time: Date.now(),
+              }
+            : {
+                id: Date.now().toString(),
+                toolName: responseToolCall.name,
+                parameters: responseToolCall.args,
+                create_time: Date.now(),
+              };
+
+        const validation = ToolServiceProvider.isViableToolCall(toolCall);
+        // Return the response if the tool call is valid
+        if (validation.isValid) {
+          // Fix the \\n back to \n
+          for (const key in toolCall.parameters) {
+            if (typeof toolCall.parameters[key] === 'string') {
+              toolCall.parameters[key] = toolCall.parameters[key].replace(
+                /\\n/g,
+                '\n',
+              );
+            }
           }
+
+          return {
+            textResponse: responseText,
+            toolCall,
+          };
+        }
+
+        // Otherwise, add the tool call feedback to the conversation history and retry
+        conversationHistory.push({
+          role: 'user',
+          parts: queryParts,
         });
-      return 'Failed to connect to the language model service.';
+        conversationHistory.push({
+          role: 'model',
+          parts: [
+            {
+              functionCall: responseToolCall,
+            },
+          ],
+        });
+        queryParts = [
+          {
+            functionResponse: {
+              name: responseToolCall.name,
+              response: {
+                error: true,
+                feedback: validation.feedback,
+              },
+            },
+          },
+        ];
+        retryCount++;
+      }
+      return { textResponse: responseText };
+    } catch (error) {
+      return this.handleGetResponseError(error, 'gemini', responseText);
     } finally {
       this.stopStreamFlag = false;
-      updateStatus && updateStatus('');
     }
   }
 

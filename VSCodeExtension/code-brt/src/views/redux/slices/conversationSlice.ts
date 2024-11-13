@@ -2,14 +2,27 @@ import { createAsyncThunk, PayloadAction } from '@reduxjs/toolkit';
 import { createSlice } from '@reduxjs/toolkit';
 import { v4 as uuidV4 } from 'uuid';
 
-import type { ConversationEntry, ConversationHistory } from '../../../types';
+import type {
+  AddConversationEntryParams,
+  ConversationEntry,
+  ConversationEntryRole,
+  ConversationHistory,
+  GetLanguageModelResponseParams,
+  ToolCallEntry,
+  ToolCallResponse,
+} from '../../../types';
 import type { CallAPI } from '../../WebviewContext';
 import type { RootState } from '../store';
 import { updateAndSaveSetting } from './settingsSlice';
+import { clearUploadedFiles } from './fileUploadSlice';
+import React from 'react';
+
+const WAIT_FOR_USER_CONFIRM_TOOLS = ['writeToFile', 'executeCommand'];
 
 const initialState: ConversationHistory & {
   tempId: string | null;
   isLoading: boolean;
+  isProcessing: boolean;
 } = {
   create_time: 0,
   update_time: 0,
@@ -28,6 +41,7 @@ const initialState: ConversationHistory & {
   entries: {},
   tempId: null,
   isLoading: false,
+  isProcessing: false,
 };
 
 export const initLoadHistory = createAsyncThunk<
@@ -118,6 +132,262 @@ export const switchHistory = createAsyncThunk<
   },
 );
 
+export const processMessage = createAsyncThunk<
+  Promise<void>,
+  {
+    message: string;
+    parentId: string;
+    tempIdRef: React.MutableRefObject<string | null>;
+    files?: string[];
+    isEdited?: boolean;
+  },
+  {
+    state: RootState;
+    extra: {
+      callApi: CallAPI;
+    };
+  }
+>(
+  'conversation/processMessage',
+  async (
+    { message, parentId, tempIdRef, files = [], isEdited = false },
+    { getState, dispatch, extra: { callApi } },
+  ) => {
+    const conversationHistory = getState().conversation;
+    const { activeModelService, selectedModel } = getState().modelService;
+
+    // Check if the conversation is processing or the message is empty
+    if (
+      conversationHistory.isProcessing ||
+      activeModelService === 'loading...' ||
+      !message.trim()
+    ) {
+      return;
+    }
+
+    // Check if the API not set
+    const settings = getState().settings.settings;
+    if (
+      activeModelService !== 'ollama' &&
+      activeModelService !== 'custom' &&
+      !settings[`${activeModelService}ApiKey`]
+    ) {
+      callApi(
+        'alertMessage',
+        `The API key of ${activeModelService} is not set, please configure it first`,
+        'error',
+        // Open the vscode settings with @code-brt as the extension id
+        [
+          {
+            text: 'Set API Key',
+            commandArgs: [
+              'workbench.action.openSettings',
+              `@code-brt:${activeModelService}ApiKey`,
+            ],
+          },
+        ],
+      ).catch(console.error);
+      return;
+    }
+
+    dispatch(startProcessing());
+
+    // TODO: Support PDF Extractor at later version current only pass the images
+    files = files.filter((file: string) => !file.endsWith('.pdf'));
+
+    const userEntry = await callApi('addConversationEntry', {
+      parentID: parentId,
+      role: 'user',
+      message,
+      images: files,
+    } as AddConversationEntryParams);
+
+    dispatch(addEntry(userEntry));
+    dispatch(addTempResponseEntry({ parentId: userEntry.id, role: 'AI' }));
+
+    try {
+      const responseWithAction = await callApi('getLanguageModelResponse', {
+        modelServiceType: activeModelService,
+        query: message,
+        images: files.length > 0 ? files : undefined,
+        currentEntryID: isEdited ? userEntry.id : undefined,
+        useStream: true,
+        showStatus: true,
+      } as GetLanguageModelResponseParams);
+
+      if (!tempIdRef.current) {
+        dispatch(finishProcessing());
+        return;
+      }
+
+      const aiEntry = await callApi('addConversationEntry', {
+        parentID: userEntry.id,
+        role: 'AI',
+        message: responseWithAction.textResponse,
+        modelServiceType: activeModelService,
+        modelName: selectedModel,
+        toolCalls: responseWithAction.toolCall
+          ? [responseWithAction.toolCall]
+          : undefined,
+      } as AddConversationEntryParams);
+
+      dispatch(replaceTempEntry(aiEntry));
+
+      if (!isEdited) {
+        dispatch(clearUploadedFiles());
+      }
+    } catch (error) {
+      callApi(
+        'alertMessage',
+        `Failed to get response: ${error}`,
+        'error',
+      ).catch(console.error);
+    } finally {
+      setTimeout(() => {
+        dispatch(finishProcessing());
+      }, 1000);
+    }
+  },
+);
+
+export const processToolCall = createAsyncThunk<
+  Promise<void>,
+  {
+    toolCall: ToolCallEntry;
+    entry: ConversationEntry;
+    rejectByUserMessage?: string;
+    tempIdRef?: React.MutableRefObject<string | null>;
+  },
+  {
+    state: RootState;
+    extra: {
+      callApi: CallAPI;
+    };
+  }
+>(
+  'conversation/processToolAction',
+  async (
+    { toolCall, entry, rejectByUserMessage, tempIdRef },
+    { dispatch, getState, extra: { callApi } },
+  ) => {
+    if (getState().conversation.isProcessing) {
+      return;
+    }
+    dispatch(startProcessing());
+    dispatch(addTempResponseEntry({ parentId: entry.id, role: 'tool' }));
+    const toolCallResponse: ToolCallResponse = !rejectByUserMessage
+      ? await callApi('approveToolCall', toolCall)
+      : {
+          id: toolCall.id,
+          toolCallName: toolCall.toolName,
+          status: 'rejectByUser',
+          result: rejectByUserMessage,
+          create_time: Date.now(),
+        };
+    const newToolCallResponseEntry = await callApi('addConversationEntry', {
+      parentID: entry.id,
+      role: 'tool',
+      message:
+        toolCallResponse.status === 'success'
+          ? 'The tool call was executed successfully'
+          : toolCallResponse,
+      toolResponses: [toolCallResponse],
+    } as AddConversationEntryParams);
+    dispatch(replaceTempEntry(newToolCallResponseEntry));
+
+    // We will continue processing instead returning
+    // - Only when tempIdRef is set, and one of the following conditions is met:
+    // - The user rejected the tool call as we do not need to confirm changes in this case
+    // - The tool is not needed to confirm changes (Some operation like read context)
+    const shouldContinueProcessing =
+      tempIdRef &&
+      (rejectByUserMessage ||
+        !WAIT_FOR_USER_CONFIRM_TOOLS.includes(toolCall.toolName)) &&
+      toolCallResponse.status !== 'error';
+
+    if (!shouldContinueProcessing) {
+      dispatch(finishProcessing());
+      return;
+    }
+
+    // Automatically process the next response if the user rejected the tool call
+    dispatch(
+      processToolResponse({
+        entry: newToolCallResponseEntry,
+        tempIdRef,
+      }),
+    );
+  },
+);
+
+export const processToolResponse = createAsyncThunk<
+  Promise<void>,
+  {
+    entry: ConversationEntry;
+    tempIdRef: React.MutableRefObject<string | null>;
+  },
+  {
+    state: RootState;
+    extra: {
+      callApi: CallAPI;
+    };
+  }
+>(
+  'conversation/processToolResponse',
+  async ({ entry, tempIdRef }, { dispatch, getState, extra: { callApi } }) => {
+    const { activeModelService, selectedModel } = getState().modelService;
+    if (activeModelService === 'loading...') {
+      return;
+    }
+
+    if (!entry.toolResponses?.[0]) {
+      callApi('alertMessage', 'No tool response to process', 'error').catch(
+        console.error,
+      );
+      return;
+    }
+
+    dispatch(startProcessing());
+    dispatch(addTempResponseEntry({ parentId: entry.id, role: 'AI' }));
+    try {
+      const responseWithAction = await callApi('getLanguageModelResponse', {
+        modelServiceType: activeModelService,
+        query: '',
+        images: entry.toolResponses?.[0].images,
+        useStream: true,
+        showStatus: true,
+        toolCallResponse: entry.toolResponses?.[0],
+        currentEntryID: entry.id,
+      } as GetLanguageModelResponseParams);
+
+      if (!tempIdRef.current) {
+        return;
+      }
+
+      const aiEntry = await callApi('addConversationEntry', {
+        parentID: entry.id,
+        role: 'AI',
+        message: responseWithAction.textResponse,
+        modelServiceType: activeModelService,
+        modelName: selectedModel,
+        toolCalls: responseWithAction.toolCall
+          ? [responseWithAction.toolCall]
+          : undefined,
+      } as AddConversationEntryParams);
+
+      dispatch(replaceTempEntry(aiEntry));
+    } catch (error) {
+      callApi(
+        'alertMessage',
+        `Failed to get response: ${error}`,
+        'error',
+      ).catch(console.error);
+    } finally {
+      dispatch(finishProcessing());
+    }
+  },
+);
+
 const conversationSlice = createSlice({
   name: 'conversation',
   initialState,
@@ -128,8 +398,19 @@ const conversationSlice = createSlice({
     finishLoading(state) {
       state.isLoading = false;
     },
-    setConversationHistory(_state, action: PayloadAction<ConversationHistory>) {
-      return { ...action.payload, tempId: null, isLoading: false };
+    startProcessing(state) {
+      state.isProcessing = true;
+    },
+    finishProcessing(state) {
+      state.isProcessing = false;
+    },
+    setConversationHistory(state, action: PayloadAction<ConversationHistory>) {
+      return {
+        ...action.payload,
+        tempId: null,
+        isLoading: false,
+        isProcessing: state.isProcessing,
+      };
     },
     handleStreamResponse(state, action: PayloadAction<string>) {
       const { tempId, entries } = state;
@@ -156,11 +437,14 @@ const conversationSlice = createSlice({
         state.top.push(newEntry.id);
       }
     },
-    addTempAIResponseEntry(state, action: PayloadAction<{ parentId: string }>) {
+    addTempResponseEntry(
+      state,
+      action: PayloadAction<{ parentId: string; role: ConversationEntryRole }>,
+    ) {
       const tempId = `temp-${uuidV4()}`;
       state.entries[tempId] = {
         id: tempId,
-        role: 'AI',
+        role: action.payload.role,
         message: '',
         parent: action.payload.parentId,
         children: [],
@@ -209,10 +493,12 @@ const conversationSlice = createSlice({
 export const {
   startLoading,
   finishLoading,
+  startProcessing,
+  finishProcessing,
   setConversationHistory,
   handleStreamResponse,
   addEntry,
-  addTempAIResponseEntry,
+  addTempResponseEntry,
   replaceTempEntry,
   updateEntryMessage,
   updateCurrentEntry,

@@ -1,3 +1,5 @@
+export type ConversationEntryRole = 'user' | 'AI' | 'tool';
+
 /**
  * The tool call entry type
  * @property id - The unique identifier of the tool call entry
@@ -22,10 +24,11 @@ export type ToolCallEntry = {
  */
 export type ToolCallResponse = {
   id: string;
-  toolCallId: string;
+  toolCallName: string;
   result: Record<string, any> | string;
-  status: 'success' | 'error';
+  status: 'success' | 'error' | 'rejectByUser';
   create_time: number;
+  images?: string[];
 };
 
 /**
@@ -37,17 +40,19 @@ export type ToolCallResponse = {
  * @property files - The files referenced by the entry in path
  * @property toolCalls - The tool calls made by the entry
  * @property toolResponses - The tool responses made by the entry
+ * @property modelName - The model name used by the entry
  * @property parent - The parent ID of the entry
  * @property children - The children's ID of the entry
  */
 export type ConversationEntry = {
   id: string;
-  role: 'user' | 'AI' | 'tool';
+  role: ConversationEntryRole;
   message: string;
   images?: string[];
   files?: string[];
   toolCalls?: ToolCallEntry[];
   toolResponses?: ToolCallResponse[];
+  modelName?: string;
   parent: string | null;
   children: string[];
 };

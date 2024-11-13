@@ -8,6 +8,7 @@ import {
   ConversationEntry,
   CustomModelSettings,
   GetResponseOptions,
+  type ResponseWithAction,
 } from '../../types';
 import { AbstractLanguageModelService } from './base';
 import { HistoryManager, SettingsManager } from '../../api';
@@ -259,12 +260,17 @@ export class CustomApiService extends AbstractLanguageModelService {
     });
   }
 
-  public async getResponse(options: GetResponseOptions): Promise<string> {
+  public async getResponse(
+    options: GetResponseOptions,
+  ): Promise<ResponseWithAction> {
     if (this.currentModel === '') {
       vscode.window.showErrorMessage(
         'Make sure the model is selected before sending a message. Open the model selection dropdown and configure the model.',
       );
-      return 'Missing model configuration. Check the model selection dropdown.';
+      return {
+        textResponse:
+          'Missing model configuration. Check the model selection dropdown.',
+      };
     }
 
     const {
@@ -294,26 +300,34 @@ export class CustomApiService extends AbstractLanguageModelService {
 
     try {
       if (canSendWithImages) {
-        return this.getResponseChunksWithImagePayload(
-          query,
-          images,
-          conversationHistory,
-          sendStreamResponse,
-        );
+        return {
+          textResponse: await this.getResponseChunksWithImagePayload(
+            query,
+            images,
+            conversationHistory,
+            sendStreamResponse,
+          ),
+        };
       }
 
-      return this.getResponseChunksWithTextPayload(
-        query,
-        conversationHistory,
-        sendStreamResponse,
-      );
+      return {
+        textResponse: await this.getResponseChunksWithTextPayload(
+          query,
+          conversationHistory,
+          sendStreamResponse,
+        ),
+      };
     } catch (error) {
       vscode.window.showErrorMessage(
         `Failed to get response from Custom API Service ${
           images && images.length > 0 ? 'with image' : ''
         }: ${error}`,
       );
-      return `Failed to get response from Custom API Service ${images && images.length > 0 ? 'with image' : ''}: ${error}`;
+      return {
+        textResponse: `Failed to get response from Custom API Service ${
+          images && images.length > 0 ? 'with image' : ''
+        }: ${error}`,
+      };
     }
   }
 

@@ -57,11 +57,6 @@ export const CustomModelForm: React.FC<CustomModelFormProps> = ({
 
     callApi('setCustomModels', modelsToSave)
       .then(() => {
-        callApi(
-          'alertMessage',
-          'Custom models saved successfully',
-          'info',
-        ).catch(console.error);
         handleEditModelListSave(modelsToSave.map((model) => model.name));
       })
       .catch((error: any) => {

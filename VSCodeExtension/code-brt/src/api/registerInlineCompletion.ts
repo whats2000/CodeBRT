@@ -27,7 +27,7 @@ export const registerInlineCompletion = (
       AVAILABLE_MODEL_SERVICES,
     );
 
-  // Activate manually complete functionality
+  // Activate manually complete capability
   const completionProvider = new InlineCompletionProvider(
     ctx,
     settingsManager,
@@ -35,7 +35,7 @@ export const registerInlineCompletion = (
     statusBarManager,
   );
 
-  // Keep the inline completion provider registration
+  // Keep the inline completion provider register
   ctx.subscriptions.push(
     vscode.languages.registerInlineCompletionItemProvider(
       SUPPORTED_LANGUAGES,

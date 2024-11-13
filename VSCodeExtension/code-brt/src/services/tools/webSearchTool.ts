@@ -6,26 +6,47 @@
 import axios from 'axios';
 import * as cheerio from 'cheerio';
 
-import type { ToolServicesApi } from '../../types';
-import { extractTextFromWebpage } from '../../utils';
+import type { ToolResponseFromToolFunction, ToolServicesApi } from './types';
+import { extractTextFromWebResponse } from './utils/extractTextFromWebResponse';
 
 const postProcessResults = (
   results: { title: string; url: string; snippet: string }[],
   format: 'text' | 'json',
-): string => {
-  if (format === 'json') {
-    return JSON.stringify(results, null, 2);
+): ToolResponseFromToolFunction => {
+  if (results.length === 0) {
+    return {
+      status: 'error',
+      result: 'No search results found.',
+    };
   }
 
-  return (
-    '#####\nWeb Search Results is at below, please answer and provide reference links:\n\n' +
-    results
-      .map(
-        (result) =>
-          `**Title**:\n${result.title}\n**URL**:\n${result.url}\n**Snippet**:\n${result.snippet}\n`,
-      )
-      .join('\n')
-  );
+  if (format === 'json') {
+    return {
+      status: 'success',
+      result: JSON.stringify(
+        {
+          message: `Use the following search results to answer the previously asked question. Reference each source by its [URL] when relevant:`,
+          content: results,
+        },
+        null,
+        2,
+      ),
+    };
+  }
+
+  const resultContent = results
+    .map(
+      (result) =>
+        `[TITLE] ${result.title}\n[URL] ${result.url}\n[CONTENT] ${result.snippet}`,
+    )
+    .join('\n\n');
+
+  return {
+    status: 'success',
+    result:
+      'Use the following search results to answer the previously asked question. Reference each source by its [URL] when relevant:\n\n' +
+      resultContent,
+  };
 };
 
 export const webSearchTool: ToolServicesApi['webSearch'] = async ({
@@ -39,7 +60,7 @@ export const webSearchTool: ToolServicesApi['webSearch'] = async ({
   try {
     maxCharsPerPage = Number(maxCharsPerPage);
     numResults = Number(numResults);
-  } catch (error) {
+  } catch {
     maxCharsPerPage = 6000;
     numResults = 4;
   }
@@ -53,7 +74,7 @@ export const webSearchTool: ToolServicesApi['webSearch'] = async ({
   });
 
   try {
-    updateStatus?.(`[Searching] Searching Web with keyword "${term}"`);
+    updateStatus?.(`[processing] Searching Web with keyword "${term}"`);
     const resp = await session.get('https://www.google.com/search', {
       params: { q: term, num: numResults, udm: 14 },
       timeout: 5000,
@@ -65,12 +86,18 @@ export const webSearchTool: ToolServicesApi['webSearch'] = async ({
       const linkElement = $(result).find('a[href]').first();
       const link = linkElement.attr('href');
       const title = $(result).find('h3').text();
-      if (!link) {
-        continue;
-      }
+      updateStatus?.(`[processing] Reading page "${title}" from ${link}`);
+
+      if (!link) continue;
+
       try {
         const webpage = await session.get(link, { timeout: 5000 });
-        const visibleText = extractTextFromWebpage(webpage.data);
+        const contentType = webpage.headers['content-type'];
+        const visibleText = await extractTextFromWebResponse(
+          webpage.data,
+          contentType,
+        );
+
         const truncatedText =
           visibleText.length > maxCharsPerPage
             ? visibleText.substring(0, maxCharsPerPage)
@@ -80,14 +107,16 @@ export const webSearchTool: ToolServicesApi['webSearch'] = async ({
         allResults.push({
           title,
           url: link,
-          snippet: 'This page does not allow web scraping.',
+          snippet:
+            'Scraping is restricted. Use `urlFetcher` with the provided URL instead.',
         });
       }
     }
   } catch (error) {
     console.error('Failed to search the web:', error);
+  } finally {
+    updateStatus?.('');
   }
 
-  updateStatus?.('[Info] Generating Response Based on Search Results');
   return postProcessResults(allResults, format);
 };

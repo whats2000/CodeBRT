@@ -8,6 +8,7 @@ import {
   MenuOutlined,
   AudioOutlined,
   PicRightOutlined,
+  RocketOutlined,
 } from '@ant-design/icons';
 import styled from 'styled-components';
 import { useDispatch, useSelector } from 'react-redux';
@@ -20,6 +21,7 @@ import {
   swapModel,
 } from '../../redux/slices/modelServiceSlice';
 import { WebviewContext } from '../../WebviewContext';
+import { useRefs } from '../../context/RefContext';
 import { EditModelListBar } from './Toolbar/EditModelListBar';
 import { HistorySidebar } from './Toolbar/HistorySidebar';
 import { SettingsBar } from './Toolbar/SettingsBar';
@@ -27,6 +29,7 @@ import { VoiceSettingsBar } from './Toolbar/VoiceSettingsBar';
 import { CodeCompletionSettingsBar } from './Toolbar/CodeCompletionSettingsBar';
 import { useWindowSize } from '../../hooks';
 import { AVAILABLE_MODEL_SERVICES } from '../../../constants';
+import { setRefId, startTour } from '../../redux/slices/tourSlice';
 
 const StyledSpace = styled(Space)`
   display: flex;
@@ -49,6 +52,7 @@ type ToolbarProps = {
 
 export const Toolbar: React.FC<ToolbarProps> = ({ setTheme }) => {
   const { callApi } = useContext(WebviewContext);
+  const { registerRef } = useRefs();
 
   const [isHistorySidebarOpen, setIsHistorySidebarOpen] = useState(false);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
@@ -63,6 +67,26 @@ export const Toolbar: React.FC<ToolbarProps> = ({ setTheme }) => {
     useSelector((state: RootState) => state.modelService);
 
   const { innerWidth } = useWindowSize();
+
+  const modelServiceSelectRef = registerRef('modelServiceSelect');
+  const modelSelectRef = registerRef('modelSelect');
+
+  useEffect(() => {
+    dispatch(
+      setRefId({
+        tourName: 'quickStart',
+        stepIndex: 6,
+        targetId: 'modelServiceSelect',
+      }),
+    );
+    dispatch(
+      setRefId({
+        tourName: 'quickStart',
+        stepIndex: 7,
+        targetId: 'modelSelect',
+      }),
+    );
+  }, []);
 
   useEffect(() => {
     if (activeModelService === 'loading...' || isLoading) {
@@ -125,6 +149,12 @@ export const Toolbar: React.FC<ToolbarProps> = ({ setTheme }) => {
       onClick: () => setIsCodeCompletionSettingsOpen(true),
       label: 'Code Completion Settings',
       icon: <PicRightOutlined />,
+    },
+    {
+      key: 'quick guide',
+      onClick: () => dispatch(startTour({ tourName: 'quickStart' })),
+      label: 'Quick Start Guide',
+      icon: <RocketOutlined />,
     },
   ];
 
@@ -206,29 +236,32 @@ export const Toolbar: React.FC<ToolbarProps> = ({ setTheme }) => {
       </Drawer>
       <StyledSpace>
         <Space wrap>
-          <Flex justify={'space-between'} gap={10}>
+          <div ref={modelServiceSelectRef}>
             <Select
               showSearch
               value={activeModelService}
               onChange={handleModelServiceChange}
               style={{
-                width: innerWidth < 550 ? 200 : 125,
+                width: innerWidth >= 550 ? 125 : innerWidth >= 320 ? 200 : 125,
               }}
               loading={isLoading}
               options={modelServiceOptions}
             />
-          </Flex>
-          <Select
-            showSearch
-            value={isLoading ? 'Loading...' : selectedModel}
-            onChange={handleModelChange}
-            style={{
-              width: innerWidth < 550 ? 200 : '100%',
-              minWidth: 150,
-            }}
-            loading={isLoading}
-            options={modelOptions}
-          />
+          </div>
+          <div ref={modelSelectRef}>
+            <Select
+              showSearch
+              value={isLoading ? 'Loading...' : selectedModel}
+              onChange={handleModelChange}
+              style={{
+                width:
+                  innerWidth >= 550 ? '100%' : innerWidth >= 320 ? 200 : 125,
+                minWidth: 100,
+              }}
+              loading={isLoading}
+              options={modelOptions}
+            />
+          </div>
         </Space>
         {innerWidth < 400 ? (
           <Dropdown menu={{ items: settingMenuItemsSmallWidth }}>

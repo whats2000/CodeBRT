@@ -14,7 +14,10 @@ import {
   Tooltip,
   Typography,
 } from 'antd';
-import { QuestionCircleFilled } from '@ant-design/icons';
+import {
+  QuestionCircleFilled,
+  QuestionCircleOutlined,
+} from '@ant-design/icons';
 import styled from 'styled-components';
 
 import type {
@@ -140,6 +143,19 @@ export const CodeCompletionSettingsBar: React.FC<
       onClose={onClose}
       width={400}
       loading={isLoading}
+      extra={
+        <Button
+          type={'text'}
+          href={
+            'https://whats2000.github.io/CodeBRT/docs/features/code-editor/code-completion'
+          }
+          target={'_blank'}
+          icon={<QuestionCircleOutlined />}
+          iconPosition={'end'}
+        >
+          <Typography.Text type='secondary'>Learn More</Typography.Text>
+        </Button>
+      }
     >
       <StyledForm layout='vertical'>
         <Divider orientation={'left'} orientationMargin={0}>

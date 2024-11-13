@@ -66,11 +66,6 @@ export const ModelForm: React.FC<ModelFormProps> = ({
       modelsToSave.map((model) => model.name).filter((model) => model !== ''),
     )
       .then(() => {
-        callApi(
-          'alertMessage',
-          'Available models saved successfully',
-          'info',
-        ).catch(console.error);
         handleEditModelListSave(
           modelsToSave
             .map((model) => model.name)

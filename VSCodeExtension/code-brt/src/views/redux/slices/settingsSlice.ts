@@ -67,7 +67,12 @@ export const saveSettings = createAsyncThunk<
       const needsReload = state.settings.needsReload;
 
       if (needsReload) {
-        await callApi('alertReload', 'Some settings require a reload to apply');
+        await callApi(
+          'alertMessage',
+          'The setting will take effect after the extension is reloaded',
+          'info',
+          [{ text: 'Reload', commandArgs: ['workbench.action.reloadWindow'] }],
+        );
       }
 
       // Loop through and update each setting
@@ -103,7 +108,12 @@ export const updateAndSaveSetting = createAsyncThunk<
       await callApi('setSettingByKey', key, value);
 
       if (RELOAD_REQUIRED_SETTINGS.includes(key)) {
-        await callApi('alertReload', 'Some settings require a reload to apply');
+        await callApi(
+          'alertMessage',
+          'Some settings require a reload to apply',
+          'info',
+          [{ text: 'Reload', commandArgs: ['workbench.action.reloadWindow'] }],
+        );
       }
     } catch (error: any) {
       throw new Error(`Failed to update setting: ${error.message}`);
