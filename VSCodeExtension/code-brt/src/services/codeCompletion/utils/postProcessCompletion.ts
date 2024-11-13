@@ -42,12 +42,12 @@ const isRewritesLineAbove = (completion: string, prefix: string): boolean => {
  * @returns {boolean} - Whether extreme repetition is detected
  */
 const isExtremeRepetition = (completion: string): boolean => {
-  const lines = completion.split('\n');
+  const lines = completion.trim().split('\n');
   if (lines.length < 6) {
     return false;
   }
   for (let freq = 1; freq < MAX_REPETITION_FREQ_TO_CHECK; freq++) {
-    const lcs = longestCommonSubsequence(lines[0], lines[freq]);
+    const lcs = longestCommonSubsequence(lines[0].trim(), lines[freq].trim());
     if (lcs.length > 5 || lcs.length > lines[0].length * 0.5) {
       let matchCount = 0;
       for (let i = 0; i < lines.length; i += freq) {
@@ -129,8 +129,6 @@ export const postProcessCompletion = (
   if (completion.startsWith(lastLineOfPrefix)) {
     completion = completion.slice(lastLineOfPrefix.length).trimStart();
   }
-
-  console.log(lastLineOfPrefix, completion);
 
   return completion;
 };

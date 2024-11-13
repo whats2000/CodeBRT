@@ -90,4 +90,22 @@ describe('postProcessCompletion', () => {
     );
     expect(result).toBe('Valid completion.');
   });
+
+  test('should remove duplicated prefix from the beginning of the completion', () => {
+    const completion =
+      '  const someVariable = someValue;\n  const someOtherVariable = someOtherValue;';
+    const prefix = '  const someVariable = someValue;\n';
+
+    const result = postProcessCompletion(completion, prefix, '', modelName);
+    expect(result).toBe('const someOtherVariable = someOtherValue;');
+  });
+
+  test('should remove duplicated prefix from the beginning of the completion (2)', () => {
+    const completion =
+      '  const someVariable = someValue;\n  const someOtherVariable = someOtherValue;';
+    const prefix = '  const someVariable = someValue;\n';
+
+    const result = postProcessCompletion(completion, prefix, '', modelName);
+    expect(result).toBe('  const someOtherVariable = someOtherValue;');
+  });
 });

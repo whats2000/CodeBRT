@@ -512,10 +512,9 @@ export class GeminiService extends AbstractLanguageModelService {
           // Fix the \\n back to \n
           for (const key in toolCall.parameters) {
             if (typeof toolCall.parameters[key] === 'string') {
-              toolCall.parameters[key] = toolCall.parameters[key].replace(
-                /\\n/g,
-                '\n',
-              );
+              toolCall.parameters[key] = toolCall.parameters[key]
+                .split(/(?<!\\)\\n/) // Match standalone \\n, skip escaped
+                .join('\n'); // Replace it with actual newlines
             }
           }
 
