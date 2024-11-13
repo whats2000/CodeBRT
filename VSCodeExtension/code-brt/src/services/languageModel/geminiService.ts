@@ -406,7 +406,9 @@ export class GeminiService extends AbstractLanguageModelService {
         });
         conversationHistory.push({
           role: 'model',
-          parts: [{ text: 'Please provide the follow-up tool response image' }],
+          parts: [
+            { text: 'Please provide the follow-up tool response image.' },
+          ],
         });
         queryParts = await this.createQueryParts(
           'Now analyze the image which was a result of the previous tool call',

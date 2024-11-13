@@ -274,7 +274,7 @@ export abstract class AbstractOpenaiLikeService extends AbstractLanguageModelSer
       }
     }
 
-    if (images && images.length > 0 && !toolCallResponse) {
+    if (images && images.length > 0) {
       const imageParts = (await Promise.all(
         images.map(async (image) => {
           return await this.fileToContentPartImage(image);
@@ -283,10 +283,28 @@ export abstract class AbstractOpenaiLikeService extends AbstractLanguageModelSer
         parts.filter((part) => part !== undefined),
       )) as ChatCompletionContentPartImageOpenaiLike[];
 
-      result[result.length - 1] = {
-        role: 'user',
-        content: [{ type: 'text', text: query }, ...imageParts],
-      };
+      if (result[result.length - 1]?.role === 'user') {
+        result[result.length - 1] = {
+          role: 'user',
+          content: [{ type: 'text', text: query }, ...imageParts],
+        };
+      } else if (result[result.length - 1]?.role === 'tool') {
+        // So as the tool response doesn't support images, we add the images as a separate model and user message
+        result.push({
+          role: 'assistant',
+          content: 'Please provide the follow-up tool response image.',
+        });
+        result.push({
+          role: 'user',
+          content: [
+            {
+              type: 'text',
+              text: 'Now analyze the image which was a result of the previous tool call',
+            },
+            ...imageParts,
+          ],
+        });
+      }
     }
 
     return result;
