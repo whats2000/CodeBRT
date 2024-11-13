@@ -194,5 +194,10 @@ export const postProcessCompletion = (
     completion = completion.slice(1);
   }
 
+  // Handle extra space added by Qwen model
+  if (modelName.toLowerCase().includes('qwen') && completion.startsWith(' ')) {
+    completion = completion.slice(1);
+  }
+
   return completion;
 };
