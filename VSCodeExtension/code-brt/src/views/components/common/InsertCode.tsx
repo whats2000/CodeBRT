@@ -47,7 +47,6 @@ const InsertButton: React.FC<InsertButtonProps> = ({
   handleOpenApplyChangesAlert,
 }) => {
   const { callApi } = useContext(WebviewContext);
-
   const [isLoading, setIsLoading] = useState(false);
 
   const handleInsertCode = async () => {
@@ -56,13 +55,17 @@ const InsertButton: React.FC<InsertButtonProps> = ({
     setIsLoading(true);
 
     try {
+      const editor = await callApi('getCurrentEditorCode');
+      if (!editor) {
+        throw new Error('Failed to find an active editor to insert the code');
+      }
+
       const originalCode: string = await callApi('getCurrentEditorCode');
       const editorInfo = await callApi('getEditorInfo'); // Assuming this gets the file starting line info
 
-      // If editor info contains the starting line, you can modify this accordingly
-      const startingLine = editorInfo?.startingLine || 1; // Default to line 1 if not provided
+      const startingLine =
+        (editorInfo as unknown as { startingLine: number })?.startingLine || 1; // Default to line 1 if not provided
 
-      // Add line numbers to the original code
       const originalCodeWithLineNumbers = addLineNumbersToCode(
         originalCode,
         startingLine,
@@ -77,12 +80,21 @@ const InsertButton: React.FC<InsertButtonProps> = ({
       console.log('FixCode Response:', response);
 
       if (response.success) {
-        const updatedModifications = await callApi(
-          'showDiffInEditor',
-          response.modifications,
+        const modifiedCode = response.modifications.reduce(
+          (updatedCode, mod) => {
+            const lines = updatedCode.split('\n');
+            if (mod.content === '') {
+              lines.splice(mod.startLine - 1, mod.endLine - mod.startLine + 1);
+            } else {
+              lines.splice(mod.startLine - 1, 0, mod.content);
+            }
+            return lines.join('\n');
+          },
+          originalCode,
         );
 
-        handleOpenApplyChangesAlert(updatedModifications);
+        await callApi('showFullDiffInEditor', { originalCode, modifiedCode });
+        handleOpenApplyChangesAlert(response.modifications);
       } else {
         console.error('Failed to fix code:', response.error);
       }

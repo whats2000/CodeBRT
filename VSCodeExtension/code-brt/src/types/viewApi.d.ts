@@ -352,12 +352,6 @@ export type ViewApi = {
   insertCode: (code: string) => Promise<void>;
 
   /**
-   * Show the differences in the editor using decorations.
-   * @param modifications - The modifications to show.
-   */
-  showDiffInEditor: (modifications: Modification[]) => Promise<Modification[]>;
-
-  /**
    * Get the current editor code.
    * @returns The current code in the editor.
    */
@@ -369,11 +363,21 @@ export type ViewApi = {
    * @returns The result of the code fixing process.
    */
   fixCode: (options: FixCodeOptions) => Promise<FixCodeResponse>;
-  applyCodeChanges: (modifications: Modification[]) => Promise<void>;
+  applyDecorations: (modifications: Modification[]) => Promise<void>;
   insertSelectedCodeToChat: () => void;
-  updateDecorationToMatchBackground: () => void;
   revertTemporaryInsertions(): Promise<void>;
   getEditorInfo: () => void;
+  showFullDiffInEditor: ({
+    originalCode,
+    modifiedCode,
+  }: {
+    originalCode: string;
+    modifiedCode: string;
+  }) => void;
+  applyCodeChanges(
+    modifications: Modification[],
+  ): Promise<{ success: boolean; error?: string }>;
+  closeActiveEditor(): Promise<void>;
 };
 
 /**

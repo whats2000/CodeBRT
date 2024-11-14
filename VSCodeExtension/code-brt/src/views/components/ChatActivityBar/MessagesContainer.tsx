@@ -279,6 +279,10 @@ export const MessagesContainer = React.memo<MessagesContainerProps>(
     const handleOpenApplyChangesAlert = (
       updatedModifications: Modification[],
     ) => {
+      console.log(
+        'Opening apply changes alert with modifications:',
+        updatedModifications,
+      );
       setUpdatedModifications(updatedModifications);
       setShowAlertApplyChanges(true);
     };
@@ -286,11 +290,34 @@ export const MessagesContainer = React.memo<MessagesContainerProps>(
     const handleApplyChanges = async () => {
       setShowAlertApplyChanges(false);
       try {
-        await callApi('updateDecorationToMatchBackground');
-        await callApi('applyCodeChanges', updatedModifications);
+        const applyChangesResponse = await callApi(
+          'applyCodeChanges',
+          updatedModifications,
+        );
+
+        if (applyChangesResponse && applyChangesResponse.success) {
+          console.log('Code changes applied successfully.');
+          setToolStatus('Changes applied successfully');
+
+          // 關閉差異視圖，返回編輯器
+          handleCloseDiffView();
+        } else {
+          console.error(
+            'Failed to apply code changes',
+            applyChangesResponse?.error,
+          );
+          setToolStatus(
+            `Failed to apply changes: ${applyChangesResponse?.error}`,
+          );
+        }
       } catch (applyError) {
         console.error('Failed to apply code changes:', applyError);
+        setToolStatus('Error while applying changes');
       }
+    };
+
+    const handleCloseDiffView = () => {
+      callApi('closeActiveEditor');
     };
 
     const handleDeclineChanges = async () => {

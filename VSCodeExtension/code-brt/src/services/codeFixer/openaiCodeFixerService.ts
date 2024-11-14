@@ -20,7 +20,13 @@ export class OpenaiCodeFixerService extends AbstractCodeFixerService {
       'codeFixerLastSelectedModel',
     ).openai;
 
-    super('openai', context, settingsManager, defaultModelName, availableModelNames);
+    super(
+      'openai',
+      context,
+      settingsManager,
+      defaultModelName,
+      availableModelNames,
+    );
   }
 
   public async getResponse(
@@ -40,7 +46,7 @@ export class OpenaiCodeFixerService extends AbstractCodeFixerService {
 
     const generativeModel = new ChatOpenAI({
       apiKey: this.settingsManager.get('openaiApiKey'),
-      model: this.currentModel,
+      model: 'gpt-4o',
       temperature: 0,
     });
 
@@ -59,7 +65,6 @@ export class OpenaiCodeFixerService extends AbstractCodeFixerService {
         originalCode: options.originalCode,
         generatedCode: options.generatedCode,
       });
-
       return {
         modifications: response,
         success: true,
