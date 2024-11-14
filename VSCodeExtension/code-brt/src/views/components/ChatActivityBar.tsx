@@ -1,32 +1,28 @@
 import { useContext, useState, useEffect, useRef } from 'react';
 import styled from 'styled-components';
 import { Content } from 'antd/es/layout/layout';
-import { ConfigProvider, FloatButton } from 'antd';
-import { ControlOutlined, LoadingOutlined } from '@ant-design/icons';
+import { ConfigProvider } from 'antd';
 import { useSelector, useDispatch } from 'react-redux';
 
-import { AppDispatch, RootState } from '../redux';
+import type { AppDispatch, RootState } from '../redux';
 import { UPLOADED_FILES_KEY } from '../../constants';
 import {
-  addEntry,
-  addTempAIResponseEntry,
   handleStreamResponse,
   initLoadHistory,
-  replaceTempEntry,
 } from '../redux/slices/conversationSlice';
 import { WebviewContext } from '../WebviewContext';
+import { RefProvider } from '../context/RefContext';
 import { useDragAndDrop, useThemeConfig } from '../hooks';
 import { Toolbar } from './ChatActivityBar/Toolbar';
 import { InputContainer } from './ChatActivityBar/InputContainer';
 import { MessagesContainer } from './ChatActivityBar/MessagesContainer';
 import { ToolActivateFloatButtons } from './ChatActivityBar/ToolActivateFloatButtons';
 import { ModelAdvanceSettingBar } from './ChatActivityBar/ModelAdvanceSettingBar';
-import {
-  handleFilesUpload,
-  clearUploadedFiles,
-} from '../redux/slices/fileUploadSlice';
+import { handleFilesUpload } from '../redux/slices/fileUploadSlice';
 import { initModelService } from '../redux/slices/modelServiceSlice';
 import { fetchSettings } from '../redux/slices/settingsSlice';
+import { UserGuildTours } from './ChatActivityBar/UserGuildTours';
+import { setRefId, startTourForNewUser } from '../redux/slices/tourSlice';
 
 const Container = styled(Content)`
   display: flex;
@@ -38,24 +34,16 @@ const Container = styled(Content)`
 `;
 
 export const ChatActivityBar = () => {
-  const { callApi, addListener, removeListener } = useContext(WebviewContext);
+  const { addListener, removeListener } = useContext(WebviewContext);
 
-  const [isProcessing, setIsProcessing] = useState(false);
   const [floatButtonBaseYPosition, setFloatButtonBaseYPosition] = useState(60);
-  const [isModelAdvanceSettingBarOpen, setIsModelAdvanceSettingBarOpen] =
-    useState(false);
 
   const inputContainerRef = useRef<HTMLDivElement>(null);
 
   const dispatch = useDispatch<AppDispatch>();
 
-  const { isLoading } = useSelector((state: RootState) => state.settings);
-
   const conversationHistory = useSelector(
     (state: RootState) => state.conversation,
-  );
-  const { activeModelService } = useSelector(
-    (state: RootState) => state.modelService,
   );
   const uploadedFiles = useSelector(
     (state: RootState) => state.fileUpload.uploadedFiles,
@@ -79,7 +67,19 @@ export const ChatActivityBar = () => {
         // Load the lasted used conversation history
         dispatch(initLoadHistory());
       })
+      .then(() => {
+        // Check if the user is new and start the quick start tour
+        dispatch(startTourForNewUser());
+      })
       .catch(console.error);
+
+    dispatch(
+      setRefId({
+        tourName: 'quickStart',
+        stepIndex: 5,
+        targetId: 'modelAdvanceSettingButton',
+      }),
+    );
 
     // For receiving stream response
     const handleStreamResponseEvent = (responseFromMessage: string) => {
@@ -139,127 +139,25 @@ export const ChatActivityBar = () => {
     tempIdRef.current = conversationHistory.tempId;
   }, [conversationHistory.tempId]);
 
-  const processMessage = async ({
-    message,
-    parentId,
-    files = [],
-    isEdited = false,
-  }: {
-    message: string;
-    parentId: string;
-    files?: string[];
-    isEdited?: boolean;
-  }): Promise<void> => {
-    if (
-      isProcessing ||
-      activeModelService === 'loading...' ||
-      !message.trim()
-    ) {
-      return;
-    }
-    setIsProcessing(true);
-
-    // TODO: Support PDF Extractor at later version current only pass the images
-    files = files.filter((file: string) => !file.endsWith('.pdf'));
-
-    const userEntry = await callApi(
-      'addConversationEntry',
-      parentId,
-      'user',
-      message,
-      files,
-      activeModelService,
-    );
-
-    dispatch(addEntry(userEntry));
-    dispatch(addTempAIResponseEntry({ parentId: userEntry.id }));
-
-    callApi(
-      'getLanguageModelResponse',
-      activeModelService,
-      message,
-      files.length > 0 ? files : undefined,
-      isEdited ? userEntry.id : undefined,
-      true,
-      true,
-    )
-      .then(async (response) => {
-        const responseText = await response;
-        if (!tempIdRef.current) {
-          setIsProcessing(false);
-          return;
-        }
-
-        const aiEntry = await callApi(
-          'addConversationEntry',
-          userEntry.id,
-          'AI',
-          responseText,
-          undefined,
-          activeModelService,
-        );
-
-        dispatch(replaceTempEntry(aiEntry));
-
-        if (!isEdited) {
-          dispatch(clearUploadedFiles());
-        }
-
-        setTimeout(() => {
-          setIsProcessing(false);
-        }, 1000);
-      })
-      .catch((error) => {
-        callApi(
-          'alertMessage',
-          `Failed to get response: ${error}`,
-          'error',
-        ).catch(console.error);
-        setIsProcessing(false);
-      });
-  };
-
-  const openModelAdvanceSettingBar = () => {
-    if (conversationHistory.isLoading || isLoading) return;
-    setIsModelAdvanceSettingBarOpen(true);
-  };
-
   return (
     <ConfigProvider theme={theme}>
-      <Container ref={dropRef}>
-        <Toolbar setTheme={setTheme} />
-        <MessagesContainer
-          isProcessing={isProcessing}
-          processMessage={processMessage}
+      <RefProvider>
+        <Container ref={dropRef}>
+          <Toolbar setTheme={setTheme} />
+          <MessagesContainer tempIdRef={tempIdRef} />
+          <InputContainer
+            tempIdRef={tempIdRef}
+            inputContainerRef={inputContainerRef}
+          />
+        </Container>
+        <ModelAdvanceSettingBar
+          floatButtonBaseYPosition={floatButtonBaseYPosition}
         />
-        <InputContainer
-          inputContainerRef={inputContainerRef}
-          processMessage={processMessage}
-          isProcessing={isProcessing}
+        <ToolActivateFloatButtons
+          floatButtonBaseYPosition={floatButtonBaseYPosition}
         />
-      </Container>
-      <FloatButton
-        tooltip={'Model Advance Settings'}
-        icon={
-          conversationHistory.isLoading || isLoading ? (
-            <LoadingOutlined />
-          ) : (
-            <ControlOutlined />
-          )
-        }
-        onClick={openModelAdvanceSettingBar}
-        style={{
-          insetInlineEnd: 40,
-          bottom: floatButtonBaseYPosition + 50,
-        }}
-      />
-      <ToolActivateFloatButtons
-        floatButtonBaseYPosition={floatButtonBaseYPosition}
-      />
-      <ModelAdvanceSettingBar
-        isOpen={isModelAdvanceSettingBarOpen}
-        onClose={() => setIsModelAdvanceSettingBarOpen(false)}
-      />
+        <UserGuildTours />
+      </RefProvider>
     </ConfigProvider>
   );
 };

@@ -19,7 +19,10 @@ import type {
 import { MODEL_SERVICE_CONSTANTS, PROJECT_LINK } from '../../../../constants';
 import { WebviewContext } from '../../../WebviewContext';
 import { GptSoVitsSettingsBar } from './VoiceSettingsBar/GptSoVitsSettingsBar';
-import { QuestionCircleFilled } from '@ant-design/icons';
+import {
+  QuestionCircleFilled,
+  QuestionCircleOutlined,
+} from '@ant-design/icons';
 import type { AppDispatch, RootState } from '../../../redux';
 import { updateAndSaveSetting } from '../../../redux/slices/settingsSlice';
 
@@ -91,6 +94,19 @@ export const VoiceSettingsBar: React.FC<VoiceSettingsBarProps> = ({
         onClose={onClose}
         width={400}
         loading={isLoading}
+        extra={
+          <Button
+            type={'text'}
+            href={
+              'https://whats2000.github.io/CodeBRT/docs/features/voice-service/installation'
+            }
+            target={'_blank'}
+            icon={<QuestionCircleOutlined />}
+            iconPosition={'end'}
+          >
+            <Typography.Text type='secondary'>Learn More</Typography.Text>
+          </Button>
+        }
       >
         <Form layout='vertical'>
           <Divider orientation={'left'} orientationMargin={0}>
@@ -236,6 +252,7 @@ export const VoiceSettingsBar: React.FC<VoiceSettingsBarProps> = ({
                 <Tooltip title='Preview voices at OpenAI website'>
                   <Typography.Link
                     type={'secondary'}
+                    underline={true}
                     onClick={() =>
                       openLink(MODEL_SERVICE_CONSTANTS.openai.apiLink)
                     }
@@ -278,6 +295,7 @@ export const VoiceSettingsBar: React.FC<VoiceSettingsBarProps> = ({
                 <Tooltip title='Find out more about set up GPT-SoVits client host'>
                   <Typography.Link
                     type={'secondary'}
+                    underline={true}
                     onClick={() =>
                       openLink(MODEL_SERVICE_CONSTANTS.gptSoVits.apiLink)
                     }

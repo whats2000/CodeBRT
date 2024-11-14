@@ -3,14 +3,14 @@ import * as path from 'path';
 import { v4 as uuidV4 } from 'uuid';
 import * as vscode from 'vscode';
 
-import type {
+import {
+  AddConversationEntryParams,
   ConversationEntry,
   ConversationHistory,
   ConversationHistoryIndex,
   ConversationHistoryIndexList,
   ConversationModelAdvanceSettings,
   IHistoryManager,
-  ModelServiceType,
 } from '../types';
 
 export class HistoryManager implements IHistoryManager {
@@ -206,18 +206,27 @@ export class HistoryManager implements IHistoryManager {
   }
 
   public async addConversationEntry(
-    parentID: string | null,
-    role: 'user' | 'AI',
-    message: string,
-    images?: string[],
-    modelServiceType?: ModelServiceType,
+    entry: AddConversationEntryParams,
   ): Promise<ConversationEntry> {
+    const {
+      parentID,
+      role,
+      message,
+      images,
+      modelServiceType,
+      modelName,
+      toolCalls,
+      toolResponses,
+    } = entry;
     const newID = uuidV4();
     const newEntry: ConversationEntry = {
       id: newID,
       role: role,
       message: message,
       images: images,
+      modelName: modelName,
+      toolCalls: toolCalls,
+      toolResponses: toolResponses,
       parent: parentID,
       children: [],
     };

@@ -2,9 +2,38 @@
 
 const path = require('path');
 const CopyWebpackPlugin = require('copy-webpack-plugin');
+const webpack = require('webpack');
 
 module.exports = (env, { mode }) => {
   const isDev = mode === 'development';
+  const treeWasmDir = path.join('node_modules', 'web-tree-sitter');
+  const languageWasmDir = path.join(
+    __dirname,
+    'node_modules',
+    'tree-sitter-wasms',
+    'out',
+  );
+  const treeWasmTargetDir = path.join('');
+  const wasmTargetDir = path.join('trees');
+
+  // List of languages to support
+  const languages = [
+    'c',
+    'cpp',
+    'c_sharp',
+    'go',
+    'java',
+    'javascript',
+    'kotlin',
+    'php',
+    'python',
+    'ruby',
+    'rust',
+    'swift',
+    'tsx',
+    'typescript',
+    'vue',
+  ];
 
   return {
     target: 'node',
@@ -23,10 +52,26 @@ module.exports = (env, { mode }) => {
     externals: {
       vs: 'vs',
       vscode: 'commonjs vscode',
+      electron: 'commonjs electron',
+      'playwright-core': 'commonjs playwright-core',
+      playwright: 'commonjs playwright',
     },
     resolve: {
       roots: [__dirname],
       extensions: ['.js', '.ts'],
+      fallback: {
+        electron: false,
+        fs: false,
+        net: false,
+        tls: false,
+      },
+      alias: {
+        playwright: path.resolve(__dirname, 'node_modules/playwright'),
+        'playwright-core': path.resolve(
+          __dirname,
+          'node_modules/playwright-core',
+        ),
+      },
     },
     optimization: {
       minimize: !isDev,
@@ -44,6 +89,10 @@ module.exports = (env, { mode }) => {
           test: /\.css$/,
           use: ['css-loader'],
         },
+        {
+          test: /playwright-core/,
+          use: 'null-loader',
+        },
       ],
     },
     plugins: [
@@ -54,7 +103,22 @@ module.exports = (env, { mode }) => {
             from: 'package.json',
             to: 'package.json',
           },
+          {
+            from: path.join(treeWasmDir, 'tree-sitter.wasm'),
+            to: path.join(treeWasmTargetDir, 'tree-sitter.wasm'),
+          },
+          ...languages.map((lang) => ({
+            from: path.join(languageWasmDir, `tree-sitter-${lang}.wasm`),
+            to: path.join(wasmTargetDir, `tree-sitter-${lang}.wasm`),
+          })),
+          {
+            from: 'node_modules/playwright-core',
+            to: 'node_modules/playwright-core',
+          },
         ].filter(Boolean),
+      }),
+      new webpack.DefinePlugin({
+        'process.env.PLAYWRIGHT_BROWSERS_PATH': JSON.stringify('0'),
       }),
     ].filter(Boolean),
     devtool: isDev ? 'inline-cheap-module-source-map' : false,

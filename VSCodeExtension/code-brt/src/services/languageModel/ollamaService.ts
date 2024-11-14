@@ -1,19 +1,21 @@
 import fs from 'fs';
 
 import * as vscode from 'vscode';
-import type { Message, Options, Tool, ToolCall } from 'ollama';
+import type { ChatRequest, Message, Options, Tool, ToolCall } from 'ollama';
 import { Ollama } from 'ollama';
 
 import type {
   ConversationEntry,
-  GetResponseOptionsWithCompletion,
-  ToolServiceType,
+  GetResponseOptions,
+  NonWorkspaceToolType,
+  ResponseWithAction,
+  ToolCallResponse,
 } from '../../types';
-import { MODEL_SERVICE_CONSTANTS, toolsSchema } from '../../constants';
-import { ParseToolCallUtils } from '../../utils';
+import { MODEL_SERVICE_CONSTANTS } from '../../constants';
+import { ParseToolCallUtils } from './utils';
 import { AbstractLanguageModelService } from './base';
 import { HistoryManager, SettingsManager } from '../../api';
-import { ToolService } from '../tools';
+import { ToolServiceProvider } from '../tools';
 
 export class OllamaService extends AbstractLanguageModelService {
   private runningModel = '';
@@ -35,47 +37,55 @@ export class OllamaService extends AbstractLanguageModelService {
     );
   }
 
-  private getAdvanceSettings(
-    historyManager: HistoryManager,
-    completionOptions?: GetResponseOptionsWithCompletion['completionOptions'], // 新增
-  ): {
+  private getAdvanceSettings(historyManager: HistoryManager): {
     systemPrompt: string | undefined;
     generationConfig: Partial<Options>;
   } {
     const advanceSettings = historyManager.getCurrentHistory().advanceSettings;
 
-    let generationConfig: Partial<Options> = {};
-
-    if (completionOptions) {
-      const { stop, ...otherOptions } = completionOptions;
-
-      generationConfig = {
-        ...generationConfig,
-        ...otherOptions,
+    if (!advanceSettings) {
+      return {
+        systemPrompt: undefined,
+        generationConfig: {},
       };
-
-      if (stop !== undefined) {
-        generationConfig.stop = Array.isArray(stop) ? stop : [stop];
-      }
     }
 
-    const systemPrompt =
-      advanceSettings?.systemPrompt && advanceSettings.systemPrompt.length > 0
-        ? advanceSettings.systemPrompt
-        : undefined;
-
     return {
-      systemPrompt,
-      generationConfig,
+      systemPrompt:
+        advanceSettings.systemPrompt.length > 0
+          ? advanceSettings.systemPrompt
+          : undefined,
+      generationConfig: {
+        num_ctx: advanceSettings.maxTokens,
+        temperature: advanceSettings.temperature,
+        top_p: advanceSettings.topP,
+        top_k: advanceSettings.topK,
+        presence_penalty: advanceSettings.presencePenalty,
+        frequency_penalty: advanceSettings.frequencyPenalty,
+      },
     };
   }
 
   private getEnabledTools(): Tool[] | undefined {
     const enabledTools = this.settingsManager.get('enableTools');
     const tools: Tool[] = [];
+    const { agentTools, ...toolsSchema } = ToolServiceProvider.getToolSchema();
+
+    if (enabledTools.agentTools?.active && agentTools) {
+      for (const [_key, tool] of Object.entries(agentTools)) {
+        tools.push({
+          type: 'function',
+          function: {
+            name: tool.name,
+            description: tool.description,
+            parameters: tool.inputSchema,
+          },
+        });
+      }
+    }
 
     for (const [key, tool] of Object.entries(toolsSchema)) {
-      if (!enabledTools[key as ToolServiceType].active) {
+      if (!enabledTools[key as NonWorkspaceToolType]?.active) {
         continue;
       }
 
@@ -98,16 +108,51 @@ export class OllamaService extends AbstractLanguageModelService {
     },
     query: string,
     historyManager: HistoryManager,
+    currentEntryID?: string,
     images?: string[],
+    toolCallResponse?: ToolCallResponse,
   ): Promise<Message[]> {
     const result: Message[] = [];
-    let currentEntry = entries[historyManager.getCurrentHistory().current];
+    let currentEntry =
+      entries[currentEntryID ?? historyManager.getCurrentHistory().current];
 
     while (currentEntry) {
-      result.unshift({
-        role: currentEntry.role === 'user' ? 'user' : 'assistant',
-        content: currentEntry.message,
-      });
+      switch (currentEntry.role) {
+        case 'AI':
+          const newEntry: Message = {
+            role: 'assistant',
+            content: currentEntry.message,
+          };
+          const toolCall = currentEntry.toolCalls?.[0];
+          if (toolCall) {
+            newEntry.tool_calls = [
+              {
+                function: {
+                  name: toolCall.toolName,
+                  arguments: toolCall.parameters,
+                },
+              },
+            ];
+          }
+          result.unshift(newEntry);
+          break;
+        case 'user':
+          result.unshift({
+            role: currentEntry.role,
+            content: currentEntry.message,
+          });
+          break;
+        case 'tool':
+          const toolCallResponse = currentEntry.toolResponses?.[0];
+          if (!toolCallResponse) {
+            throw new Error('Tool call response not found');
+          }
+          result.unshift({
+            role: 'user',
+            content: JSON.stringify(toolCallResponse.result),
+          });
+          break;
+      }
 
       if (currentEntry.parent) {
         currentEntry = entries[currentEntry.parent];
@@ -120,7 +165,9 @@ export class OllamaService extends AbstractLanguageModelService {
     if (result[result.length - 1]?.role !== 'user') {
       result.push({
         role: 'user',
-        content: query,
+        content: toolCallResponse
+          ? JSON.stringify(toolCallResponse.result)
+          : query,
       });
     }
 
@@ -156,7 +203,8 @@ export class OllamaService extends AbstractLanguageModelService {
           return recentlyModifiedModel;
         }
 
-        // As the ollama service will unload the model after 5 min, we use the last selected model as the running model
+        // As the ollama service will unload the model after 5 min,
+        // We use the last selected model as the running model
         return this.runningModel;
       })
       .catch((error) => {
@@ -194,6 +242,7 @@ export class OllamaService extends AbstractLanguageModelService {
     currentEntryID?: string,
     images?: string[],
     selectedModelName?: string,
+    toolCallResponse?: ToolCallResponse,
   ): Promise<{
     client: Ollama;
     conversationHistory: Message[];
@@ -207,7 +256,9 @@ export class OllamaService extends AbstractLanguageModelService {
       historyManager.getHistoryBeforeEntry(currentEntryID).entries,
       query,
       historyManager,
+      currentEntryID,
       images,
+      toolCallResponse,
     );
 
     let model = selectedModelName ?? this.currentModel;
@@ -217,47 +268,6 @@ export class OllamaService extends AbstractLanguageModelService {
 
     return { client, conversationHistory, model };
   }
-
-  private handleFunctionCalls = async (
-    functionCalls: ToolCall[],
-    updateStatus?: (status: string) => void,
-  ): Promise<Message[]> => {
-    const functionCallResults: Message[] = [];
-
-    for (const functionCall of functionCalls) {
-      if (!functionCall.function?.name || !functionCall.function?.arguments) {
-        continue;
-      }
-
-      const tool = ToolService.getTool(functionCall.function.name);
-      if (!tool) {
-        functionCallResults.push({
-          role: 'tool',
-          content:
-            'Failed to find tool with name: ' + functionCall.function.name,
-        });
-        continue;
-      }
-
-      try {
-        const result = await tool({
-          ...functionCall.function.arguments,
-          updateStatus,
-        } as any);
-        functionCallResults.push({
-          role: 'tool',
-          content: result,
-        });
-      } catch (error) {
-        functionCallResults.push({
-          role: 'tool',
-          content: `Error executing tool ${functionCall.function.name}: ${error}`,
-        });
-      }
-    }
-
-    return functionCallResults;
-  };
 
   public async getLatestAvailableModelNames(): Promise<string[]> {
     const client = new Ollama({
@@ -276,7 +286,7 @@ export class OllamaService extends AbstractLanguageModelService {
         latestModels.some((model) => model.name === name),
       );
 
-      // Append the models to the available models if they are not already there
+      // Append the models to the available models if they aren't already there
       latestModels.forEach((model) => {
         if (newAvailableModelNames.includes(model.name)) return;
 
@@ -297,13 +307,16 @@ export class OllamaService extends AbstractLanguageModelService {
   }
 
   public async getResponse(
-    options: GetResponseOptionsWithCompletion,
-  ): Promise<string> {
+    options: GetResponseOptions,
+  ): Promise<ResponseWithAction> {
     if (this.currentModel === '') {
       vscode.window.showErrorMessage(
         'Make sure the model is selected before sending a message. Open the model selection dropdown and configure the model.',
       );
-      return 'Missing model configuration. Check the model selection dropdown.';
+      return {
+        textResponse:
+          'Missing model configuration. Check the model selection dropdown.',
+      };
     }
 
     const {
@@ -312,10 +325,9 @@ export class OllamaService extends AbstractLanguageModelService {
       images,
       currentEntryID,
       sendStreamResponse,
-      updateStatus,
       selectedModelName,
       disableTools,
-      completionOptions, // 新增
+      toolCallResponse,
     } = options;
     const { client, conversationHistory, model } = await this.initModel(
       query,
@@ -323,19 +335,18 @@ export class OllamaService extends AbstractLanguageModelService {
       currentEntryID,
       images,
       selectedModelName,
+      toolCallResponse,
     );
 
     if (model === '') {
-      return 'The ollama is seems to be down. Please start the ollama service.';
+      return {
+        textResponse:
+          'The ollama is seems to be down. Please start the ollama service.',
+      };
     }
 
-    let functionCallCount = 0;
-    const MAX_FUNCTION_CALLS = 5;
-
-    const { systemPrompt, generationConfig } = this.getAdvanceSettings(
-      historyManager,
-      completionOptions,
-    );
+    const { systemPrompt, generationConfig } =
+      this.getAdvanceSettings(historyManager);
 
     if (systemPrompt) {
       conversationHistory.unshift({
@@ -344,180 +355,80 @@ export class OllamaService extends AbstractLanguageModelService {
       });
     }
 
+    const MAX_RETRIES = 5;
+    let retryCount = 0;
+    let responseText = '';
+    let responseToolCall: ToolCall | undefined = undefined;
     try {
-      if (!sendStreamResponse) {
-        while (functionCallCount < MAX_FUNCTION_CALLS) {
+      while (retryCount < MAX_RETRIES) {
+        const requestPayload: ChatRequest = {
+          model: model,
+          messages: conversationHistory,
+          tools: disableTools ? undefined : this.getEnabledTools(),
+          options: generationConfig,
+        };
+
+        if (!sendStreamResponse) {
           const response = await client.chat({
-            model,
-            messages: conversationHistory,
-            tools: disableTools ? undefined : this.getEnabledTools(),
-            options: generationConfig,
+            ...requestPayload,
+            stream: false,
           });
-
-          if (
-            response.message.tool_calls &&
-            response.message.tool_calls.length > 0
-          ) {
-            const toolCalls = response.message.tool_calls!;
-
-            const functionCallResults = await this.handleFunctionCalls(
-              toolCalls,
-              updateStatus,
-            );
-            conversationHistory.push({
-              role: 'assistant',
-              content: response.message.content,
-              tool_calls: toolCalls,
-            });
-            conversationHistory.push(...functionCallResults);
-
-            functionCallCount++;
-          } else {
-            return response.message.content;
-          }
-        }
-        return 'Max function call limit reached.';
-      } else {
-        let responseText = '';
-        let toolCallBuffer = '';
-        let inToolCall = false;
-        let inCodeBlock = false;
-        let openBraces = 0;
-        let inTaggedToolCall = false;
-
-        while (functionCallCount < MAX_FUNCTION_CALLS) {
-          if (this.stopStreamFlag) {
-            return ParseToolCallUtils.cleanResponseText(responseText);
-          }
-
+          responseText = response.message.content;
+          responseToolCall = response.message.tool_calls?.[0];
+        } else {
           const streamResponse = await client.chat({
-            model,
-            messages: conversationHistory,
+            ...requestPayload,
             stream: true,
-            tools: disableTools ? undefined : this.getEnabledTools(),
-            options: generationConfig,
           });
-
-          let breakByToolCall = false;
 
           for await (const chunk of streamResponse) {
             if (this.stopStreamFlag) {
-              return ParseToolCallUtils.cleanResponseText(responseText);
+              return { textResponse: responseText };
             }
 
             const chunkContent = chunk.message.content;
-
-            // Check for code block
-            if (chunkContent.includes('```')) {
-              inCodeBlock = !inCodeBlock;
-              if (inCodeBlock && (inToolCall || inTaggedToolCall)) {
-                // If entering a code block while in a potential tool call, abort the tool call
-                sendStreamResponse(toolCallBuffer);
-                responseText += toolCallBuffer;
-                toolCallBuffer = '';
-                inToolCall = false;
-                inTaggedToolCall = false;
-                openBraces = 0;
-              }
-            }
-
-            if (inCodeBlock) {
-              // In code block, send everything as is
-              sendStreamResponse(chunkContent);
-              responseText += chunkContent;
-              continue;
-            }
-
-            // Process the chunk character by character
-            for (const char of chunkContent) {
-              if (!inToolCall && !inTaggedToolCall && char === '<') {
-                // Potential start of a tagged tool call
-                if (
-                  chunkContent
-                    .substring(chunkContent.indexOf(char))
-                    .startsWith('<tool_call>')
-                ) {
-                  inTaggedToolCall = true;
-                  toolCallBuffer = '<';
-                }
-              } else if (inTaggedToolCall) {
-                toolCallBuffer += char;
-                if (toolCallBuffer.endsWith('</tool_call>')) {
-                  // End of tagged tool call
-                  breakByToolCall = true;
-                  break;
-                }
-              } else if (!inToolCall && !inTaggedToolCall && char === '{') {
-                inToolCall = true;
-                openBraces = 1;
-                toolCallBuffer = char;
-              } else if (inToolCall) {
-                toolCallBuffer += char;
-                if (char === '{') {
-                  openBraces++;
-                } else if (char === '}') {
-                  openBraces--;
-                  if (openBraces === 0) {
-                    // Potential end of a tool call
-                    breakByToolCall = true;
-                    break;
-                  }
-                }
-              } else {
-                // Regular content
-                sendStreamResponse(char);
-                responseText += char;
-              }
-            }
-
-            if (breakByToolCall) {
-              break;
-            }
-          }
-
-          if (!breakByToolCall) {
-            // Handle any remaining content in the buffer
-            if (toolCallBuffer) {
-              sendStreamResponse(toolCallBuffer);
-              responseText += toolCallBuffer;
-              toolCallBuffer = '';
-              inToolCall = false;
-              inTaggedToolCall = false;
-            }
-
-            return ParseToolCallUtils.cleanResponseText(responseText);
+            sendStreamResponse(chunkContent);
+            responseText += chunkContent;
           }
 
           // Process the potential tool call
-          const possibleToolCall =
-            ParseToolCallUtils.extractToolCalls(toolCallBuffer);
-          if (!possibleToolCall) {
-            // Not a valid tool call, send as regular content
-            sendStreamResponse(toolCallBuffer);
-            responseText += toolCallBuffer;
-            return ParseToolCallUtils.cleanResponseText(responseText);
-          }
-
-          // Valid tool call found
-          const functionCallResults = await this.handleFunctionCalls(
-            [possibleToolCall],
-            updateStatus,
-          );
-          conversationHistory.push({
-            role: 'assistant',
-            content: toolCallBuffer,
-            tool_calls: [possibleToolCall],
-          });
-          conversationHistory.push(...functionCallResults);
-
-          functionCallCount++;
-          toolCallBuffer = '';
-          inToolCall = false;
-          inTaggedToolCall = false;
+          const responseObject =
+            ParseToolCallUtils.extractToolCalls(responseText);
+          responseText = responseObject.text;
+          responseToolCall = responseObject.toolCall;
         }
 
-        return ParseToolCallUtils.cleanResponseText(responseText);
+        if (!responseToolCall) {
+          return { textResponse: responseText };
+        }
+        const toolCall = {
+          id: Date.now().toString(),
+          toolName: responseToolCall.function.name,
+          parameters: responseToolCall.function.arguments,
+          create_time: Date.now(),
+        };
+
+        const validation = ToolServiceProvider.isViableToolCall(toolCall);
+        // Return the response if the tool call is valid
+        if (validation.isValid) {
+          return {
+            textResponse: responseText,
+            toolCall,
+          };
+        }
+
+        // Otherwise, add the tool call feedback to the conversation history and retry
+        conversationHistory.push({
+          role: 'assistant',
+          content: responseText,
+        });
+        conversationHistory.push({
+          role: 'user',
+          content: validation.feedback,
+        });
+        retryCount++;
       }
+      return { textResponse: responseText };
     } catch (error) {
       vscode.window
         .showErrorMessage(
@@ -535,13 +446,13 @@ export class OllamaService extends AbstractLanguageModelService {
             );
           }
         });
-      return (
-        'Failed to connect to the language model service. ' +
-        'Make sure the ollama service is running. Also, check the model has been downloaded.'
-      );
+      return {
+        textResponse:
+          'Failed to connect to the language model service. ' +
+          'Make sure the ollama service is running. Also, check the model has been downloaded.',
+      };
     } finally {
       this.stopStreamFlag = false;
-      updateStatus && updateStatus('');
     }
   }
 

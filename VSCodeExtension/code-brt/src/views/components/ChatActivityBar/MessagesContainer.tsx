@@ -7,8 +7,12 @@ import { VirtuosoHandle } from 'react-virtuoso';
 import { Virtuoso } from 'react-virtuoso';
 
 import type { ConversationEntry } from '../../../types';
-import type { RootState } from '../../redux';
-import { updateEntryMessage } from '../../redux/slices/conversationSlice';
+import type { AppDispatch, RootState } from '../../redux';
+import {
+  processMessage,
+  processToolResponse,
+  updateEntryMessage,
+} from '../../redux/slices/conversationSlice';
 import { WebviewContext } from '../../WebviewContext';
 import { useWindowSize } from '../../hooks';
 import { traverseHistory } from '../../utils';
@@ -37,7 +41,6 @@ const StyledMessagesContainer = styled.div<{
   $token: GlobalToken;
 }>`
   flex-grow: 1;
-  overflow-y: auto;
   padding: 10px 0 10px 10px;
   border-top: 1px solid ${({ $token }) => $token.colorBorder};
   border-bottom: 1px solid ${({ $token }) => $token.colorBorder};
@@ -47,22 +50,11 @@ const StyledMessagesContainer = styled.div<{
 `;
 
 type MessagesContainerProps = {
-  isProcessing: boolean;
-  processMessage: ({
-    message,
-    parentId,
-    files,
-    isEdited,
-  }: {
-    message: string;
-    parentId: string;
-    files?: string[];
-    isEdited?: boolean;
-  }) => Promise<void>;
+  tempIdRef: React.MutableRefObject<string | null>;
 };
 
 export const MessagesContainer = React.memo<MessagesContainerProps>(
-  ({ isProcessing, processMessage }) => {
+  ({ tempIdRef }) => {
     const { callApi, addListener, removeListener } = useContext(WebviewContext);
     const token = theme.useToken().token;
 
@@ -81,11 +73,12 @@ export const MessagesContainer = React.memo<MessagesContainerProps>(
     const [showFloatButtons, setShowFloatButtons] = useState(false);
     const [toolStatus, setToolStatus] = useState<string>('');
     const [isAutoScroll, setIsAutoScroll] = useState(true);
+    const [isUserScrolling, setIsUserScrolling] = useState(true);
 
     const virtualListRef = useRef<VirtuosoHandle>(null);
     const messagesContainerRef = useRef<HTMLDivElement>(null);
 
-    const dispatch = useDispatch();
+    const dispatch = useDispatch<AppDispatch>();
     const conversationHistory = useSelector(
       (state: RootState) => state.conversation,
     );
@@ -139,14 +132,21 @@ export const MessagesContainer = React.memo<MessagesContainerProps>(
     }, [hoveredBubble]);
 
     useEffect(() => {
-      if (isAutoScroll && isProcessing) {
+      // Only auto-scroll if isAutoScroll is true and not user scrolling,
+      // and there's a new message being processed
+      if (
+        isAutoScroll &&
+        !isUserScrolling &&
+        conversationHistory.isProcessing
+      ) {
         scrollToBottom();
       }
     }, [
-      isProcessing,
+      conversationHistory.isProcessing,
       conversationHistoryEntries[conversationHistoryEntries.length - 1]
         ?.message,
       isAutoScroll,
+      isUserScrolling,
     ]);
 
     const scrollToBottom = () => {
@@ -160,12 +160,15 @@ export const MessagesContainer = React.memo<MessagesContainerProps>(
     };
 
     // Disable auto-scroll if the user scrolls up
-    const handleUserScroll = (e: React.UIEvent) => {
+    const handleUserScroll = (e: React.UIEvent<HTMLDivElement>) => {
+      setIsUserScrolling(true);
+
       const scrollContainer = e.currentTarget;
       const currentScrollTop = scrollContainer.scrollTop;
       const scrollHeight = scrollContainer.scrollHeight;
       const clientHeight = scrollContainer.clientHeight;
 
+      // Disable auto-scroll if user has scrolled up significantly
       if (currentScrollTop + clientHeight < scrollHeight - 100) {
         setIsAutoScroll(false);
       }
@@ -174,6 +177,7 @@ export const MessagesContainer = React.memo<MessagesContainerProps>(
     const handleAtBottomStateChange = (atBottom: boolean) => {
       if (atBottom) {
         setIsAutoScroll(true);
+        setIsUserScrolling(false);
       }
     };
 
@@ -182,12 +186,15 @@ export const MessagesContainer = React.memo<MessagesContainerProps>(
       editedMessage: string,
     ) => {
       const entry = conversationHistory.entries[entryId];
-      await processMessage({
-        message: editedMessage,
-        parentId: entry.parent ?? '',
-        files: entry.images,
-        isEdited: true,
-      });
+      dispatch(
+        processMessage({
+          message: editedMessage,
+          parentId: entry.parent ?? '',
+          tempIdRef,
+          files: entry.images,
+          isEdited: true,
+        }),
+      );
     };
 
     const handleUpdateStatus = (status: string) => {
@@ -208,9 +215,19 @@ export const MessagesContainer = React.memo<MessagesContainerProps>(
 
     const handleSaveEdit = async (entryId: string, editedMessage: string) => {
       if (activeModelService === 'loading...') return;
-
-      if (conversationHistory.entries[entryId].role === 'user') {
+      const role = conversationHistory.entries[entryId].role;
+      if (role === 'user') {
         await handleEditUserMessageSave(entryId, editedMessage);
+      } else if (role === 'tool') {
+        const toolCallResult =
+          conversationHistory.entries[entryId].toolResponses?.[0];
+        if (!toolCallResult) return;
+        dispatch(
+          processToolResponse({
+            entry: conversationHistory.entries[entryId],
+            tempIdRef,
+          }),
+        );
       } else {
         callApi('editLanguageModelConversationHistory', entryId, editedMessage)
           .then(() => {
@@ -261,23 +278,11 @@ export const MessagesContainer = React.memo<MessagesContainerProps>(
         .catch((err) => console.error('Failed to copy text: ', err));
     };
 
-    // When click redo the AI message mean the user want to re-generate the AI response,
-    // We simply remove the AI message and re-generate it by editing exactly and save the same user message
-    const handleRedo = (entryId: string) => {
-      const previousMessageId = conversationHistory.entries[entryId].parent;
-      if (!previousMessageId) return;
-      const previousMessage = conversationHistory.entries[previousMessageId];
-      handleSaveEdit(previousMessage.id, previousMessage.message).catch(
-        console.error,
-      );
-    };
-
     const renderMessage = (index: number) => {
       return (
         <MessageItem
           index={index}
           conversationHistoryEntries={conversationHistoryEntries}
-          isProcessing={isProcessing}
           hoveredBubble={hoveredBubble}
           setHoveredBubble={setHoveredBubble}
           setShowFloatButtons={setShowFloatButtons}
@@ -292,24 +297,17 @@ export const MessagesContainer = React.memo<MessagesContainerProps>(
           isAudioPlaying={isAudioPlaying}
           isStopAudio={isStopAudio}
           handleConvertTextToVoice={handleConvertTextToVoice}
-          handleRedo={handleRedo}
           floatButtonsXPosition={floatButtonsXPosition}
           showFloatButtons={showFloatButtons}
+          tempIdRef={tempIdRef}
         />
       );
     };
 
     return (
       <>
-        {isLoading && (
-          <Spin fullscreen={true} size={'large'}>
-            <span>Setting up the model...</span>
-          </Spin>
-        )}
-        {conversationHistory.isLoading && (
-          <Spin fullscreen={true} size={'large'}>
-            <span>Fetching conversation history...</span>
-          </Spin>
+        {(isLoading || conversationHistory.isLoading) && (
+          <Spin fullscreen={true} size={'large'} />
         )}
         <StyledMessagesContainer
           $isLoading={conversationHistory.isLoading}
@@ -325,6 +323,7 @@ export const MessagesContainer = React.memo<MessagesContainerProps>(
             followOutput={'smooth'}
             atBottomThreshold={100}
             atBottomStateChange={handleAtBottomStateChange}
+            style={{ overflowY: 'scroll' }}
           />
         </StyledMessagesContainer>
       </>
