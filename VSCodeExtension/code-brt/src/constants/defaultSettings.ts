@@ -91,15 +91,19 @@ export const DEFAULT_LOCAL_SETTINGS: ExtensionSettingsLocal = {
     'gemini-1.5-pro-latest',
     'gemini-1.5-flash-latest',
   ],
+  codeFixerCohereAvailableModels: ['command', 'command-r', 'command-r-plus'],
+  codeFixerGroqAvailableModels: [
+    'llama3-70b-8192',
+    'llama3-8b-8192',
+    'mixtral-8x7b-32768',
+    'gemma-7b-it',
+    'gemma2-9b-it',
+  ],
   codeFixerLastSelectedModel: {
     gemini: 'gemini-1.5-pro-latest',
-    anthropic: 'claude-3-5-sonnet-20240620',
     openai: 'gpt-4',
     cohere: 'command',
     groq: 'llama3-70b-8192',
-    huggingFace: 'HuggingFaceH4/zephyr-7b-beta',
-    ollama: 'Auto Detect',
-    custom: '',
   },
 };
 export const DEFAULT_WORKSPACE_SETTINGS: ExtensionSettingsWorkspace = {

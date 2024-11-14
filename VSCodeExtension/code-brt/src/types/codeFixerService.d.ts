@@ -1,13 +1,4 @@
 /*
- * Represents the status of each code fixer operation.
- */
-export type CodeFixerStatuses = {
-  [key: string]: {
-    status: 'waitForResponse' | 'receivedResponse' | 'error';
-  };
-};
-
-/*
  * Options for getting a response from the CodeFixerService.
  * @property userQuery - The query string to process.
  * @property originalCode - The original code to process.
@@ -18,7 +9,6 @@ export type GetResponseCodeFixerOptions = {
   userQuery: string;
   originalCode: string;
   generatedCode: string;
-  sendCodeFixerStatus?: (codeFixerStatuses: CodeFixerStatuses) => void;
 };
 
 /*
@@ -44,25 +34,18 @@ export type CodeFixerResponse = {
  * Service for code fixer operations.
  */
 export interface CodeFixerService {
-  /**
-   * Gets the response from the code fixer based on the provided options.
-   * @param options The options to use for getting the code fixer response.
-   * @returns A promise that resolves to a CodeFixerResponse containing the modifications.
-   */
-  getResponse(options: GetResponseCodeFixerOptions): Promise<CodeFixerResponse>;
-
-  /**
-   * Updates the status of the code fixer operation.
-   * @param key The identifier for the operation.
-   * @param status The status to update.
-   */
-  updateStatus(key: string, status: 'waitForResponse' | 'receivedResponse' | 'error'): void;
 
   /**
    * Updates the available models for the code fixer.
    * @param newAvailableModels An array of available model names to update.
    */
   updateAvailableModels(newAvailableModels: string[]): void;
+
+  /**
+   * Gets the latest available model names.
+   * @returns A promise that resolves to an array of model names.
+   */
+  getLatestAvailableModelNames(): Promise<string[]>;
 
   /**
    * Switch to a different model
@@ -75,9 +58,11 @@ export interface CodeFixerService {
    */
   stopResponse(): Promise<void>;
 
+
   /**
-   * Gets the latest available model names.
-   * @returns A promise that resolves to an array of model names.
+   * Gets the response from the code fixer based on the provided options.
+   * @param options The options to use for getting the code fixer response.
+   * @returns A promise that resolves to a CodeFixerResponse containing the modifications.
    */
-  getLatestAvailableModelNames(): Promise<string[]>;
+  getResponse(options: GetResponseCodeFixerOptions): Promise<CodeFixerResponse>;
 }

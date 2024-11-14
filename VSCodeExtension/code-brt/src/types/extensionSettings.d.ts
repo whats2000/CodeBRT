@@ -172,6 +172,8 @@ export type ToolServiceSettings = {
 export type CodeFixerSettings = {
   codeFixerOpenaiAvailableModels: string[];
   codeFixerGeminiAvailableModels: string[];
+  codeFixerCohereAvailableModels: string[];
+  codeFixerGroqAvailableModels: string[];
   codeFixerLastSelectedModel: {
     [keyof in CodeFixerModelServiceType]: string;
   };

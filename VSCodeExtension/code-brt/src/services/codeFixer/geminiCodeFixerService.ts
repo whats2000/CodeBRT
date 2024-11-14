@@ -4,7 +4,7 @@ import { ChatPromptTemplate } from '@langchain/core/prompts';
 import { ChatGoogleGenerativeAI } from '@langchain/google-genai';
 import type { GetResponseCodeFixerOptions } from '../../types';
 import { MODEL_SERVICE_CONSTANTS } from '../../constants';
-import { AbstractCodeFixerService } from './abstractCodeFixerService';
+import { AbstractCodeFixerService } from './base/abstractCodeFixerService';
 import { SettingsManager } from '../../api';
 import { CodeFixerModification, CodeFixerResponse } from '../../types';
 
@@ -38,13 +38,7 @@ export class GeminiCodeFixerService extends AbstractCodeFixerService {
       'codeFixerLastSelectedModel',
     ).gemini;
 
-    super(
-      'gemini',
-      context,
-      settingsManager,
-      defaultModelName,
-      availableModelNames,
-    );
+    super('gemini', context, settingsManager, defaultModelName, availableModelNames);
   }
 
   public async getLatestAvailableModelNames(): Promise<string[]> {
@@ -107,12 +101,6 @@ export class GeminiCodeFixerService extends AbstractCodeFixerService {
       };
     }
 
-    // // Initialize the status to 'waitForResponse'
-    // if (options.sendCodeFixerStatus) {
-    //   this.updateStatus('codeFixer', 'waitForResponse');
-    //   options.sendCodeFixerStatus(this.statuses);
-    // }
-
     const generativeModel = new ChatGoogleGenerativeAI({
       apiKey: this.settingsManager.get('geminiApiKey'),
       model: this.currentModel,
@@ -125,7 +113,7 @@ export class GeminiCodeFixerService extends AbstractCodeFixerService {
     const partialedPrompt = await promptTemplate.partial({
       format_instructions: this.formatInstructions,
     });
-    // 组合模型和解析器链
+    // 组合模型和解析器鏈
     const chain = partialedPrompt.pipe(generativeModel).pipe(parser);
 
     try {
@@ -134,11 +122,7 @@ export class GeminiCodeFixerService extends AbstractCodeFixerService {
         originalCode: options.originalCode,
         generatedCode: options.generatedCode,
       });
-      // // Update the status to 'receivedResponse'.
-      // if (options.sendCodeFixerStatus) {
-      //   this.updateStatus('codeFixer', 'receivedResponse');
-      //   options.sendCodeFixerStatus(this.statuses);
-      // }
+
       return {
         modifications: response,
         success: true,
