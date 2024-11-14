@@ -433,7 +433,10 @@ export class OllamaService extends AbstractLanguageModelService {
     } catch (error) {
       vscode.window
         .showErrorMessage(
-          'Failed to get response from Ollama Service: ' + error,
+          'Failed to get response from Ollama Service with model ' +
+            model +
+            ': ' +
+            error,
           'Copy Run Command',
           'Upgrade Ollama',
         )

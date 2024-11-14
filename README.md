@@ -101,7 +101,7 @@ Here’s an outline of the upcoming features and improvements for CodeBRT:
 - [ ] Manual code completion with hotkeys
     - [x] Trigger code completion
     - [ ] Context retrieval
-- [ ] Auto code completion
+- [x] Auto code completion
 - [ ] Code integrator to compose code snippets
 
 ### Version 0.4 (WIP)

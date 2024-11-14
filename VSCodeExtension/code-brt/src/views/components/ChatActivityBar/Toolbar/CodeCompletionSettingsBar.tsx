@@ -302,47 +302,70 @@ export const CodeCompletionSettingsBar: React.FC<
           key={'lastUsedAutoCodeCompletionModelService'}
           label={'Model Service for Auto Code Completion'}
         >
-          <Select
-            showSearch
-            value={settings.lastUsedAutoCodeCompletionModelService}
-            onChange={handleSelectChange(
-              'lastUsedAutoCodeCompletionModelService',
-            )}
-            style={{
-              width: '100%',
-            }}
-            loading={isLoading || isAvailableModelLoading}
-            options={modelServiceOptions}
-          />
+          <Tooltip title={'Currently only support ollama'}>
+            <Select
+              showSearch
+              value={settings.lastUsedAutoCodeCompletionModelService}
+              onChange={handleSelectChange(
+                'lastUsedAutoCodeCompletionModelService',
+              )}
+              style={{
+                width: '100%',
+              }}
+              loading={isLoading || isAvailableModelLoading}
+              options={[
+                {
+                  key: 'ollama',
+                  label: 'ollama',
+                  value: 'ollama',
+                },
+              ]}
+              // options={modelServiceOptions}
+            />
+          </Tooltip>
         </FormGroup>
         <FormGroup
           key={'lastSelectedAutoCodeCompletionModel'}
           label={'Model for Auto Code Completion'}
         >
-          <Select
-            showSearch
-            value={
-              settings.lastSelectedAutoCodeCompletionModel[
-                settings.lastUsedAutoCodeCompletionModelService
-              ]
+          <Tooltip
+            title={
+              <Typography.Text>
+                We currently support the model which are in{' '}
+                <Typography.Text type={'warning'}>
+                  Stable Code, Qwen2.5-Coder, Codestral, CodeLlama,
+                  DeepSeek-Coder, StarCoder
+                </Typography.Text>
+                fill hole model template. Please help us to add more model in
+                GitHub if you interested.
+              </Typography.Text>
             }
-            onChange={(value) =>
-              handleModelSelectChange(
-                'lastSelectedAutoCodeCompletionModel',
-                settings.lastUsedAutoCodeCompletionModelService,
-                value,
-              )
-            }
-            style={{
-              width: '100%',
-            }}
-            loading={isLoading || isAvailableModelLoading}
-            options={availableAutoCodeCompletionModels.map((model) => ({
-              key: model,
-              label: model,
-              value: model,
-            }))}
-          />
+          >
+            <Select
+              showSearch
+              value={
+                settings.lastSelectedAutoCodeCompletionModel[
+                  settings.lastUsedAutoCodeCompletionModelService
+                ]
+              }
+              onChange={(value) =>
+                handleModelSelectChange(
+                  'lastSelectedAutoCodeCompletionModel',
+                  settings.lastUsedAutoCodeCompletionModelService,
+                  value,
+                )
+              }
+              style={{
+                width: '100%',
+              }}
+              loading={isLoading || isAvailableModelLoading}
+              options={availableAutoCodeCompletionModels.map((model) => ({
+                key: model,
+                label: model,
+                value: model,
+              }))}
+            />
+          </Tooltip>
         </FormGroup>
         {showMoreInfo === 'autoTriggerCodeCompletion' && (
           <Alert
