@@ -62,6 +62,7 @@ export class OllamaService extends AbstractLanguageModelService {
         top_k: advanceSettings.topK,
         presence_penalty: advanceSettings.presencePenalty,
         frequency_penalty: advanceSettings.frequencyPenalty,
+        stop: advanceSettings.stop,
       },
     };
   }

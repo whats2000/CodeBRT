@@ -53,6 +53,7 @@ export abstract class AbstractOpenaiLikeService extends AbstractLanguageModelSer
         top_p: advanceSettings.topP,
         presence_penalty: advanceSettings.presencePenalty,
         frequency_penalty: advanceSettings.frequencyPenalty,
+        stop: advanceSettings.stop,
       },
     };
   }

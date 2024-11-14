@@ -1,3 +1,5 @@
+import { CompletionTemplate } from '../types';
+
 /**
  * The follow code is modified from the original source code.
  * https://github.com/continuedev/continue/blob/main/core/autocomplete/templates.ts
@@ -114,143 +116,82 @@ export const MAIN_PROMPT_TEMPLATE = `<LANGUAGE>{codeLanguage}</LANGUAGE>
 TASK: Fill the {{FILL_HERE}} hole. Answer only with the CORRECT completion inside the <COMPLETION> tag. Do NOT include any explanations, markdown formatting, or extra content. Do it now.
 <COMPLETION>`;
 
-// ==================== 新增 Ollama 模型模板 ====================
-
-export interface CompletionOptions {
-  maxTokens?: number;
-  temperature?: number;
-  topP?: number;
-  topK?: number;
-  presencePenalty?: number;
-  frequencyPenalty?: number;
-  stop?: string | string[];
-}
-
-export interface CompletionTemplate {
-  template:
-    | string
-    | ((
-        prefix: string,
-        suffix: string,
-        filepath: string,
-        language: string,
-      ) => string);
-  completionOptions?: Partial<CompletionOptions>;
-}
-
-// StableCode FIM 模板（默认）
-const stableCodeFimTemplate: CompletionTemplate = {
-  template: '<fim_prefix>{{{prefix}}}<fim_suffix>{{{suffix}}}<fim_middle>',
-  completionOptions: {
-    stop: [
-      '<fim_prefix>',
-      '<fim_suffix>',
-      '<fim_middle>',
-      '<file_sep>',
-      '<|endoftext|>',
-      '</fim_middle>',
-      '</code>',
-    ],
+// ==================== Add Ollama Model Template ====================
+export const HOLE_FILLER_TEMPLATE: {
+  [key: string]: CompletionTemplate;
+} = {
+  // StableCode FIM Template (Default)
+  stableCodeFimTemplate: {
+    template: '<fim_prefix>{{{prefix}}}<fim_suffix>{{{suffix}}}<fim_middle>',
+    completionOptions: {
+      stop: [
+        '<fim_prefix>',
+        '<fim_suffix>',
+        '<fim_middle>',
+        '<file_sep>',
+        '<|endoftext|>',
+        '</fim_middle>',
+        '</code>',
+      ],
+    },
+  },
+  // Qwen2.5-Coder Template
+  qwenCoderFimTemplate: {
+    template:
+      '<|fim_prefix|>{{{prefix}}}<|fim_suffix|>{{{suffix}}}<|fim_middle|>',
+    completionOptions: {
+      stop: [
+        '<|endoftext|>',
+        '<|fim_prefix|>',
+        '<|fim_middle|>',
+        '<|fim_suffix|>',
+        '<|fim_pad|>',
+        '<|repo_name|>',
+        '<|file_sep|>',
+        '<|im_start|>',
+        '<|im_end|>',
+      ],
+    },
+  },
+  // Codestral Template
+  codestralFimTemplate: {
+    template: '[SUFFIX]{{{suffix}}}[PREFIX]{{{prefix}}}',
+    completionOptions: {
+      stop: ['[PREFIX]', '[SUFFIX]'],
+    },
+  },
+  // CodeLlama Template
+  codeLlamaFimTemplate: {
+    template: '<PRE> {{{prefix}}} <SUF>{{{suffix}}} <MID>',
+    completionOptions: {
+      stop: ['<PRE>', '<SUF>', '<MID>', '<EOT>'],
+    },
+  },
+  // DeepSeek-Coder Template
+  deepseekFimTemplate: {
+    template:
+      '<｜fim▁begin｜>{{{prefix}}}<｜fim▁hole｜>{{{suffix}}}<｜fim▁end｜>',
+    completionOptions: {
+      stop: [
+        '<｜fim▁begin｜>',
+        '<｜fim▁hole｜>',
+        '<｜fim▁end｜>',
+        '//',
+        '<｜end▁of▁sentence｜>',
+      ],
+    },
+  },
+  // StarCoder Template
+  starCoderFimTemplate: {
+    template: '<fim_prefix>{{{prefix}}}<fim_suffix>{{{suffix}}}<fim_middle>',
+    completionOptions: {
+      stop: [
+        '<fim_prefix>',
+        '<fim_suffix>',
+        '<fim_middle>',
+        '<file_sep>',
+        '<|endoftext|>',
+      ],
+    },
   },
 };
-
-// Qwen2.5-Coder 模板
-const qwenCoderFimTemplate: CompletionTemplate = {
-  template:
-    '<|fim_prefix|>{{{prefix}}}<|fim_suffix|>{{{suffix}}}<|fim_middle|>',
-  completionOptions: {
-    stop: [
-      '<|endoftext|>',
-      '<|fim_prefix|>',
-      '<|fim_middle|>',
-      '<|fim_suffix|>',
-      '<|fim_pad|>',
-      '<|repo_name|>',
-      '<|file_sep|>',
-      '<|im_start|>',
-      '<|im_end|>',
-    ],
-  },
-};
-
-// Codestral 模板
-const codestralFimTemplate: CompletionTemplate = {
-  template: '[SUFFIX]{{{suffix}}}[PREFIX]{{{prefix}}}',
-  completionOptions: {
-    stop: ['[PREFIX]', '[SUFFIX]'],
-  },
-};
-
-// CodeLlama 模板
-const codeLlamaFimTemplate: CompletionTemplate = {
-  template: '<PRE> {{{prefix}}} <SUF>{{{suffix}}} <MID>',
-  completionOptions: {
-    stop: ['<PRE>', '<SUF>', '<MID>', '<EOT>'],
-  },
-};
-
-// DeepSeek-Coder 模板
-const deepseekFimTemplate: CompletionTemplate = {
-  template:
-    '<｜fim▁begin｜>{{{prefix}}}<｜fim▁hole｜>{{{suffix}}}<｜fim▁end｜>',
-  completionOptions: {
-    stop: [
-      '<｜fim▁begin｜>',
-      '<｜fim▁hole｜>',
-      '<｜fim▁end｜>',
-      '//',
-      '<｜end▁of▁sentence｜>',
-    ],
-  },
-};
-
-const starCoderFimTemplate: CompletionTemplate = {
-  template: '<fim_prefix>{{{prefix}}}<fim_suffix>{{{suffix}}}<fim_middle>',
-  completionOptions: {
-    stop: [
-      '<fim_prefix>',
-      '<fim_suffix>',
-      '<fim_middle>',
-      '<file_sep>',
-      '<|endoftext|>',
-    ],
-  },
-};
-
-export const modelTemplates: { [modelName: string]: CompletionTemplate } = {
-  'deepseek-coder-v2': deepseekFimTemplate,
-  codellama: codeLlamaFimTemplate,
-  'deepseek-coder': deepseekFimTemplate,
-  'qwen2.5-coder': qwenCoderFimTemplate,
-  starcoder: starCoderFimTemplate,
-  codestral: codestralFimTemplate,
-};
-
-export function getTemplateForModel(modelName: string): CompletionTemplate {
-  const lowerCaseModel = modelName.toLowerCase();
-
-  if (lowerCaseModel.includes('qwen') && lowerCaseModel.includes('coder')) {
-    return qwenCoderFimTemplate;
-  }
-
-  if (
-    lowerCaseModel.includes('starcoder') ||
-    lowerCaseModel.includes('star-coder')
-  ) {
-    return starCoderFimTemplate;
-  }
-
-  if (lowerCaseModel.includes('codestral')) {
-    return codestralFimTemplate;
-  }
-
-  if (lowerCaseModel.includes('codellama')) {
-    return codeLlamaFimTemplate;
-  }
-
-  if (lowerCaseModel.includes('deepseek')) {
-    return deepseekFimTemplate;
-  }
-
-  return stableCodeFimTemplate;
-}

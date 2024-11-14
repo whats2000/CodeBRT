@@ -28,6 +28,7 @@ const DEFAULT_ADVANCE_SETTINGS: ConversationModelAdvanceSettings = {
   topK: undefined,
   presencePenalty: undefined,
   frequencyPenalty: undefined,
+  stop: undefined,
 };
 
 export type ModelAdvanceSettingsProps = {

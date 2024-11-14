@@ -1,6 +1,5 @@
-// autoCodeCompletionProvider.ts
-
 import * as vscode from 'vscode';
+
 import { AbstractCompletionProvider } from '../base';
 import { SettingsManager } from '../../../api';
 import { AutoCodeCompletionStrategy } from '../strategies';

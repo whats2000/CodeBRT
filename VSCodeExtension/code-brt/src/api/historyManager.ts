@@ -91,6 +91,7 @@ export class HistoryManager implements IHistoryManager {
         topK: undefined,
         presencePenalty: undefined,
         frequencyPenalty: undefined,
+        stop: undefined,
       },
       entries: {},
     };

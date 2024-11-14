@@ -73,6 +73,7 @@ export class CohereService extends AbstractLanguageModelService {
         frequencyPenalty: advanceSettings.frequencyPenalty
           ? (advanceSettings.frequencyPenalty + 2) / 4
           : undefined,
+        stopSequences: advanceSettings.stop,
       },
     };
   }

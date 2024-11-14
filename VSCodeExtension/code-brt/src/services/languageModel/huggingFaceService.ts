@@ -64,6 +64,7 @@ export class HuggingFaceService extends AbstractLanguageModelService {
         top_p: advanceSettings.topP,
         presence_penalty: advanceSettings.presencePenalty,
         frequency_penalty: advanceSettings.frequencyPenalty,
+        stop: advanceSettings.stop,
       },
     };
   }

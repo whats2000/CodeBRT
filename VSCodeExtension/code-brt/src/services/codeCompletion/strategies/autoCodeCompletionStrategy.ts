@@ -1,15 +1,16 @@
-// autoCodeCompletionStrategy.ts
-
 import * as vscode from 'vscode';
-import type { LoadedModelServices, ModelServiceType } from '../../../types';
-import { CompletionStrategy } from './index';
-import { getTemplateForModel } from '../constants/templates';
+
+import type {
+  CodeLanguageId,
+  CompletionStrategy,
+  CompletionTemplate,
+  LoadedModelServices,
+  ModelServiceType,
+} from '../../../types';
+import { FILE_TO_LANGUAGE, LANGUAGE_NAME_MAPPING } from '../constants';
 import { SettingsManager, HistoryManager } from '../../../api';
 import { StatusBarManager } from '../ui/statusBarManager';
-import { postProcessCompletion } from '../utils';
-import { CodeLanguageId } from '../types/CodeLanguageId';
-import { FILE_TO_LANGUAGE, LANGUAGE_NAME_MAPPING } from '../constants';
-import { GetResponseOptionsWithCompletion } from '../../../../src/types';
+import { getTemplateForModel, postProcessCompletion } from '../utils';
 
 export class AutoCodeCompletionStrategy implements CompletionStrategy {
   private readonly settingsManager: SettingsManager;
@@ -57,22 +58,15 @@ export class AutoCodeCompletionStrategy implements CompletionStrategy {
     prompt: string,
     modelService: ModelServiceType,
     modelName: string,
-    completionOptions?: Partial<{
-      maxTokens?: number;
-      temperature?: number;
-      topP?: number;
-      topK?: number;
-      presencePenalty?: number;
-      frequencyPenalty?: number;
-      stop?: string | string[]; 
-    }>,
+    template: CompletionTemplate,
   ): Promise<string> {
     const history = this.historyManager.getCurrentHistory();
     await this.historyManager.updateHistoryModelAdvanceSettings(history.root, {
       ...history.advanceSettings,
       systemPrompt: '',
-      temperature: completionOptions?.temperature || 0.7,
-      maxTokens: completionOptions?.maxTokens || 150,
+      temperature: template.completionOptions?.temperature || 0.7,
+      maxTokens: template.completionOptions?.maxTokens || 150,
+      stop: template.completionOptions?.stop || undefined,
     });
 
     const response = await this.loadedModelServices[
@@ -82,10 +76,9 @@ export class AutoCodeCompletionStrategy implements CompletionStrategy {
       historyManager: this.historyManager,
       selectedModelName: modelName,
       disableTools: true,
-      completionOptions: completionOptions, 
-    } as GetResponseOptionsWithCompletion);
+    });
 
-    return this.cleanCompletionResponse(response);
+    return this.cleanCompletionResponse(response.textResponse);
   }
 
   public async provideCompletion(
@@ -158,15 +151,11 @@ export class AutoCodeCompletionStrategy implements CompletionStrategy {
         return null;
       }
 
-      const completionOptions = {
-        ...template.completionOptions,
-      };
-
       const rawResponse = await this.getResponse(
         prompt,
         modelService,
         modelName,
-        completionOptions,
+        template,
       );
 
       const postProcessedResult = postProcessCompletion(
