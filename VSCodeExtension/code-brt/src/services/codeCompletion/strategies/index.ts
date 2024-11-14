@@ -9,3 +9,4 @@ export interface CompletionStrategy {
 }
 
 export * from './manuallyCodeCompletionStrategy';
+export * from './autoCodeCompletionStrategy';

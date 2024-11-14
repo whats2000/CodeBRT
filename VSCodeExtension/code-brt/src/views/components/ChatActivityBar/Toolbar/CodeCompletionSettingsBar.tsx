@@ -276,10 +276,9 @@ export const CodeCompletionSettingsBar: React.FC<
           <Checkbox
             checked={settings.autoTriggerCodeCompletion}
             onChange={handleCheckboxChange('autoTriggerCodeCompletion')}
-            disabled={true}
           >
             <Typography.Text type='secondary'>
-              Enable Auto Trigger Code Completion (Soon)
+              Enable Auto Trigger Code Completion
             </Typography.Text>
           </Checkbox>
         </FormGroup>

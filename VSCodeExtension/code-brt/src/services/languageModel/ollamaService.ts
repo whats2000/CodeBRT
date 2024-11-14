@@ -6,7 +6,7 @@ import { Ollama } from 'ollama';
 
 import type {
   ConversationEntry,
-  GetResponseOptions,
+  GetResponseOptionsWithCompletion,
   ToolServiceType,
 } from '../../types';
 import { MODEL_SERVICE_CONSTANTS, toolsSchema } from '../../constants';
@@ -35,32 +35,38 @@ export class OllamaService extends AbstractLanguageModelService {
     );
   }
 
-  private getAdvanceSettings(historyManager: HistoryManager): {
+  private getAdvanceSettings(
+    historyManager: HistoryManager,
+    completionOptions?: GetResponseOptionsWithCompletion['completionOptions'], // 新增
+  ): {
     systemPrompt: string | undefined;
     generationConfig: Partial<Options>;
   } {
     const advanceSettings = historyManager.getCurrentHistory().advanceSettings;
 
-    if (!advanceSettings) {
-      return {
-        systemPrompt: undefined,
-        generationConfig: {},
+    let generationConfig: Partial<Options> = {};
+
+    if (completionOptions) {
+      const { stop, ...otherOptions } = completionOptions;
+
+      generationConfig = {
+        ...generationConfig,
+        ...otherOptions,
       };
+
+      if (stop !== undefined) {
+        generationConfig.stop = Array.isArray(stop) ? stop : [stop];
+      }
     }
 
+    const systemPrompt =
+      advanceSettings?.systemPrompt && advanceSettings.systemPrompt.length > 0
+        ? advanceSettings.systemPrompt
+        : undefined;
+
     return {
-      systemPrompt:
-        advanceSettings.systemPrompt.length > 0
-          ? advanceSettings.systemPrompt
-          : undefined,
-      generationConfig: {
-        num_ctx: advanceSettings.maxTokens,
-        temperature: advanceSettings.temperature,
-        top_p: advanceSettings.topP,
-        top_k: advanceSettings.topK,
-        presence_penalty: advanceSettings.presencePenalty,
-        frequency_penalty: advanceSettings.frequencyPenalty,
-      },
+      systemPrompt,
+      generationConfig,
     };
   }
 
@@ -290,7 +296,9 @@ export class OllamaService extends AbstractLanguageModelService {
     return newAvailableModelNames;
   }
 
-  public async getResponse(options: GetResponseOptions): Promise<string> {
+  public async getResponse(
+    options: GetResponseOptionsWithCompletion,
+  ): Promise<string> {
     if (this.currentModel === '') {
       vscode.window.showErrorMessage(
         'Make sure the model is selected before sending a message. Open the model selection dropdown and configure the model.',
@@ -307,6 +315,7 @@ export class OllamaService extends AbstractLanguageModelService {
       updateStatus,
       selectedModelName,
       disableTools,
+      completionOptions, // 新增
     } = options;
     const { client, conversationHistory, model } = await this.initModel(
       query,
@@ -323,8 +332,10 @@ export class OllamaService extends AbstractLanguageModelService {
     let functionCallCount = 0;
     const MAX_FUNCTION_CALLS = 5;
 
-    const { systemPrompt, generationConfig } =
-      this.getAdvanceSettings(historyManager);
+    const { systemPrompt, generationConfig } = this.getAdvanceSettings(
+      historyManager,
+      completionOptions,
+    );
 
     if (systemPrompt) {
       conversationHistory.unshift({

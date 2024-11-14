@@ -26,6 +26,18 @@ type GetResponseOptions = {
   disableTools?: boolean;
 };
 
+export interface GetResponseOptionsWithCompletion extends GetResponseOptions {
+  completionOptions?: Partial<{
+    maxTokens?: number;
+    temperature?: number;
+    topP?: number;
+    topK?: number;
+    presencePenalty?: number;
+    frequencyPenalty?: number;
+    stop?: string | string[];
+  }>;
+}
+
 export type LanguageModelService = {
   /**
    * Update the available models
