@@ -67,7 +67,7 @@ export const ModelAdvanceSettingFormItem: React.FC<
         <Row gutter={8} align={'middle'}>
           <Col flex={'auto'}>
             <Input.TextArea
-              value={(value as string[]).join('\n') || ''}
+              value={(value as string[] | undefined)?.join('\n') || ''}
               onChange={(e) =>
                 handleInputChange(settingName, e.target.value.split('\n'))
               }
