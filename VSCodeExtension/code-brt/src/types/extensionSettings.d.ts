@@ -92,6 +92,7 @@ export type CustomModelSettings = {
  * @property apiKey - The API key for the specific provider
  */
 export type OpenRouterModelSettings = {
+  uuid: string;
   id: string;
   name: string;
   apiKey: string;

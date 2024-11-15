@@ -242,7 +242,7 @@ export const Toolbar: React.FC<ToolbarProps> = ({ setTheme }) => {
               value={activeModelService}
               onChange={handleModelServiceChange}
               style={{
-                width: innerWidth >= 550 ? 125 : innerWidth >= 320 ? 200 : 125,
+                width: innerWidth >= 550 ? 125 : innerWidth >= 320 ? 200 : 150,
               }}
               loading={isLoading}
               options={modelServiceOptions}
@@ -255,8 +255,8 @@ export const Toolbar: React.FC<ToolbarProps> = ({ setTheme }) => {
               onChange={handleModelChange}
               style={{
                 width:
-                  innerWidth >= 550 ? '100%' : innerWidth >= 320 ? 200 : 125,
-                minWidth: 100,
+                  innerWidth >= 550 ? '100%' : innerWidth >= 320 ? 200 : 150,
+                minWidth: 150,
               }}
               loading={isLoading}
               options={modelOptions}

@@ -1,5 +1,6 @@
 import * as vscode from 'vscode';
 import OpenAI from 'openai';
+import axios from 'axios';
 
 import type {
   ChatCompletionCreateParamsBaseOpenaiLike,
@@ -11,6 +12,31 @@ import type {
 import type { OpenRouterModelSettings } from '../../types';
 import { AbstractOpenaiLikeService } from './base';
 import { SettingsManager } from '../../api';
+
+type OpenRouterModelSetting = {
+  id: string;
+  name: string;
+  created: number;
+  description: string;
+  context_length: number;
+  architecture: {
+    modality: string;
+    tokenizer: string;
+    instruct_type: string | null;
+  };
+  pricing: {
+    prompt: string;
+    completion: string;
+    image: string;
+    request: string;
+  };
+  top_provider: {
+    context_length: number | null;
+    max_completion_tokens: number | null;
+    is_moderated: boolean | null;
+  };
+  per_request_limits: number | null;
+};
 
 export class OpenRouterService extends AbstractOpenaiLikeService {
   constructor(
@@ -91,19 +117,52 @@ export class OpenRouterService extends AbstractOpenaiLikeService {
   }
 
   public async getLatestAvailableModelNames(): Promise<string[]> {
-    try {
-      const response = await fetch('https://openrouter.ai/api/v1/models');
-      const models = await response.json();
+    const requestUrl = `https://openrouter.ai/api/v1/models`;
 
-      return models.data
-        .map((model: any) => model.name)
+    let newAvailableModelNames: string[] = [...this.availableModelNames];
+
+    try {
+      const response = await axios.get(requestUrl).catch(console.error);
+
+      if (!response || response.status !== 200) {
+        vscode.window.showErrorMessage(
+          'Failed to fetch available models from OpenRouter',
+        );
+        return this.availableModelNames;
+      }
+
+      const latestModelsInfo: OpenRouterModelSetting[] | undefined =
+        response.data.data;
+
+      if (!latestModelsInfo) {
+        vscode.window.showErrorMessage(
+          'Failed to fetch available models from OpenRouter',
+        );
+        return this.availableModelNames;
+      }
+
+      const latestModels = latestModelsInfo
+        .map((model: OpenRouterModelSetting) => model.name)
         .filter((name: string) => name.length > 0);
+
+      // Filter the invalid models from the available models
+      newAvailableModelNames = newAvailableModelNames.filter((name) =>
+        latestModels.some((model) => model === name),
+      );
+
+      // Append the models to the available models if they aren't already there
+      latestModels.forEach((model) => {
+        if (newAvailableModelNames.includes(model)) return;
+
+        newAvailableModelNames.push(model);
+      });
     } catch (error) {
       vscode.window.showErrorMessage(
         'Failed to fetch available models: ' + error,
       );
-      return this.availableModelNames;
     }
+
+    return newAvailableModelNames;
   }
 
   public async getResponse(

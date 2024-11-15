@@ -60,6 +60,13 @@ export const createLanguageModelServiceApi = (
         );
       });
     },
+    setOpenRouterModels: (newOpenRouterModels) => {
+      settingsManager.set('openRouterModels', newOpenRouterModels).then(() => {
+        models.openRouter.service.updateAvailableModels(
+          newOpenRouterModels.map((model) => model.name),
+        );
+      });
+    },
     switchModel: (modelServiceType, modelName) => {
       models[modelServiceType].service.switchModel(modelName);
     },

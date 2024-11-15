@@ -13,15 +13,7 @@ import {
 } from 'antd';
 import { DeleteOutlined, HolderOutlined } from '@ant-design/icons';
 
-type CustomModelSettings = {
-  name: string;
-  apiUrl: string;
-  apiMethod: string;
-  apiTextParam: string;
-  apiImageParam: string;
-  apiQueryParam: string;
-  includeQueryInHistory: boolean;
-};
+import type { CustomModelSettings } from '../../../../../../types';
 
 type CustomModelSortableItemProps = {
   id: string;

@@ -2,12 +2,16 @@ import React, { useEffect, useState } from 'react';
 import { Drawer } from 'antd';
 import { useDispatch, useSelector } from 'react-redux';
 
-import type { CustomModelSettings } from '../../../../types';
+import type {
+  CustomModelSettings,
+  OpenRouterModelSettings,
+} from '../../../../types';
 import type { AppDispatch, RootState } from '../../../redux';
 import { ModelForm } from './EditModelListBar/ModelForm';
 import { CustomModelForm } from './EditModelListBar/CustomModelForm';
 import { updateAvailableModels } from '../../../redux/slices/modelServiceSlice';
 import { updateAndSaveSetting } from '../../../redux/slices/settingsSlice';
+import { OpenRouterModelForm } from './EditModelListBar/OpenRouterModelForm';
 
 type EditModelListBarProps = {
   isOpen: boolean;
@@ -19,6 +23,9 @@ export const EditModelListBar: React.FC<EditModelListBarProps> = ({
   onClose,
 }) => {
   const [customModels, setCustomModels] = useState<CustomModelSettings[]>([]);
+  const [openRouterModels, setOpenRouterModels] = useState<
+    OpenRouterModelSettings[]
+  >([]);
   const [availableModels, setAvailableModels] = useState<string[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -35,10 +42,12 @@ export const EditModelListBar: React.FC<EditModelListBarProps> = ({
     if (activeModelService === 'loading...') return;
 
     if (isOpen) {
-      if (activeModelService !== 'custom') {
-        setAvailableModels(settings[`${activeModelService}AvailableModels`]);
-      } else {
+      if (activeModelService === 'custom') {
         setCustomModels(settings.customModels);
+      } else if (activeModelService === 'openRouter') {
+        setOpenRouterModels(settings.openRouterModels);
+      } else {
+        setAvailableModels(settings[`${activeModelService}AvailableModels`]);
       }
       setIsLoading(false);
     }
@@ -59,6 +68,16 @@ export const EditModelListBar: React.FC<EditModelListBarProps> = ({
         updateAndSaveSetting({
           key: 'customModels',
           value: customModels,
+        }),
+      );
+      return;
+    }
+
+    if (activeModelService === 'openRouter') {
+      dispatch(
+        updateAndSaveSetting({
+          key: 'openRouterModels',
+          value: openRouterModels,
         }),
       );
       return;
@@ -90,7 +109,13 @@ export const EditModelListBar: React.FC<EditModelListBarProps> = ({
           handleEditModelListSave={handleEditModelListSave}
         />
       ) : activeModelService === 'openRouter' ? (
-        <></>
+        <OpenRouterModelForm
+          isOpen={isOpen}
+          isLoading={isLoading}
+          openRouterModels={openRouterModels}
+          setOpenRouterModels={setOpenRouterModels}
+          handleEditModelListSave={handleEditModelListSave}
+        />
       ) : (
         <ModelForm
           isOpen={isOpen}

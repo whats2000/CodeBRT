@@ -14,7 +14,7 @@ import { GroqService } from './groqService';
 import { HuggingFaceService } from './huggingFaceService';
 import { OllamaService } from './ollamaService';
 import { CustomApiService } from './customApiService';
-import { OpenRouterService } from './openrouterService';
+import { OpenRouterService } from './openRouterService';
 
 export class ModelServiceFactory {
   constructor(
