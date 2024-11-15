@@ -4,7 +4,7 @@ export * from './conversationHistory';
 export * from './extensionSettings';
 export * from './historyManager';
 export * from './settingsManager';
-export * from './viewApi';
+export * from '../api/viewApi/types';
 export * from '../services/codeCompletion/types';
 export * from '../services/languageModel/types';
 export * from '../services/tools/types';

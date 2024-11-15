@@ -30,6 +30,7 @@ dist-ssr
 MonitorProject/
 
 ExternalPlugIn/LocalLanguageModelServer/venv/*
+VSCodeExtension\code-brt\.vscode\settings.json
 uploads/*
 coverage/
 

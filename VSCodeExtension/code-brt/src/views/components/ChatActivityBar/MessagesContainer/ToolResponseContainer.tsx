@@ -78,7 +78,7 @@ export const ToolResponseContainer: React.FC<ToolResponseContainerProps> = ({
       return (
         <Typography.Paragraph
           ellipsis={{
-            rows: 2,
+            rows: 5,
             expandable: 'collapsible',
           }}
           style={{ whiteSpace: 'pre-wrap' }}

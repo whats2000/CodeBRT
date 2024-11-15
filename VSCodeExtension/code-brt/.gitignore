@@ -2,3 +2,7 @@
 dist/**
 build/**
 node_modules/**
+.vscode/**
+!.vscode/extensions.json
+!.vscode/tasks.json
+!.vscode/launch.json
