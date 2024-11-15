@@ -1,24 +1,20 @@
 import * as vscode from 'vscode';
 
-import type { GetLanguageModelResponseParams, ViewApi } from './types';
 import {
   AVAILABLE_MODEL_SERVICES,
   AVAILABLE_VOICE_SERVICES,
 } from './constants';
-import { FileOperationsProvider } from './utils';
 import {
   connectedViews,
   HistoryManager,
   registerAndConnectView,
   registerInlineCompletion,
   SettingsManager,
-  triggerEvent,
 } from './api';
 import { ModelServiceFactory } from './services/languageModel';
 import { VoiceServiceFactory } from './services/voice';
-import { GptSoVitsApiService } from './services/voice/gptSoVitsService';
-import { ToolServiceProvider } from './services/tools';
 import { TerminalManager } from './integrations';
+import { createViewApi } from './api/viewApi/viewApiFactory';
 
 let extensionContext: vscode.ExtensionContext | undefined = undefined;
 
@@ -42,235 +38,15 @@ export const activate = async (ctx: vscode.ExtensionContext) => {
    * Register and connect views to the extension
    * This uses for communication messages channel
    */
-  const api: ViewApi = {
-    setSettingByKey: async (key, value) => {
-      await settingsManager.set(key, value);
-    },
-    getSettingByKey: (key) => {
-      return settingsManager.get(key);
-    },
-    getAllSettings: async () => {
-      return await settingsManager.getAllSettings();
-    },
-    alertMessage: async (msg, type, selections) => {
-      const showFunction = {
-        info: vscode.window.showInformationMessage,
-        warning: vscode.window.showWarningMessage,
-        error: vscode.window.showErrorMessage,
-      }[type];
-
-      const selectionOptions = selections?.map((selection) => selection.text);
-      if (selectionOptions) {
-        await showFunction(msg, ...selectionOptions).then((selection) => {
-          if (!selection) {
-            return;
-          }
-          const commandArgs = selections?.find(
-            (s) => s.text === selection,
-          )?.commandArgs;
-          if (!commandArgs || commandArgs.length === 0) {
-            return;
-          }
-          vscode.commands.executeCommand(
-            commandArgs[0],
-            ...commandArgs.slice(1),
-          );
-        });
-      }
-    },
-    getLanguageModelResponse: async (
-      options: GetLanguageModelResponseParams,
-    ) => {
-      return await models[options.modelServiceType].service.getResponse({
-        ...options,
-        historyManager,
-        sendStreamResponse: options.useStream
-          ? (msg) => {
-              triggerEvent('streamResponse', msg);
-            }
-          : undefined,
-        updateStatus: options.showStatus
-          ? (status) => {
-              triggerEvent('updateStatus', status);
-            }
-          : undefined,
-      });
-    },
-    stopLanguageModelResponse: (modelServiceType) => {
-      models[modelServiceType].service.stopResponse();
-    },
-    getCurrentHistory: () => {
-      return historyManager.getCurrentHistory();
-    },
-    addNewConversationHistory: async () => {
-      return await historyManager.addNewConversationHistory();
-    },
-    editLanguageModelConversationHistory: (entryID, newMessage) => {
-      historyManager.editConversationEntry(entryID, newMessage);
-    },
-    getHistoryIndexes: () => {
-      return historyManager.getHistoryIndexes();
-    },
-    switchHistory: (historyID) => {
-      return historyManager.switchHistory(historyID);
-    },
-    deleteHistory: async (historyID) => {
-      return await historyManager.deleteHistory(historyID);
-    },
-    updateHistoryTitleById: (historyID, title) => {
-      historyManager.updateHistoryTitleById(historyID, title);
-    },
-    addHistoryTag: (historyID, tag) => {
-      historyManager.addTagToHistory(historyID, tag);
-    },
-    removeHistoryTag: (historyID, tag) => {
-      historyManager.removeTagFromHistory(historyID, tag);
-    },
-    updateHistoryModelAdvanceSettings: (historyID, advanceSettings) => {
-      historyManager.updateHistoryModelAdvanceSettings(
-        historyID,
-        advanceSettings,
-      );
-    },
-    addConversationEntry: async (entry) => {
-      return await historyManager.addConversationEntry(entry);
-    },
-    getAvailableModels: (modelServiceType) => {
-      if (modelServiceType === 'custom') {
-        return settingsManager.get('customModels').map((model) => model.name);
-      }
-
-      return settingsManager.get(`${modelServiceType}AvailableModels`);
-    },
-    getCurrentModel: (modelServiceType) => {
-      return settingsManager.get(`lastSelectedModel`)[modelServiceType];
-    },
-    setAvailableModels: (modelServiceType, newAvailableModels) => {
-      settingsManager
-        .set(`${modelServiceType}AvailableModels`, newAvailableModels)
-        .then(() => {
-          models[modelServiceType].service.updateAvailableModels(
-            newAvailableModels,
-          );
-        });
-    },
-    setCustomModels: (newCustomModels) => {
-      settingsManager.set('customModels', newCustomModels).then(() => {
-        models.custom.service.updateAvailableModels(
-          newCustomModels.map((model) => model.name),
-        );
-      });
-    },
-    switchModel: (modelServiceType, modelName) => {
-      models[modelServiceType].service.switchModel(modelName);
-    },
-    getLatestAvailableModelNames: async (modelServiceType) => {
-      return await models[
-        modelServiceType
-      ].service.getLatestAvailableModelNames();
-    },
-    uploadFile: async (base64Data, originalFileName) => {
-      return FileOperationsProvider.uploadFile(
-        ctx,
-        base64Data,
-        originalFileName,
-      );
-    },
-    deleteFile: FileOperationsProvider.deleteFile,
-    getWebviewUri: async (absolutePath: string) => {
-      return await FileOperationsProvider.getWebviewUri(
-        ctx,
-        connectedViews,
-        absolutePath,
-      );
-    },
-    convertTextToVoice: async (text) => {
-      const voiceServiceType = settingsManager.get(
-        'selectedTextToVoiceService',
-      );
-
-      if (voiceServiceType === 'not set') {
-        vscode.window.showErrorMessage(
-          'You have not selected a voice service for text to voice conversion, go to settings to select one',
-        );
-        return;
-      }
-
-      await voiceServices[voiceServiceType].service.textToVoice(text);
-    },
-    convertVoiceToText: async () => {
-      const voiceServiceType = settingsManager.get(
-        'selectedVoiceToTextService',
-      );
-
-      if (voiceServiceType === 'not set') {
-        vscode.window.showErrorMessage(
-          'You have not selected a voice service for voice to text conversion, go to voice settings to select one',
-        );
-        return '';
-      }
-
-      return voiceServices[voiceServiceType].service.voiceToText();
-    },
-    stopPlayVoice: async () => {
-      const voiceServiceType = settingsManager.get(
-        'selectedTextToVoiceService',
-      );
-
-      if (voiceServiceType === 'not set') {
-        vscode.window.showErrorMessage(
-          'You have not selected a voice service for voice playback, go to voice settings to select one',
-        );
-        return;
-      }
-
-      await voiceServices[voiceServiceType].service.stopTextToVoice();
-    },
-    stopRecordVoice: async () => {
-      const voiceServiceType = settingsManager.get(
-        'selectedVoiceToTextService',
-      );
-
-      if (voiceServiceType === 'not set') {
-        vscode.window.showErrorMessage(
-          'You have not selected a voice service for voice recording, How did you even get here? Please report this bug to the developers',
-        );
-        return;
-      }
-
-      await voiceServices[voiceServiceType].service.stopVoiceToText();
-    },
-    switchGptSoVitsReferenceVoice: async (voiceName) => {
-      await (
-        voiceServices.gptSoVits.service as GptSoVitsApiService
-      ).switchVoice(voiceName);
-    },
-    openExternalLink: async (url) => {
-      await vscode.env.openExternal(vscode.Uri.parse(url));
-    },
-    openKeyboardShortcuts: async (commandId) => {
-      await vscode.commands.executeCommand(
-        'workbench.action.openGlobalKeybindings',
-        `@command:${commandId}`,
-      );
-    },
-    openExtensionMarketplace: async (extensionId) => {
-      await vscode.commands.executeCommand(
-        'workbench.extensions.search',
-        extensionId,
-      );
-    },
-    approveToolCall: async (toolCall) => {
-      return await ToolServiceProvider.executeToolCall(
-        toolCall,
-        terminalManager,
-        (status) => {
-          triggerEvent('updateStatus', status);
-        },
-      );
-    },
-    continueWithToolCallResponse: async (_entry) => {},
-  };
+  const api = createViewApi(
+    ctx,
+    settingsManager,
+    historyManager,
+    terminalManager,
+    models,
+    voiceServices,
+    connectedViews,
+  );
 
   void registerAndConnectView(ctx, settingsManager, 'chatActivityBar', api);
   void registerAndConnectView(ctx, settingsManager, 'workPanel', api);
