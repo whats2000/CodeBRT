@@ -86,6 +86,18 @@ export type CustomModelSettings = {
 };
 
 /**
+ * Represents the settings for an OpenRouter model.
+ * @property id - The unique identifier of the OpenRouter model
+ * @property name - A user-friendly name for the model
+ * @property apiKey - The API key for the specific provider
+ */
+export type OpenRouterModelSettings = {
+  id: string;
+  name: string;
+  apiKey: string;
+};
+
+/**
  * Represents the settings for the extension which are stored locally.
  * @property anthropicAvailableModels - The available models for the Anthropic API
  * @property geminiAvailableModels - The available models for the Gemini API
@@ -117,7 +129,8 @@ export type ModelServiceSettings = {
     [keyof in ModelServiceType]: string;
   };
   customModels: CustomModelSettings[];
-  lastUsedModelForManualCompletion: ModelServiceType;
+  openRouterAvailableModels: string[];
+  openRouterModels: OpenRouterModelSettings[];
 };
 
 /**

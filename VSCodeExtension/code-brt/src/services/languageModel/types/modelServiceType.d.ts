@@ -11,6 +11,7 @@ export type ModelServiceType =
   | 'groq'
   | 'huggingFace'
   | 'ollama'
+  | 'openRouter'
   | 'custom';
 
 /**
@@ -29,7 +30,3 @@ export type GetResponseOptions = {
   sendStreamResponse?: (message: string) => void;
   updateStatus?: (status: string) => void;
 };
-
-export interface ExtendedGetResponseOptions extends GetResponseOptions {
-  multiline?: boolean;
-}

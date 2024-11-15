@@ -89,6 +89,8 @@ export const EditModelListBar: React.FC<EditModelListBarProps> = ({
           setCustomModels={setCustomModels}
           handleEditModelListSave={handleEditModelListSave}
         />
+      ) : activeModelService === 'openRouter' ? (
+        <></>
       ) : (
         <ModelForm
           isOpen={isOpen}
