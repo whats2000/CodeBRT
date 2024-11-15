@@ -15,6 +15,7 @@ import {
   Checkbox,
   Divider,
   Alert,
+  Tag,
 } from 'antd';
 import { useDispatch, useSelector } from 'react-redux';
 
@@ -34,6 +35,7 @@ import {
   saveSettings,
   updateLocalSetting,
 } from '../../../redux/slices/settingsSlice';
+import { QuestionCircleOutlined } from '@ant-design/icons';
 
 const StyledForm = styled(Form)`
   display: flex;
@@ -43,6 +45,9 @@ const StyledForm = styled(Form)`
 const FormGroup = styled(Form.Item)`
   margin-bottom: 15px;
 `;
+
+const PAID_PLAN_ONLY = ['anthropic', 'openai'];
+const SUPPORTED_OFFLINE = ['ollama', 'gptSoVits'];
 
 // Define the desired order of settings
 const SETTINGS_GROUPS: { title: string; keys: (keyof ExtensionSettings)[] }[] =
@@ -189,6 +194,19 @@ export const SettingsBar: React.FC<SettingSidebarProps> = ({
       placement='left'
       width={400}
       loading={isLoading}
+      extra={
+        <Button
+          type={'text'}
+          href={
+            'https://whats2000.github.io/CodeBRT/docs/getting-started/configuration'
+          }
+          target={'_blank'}
+          icon={<QuestionCircleOutlined />}
+          iconPosition={'end'}
+        >
+          <Typography.Text type='secondary'>Learn More</Typography.Text>
+        </Button>
+      }
     >
       {needsReload && (
         <Alert
@@ -299,7 +317,7 @@ export const SettingsBar: React.FC<SettingSidebarProps> = ({
                   <FormGroup
                     key={key}
                     label={
-                      <Space>
+                      <Space wrap={true}>
                         <span>
                           {MODEL_SERVICE_CONSTANTS[serviceKey]?.name || key}
                         </span>
@@ -313,6 +331,7 @@ export const SettingsBar: React.FC<SettingSidebarProps> = ({
                           >
                             <Typography.Link
                               type={'secondary'}
+                              underline={true}
                               onClick={() =>
                                 openModelServiceLink(
                                   MODEL_SERVICE_CONSTANTS[serviceKey].apiLink,
@@ -324,6 +343,16 @@ export const SettingsBar: React.FC<SettingSidebarProps> = ({
                                 : 'Learn More'}
                             </Typography.Link>
                           </Tooltip>
+                        )}
+                        {!PAID_PLAN_ONLY.includes(serviceKey) && (
+                          <Tag color={'blue'} style={{ margin: 0 }}>
+                            Free
+                          </Tag>
+                        )}
+                        {SUPPORTED_OFFLINE.includes(serviceKey) && (
+                          <Tag color={'green'} style={{ margin: 0 }}>
+                            Supports Offline
+                          </Tag>
                         )}
                       </Space>
                     }

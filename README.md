@@ -2,7 +2,7 @@
 
 ## Overview
 
-**Version**: 0.3.1
+**Version**: 0.4.0
 
 **Status**: _Under Development_  
 ⚠️ This project is currently in the Beta phase. Some features are still being developed, and you may encounter bugs or
@@ -104,14 +104,22 @@ Here’s an outline of the upcoming features and improvements for CodeBRT:
 - [ ] Auto code completion
 - [ ] Code integrator to compose code snippets
 
-### Version 0.4 (Upcoming)
+### Version 0.4 (WIP)
 
 - [ ] Tool Calling Feature
     - [x] Web Search
     - [x] URL Fetch
-    - [ ] PDF Extraction
+    - [x] PDF Extraction
+    - [x] Read File
+    - [x] Write File
+    - [x] Search File
+    - [x] List Files Usage Context
+    - [x] Execute Code
+    - [ ] Website Inspector
+    - [x] List Code Definitions
     - [ ] Image Generation
     - [ ] Code Interpreter
+- [ ] Show file difference after code completion
 - [ ] Task Scheduling
 - [ ] Auto task scheduling and completion
 - [ ] Auto-debugging
@@ -153,6 +161,7 @@ CodeBRT is built on various open-source tools and frameworks. Special thanks to 
 
 - [The Starter Framework For VSCode Extension](https://github.com/sfc-gh-tkojima/vscode-react-webviews) by [sfc-gh-tkojima](https://github.com/sfc-gh-tkojima)
 - [The Continue Project For the process of LLM responses](https://github.com/continuedev/continue/) by continuedev team (Apache License 2.0)
+- [The Cline Project For the agent-based framework](https://github.com/clinebot/cline) by [saoudrizwan](https://github.com/saoudrizwan/) (Apache License 2.0)
 
 - Icons and logos from [SVG Repo](https://www.svgrepo.com/):
     - [Vscode2 Opened SVG Vector](https://www.svgrepo.com/svg/373400/vscode2-opened) (MIT License)

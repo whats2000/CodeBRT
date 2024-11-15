@@ -13,11 +13,7 @@ import {
 import styled from 'styled-components';
 import { useDispatch, useSelector } from 'react-redux';
 
-import type {
-  ConversationEntry,
-  ConversationHistory,
-  ModelServiceType,
-} from '../../../../types';
+import type { ConversationEntry, ConversationHistory } from '../../../../types';
 import type { RootState } from '../../../redux';
 import { updateCurrentEntry } from '../../../redux/slices/conversationSlice';
 import { CancelOutlined } from '../../../icons';
@@ -30,7 +26,6 @@ const RespondCharacter = styled(Typography.Text)<{ $user: string }>`
 `;
 
 type MessagesTopToolBarProps = {
-  modelType: ModelServiceType | 'loading...';
   index: number;
   conversationHistoryEntries: ConversationEntry[];
   isAudioPlaying: boolean;
@@ -42,11 +37,9 @@ type MessagesTopToolBarProps = {
   copied: Record<string, boolean>;
   handleCopy: (text: string, entryId: string) => void;
   handleRedo: (entryId: string) => void;
-  isProcessing: boolean;
 };
 
 export const TopToolBar: React.FC<MessagesTopToolBarProps> = ({
-  modelType,
   index,
   conversationHistoryEntries,
   isAudioPlaying,
@@ -58,7 +51,6 @@ export const TopToolBar: React.FC<MessagesTopToolBarProps> = ({
   copied,
   handleCopy,
   handleRedo,
-  isProcessing,
 }) => {
   const { token } = theme.useToken();
 
@@ -66,12 +58,16 @@ export const TopToolBar: React.FC<MessagesTopToolBarProps> = ({
   const conversationHistory = useSelector(
     (state: RootState) => state.conversation,
   );
+  const { activeModelService } = useSelector(
+    (state: RootState) => state.modelService,
+  );
 
   const entry = conversationHistoryEntries[index];
   const top = conversationHistory.top;
   const topCount = top.length;
   const topIndex = top.indexOf(conversationHistoryEntries[0]?.id);
 
+  const isTemp = entry.id.startsWith('temp-');
   const parent = entry.parent
     ? conversationHistory.entries[entry.parent]
     : null;
@@ -134,103 +130,138 @@ export const TopToolBar: React.FC<MessagesTopToolBarProps> = ({
     }
   };
 
+  let displayRole: string;
+  switch (entry.role) {
+    case 'user':
+      displayRole = 'You';
+      break;
+    case 'AI':
+      displayRole = entry.modelName
+        ? entry.modelName.charAt(0).toUpperCase() + entry.modelName.slice(1)
+        : activeModelService.charAt(0).toUpperCase() +
+          activeModelService.slice(1);
+      break;
+    case 'tool':
+      displayRole = entry.toolResponses?.[0].toolCallName
+        ? entry.toolResponses[0].toolCallName.charAt(0).toUpperCase() +
+          entry.toolResponses[0].toolCallName.slice(1)
+        : 'Tool';
+      break;
+    default:
+      displayRole = entry.role;
+      break;
+  }
+
   return (
     <Flex align={'center'} justify={'space-between'}>
       <RespondCharacter $user={entry.role} theme={token}>
-        {entry.role === 'AI'
-          ? modelType.charAt(0).toUpperCase() + modelType.slice(1)
-          : 'You'}
+        {displayRole}
       </RespondCharacter>
-      <Flex gap={1} wrap={true} justify={'flex-end'}>
-        {parent && siblingCount > 1 && (
-          <>
-            <Button
-              onClick={() => handleGoForward(entry, 'prev')}
-              type={'text'}
-              disabled={currentIndex === 1 || isProcessing}
-            >
-              <ArrowLeftOutlined />
-            </Button>
-            <Button type={'text'}>
-              {currentIndex}/{siblingCount}
-            </Button>
-            <Button
-              onClick={() => handleGoForward(entry, 'next')}
-              type={'text'}
-              disabled={currentIndex === siblingCount || isProcessing}
-            >
-              <ArrowRightOutlined />
-            </Button>
-          </>
-        )}
-        {topCount > 1 && index === 0 && (
-          <>
-            <Button
-              onClick={() => handleSwitchRoot(conversationHistory, 'prev')}
-              type={'text'}
-              disabled={topIndex === 0 || isProcessing}
-            >
-              <ArrowLeftOutlined />
-            </Button>
-            <Button type={'text'}>
-              {topIndex + 1}/{topCount}
-            </Button>
-            <Button
-              onClick={() => handleSwitchRoot(conversationHistory, 'next')}
-              type={'text'}
-              disabled={topIndex === topCount - 1 || isProcessing}
-            >
-              <ArrowRightOutlined />
-            </Button>
-          </>
-        )}
-        <Tooltip
-          title={
-            isAudioPlaying
-              ? 'Stop audio, these will take a few seconds in current version'
-              : ''
-          }
-        >
-          <Button
-            icon={
-              isStopAudio ? (
-                <LoadingOutlined spin={true} />
-              ) : isAudioPlaying ? (
-                <CancelOutlined />
-              ) : (
-                <SoundOutlined />
-              )
+      {entry.role !== 'tool' && (
+        <Flex gap={1} wrap={true} justify={'flex-end'}>
+          {parent && siblingCount > 1 && (
+            <>
+              <Button
+                onClick={() => handleGoForward(entry, 'prev')}
+                type={'text'}
+                disabled={
+                  currentIndex === 1 || conversationHistory.isProcessing
+                }
+              >
+                <ArrowLeftOutlined />
+              </Button>
+              <Button type={'text'}>
+                {isTemp
+                  ? `${siblingCount + 1}/${siblingCount + 1}`
+                  : `${currentIndex}/${siblingCount}`}
+              </Button>
+              <Button
+                onClick={() => handleGoForward(entry, 'next')}
+                type={'text'}
+                disabled={
+                  currentIndex === siblingCount ||
+                  conversationHistory.isProcessing
+                }
+              >
+                <ArrowRightOutlined />
+              </Button>
+            </>
+          )}
+          {topCount > 1 && index === 0 && (
+            <>
+              <Button
+                onClick={() => handleSwitchRoot(conversationHistory, 'prev')}
+                type={'text'}
+                disabled={topIndex === 0 || conversationHistory.isProcessing}
+              >
+                <ArrowLeftOutlined />
+              </Button>
+              <Button type={'text'}>
+                {topIndex + 1}/{topCount}
+              </Button>
+              <Button
+                onClick={() => handleSwitchRoot(conversationHistory, 'next')}
+                type={'text'}
+                disabled={
+                  topIndex === topCount - 1 || conversationHistory.isProcessing
+                }
+              >
+                <ArrowRightOutlined />
+              </Button>
+            </>
+          )}
+          <Tooltip
+            title={
+              isAudioPlaying
+                ? 'Stop audio, these will take a few seconds in current version'
+                : ''
             }
-            type={'text'}
-            onClick={() => handleConvertTextToVoice(entry.message)}
-            disabled={isStopAudio}
-          />
-        </Tooltip>
-        {entry.role === 'AI' && (
+          >
+            <Button
+              icon={
+                isStopAudio ? (
+                  <LoadingOutlined spin={true} />
+                ) : isAudioPlaying ? (
+                  <CancelOutlined />
+                ) : (
+                  <SoundOutlined />
+                )
+              }
+              type={'text'}
+              onClick={() => handleConvertTextToVoice(entry.message)}
+              disabled={isStopAudio}
+            />
+          </Tooltip>
+          {entry.role === 'AI' && (
+            <Button
+              icon={
+                conversationHistory.isProcessing ? (
+                  <LoadingOutlined spin={true} />
+                ) : (
+                  <RedoOutlined />
+                )
+              }
+              type={'text'}
+              disabled={conversationHistory.isProcessing}
+              onClick={() => handleRedo(entry.id)}
+            />
+          )}
           <Button
-            icon={
-              isProcessing ? <LoadingOutlined spin={true} /> : <RedoOutlined />
-            }
+            icon={<EditOutlined />}
             type={'text'}
-            disabled={isProcessing}
-            onClick={() => handleRedo(entry.id)}
+            onClick={() =>
+              editingEntryId === entry.id
+                ? handleCancelEdit()
+                : handleEdit(entry.id, entry.message)
+            }
           />
-        )}
-        <Button
-          icon={<EditOutlined />}
-          type={'text'}
-          onClick={() =>
-            editingEntryId === entry.id
-              ? handleCancelEdit()
-              : handleEdit(entry.id, entry.message)
-          }
-        />
-        <Button
-          icon={copied[entry.id] ? <CopyFilled /> : <CopyOutlined />}
-          onClick={() => handleCopy(entry.message, entry.id)}
-          type={'text'}
-        />
-      </Flex>
+          <Button
+            icon={copied[entry.id] ? <CopyFilled /> : <CopyOutlined />}
+            onClick={() => handleCopy(entry.message, entry.id)}
+            type={'text'}
+          />
+        </Flex>
+      )}
     </Flex>
   );
 };

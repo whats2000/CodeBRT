@@ -53,6 +53,7 @@ export const DEFAULT_LOCAL_SETTINGS: ExtensionSettingsLocal = {
   enableTools: {
     webSearch: { active: true },
     urlFetcher: { active: true },
+    agentTools: { active: true },
   },
   systemPrompts: [],
   retainContextWhenHidden: false,
@@ -117,7 +118,7 @@ export const DEFAULT_CROSS_DEVICE_SETTINGS: ExtensionSettingsCrossDevice = {
   groqApiKey: '',
   huggingFaceApiKey: '',
   doubleEnterSendMessages: false,
-  themePrimaryColor: '#f0f0f0',
+  themePrimaryColor: '#007ACC',
   themeAlgorithm: 'darkAlgorithm',
   themeBorderRadius: 4,
   hljsTheme: 'darcula',

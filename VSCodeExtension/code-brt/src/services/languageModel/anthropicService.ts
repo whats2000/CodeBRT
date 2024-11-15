@@ -1,4 +1,3 @@
-import fs from 'fs';
 import path from 'path';
 
 import vscode from 'vscode';
@@ -7,13 +6,13 @@ import * as cheerio from 'cheerio';
 import type {
   ImageBlockParam,
   MessageParam,
-  TextBlock,
   TextBlockParam,
   Tool,
-  ToolUseBlock,
   ToolResultBlockParam,
+  ToolUseBlock,
 } from '@anthropic-ai/sdk/src/resources';
 import type {
+  MessageCreateParamsBase,
   MessageCreateParamsNonStreaming,
   MessageStream,
 } from '@anthropic-ai/sdk/resources/messages';
@@ -22,12 +21,14 @@ import Anthropic from '@anthropic-ai/sdk';
 import {
   ConversationEntry,
   GetResponseOptions,
-  ToolServiceType,
+  NonWorkspaceToolType,
+  ResponseWithAction,
+  ToolCallResponse,
 } from '../../types';
-import { MODEL_SERVICE_CONSTANTS, toolsSchema } from '../../constants';
 import { HistoryManager, SettingsManager } from '../../api';
 import { AbstractLanguageModelService } from './base';
-import { ToolService } from '../tools';
+import { ToolServiceProvider } from '../tools';
+import { fileToBase64 } from './utils';
 
 export class AnthropicService extends AbstractLanguageModelService {
   private currentStreamResponse: MessageStream | undefined;
@@ -97,8 +98,21 @@ export class AnthropicService extends AbstractLanguageModelService {
   private getEnabledTools(): Tool[] | undefined {
     const enabledTools = this.settingsManager.get('enableTools');
     const tools: Tool[] = [];
+    const { agentTools, ...toolsSchema } = ToolServiceProvider.getToolSchema();
+
+    // Add agent tools if enabled
+    if (enabledTools.agentTools?.active && agentTools) {
+      for (const [key, tool] of Object.entries(agentTools)) {
+        tools.push({
+          name: key,
+          description: tool.description,
+          input_schema: tool.inputSchema as Tool.InputSchema,
+        });
+      }
+    }
+
     for (const [key, tool] of Object.entries(toolsSchema)) {
-      if (!enabledTools[key as ToolServiceType].active) {
+      if (!enabledTools[key as NonWorkspaceToolType]?.active) {
         continue;
       }
 
@@ -116,20 +130,74 @@ export class AnthropicService extends AbstractLanguageModelService {
     entries: { [key: string]: ConversationEntry },
     query: string,
     historyManager: HistoryManager,
+    currentEntryID?: string,
+    toolCallResponse?: ToolCallResponse,
   ): MessageParam[] {
     const result: MessageParam[] = [];
-    let currentEntry = entries[historyManager.getCurrentHistory().current];
+    let currentEntry =
+      entries[currentEntryID ?? historyManager.getCurrentHistory().current];
 
     while (currentEntry) {
-      result.unshift({
-        role: currentEntry.role === 'user' ? 'user' : 'assistant',
-        content: [
-          {
-            type: 'text',
-            text: currentEntry.message,
-          },
-        ],
-      });
+      switch (currentEntry.role) {
+        case 'AI':
+          // Anthropic's API requires non-empty messages
+          const newEntry: MessageParam = {
+            role: 'assistant',
+            content: [
+              {
+                type: 'text',
+                text:
+                  // Message is empty or the message only contains '\n' characters
+                  currentEntry.message === '' ||
+                  /^\n+$/.test(currentEntry.message)
+                    ? 'Let continue...'
+                    : currentEntry.message,
+              },
+            ],
+          };
+          if (typeof newEntry.content === 'string') {
+            break;
+          }
+          const toolCall = currentEntry.toolCalls?.[0];
+          if (toolCall) {
+            newEntry.content.push({
+              type: 'tool_use',
+              id: toolCall.id,
+              name: toolCall.toolName,
+              input: toolCall.parameters,
+            });
+          }
+          result.unshift(newEntry);
+          break;
+        case 'user':
+          result.unshift({
+            role: 'user',
+            content: [
+              {
+                type: 'text',
+                text: currentEntry.message,
+              },
+            ],
+          });
+          break;
+        case 'tool':
+          const toolCallResponse = currentEntry.toolResponses?.[0];
+          if (!toolCallResponse) {
+            throw new Error('Tool call response not found');
+          }
+          result.unshift({
+            role: 'user',
+            content: [
+              {
+                type: 'tool_result',
+                tool_use_id: toolCallResponse.id,
+                content: JSON.stringify(toolCallResponse.result),
+                is_error: toolCallResponse.status === 'error',
+              },
+            ],
+          });
+          break;
+      }
 
       if (currentEntry.parent) {
         currentEntry = entries[currentEntry.parent];
@@ -140,7 +208,7 @@ export class AnthropicService extends AbstractLanguageModelService {
 
     // Anthropic's API requires the query message at the end of the history
     if (result[result.length - 1]?.role !== 'user') {
-      result.push({
+      const newEntry: MessageParam = {
         role: 'user',
         content: [
           {
@@ -148,18 +216,46 @@ export class AnthropicService extends AbstractLanguageModelService {
             text: query,
           },
         ],
-      });
+      };
+      if (toolCallResponse && typeof newEntry.content !== 'string') {
+        newEntry.content.push({
+          type: 'tool_result',
+          tool_use_id: toolCallResponse.id,
+          content: JSON.stringify(toolCallResponse.result),
+          is_error: toolCallResponse.status === 'error',
+        });
+      }
+      result.push(newEntry);
     }
 
     return result;
   }
 
-  private fileToImagePart(
+  private async fileToImagePart(
     filePath: string,
-    mimeType: 'image/jpeg' | 'image/png' | 'image/gif' | 'image/webp',
-  ): ImageBlockParam | undefined {
+  ): Promise<ImageBlockParam | undefined> {
     try {
-      const base64Data = fs.readFileSync(filePath).toString('base64');
+      const result = await fileToBase64(filePath);
+
+      if (!result) {
+        return undefined;
+      }
+
+      const { base64Data, mimeType } = result;
+
+      if (
+        mimeType !== 'image/jpeg' &&
+        mimeType !== 'image/png' &&
+        mimeType !== 'image/gif' &&
+        mimeType !== 'image/webp'
+      ) {
+        void vscode.window.showErrorMessage(
+          `Unsupported image file type: ${mimeType}`,
+        );
+
+        return undefined;
+      }
+
       return {
         type: 'image',
         source: {
@@ -173,16 +269,17 @@ export class AnthropicService extends AbstractLanguageModelService {
     }
   }
 
-  private initModel(
+  private async initModel(
     query: string,
     historyManager: HistoryManager,
     currentEntryID?: string,
     images?: string[],
-  ): {
+    toolCallResponse?: ToolCallResponse,
+  ): Promise<{
     anthropic: Anthropic;
     conversationHistory: MessageParam[];
     errorMessage?: string;
-  } {
+  }> {
     const anthropic = new Anthropic({
       apiKey: this.settingsManager.get('anthropicApiKey'),
     });
@@ -203,6 +300,8 @@ export class AnthropicService extends AbstractLanguageModelService {
       historyManager.getHistoryBeforeEntry(currentEntryID).entries,
       query,
       historyManager,
+      currentEntryID,
+      toolCallResponse,
     );
 
     if (!images) {
@@ -228,19 +327,21 @@ export class AnthropicService extends AbstractLanguageModelService {
     }
 
     // Append the images to last message
-    const imageParts = images
-      .map((image) => {
-        const mimeType = `image/${path.extname(image).slice(1)}` as
-          | 'image/jpeg'
-          | 'image/png'
-          | 'image/gif'
-          | 'image/webp';
-        return this.fileToImagePart(image, mimeType);
-      })
-      .filter((part) => part !== undefined) as ImageBlockParam[];
+    const imageParts = await Promise.all(
+      images.map(async (image) => {
+        const imagePart = await this.fileToImagePart(image);
+        if (!imagePart) {
+          return undefined;
+        }
+        return imagePart;
+      }),
+    ).then((parts) =>
+      parts.filter((part): part is ImageBlockParam => part !== undefined),
+    );
 
     (
       conversationHistory[conversationHistory.length - 1].content as (
+        | ToolResultBlockParam
         | TextBlockParam
         | ImageBlockParam
       )[]
@@ -251,46 +352,6 @@ export class AnthropicService extends AbstractLanguageModelService {
       conversationHistory,
     };
   }
-
-  private handleFunctionCalls = async (
-    functionCalls: ToolUseBlock[],
-    updateStatus?: (status: string) => void,
-  ): Promise<ToolResultBlockParam[]> => {
-    const functionCallResults: ToolResultBlockParam[] = [];
-
-    for (const functionCall of functionCalls) {
-      const tool = ToolService.getTool(functionCall.name);
-      if (!tool) {
-        functionCallResults.push({
-          type: 'tool_result',
-          tool_use_id: functionCall.id,
-          content: 'Failed to find tool with name: ' + functionCall.name,
-          is_error: true,
-        });
-        continue;
-      }
-
-      try {
-        const args = { ...(functionCall.input as object), updateStatus };
-        const result = await tool(args as any);
-        functionCallResults.push({
-          type: 'tool_result',
-          tool_use_id: functionCall.id,
-          content: result,
-          is_error: false,
-        });
-      } catch (error) {
-        functionCallResults.push({
-          type: 'tool_result',
-          tool_use_id: functionCall.id,
-          content: `Error executing tool ${functionCall.name}: ${error}`,
-          is_error: true,
-        });
-      }
-    }
-
-    return functionCallResults;
-  };
 
   public async getLatestAvailableModelNames(): Promise<string[]> {
     const requestUrl = `https://docs.anthropic.com/en/docs/about-claude/models`;
@@ -313,10 +374,13 @@ export class AnthropicService extends AbstractLanguageModelService {
 
       const latestModels: string[] = [];
       rows.each((_index, row) => {
-        const modelCode = htmlData(row).find('td:nth-child(2) code').text();
-        if (modelCode) {
-          latestModels.push(modelCode);
-        }
+        const modelCodes = htmlData(row).find('td:nth-child(2) code');
+        modelCodes.each((_codeIndex, codeElement) => {
+          const modelCode = htmlData(codeElement).text().trim();
+          if (modelCode) {
+            latestModels.push(modelCode);
+          }
+        });
       });
 
       // Filter the invalid models from the available models
@@ -339,7 +403,9 @@ export class AnthropicService extends AbstractLanguageModelService {
     return newAvailableModelNames;
   }
 
-  public async getResponse(options: GetResponseOptions): Promise<string> {
+  public async getResponse(
+    options: GetResponseOptions,
+  ): Promise<ResponseWithAction> {
     const {
       query,
       historyManager,
@@ -349,126 +415,112 @@ export class AnthropicService extends AbstractLanguageModelService {
       updateStatus,
       selectedModelName,
       disableTools,
+      toolCallResponse,
     } = options;
 
-    const { anthropic, conversationHistory, errorMessage } = this.initModel(
-      query,
-      historyManager,
-      currentEntryID,
-      images,
-    );
+    const { anthropic, conversationHistory, errorMessage } =
+      await this.initModel(
+        query,
+        historyManager,
+        currentEntryID,
+        images,
+        toolCallResponse,
+      );
 
     if (errorMessage) {
-      return errorMessage;
+      return { textResponse: errorMessage };
     }
-
-    let functionCallCount = 0;
-    const MAX_FUNCTION_CALLS = 5;
 
     const { systemPrompt, generationConfig } =
       this.getAdvanceSettings(historyManager);
 
+    const MAX_RETRIES = 5;
+    let retryCount = 0;
+    let responseText = '';
+    let response;
+    updateStatus && updateStatus('');
+
     try {
-      if (!sendStreamResponse) {
-        while (functionCallCount < MAX_FUNCTION_CALLS) {
-          const response = await anthropic.messages.create({
-            model: selectedModelName ?? this.currentModel,
-            system: systemPrompt,
-            messages: conversationHistory,
-            tools: disableTools ? undefined : this.getEnabledTools(),
+      while (retryCount < MAX_RETRIES) {
+        const requestPayload: MessageCreateParamsBase = {
+          model: selectedModelName ?? this.currentModel,
+          system: systemPrompt,
+          messages: conversationHistory,
+          tools: disableTools ? undefined : this.getEnabledTools(),
+          ...generationConfig,
+        };
+        if (!sendStreamResponse) {
+          response = await anthropic.messages.create({
+            ...requestPayload,
             stream: false,
-            ...generationConfig,
           });
-
-          if (response.content[0].type !== 'tool_use') {
-            return (response.content[0] as TextBlock).text;
+          if (response.content[0].type === 'text') {
+            responseText = response.content[0].text;
           }
-
-          const toolUseBlock = response.content.filter(
-            (message) => message.type === 'tool_use',
-          ) as ToolUseBlock[];
-          const functionCallResults =
-            await this.handleFunctionCalls(toolUseBlock);
-
-          conversationHistory.push({
-            role: 'assistant',
-            content: toolUseBlock,
-          });
-
-          conversationHistory.push({
-            role: 'user',
-            content: functionCallResults,
-          });
-
-          functionCallCount++;
-        }
-        return 'Max function call limit reached.';
-      } else {
-        let responseText = '';
-
-        while (functionCallCount < MAX_FUNCTION_CALLS) {
+        } else {
           this.currentStreamResponse?.abort();
           this.currentStreamResponse = anthropic.messages
             .stream({
-              model: selectedModelName ?? this.currentModel,
-              system: systemPrompt,
-              messages: conversationHistory,
-              tools: disableTools ? undefined : this.getEnabledTools(),
+              ...requestPayload,
               stream: true,
-              ...generationConfig,
             })
-            .on('connect', () => {
-              updateStatus && updateStatus('');
+            .on('inputJson', () => {
+              updateStatus &&
+                updateStatus(`[processing] I'm creating an action...`);
             })
             .on('text', (partText) => {
               sendStreamResponse(partText);
               responseText += partText;
             });
 
-          const finalMessage = await this.currentStreamResponse.finalMessage();
-
-          if (finalMessage.stop_reason !== 'tool_use') {
-            return responseText;
-          }
-
-          const toolUseBlock = finalMessage.content.filter(
-            (message) => message.type === 'tool_use',
-          ) as ToolUseBlock[];
-
-          const functionCallResults = await this.handleFunctionCalls(
-            toolUseBlock,
-            updateStatus,
-          );
-
-          conversationHistory.push({
-            role: 'assistant',
-            content: toolUseBlock,
-          });
-
-          conversationHistory.push({
-            role: 'user',
-            content: functionCallResults,
-          });
-
-          functionCallCount++;
+          response = await this.currentStreamResponse.finalMessage();
         }
-        return 'Max function call limit reached.';
-      }
-    } catch (error) {
-      vscode.window
-        .showErrorMessage(
-          'Failed to get response from Anthropic Service: ' + error,
-          'Get API Key',
-        )
-        .then((selection) => {
-          if (selection === 'Get API Key') {
-            vscode.env.openExternal(
-              vscode.Uri.parse(MODEL_SERVICE_CONSTANTS.anthropic.apiLink),
-            );
-          }
-        });
 
-      return 'Failed to connect to the language model service';
+        // Return the response is no tool calls are present
+        if (response.stop_reason !== 'tool_use') {
+          return { textResponse: responseText };
+        }
+
+        const toolUseBlock = response.content.filter(
+          (message) => message.type === 'tool_use',
+        ) as ToolUseBlock[];
+        const toolCall = {
+          id: toolUseBlock[0].id,
+          toolName: toolUseBlock[0].name,
+          parameters: toolUseBlock[0].input as Record<string, any>,
+          create_time: Date.now(),
+        };
+
+        const validation = ToolServiceProvider.isViableToolCall(toolCall);
+        // Return the response if the tool call is valid
+        if (validation.isValid) {
+          return {
+            textResponse: responseText,
+            toolCall,
+          };
+        }
+
+        // Otherwise, add the tool call feedback to the conversation history and retry
+        conversationHistory.push({
+          role: 'assistant',
+          content: [toolUseBlock[0]],
+        });
+        conversationHistory.push({
+          role: 'user',
+          content: [
+            {
+              type: 'tool_result',
+              tool_use_id: toolUseBlock[0].id,
+              content: validation.feedback,
+              is_error: true,
+            },
+          ],
+        });
+        retryCount++;
+      }
+      return { textResponse: responseText };
+    } catch (error) {
+      return this.handleGetResponseError(error, 'anthropic', responseText);
     } finally {
       updateStatus && updateStatus('');
     }

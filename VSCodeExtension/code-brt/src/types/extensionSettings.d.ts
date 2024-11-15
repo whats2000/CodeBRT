@@ -1,13 +1,11 @@
 import type * as hljs from 'react-syntax-highlighter/dist/cjs/styles/hljs';
 import { SpeechCreateParams } from 'openai/resources/audio';
-
-import { ModelServiceType } from './modelServiceType';
-import { CodeFixerModelServiceType } from './codeFixerModelServiceType';
 import {
   TextToVoiceServiceType,
   VoiceToTextServiceType,
-} from './voiceServiceType';
-import { ToolServiceType } from './toolServicesType';
+} from '../services/voice/types';
+import { ModelServiceType } from '../services/languageModel/types';
+import { NonWorkspaceToolType } from '../services/tools/types';
 
 /**
  * Represents the available theme algorithms for the Ant Design theme.
@@ -157,7 +155,7 @@ export type CodeCompletionSettings = {
  */
 export type ToolServiceSettings = {
   enableTools: {
-    [key in ToolServiceType]: {
+    [key in NonWorkspaceToolType | 'agentTools']: {
       active: boolean;
     };
   };

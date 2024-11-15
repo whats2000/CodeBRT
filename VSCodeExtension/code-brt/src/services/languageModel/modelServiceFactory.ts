@@ -4,7 +4,7 @@ import type {
   LanguageModelService,
   LoadedModelServices,
   ModelServiceType,
-} from '../../types';
+} from './types';
 import type { SettingsManager } from '../../api';
 import { AnthropicService } from './anthropicService';
 import { GeminiService } from './geminiService';

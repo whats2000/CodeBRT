@@ -6,9 +6,8 @@
  * The related file is located at:
  * https://github.com/continuedev/continue/blob/main/core/autocomplete/postprocessing.ts
  */
-import { lcs_dp } from '@algorithm.ts/lcs';
-
 import { isLineRepeated } from './lineUtils';
+import { longestCommonSubsequence } from '../../../utils';
 
 const MAX_REPETITION_FREQ_TO_CHECK = 3;
 
@@ -47,52 +46,25 @@ const isExtremeRepetition = (completion: string): boolean => {
   if (lines.length < 6) {
     return false;
   }
-
-  // Check repetition between lines, by comparing line pairs
-  for (let freq = 1; freq <= MAX_REPETITION_FREQ_TO_CHECK; freq++) {
-    const line1 = lines[0].trim();
-    const line2 = lines[freq].trim();
-
-    // Find the LCS (longest common subsequence) between the first line and others
-    const lcsPairs = lcs_dp(
-      line1.length,
-      line2.length,
-      (i, j) => line1[i] === line2[j],
-    );
-
-    // If there is enough overlap, count repetition
-    if (lcsPairs.length > 5 || lcsPairs.length > line1.length * 0.5) {
+  for (let freq = 1; freq < MAX_REPETITION_FREQ_TO_CHECK; freq++) {
+    const lcs = longestCommonSubsequence(lines[0].trim(), lines[freq].trim());
+    if (lcs.length > 5 || lcs.length > lines[0].length * 0.5) {
       let matchCount = 0;
       for (let i = 0; i < lines.length; i += freq) {
-        const currentLine = lines[i].trim();
-
-        // Check how many LCS matches are in the current line
-        const matchingChars = lcsPairs.filter(
-          ([pos1, pos2]) =>
-            pos1 < currentLine.length && currentLine[pos2] === line1[pos1],
-        );
-
-        // If the matching characters are above the threshold, increment match count
-        if (
-          matchingChars.length > 5 ||
-          matchingChars.length > currentLine.length * 0.5
-        ) {
+        if (lines[i].includes(lcs)) {
           matchCount++;
         }
       }
-
-      // If repetition is extreme, return true
       if (matchCount * freq > 8 || (matchCount * freq) / lines.length > 0.8) {
         return true;
       }
     }
   }
-
   return false;
 };
 
 /**
- * Post process the completion result
+ * Post-process the completion result
  * @param completion - The raw completion result string
  * @param prefix - The preceding context string
  * @param suffix - The succeeding context string
@@ -106,16 +78,71 @@ export const postProcessCompletion = (
   modelName: string,
 ): string | null => {
   // Don't return empty completions
+  /**
+   * Filter out empty completions
+   * @example
+   * completion: "   "
+   * result: null
+   */
   if (completion.trim().length <= 0) {
     return null;
   }
 
-  // Filter if the first line rewrites the previous line
+  const lastLineOfPrefix = prefix.split('\n').slice(-1)[0]?.trim() || '';
+
+  /**
+   * If the completion starts with the last line of the prefix, remove it
+   * @example
+   * prefix: "  const numberX = "
+   * completion: "  const numberX = 5;"
+   * result: "5;"
+   */
+  if (completion.startsWith(lastLineOfPrefix)) {
+    completion = completion.slice(lastLineOfPrefix.length);
+  }
+
+  /**
+   * If the last line of the prefix is empty or contains only spaces, remove leading '\n' in the completion
+   * @example
+   * prefix: "  \n"
+   * completion: "\nconst result = 5;"
+   * result: "const result = 5;"
+   */
+  if (!lastLineOfPrefix || lastLineOfPrefix.trim() === '') {
+    completion = completion.replace(/^\n+/, '');
+  }
+
+  /**
+   * If the completion ends with the first line of the suffix, remove it
+   * @example
+   * suffix: "return x;"
+   * completion: "const x = 5;\nreturn x;"
+   * result: "const x = 5;"
+   */
+  const firstLineOfSuffix = suffix
+    .split('\n')
+    .find((line) => line.trim().length > 0);
+  if (firstLineOfSuffix && completion.endsWith(firstLineOfSuffix)) {
+    completion = completion.slice(0, -firstLineOfSuffix.length);
+  }
+
+  /**
+   * Filter if the first line rewrites the previous line
+   * @example
+   * prefix: "const x = 5;"
+   * completion: "const x = 5;"
+   * result: null
+   */
   if (isRewritesLineAbove(completion, prefix)) {
     return null;
   }
 
-  // Filter out completions with extreme repetition of lines
+  /**
+   * Filter out completions with extreme repetition of lines
+   * @example
+   * completion: "const x = 5;\nconst x = 5;\nconst x = 5;"
+   * result: null
+   */
   if (isExtremeRepetition(completion)) {
     return null;
   }
@@ -123,17 +150,31 @@ export const postProcessCompletion = (
   // Remove trailing whitespace
   completion = completion.trimEnd();
 
-  // Handle model-specific cases (e.g., "codestral" and "qwen")
-  if (modelName.includes('codestral')) {
+  /**
+   * Handle model-specific cases (e.g., "codestral")
+   * @example
+   * modelName: "codestral"
+   * prefix: "const x = 5; "
+   * completion: " const y = 10;"
+   * result: "const y = 10;"
+   */
+  if (modelName.toLowerCase().includes('codestral')) {
     // Codestral sometimes starts with an extra space
-    if (completion[0] === ' ' && completion[1] !== ' ') {
+    if (completion.startsWith(' ') && completion[1] !== ' ') {
       if (prefix.endsWith(' ') && suffix.startsWith('\n')) {
         completion = completion.slice(1);
       }
     }
   }
 
-  // If completion starts with multiple whitespaces but the cursor is at the end of the line
+  /**
+   * If completion starts with multiple whitespaces but the cursor is at the end of the line
+   * @example
+   * prefix: "const x = 5;"
+   * completion: "  const y = 10;"
+   * suffix: "\n"
+   * result: null
+   */
   if (
     (completion.startsWith('  ') || completion.startsWith('\t')) &&
     !prefix.endsWith('\n') &&
@@ -142,7 +183,13 @@ export const postProcessCompletion = (
     return null;
   }
 
-  // If prefix ends with space and so does completion, then remove the space from completion
+  /**
+   * If the prefix ends with a space and so does completion, remove the space from the completion
+   * @example
+   * prefix: "const x = 5; "
+   * completion: " const y = 10;"
+   * result: "const y = 10;"
+   */
   if (prefix.endsWith(' ') && completion.startsWith(' ')) {
     completion = completion.slice(1);
   }

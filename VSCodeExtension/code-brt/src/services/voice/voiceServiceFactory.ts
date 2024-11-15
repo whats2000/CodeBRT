@@ -1,11 +1,7 @@
 import vscode from 'vscode';
 
 import type { SettingsManager } from '../../api';
-import {
-  LoadedVoiceServices,
-  VoiceService,
-  VoiceServiceType,
-} from '../../types';
+import { LoadedVoiceServices, VoiceService, VoiceServiceType } from './types';
 import { GptSoVitsApiService } from './gptSoVitsService';
 import { OpenaiVoiceService } from './openaiVoiceService';
 import { VisualStudioCodeBuiltInService } from './visualStudioCodeBuildInService';

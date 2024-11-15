@@ -12,13 +12,19 @@ import { useDispatch, useSelector } from 'react-redux';
 
 import type { AppDispatch, RootState } from '../../redux';
 import { WebviewContext } from '../../WebviewContext';
+import { useRefs } from '../../context/RefContext';
 import { useClipboardFiles, useWindowSize } from '../../hooks';
 import {
   deleteFile,
   handleFilesUpload,
 } from '../../redux/slices/fileUploadSlice';
 import { CancelOutlined } from '../../icons';
-import { INPUT_MESSAGE_KEY } from '../../../constants';
+import { INPUT_MESSAGE_KEY } from 'src/constants';
+import {
+  processMessage,
+  processToolCall,
+} from '../../redux/slices/conversationSlice';
+import { setRefId } from '../../redux/slices/tourSlice';
 
 const StyledInputContainer = styled.div`
   display: flex;
@@ -38,24 +44,14 @@ const StyledUpload = styled(Upload)`
 `;
 
 type InputContainerProps = {
+  tempIdRef: React.MutableRefObject<string | null>;
   inputContainerRef: React.RefObject<HTMLDivElement>;
-  processMessage: ({
-    message,
-    parentId,
-    files,
-    isEdited,
-  }: {
-    message: string;
-    parentId: string;
-    files?: string[];
-    isEdited?: boolean;
-  }) => Promise<void>;
-  isProcessing: boolean;
 };
 
 export const InputContainer = React.memo<InputContainerProps>(
-  ({ inputContainerRef, processMessage, isProcessing }) => {
+  ({ tempIdRef, inputContainerRef }) => {
     const { callApi, addListener, removeListener } = useContext(WebviewContext);
+    const { registerRef } = useRefs();
     const [enterPressCount, setEnterPressCount] = useState(0);
     const [previewOpen, setPreviewOpen] = useState(false);
     const [previewImage, setPreviewImage] = useState('');
@@ -66,6 +62,9 @@ export const InputContainer = React.memo<InputContainerProps>(
     );
 
     const fileInputRef = useRef<HTMLInputElement>(null);
+    const uploadFileButtonRef = registerRef('uploadFileButton');
+    const voiceInputButtonRef = registerRef('voiceInputButton');
+    const inputMessageRef = registerRef('inputMessage');
 
     const dispatch = useDispatch<AppDispatch>();
     const { uploadedFiles } = useSelector(
@@ -84,6 +83,30 @@ export const InputContainer = React.memo<InputContainerProps>(
     useClipboardFiles((files) => dispatch(handleFilesUpload(files)));
 
     const { innerWidth } = useWindowSize();
+
+    useEffect(() => {
+      dispatch(
+        setRefId({
+          tourName: 'quickStart',
+          targetId: 'uploadFileButton',
+          stepIndex: 1,
+        }),
+      );
+      dispatch(
+        setRefId({
+          tourName: 'quickStart',
+          targetId: 'voiceInputButton',
+          stepIndex: 2,
+        }),
+      );
+      dispatch(
+        setRefId({
+          tourName: 'quickStart',
+          targetId: 'inputMessage',
+          stepIndex: 3,
+        }),
+      );
+    }, [dispatch]);
 
     useEffect(() => {
       // Note: The link will break in vscode webview, so we need to remove the href attribute to prevent it.
@@ -108,12 +131,41 @@ export const InputContainer = React.memo<InputContainerProps>(
 
     const resetEnterPressCount = () => setEnterPressCount(0);
 
+    const currentEntry =
+      conversationHistory.entries[conversationHistory.current];
+    const isToolResponse = currentEntry?.role === 'tool';
+
     const sendMessage = async () => {
-      await processMessage({
-        message: inputMessage,
-        parentId: conversationHistory.current,
-        files: uploadedFiles,
-      }).then(() => {
+      // If the current entry is a tool response, we need to prevent a sending message from the input
+      if (isToolResponse) {
+        return;
+      }
+      const toolCall = currentEntry?.toolCalls?.[0];
+
+      if (toolCall) {
+        // If the current entry is a tool call.
+        // We use response for the tool call instead of the input message
+        dispatch(
+          processToolCall({
+            toolCall: toolCall,
+            entry: currentEntry,
+            rejectByUserMessage: inputMessage,
+            tempIdRef,
+          }),
+        );
+        setInputMessage('');
+        localStorage.setItem(INPUT_MESSAGE_KEY, '');
+        return;
+      }
+
+      dispatch(
+        processMessage({
+          message: inputMessage,
+          parentId: conversationHistory.current,
+          tempIdRef,
+          files: uploadedFiles,
+        }),
+      ).then(() => {
         setInputMessage('');
         localStorage.setItem(INPUT_MESSAGE_KEY, '');
       });
@@ -122,7 +174,7 @@ export const InputContainer = React.memo<InputContainerProps>(
     const handleKeyDown = async (
       event: React.KeyboardEvent<HTMLTextAreaElement>,
     ) => {
-      if (isProcessing) {
+      if (conversationHistory.isProcessing) {
         return;
       }
 
@@ -140,7 +192,7 @@ export const InputContainer = React.memo<InputContainerProps>(
         }
         setEnterPressCount((prev) => prev + 1);
 
-        if (enterPressCount + 1 >= 2 && !isProcessing) {
+        if (enterPressCount + 1 >= 2 && !conversationHistory.isProcessing) {
           await sendMessage();
           resetEnterPressCount();
         }
@@ -256,19 +308,20 @@ export const InputContainer = React.memo<InputContainerProps>(
         )}
         <UploadedImageContainer>
           <StyledUpload
-            fileList={isProcessing ? [] : fileList}
+            fileList={conversationHistory.isProcessing ? [] : fileList}
             listType='picture-card'
             onRemove={handleRemove}
             onPreview={handlePreview}
             supportServerRender={false}
           />
         </UploadedImageContainer>
-        <Flex gap={10}>
+        <Flex gap={10} wrap={innerWidth < 320}>
           <Button
+            ref={uploadFileButtonRef}
             type={'text'}
             icon={<UploadOutlined />}
             onClick={handleUploadButtonClick}
-            disabled={isProcessing}
+            disabled={conversationHistory.isProcessing}
           />
           <input
             type='file'
@@ -279,32 +332,49 @@ export const InputContainer = React.memo<InputContainerProps>(
             style={{ display: 'none' }}
           />
           <Button
+            ref={voiceInputButtonRef}
             type={'text'}
             icon={isRecording ? <LoadingOutlined /> : <AudioOutlined />}
             onClick={handleVoiceInput}
-            disabled={isProcessing}
+            disabled={conversationHistory.isProcessing}
           />
-          <Input.TextArea
-            value={inputMessage}
-            onChange={handleInputMessageChange}
-            onKeyDown={handleKeyDown}
-            placeholder={innerWidth > 520 ? 'Paste images...' : 'Ask...'}
-            disabled={isProcessing}
-            autoSize={{ minRows: 1, maxRows: isProcessing ? 2 : 10 }}
-            allowClear
-          />
-          <Flex vertical={true}>
-            <Button onClick={isProcessing ? handleCancelResponse : sendMessage}>
-              {isProcessing ? <CancelOutlined /> : <SendOutlined />}
-            </Button>
-            {inputMessage.length > 100 && (
-              <Tag
-                color='warning'
-                style={{ marginTop: 5, width: '100%', textAlign: 'center' }}
+          <Flex gap={10} style={{ width: '100%' }} ref={inputMessageRef}>
+            <Input.TextArea
+              value={inputMessage}
+              onChange={handleInputMessageChange}
+              onKeyDown={handleKeyDown}
+              placeholder={innerWidth > 520 ? 'Paste images...' : 'Ask...'}
+              disabled={conversationHistory.isProcessing || isToolResponse}
+              autoSize={{
+                minRows: 1,
+                maxRows: conversationHistory.isProcessing ? 2 : 10,
+              }}
+              allowClear
+            />
+            <Flex vertical={true}>
+              <Button
+                onClick={
+                  conversationHistory.isProcessing
+                    ? handleCancelResponse
+                    : sendMessage
+                }
+                disabled={isToolResponse}
               >
-                {inputMessage.length}
-              </Tag>
-            )}
+                {conversationHistory.isProcessing ? (
+                  <CancelOutlined />
+                ) : (
+                  <SendOutlined />
+                )}
+              </Button>
+              {inputMessage.length > 100 && (
+                <Tag
+                  color='warning'
+                  style={{ marginTop: 5, width: '100%', textAlign: 'center' }}
+                >
+                  {inputMessage.length}
+                </Tag>
+              )}
+            </Flex>
           </Flex>
         </Flex>
       </StyledInputContainer>

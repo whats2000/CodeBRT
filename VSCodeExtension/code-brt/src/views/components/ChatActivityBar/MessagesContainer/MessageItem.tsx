@@ -2,17 +2,17 @@ import React, { useEffect, useState } from 'react';
 import type { GlobalToken } from 'antd';
 import { theme } from 'antd';
 import styled from 'styled-components';
-import { useDispatch, useSelector } from 'react-redux';
-import * as hljs from 'react-syntax-highlighter/dist/cjs/styles/hljs';
+import { useSelector } from 'react-redux';
 
 import type { ConversationEntry, Modification } from '../../../../types';
-import type { AppDispatch, RootState } from '../../../redux';
-import { updateAndSaveSetting } from '../../../redux/slices/settingsSlice';
+import type { RootState } from '../../../redux';
 import { TopToolBar } from './TopToolBar';
 import { TextEditContainer } from './TextEditContainer';
 import { TextContainer } from './TextContainer';
 import { ImageContainer } from './ImageContainer';
 import { MessageFloatButton } from './MessageFloatButton';
+import { ToolActionContainer } from './ToolActionContainer';
+import { ToolResponseContainer } from './ToolResponseContainer';
 
 const MessageBubbleWrapper = styled.div<{
   $paddingBottom: boolean;
@@ -28,7 +28,7 @@ const MessageBubble = styled.div<{
   display: flex;
   flex-direction: column;
   background-color: ${({ $user, $token }) =>
-    $user === 'user' ? $token.colorBgLayout : $token.colorBgElevated};
+    $user !== 'AI' ? $token.colorBgLayout : $token.colorBgElevated};
   border-radius: 15px;
   border: 1px solid ${({ $token }) => $token.colorBorder};
   padding: 8px 15px;
@@ -39,7 +39,6 @@ const MessageBubble = styled.div<{
 type MessageItemProps = {
   index: number;
   conversationHistoryEntries: ConversationEntry[];
-  isProcessing: boolean;
   hoveredBubble: {
     current: HTMLDivElement | null;
     entry: ConversationEntry | null;
@@ -65,9 +64,9 @@ type MessageItemProps = {
   isAudioPlaying: boolean;
   isStopAudio: boolean;
   handleConvertTextToVoice: (text: string) => void;
-  handleRedo: (entryId: string) => void;
   floatButtonsXPosition: number;
   showFloatButtons: boolean;
+  tempIdRef: React.MutableRefObject<string | null>;
   handleOpenApplyChangesAlert: (updatedModifications: Modification[]) => void;
 };
 
@@ -75,7 +74,6 @@ export const MessageItem = React.memo<MessageItemProps>(
   ({
     index,
     conversationHistoryEntries,
-    isProcessing,
     hoveredBubble,
     setHoveredBubble,
     setShowFloatButtons,
@@ -89,9 +87,9 @@ export const MessageItem = React.memo<MessageItemProps>(
     isAudioPlaying,
     isStopAudio,
     handleConvertTextToVoice,
-    handleRedo,
     floatButtonsXPosition,
     showFloatButtons,
+    tempIdRef,
     handleOpenApplyChangesAlert,
   }) => {
     const token = theme.useToken();
@@ -99,24 +97,20 @@ export const MessageItem = React.memo<MessageItemProps>(
 
     const [editedMessage, setEditedMessage] = useState(entry.message);
 
-    const dispatch = useDispatch<AppDispatch>();
-    const { activeModelService } = useSelector(
-      (rootState: RootState) => rootState.modelService,
-    );
     const conversationHistory = useSelector(
       (rootState: RootState) => rootState.conversation,
     );
-    const { settings } = useSelector(
-      (rootState: RootState) => rootState.settings,
-    );
-
-    const setHljsTheme = (theme: keyof typeof hljs) => {
-      dispatch(updateAndSaveSetting({ key: 'hljsTheme', value: theme }));
-    };
 
     useEffect(() => {
       setEditedMessage(entry.message);
     }, [entry.id]);
+
+    const handleRedo = (entryId: string) => {
+      const previousMessageId = conversationHistory.entries[entryId].parent;
+      if (!previousMessageId) return;
+      const previousMessage = conversationHistory.entries[previousMessageId];
+      handleSaveEdit(previousMessage.id, previousMessage.message);
+    };
 
     const handleMouseEnter = (
       e: React.MouseEvent<HTMLDivElement>,
@@ -131,11 +125,56 @@ export const MessageItem = React.memo<MessageItemProps>(
       setEditingEntryId(null);
     };
 
+    const renderContainer = () => {
+      if (entry.role === 'tool') {
+        return (
+          <ToolResponseContainer
+            entry={entry}
+            toolStatus={toolStatus}
+            showActionButtons={
+              conversationHistory.current === entry.id &&
+              !entry.id.startsWith('temp')
+            }
+          />
+        );
+      }
+      if (entry.id === editingEntryId) {
+        return (
+          <TextEditContainer
+            entry={entry}
+            isProcessing={conversationHistory.isProcessing}
+            editedMessage={editedMessage}
+            setEditedMessage={setEditedMessage}
+            handleSaveEdit={handleSaveEdit}
+            handleCancelEdit={handleCancelEdit}
+          />
+        );
+      }
+      return (
+        <div>
+          <TextContainer
+            entry={entry}
+            isProcessing={conversationHistory.isProcessing}
+            conversationHistoryCurrent={conversationHistory.current}
+            toolStatus={toolStatus}
+            handleOpenApplyChangesAlert={handleOpenApplyChangesAlert}
+          />
+          <ImageContainer entry={entry} />
+          <ToolActionContainer
+            entry={entry}
+            tempIdRef={tempIdRef}
+            showActionButtons={conversationHistory.current === entry.id}
+          />
+        </div>
+      );
+    };
+
     return (
       <>
         <MessageBubbleWrapper
           $paddingBottom={
-            index === conversationHistoryEntries.length - 1 && isProcessing
+            index === conversationHistoryEntries.length - 1 &&
+            conversationHistory.isProcessing
           }
         >
           <MessageBubble
@@ -145,7 +184,6 @@ export const MessageItem = React.memo<MessageItemProps>(
             onMouseEnter={(e) => handleMouseEnter(e, entry)}
           >
             <TopToolBar
-              modelType={activeModelService}
               index={index}
               conversationHistoryEntries={conversationHistoryEntries}
               isAudioPlaying={isAudioPlaying}
@@ -157,32 +195,8 @@ export const MessageItem = React.memo<MessageItemProps>(
               copied={copied}
               handleCopy={handleCopy}
               handleRedo={handleRedo}
-              isProcessing={isProcessing}
             />
-
-            {entry.id === editingEntryId ? (
-              <TextEditContainer
-                entry={entry}
-                isProcessing={isProcessing}
-                editedMessage={editedMessage}
-                setEditedMessage={setEditedMessage}
-                handleSaveEdit={handleSaveEdit}
-                handleCancelEdit={handleCancelEdit}
-              />
-            ) : (
-              <div>
-                <TextContainer
-                  entry={entry}
-                  conversationHistoryCurrent={conversationHistory.current}
-                  isProcessing={isProcessing}
-                  hljsTheme={settings.hljsTheme}
-                  setHljsTheme={setHljsTheme}
-                  toolStatus={toolStatus}
-                  handleOpenApplyChangesAlert={handleOpenApplyChangesAlert}
-                />
-                <ImageContainer entry={entry} />
-              </div>
-            )}
+            {renderContainer()}
           </MessageBubble>
         </MessageBubbleWrapper>
         {hoveredBubble && showFloatButtons && (

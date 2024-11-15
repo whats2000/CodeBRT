@@ -4,8 +4,10 @@ import {
   LanguageModelService,
   GetResponseOptions,
   ModelServiceType,
-} from '../../../types';
+  ResponseWithAction,
+} from '../types';
 import { SettingsManager } from '../../../api';
+import { MODEL_SERVICE_CONSTANTS } from '../../../constants';
 
 /**
  * Abstract class for the Language Model Service
@@ -20,6 +22,44 @@ export abstract class AbstractLanguageModelService
     protected currentModel: string,
     protected availableModelNames: string[],
   ) {}
+
+  protected handleGetResponseError(
+    error: unknown,
+    modelServiceType: ModelServiceType,
+    partialResponse?: string,
+  ): ResponseWithAction {
+    vscode.window
+      .showErrorMessage(
+        'Failed to get response from ' +
+          modelServiceType.charAt(0).toUpperCase() +
+          modelServiceType.slice(1) +
+          ' Service: ' +
+          error,
+        'Get API Key',
+        'Troubleshooting',
+      )
+      .then((selection) => {
+        if (selection === 'Get API Key') {
+          void vscode.env.openExternal(
+            vscode.Uri.parse(MODEL_SERVICE_CONSTANTS[modelServiceType].apiLink),
+          );
+        }
+        if (selection === 'Troubleshooting') {
+          void vscode.env.openExternal(
+            vscode.Uri.parse(
+              'https://whats2000.github.io/CodeBRT/docs/troubleshooting/',
+            ),
+          );
+        }
+      });
+
+    return {
+      textResponse:
+        partialResponse === '' || !partialResponse
+          ? 'Failed to get response'
+          : partialResponse,
+    };
+  }
 
   public updateAvailableModels(newAvailableModels: string[]): void {
     this.availableModelNames = newAvailableModels;
@@ -58,27 +98,12 @@ export abstract class AbstractLanguageModelService
     if (this.availableModelNames.includes(newModel)) {
       this.currentModel = newModel;
       lastSelectedModel[this.serviceType] = newModel;
-      this.settingsManager
-        .set('lastSelectedModel', lastSelectedModel)
-        .then(() => {
-          void vscode.window.showInformationMessage(
-            `Switched to model: ${newModel}`,
-          );
-        });
+      void this.settingsManager.set('lastSelectedModel', lastSelectedModel);
     } else {
       void vscode.window.showErrorMessage(
         `Model ${newModel} is not available.`,
       );
     }
-  }
-
-  /**
-   * Stop current response
-   */
-  public async stopResponse(): Promise<void> {
-    void vscode.window.showInformationMessage(
-      'This feature is not supported by the current model.',
-    );
   }
 
   /**
@@ -88,5 +113,16 @@ export abstract class AbstractLanguageModelService
    * @returns The response for the query
    * @see GetResponseOptions
    */
-  public abstract getResponse(options: GetResponseOptions): Promise<string>;
+  public abstract getResponse(
+    options: GetResponseOptions,
+  ): Promise<ResponseWithAction>;
+
+  /**
+   * Stop current response
+   */
+  public async stopResponse(): Promise<void> {
+    void vscode.window.showInformationMessage(
+      'This feature is not supported by the current model.',
+    );
+  }
 }

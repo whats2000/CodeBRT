@@ -1,13 +1,18 @@
-import React, { createContext, useContext, useState } from 'react';
+import React, { useState } from 'react';
 import SyntaxHighlighter from 'react-syntax-highlighter';
 import * as hljs from 'react-syntax-highlighter/dist/cjs/styles/hljs';
 import { Button, Flex, Select } from 'antd';
-import { BgColorsOutlined } from '@ant-design/icons';
+import {
+  ArrowsAltOutlined,
+  BgColorsOutlined,
+  ShrinkOutlined,
+} from '@ant-design/icons';
 import styled from 'styled-components';
 
 import { CopyButton } from './CopyButton';
-import InsertButton from './InsertCode';
-import type { Modification } from '../../../types';
+import { updateAndSaveSetting } from '../../redux/slices/settingsSlice';
+import { AppDispatch, RootState } from '../../redux';
+import { useDispatch, useSelector } from 'react-redux';
 
 const CodeContainer = styled.div<{ $dynamicStyle: React.CSSProperties }>`
   border-radius: 4px !important;
@@ -50,6 +55,7 @@ const OtherCodeBlock = styled.code`
   overflow-x: scroll;
 `;
 
+const MAX_LINES = 10;
 type RenderCodeProviderProps = {
   value: {
     hljsTheme: keyof typeof hljs;
@@ -80,8 +86,17 @@ export const RendererCode: { [nodeType: string]: React.ElementType } = {
   code: ({ node, inline, className, children, ...props }) => {
     const [copied, setCopied] = useState(false);
     const [showSetting, setShowSetting] = useState(false);
-    const { hljsTheme, setHljsTheme, handleOpenApplyChangesAlert } =
-      useContext(RendererCodeContext);
+    const [expanded, setExpanded] = useState(false);
+    const dispatch = useDispatch<AppDispatch>();
+
+    const setHljsTheme = (theme: keyof typeof hljs) => {
+      dispatch(updateAndSaveSetting({ key: 'hljsTheme', value: theme }));
+    };
+
+    const { hljsTheme } = useSelector(
+      (rootState: RootState) => rootState.settings.settings,
+    );
+
     const match = /language-(\w+)/.exec(className || '');
     const generatedCode = String(children).replace(/\n$/, '');
 
@@ -96,6 +111,12 @@ export const RendererCode: { [nodeType: string]: React.ElementType } = {
         })
         .catch((err) => console.error('Failed to copy text: ', err));
     };
+
+    const codeLines = String(children).split('\n');
+    const isExpandable = codeLines.length > MAX_LINES;
+    const displayedCode = expanded
+      ? codeLines.join('\n')
+      : codeLines.slice(0, MAX_LINES).join('\n');
 
     return !inline && match ? (
       <CodeContainer $dynamicStyle={hljsStyle.hljs}>
@@ -151,8 +172,17 @@ export const RendererCode: { [nodeType: string]: React.ElementType } = {
           PreTag='div'
           {...props}
         >
-          {String(children).replace(/\n$/, '')}
+          {displayedCode}
         </CodeBlock>
+        {isExpandable && (
+          <Button
+            icon={expanded ? <ShrinkOutlined /> : <ArrowsAltOutlined />}
+            type='text'
+            onClick={() => setExpanded(!expanded)}
+          >
+            {expanded ? 'Show Less' : 'Show More'}
+          </Button>
+        )}
       </CodeContainer>
     ) : children?.includes('\n') ? (
       <OtherCodeBlock className={className} {...props}>

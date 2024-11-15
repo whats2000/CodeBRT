@@ -6,9 +6,9 @@ import * as vscode from 'vscode';
 import * as tokenizer from 'simple-text-tokenizer';
 import removeMarkdown from 'markdown-to-text';
 
-import type { VoiceService } from '../../../types';
+import type { VoiceService } from '../types';
 import { SettingsManager } from '../../../api';
-import { SoundPlay, AudioRecorder } from '../../../utils';
+import { SoundPlay, AudioRecorder } from '../utils';
 
 export abstract class AbstractVoiceService implements VoiceService {
   protected readonly context: vscode.ExtensionContext;
@@ -42,6 +42,10 @@ export abstract class AbstractVoiceService implements VoiceService {
    * Preprocesses the given text to remove unnecessary characters.
    * @param text - The text to preprocess.
    */
+  /**
+   * Preprocesses the given text to remove unnecessary characters and treat new lines as sentence terminators.
+   * @param text - The text to preprocess.
+   */
   private preprocessText(text: string): string {
     text = text.replace(
       /^([*-+]\s.*?)([:.!?：。！？]?)$/gm,
@@ -49,6 +53,10 @@ export abstract class AbstractVoiceService implements VoiceService {
         return p2 ? match : p1 + '.';
       },
     );
+
+    // Replace newline characters with a period followed by a space
+    text = text.replace(/\n+/g, '. ');
+
     return removeMarkdown(text);
   }
 
@@ -89,7 +97,7 @@ export abstract class AbstractVoiceService implements VoiceService {
     const sentences = tokenizer.getSentenceTokens(text);
     const chunks = [];
     for (let i = 0; i < sentences.length; i += chunkSize) {
-      chunks.push(sentences.slice(i, i + chunkSize).join(' '));
+      chunks.push(sentences.slice(i, i + chunkSize).join('. '));
     }
     return chunks;
   }
@@ -236,8 +244,6 @@ export abstract class AbstractVoiceService implements VoiceService {
       );
     }
 
-    vscode.window.showInformationMessage(`Recording started.`);
-
     let filePath: string;
 
     try {
@@ -262,8 +268,6 @@ export abstract class AbstractVoiceService implements VoiceService {
         });
       return '';
     }
-
-    vscode.window.showInformationMessage(`Recording finished.`);
 
     return this.sendVoiceToTextRequest(filePath);
   }

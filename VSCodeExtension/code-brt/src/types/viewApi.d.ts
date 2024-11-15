@@ -4,8 +4,14 @@ import {
   ConversationHistory,
   ConversationHistoryIndexList,
   ConversationModelAdvanceSettings,
+  ToolCallEntry,
+  ToolCallResponse,
 } from './conversationHistory';
-import { ModelServiceType } from './modelServiceType';
+import {
+  AddConversationEntryParams,
+  ModelServiceType,
+  ResponseWithAction,
+} from '../types';
 
 /**
  * Represents the modifications in the code.
@@ -72,15 +78,30 @@ export type ViewApiEvent<K extends keyof ViewEvents = keyof ViewEvents> = {
 };
 
 /**
+ * Represents the API structure for the getLanguageModelResponse method.
+ * @property modelServiceType - The type of the model service to get the response for.
+ * @property query - The query to get the response for.
+ * @property images - The image paths to use for the query, if not provided, the query will be used without images.
+ * @property currentEntryID - The current entry ID, if not provided, the history will be used from the latest entry.
+ * @property useStream - Whether to use streaming for the response.
+ * @property showStatus - Whether to show the status if the model is using tools.
+ * @property toolCallResponse - The tool call response to use for the query.
+ */
+export type GetLanguageModelResponseParams = {
+  modelServiceType: ModelServiceType;
+  query: string;
+  images?: string[];
+  currentEntryID?: string;
+  useStream?: boolean;
+  showStatus?: boolean;
+  toolCallResponse?: ToolCallResponse;
+};
+
+/**
  * Defines the API for the view.
  * If a new API method is added, it should be added here as well.
  */
 export type ViewApi = {
-  /**
-   * Get the contents of the pdf file.
-   */
-  extractPdfText: (filePath: string) => Promise<string>;
-
   /**
    * Set the target setting of the extension.
    * @param key - The key of the setting to set.
@@ -111,13 +132,17 @@ export type ViewApi = {
    * Show an alert message.
    * @param msg - The message to show.
    * @param type - The type of the message in ["info", "warning", "error"]
+   * @param selections - The selections to show.
+   * And invoke the command when selected.
    */
-  alertMessage: (msg: string, type: 'info' | 'warning' | 'error') => void;
-
-  /**
-   * Tell use the action need to reload the extension.
-   */
-  alertReload: (msg?: string) => void;
+  alertMessage: (
+    msg: string,
+    type: 'info' | 'warning' | 'error',
+    selections?: {
+      text: string;
+      commandArgs: string[];
+    }[],
+  ) => void;
 
   /**
    * Get the response for a query.
@@ -127,15 +152,11 @@ export type ViewApi = {
    * @param currentEntryID - The current entry ID, if not provided, the history will be used from the latest entry.
    * @param useStream - Whether to use streaming for the response.
    * @param useStatus - Whether to show the status if the model is using tools.
+   * @param toolCallResponse - The tool call response to use for the query.
    */
   getLanguageModelResponse: (
-    modelServiceType: ModelServiceType,
-    query: string,
-    images?: string[],
-    currentEntryID?: string,
-    useStream?: boolean,
-    showStatus?: boolean,
-  ) => Promise<string>;
+    options: GetLanguageModelResponseParams,
+  ) => Promise<ResponseWithAction>;
 
   /**
    * Stop the language model response.
@@ -222,14 +243,13 @@ export type ViewApi = {
    * @param message - The message to add.
    * @param images - The images to add.
    * @param modelServiceType - The type of the model service to add the entry to.
+   * @param modelName - The name of the model to add the entry to.
+   * @param toolCalls - The tool calls to add.
+   * @param toolResponses - The tool responses to add.
    * @returns The ID of the new entry.
    */
   addConversationEntry: (
-    parentID: string,
-    sender: 'user' | 'AI',
-    message: string,
-    images?: string[],
-    modelServiceType?: ModelServiceType,
+    entry: AddConversationEntryParams,
   ) => Promise<ConversationEntry>;
 
   /**
@@ -346,6 +366,20 @@ export type ViewApi = {
   openExtensionMarketplace: (extensionId: string) => Promise<void>;
 
   /**
+   * Approve the tool call.
+   * @param toolCall - The tool call to approve.
+   * @returns The response of the tool call.
+   */
+  approveToolCall: (toolCall: ToolCallEntry) => Promise<ToolCallResponse>;
+
+  /**
+   * Continue with the action made by the tool call.
+   * And let the model continue.
+   * @param entry - The conversation entry to confirm the tool call for.
+   */
+  continueWithToolCallResponse: (entry: ConversationEntry) => Promise<void>;
+
+  /**
    * Insert code into the editor at the current cursor position.
    * @param code - The code to insert.
    */
@@ -363,10 +397,14 @@ export type ViewApi = {
    * @returns The result of the code fixing process.
    */
   fixCode: (options: FixCodeOptions) => Promise<FixCodeResponse>;
+
   applyDecorations: (modifications: Modification[]) => Promise<void>;
+
   insertSelectedCodeToChat: () => void;
   revertTemporaryInsertions(): Promise<void>;
+
   getEditorInfo: () => void;
+
   showFullDiffInEditor: ({
     originalCode,
     modifiedCode,

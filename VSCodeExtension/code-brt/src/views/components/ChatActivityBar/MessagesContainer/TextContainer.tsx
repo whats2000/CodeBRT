@@ -7,7 +7,6 @@ import styled from 'styled-components';
 import rehypeKatex from 'rehype-katex';
 import remarkMath from 'remark-math';
 import remarkGfm from 'remark-gfm';
-import hljs from 'react-syntax-highlighter/dist/cjs/styles/hljs';
 
 import type { ConversationEntry, Modification } from '../../../../types';
 import { preprocessLaTeX } from '../../../utils';
@@ -98,8 +97,6 @@ type MessageTextContainerProps = {
   entry: ConversationEntry;
   conversationHistoryCurrent: string;
   isProcessing: boolean;
-  hljsTheme: keyof typeof hljs;
-  setHljsTheme: (theme: keyof typeof hljs) => void;
   toolStatus: string;
   handleOpenApplyChangesAlert: (updatedModifications: Modification[]) => void;
 };
@@ -108,8 +105,6 @@ export const TextContainer: React.FC<MessageTextContainerProps> = ({
   entry,
   conversationHistoryCurrent,
   isProcessing,
-  hljsTheme,
-  setHljsTheme,
   toolStatus,
   handleOpenApplyChangesAlert,
 }) => {
@@ -122,16 +117,12 @@ export const TextContainer: React.FC<MessageTextContainerProps> = ({
           <TypingAnimation
             message={entry.message}
             isProcessing={isProcessing}
-            hljsTheme={hljsTheme}
-            setHljsTheme={setHljsTheme}
           />
           {toolStatus !== '' && <ToolStatusBlock status={toolStatus} />}
         </>
       ) : (
         <RendererCodeProvider
           value={{
-            hljsTheme,
-            setHljsTheme,
             handleOpenApplyChangesAlert,
           }}
         >
