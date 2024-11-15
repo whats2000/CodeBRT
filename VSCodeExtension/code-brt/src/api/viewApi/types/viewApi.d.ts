@@ -3,6 +3,7 @@ import { LanguageModelServiceApi } from './languageModelServiceApi';
 import { HistoryManagerApi } from './historyManagerApi';
 import { VoiceServiceApi } from './voiceServiceApi';
 import { MiscApi } from './miscApi';
+import { CodeFixerApi } from './codeFixerApi';
 
 /**
  * Represents the API request structure for the view.
@@ -69,7 +70,8 @@ export type ViewApi = SettingApi &
   LanguageModelServiceApi &
   HistoryManagerApi &
   VoiceServiceApi &
-  MiscApi;
+  MiscApi &
+  CodeFixerApi;
 
 /**
  * Defines the events that the view can trigger.

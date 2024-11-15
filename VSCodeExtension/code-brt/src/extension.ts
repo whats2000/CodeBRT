@@ -13,8 +13,10 @@ import {
 } from './api';
 import { ModelServiceFactory } from './services/languageModel';
 import { VoiceServiceFactory } from './services/voice';
+import { OpenaiCodeFixerService } from './services/codeFixer';
 import { TerminalManager } from './integrations';
 import { createViewApi } from './api/viewApi/viewApiFactory';
+import { DiffViewProvider } from './diff';
 
 let extensionContext: vscode.ExtensionContext | undefined = undefined;
 
@@ -51,6 +53,8 @@ export const activate = async (ctx: vscode.ExtensionContext) => {
     models,
     voiceServices,
     connectedViews,
+    openaiCodeFixerService,
+    diffViewProvider,
   );
 
   void registerAndConnectView(ctx, settingsManager, 'chatActivityBar', api);
