@@ -17,6 +17,7 @@ import { OpenaiCodeFixerService } from './services/codeFixer';
 import { TerminalManager } from './integrations';
 import { createViewApi } from './api/viewApi/viewApiFactory';
 import { DiffViewProvider } from './diff';
+import { registerCodeActions } from './api/registerCodeActions';
 
 let extensionContext: vscode.ExtensionContext | undefined = undefined;
 
@@ -59,31 +60,7 @@ export const activate = async (ctx: vscode.ExtensionContext) => {
 
   void registerAndConnectView(ctx, settingsManager, 'chatActivityBar', api);
   void registerAndConnectView(ctx, settingsManager, 'workPanel', api);
-  vscode.languages.registerCodeActionsProvider('javascript', {
-    provideCodeActions(
-      document: vscode.TextDocument,
-      range: vscode.Range,
-      _context: vscode.CodeActionContext,
-      _token: vscode.CancellationToken,
-    ): vscode.ProviderResult<(vscode.CodeAction | vscode.Command)[]> {
-      const fixCodeAction = new vscode.CodeAction(
-        'Quick Fix Code',
-        vscode.CodeActionKind.QuickFix,
-      );
-      fixCodeAction.command = {
-        title: 'Send to Chat',
-        command: 'code-brt.fixCode',
-        arguments: [document.getText(range)],
-      };
-      return [fixCodeAction];
-    },
-  });
-
-  vscode.commands.registerCommand('code-brt.fixCode', (selectedCode) => {
-    if (selectedCode) {
-      api.insertSelectedCodeToChat();
-    }
-  });
+  registerCodeActions(api);
   registerInlineCompletion(ctx, settingsManager, connectedViews);
 };
 
