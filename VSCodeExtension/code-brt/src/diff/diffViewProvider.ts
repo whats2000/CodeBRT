@@ -1,8 +1,10 @@
-import * as vscode from 'vscode';
 import * as path from 'path';
 import * as fs from 'fs/promises';
-import { DecorationController } from './DecorationController';
+
+import * as vscode from 'vscode';
 import * as diff from 'diff';
+
+import { DecorationController } from './decorationController';
 
 export const DIFF_VIEW_URI_SCHEME = 'code-brt-diff';
 
@@ -69,7 +71,7 @@ export class DiffViewProvider {
 
     this.modifiedContent = newContent;
     const newLines = newContent.split('\n');
-    const originalLines = this.originalContent.split('\n');
+    // const originalLines = this.originalContent.split('\n');
     const lineDiffs = diff.diffLines(this.originalContent, newContent);
 
     let currentLine = 0;
@@ -122,7 +124,13 @@ export class DiffViewProvider {
           preview: false,
         });
       } else {
-        throw new Error('Original document URI is not available.');
+        vscode.window.showErrorMessage(
+          'Original document URI is not available.',
+        );
+        return {
+          success: false,
+          error: 'Original document URI is not available.',
+        };
       }
 
       // 再次檢查活動編輯器是否與原始文檔匹配
@@ -131,7 +139,13 @@ export class DiffViewProvider {
         this.activeEditor.document.uri.toString() !==
           this.originalDocumentUri?.toString()
       ) {
-        throw new Error('No matching active editor found to apply changes.');
+        vscode.window.showErrorMessage(
+          'Active editor does not match the original document URI.',
+        );
+        return {
+          success: false,
+          error: 'Active editor does not match the original document URI.',
+        };
       }
 
       // 获取整个文件的范围

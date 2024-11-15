@@ -16,29 +16,29 @@ import {
 /**
  * Represents the modifications in the code.
  */
-export interface Modification {
+export type Modification = {
   startLine: number;
   endLine: number;
   content: string;
-}
+};
 
 /**
  * Represents the response from the code fixer.
  */
-export interface FixCodeResponse {
+export type FixCodeResponse = {
   success: boolean;
   modifications: Modification[];
   error?: string;
-}
+};
 
 /**
  * Represents the options for the fixCode function.
  */
-export interface FixCodeOptions {
+export type FixCodeOptions = {
   originalCode: string;
   generatedCode: string;
   userQuery: string;
-}
+};
 
 /**
  * Represents the API request structure for the view.
@@ -398,13 +398,32 @@ export type ViewApi = {
    */
   fixCode: (options: FixCodeOptions) => Promise<FixCodeResponse>;
 
+  /**
+   * Apply the modifications to the code.
+   * @param modifications - The modifications to apply.
+   */
   applyDecorations: (modifications: Modification[]) => Promise<void>;
 
+  /**
+   * Insert the selected code to the chat input.
+   */
   insertSelectedCodeToChat: () => void;
-  revertTemporaryInsertions(): Promise<void>;
 
+  /**
+   * Revert the temporary insertions.
+   */
+  revertTemporaryInsertions: () => Promise<void>;
+
+  /**
+   * Get the current editor info.
+   */
   getEditorInfo: () => void;
 
+  /**
+   * Show the full diff in the editor.
+   * @param originalCode - The original code to show in the diff.
+   * @param modifiedCode - The modified code to show in the diff.
+   */
   showFullDiffInEditor: ({
     originalCode,
     modifiedCode,
@@ -412,10 +431,19 @@ export type ViewApi = {
     originalCode: string;
     modifiedCode: string;
   }) => void;
-  applyCodeChanges(
+
+  /**
+   * Apply the modifications to the code.
+   * @param modifications - The modifications to apply.
+   */
+  applyCodeChanges: (
     modifications: Modification[],
-  ): Promise<{ success: boolean; error?: string }>;
-  closeActiveEditor(): Promise<void>;
+  ) => Promise<{ success: boolean; error?: string }>;
+
+  /**
+   * Close the active editor.
+   */
+  closeActiveEditor: () => Promise<void>;
 };
 
 /**

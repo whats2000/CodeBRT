@@ -390,11 +390,7 @@ export const MessagesContainer = React.memo<MessagesContainerProps>(
             }
             action={
               <Space direction={'vertical'}>
-                <Button
-                  size='small'
-                  type='primary'
-                  onClick={handleApplyChanges}
-                >
+                <Button size='small' onClick={handleApplyChanges} block={true}>
                   Accept
                 </Button>
                 <Button
@@ -402,6 +398,7 @@ export const MessagesContainer = React.memo<MessagesContainerProps>(
                   danger
                   ghost
                   onClick={handleDeclineChanges}
+                  block={true}
                 >
                   Decline
                 </Button>

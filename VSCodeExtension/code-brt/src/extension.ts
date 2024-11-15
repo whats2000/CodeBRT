@@ -1,6 +1,10 @@
 import * as vscode from 'vscode';
 
-import type { GetLanguageModelResponseParams, ViewApi } from './types';
+import type {
+  GetLanguageModelResponseParams,
+  Modification,
+  ViewApi,
+} from './types';
 import {
   AVAILABLE_MODEL_SERVICES,
   AVAILABLE_VOICE_SERVICES,
@@ -20,8 +24,8 @@ import { GptSoVitsApiService } from './services/voice/gptSoVitsService';
 import { ToolServiceProvider } from './services/tools';
 import { TerminalManager } from './integrations';
 import { OpenaiCodeFixerService } from './services/codeFixer';
-import { DecorationController } from './views/components/common/DecorationController';
-import { DiffViewProvider } from './views/components/common/DiffViewProvider';
+import { DecorationController } from './diff/decorationController';
+import { DiffViewProvider } from './diff/diffViewProvider';
 
 let extensionContext: vscode.ExtensionContext | undefined = undefined;
 
@@ -404,19 +408,17 @@ export const activate = async (ctx: vscode.ExtensionContext) => {
         modifications.forEach((mod) => {
           const lines = updatedContent.split('\n');
           if (mod.content === '') {
-            // 删除指定范围内的行
+            // Delete content from the specified line
             lines.splice(mod.startLine - 1, mod.endLine - mod.startLine + 1);
           } else {
-            // 插入或替换指定行
+            // Insert content at the specified line
             lines.splice(mod.startLine - 1, 0, mod.content);
           }
           updatedContent = lines.join('\n');
         });
 
-        // 使用合并后的字符串更新内容
         await diffViewProvider.updateContent(updatedContent);
-        const result = await diffViewProvider.applyChanges(); // 直接在当前文件中应用变更
-        return result;
+        return await diffViewProvider.applyChanges();
       } catch (error) {
         return {
           success: false,

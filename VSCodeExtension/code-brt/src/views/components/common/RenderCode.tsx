@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { createContext, useContext, useState } from 'react';
 import SyntaxHighlighter from 'react-syntax-highlighter';
 import * as hljs from 'react-syntax-highlighter/dist/cjs/styles/hljs';
 import { Button, Flex, Select } from 'antd';
@@ -13,6 +13,8 @@ import { CopyButton } from './CopyButton';
 import { updateAndSaveSetting } from '../../redux/slices/settingsSlice';
 import { AppDispatch, RootState } from '../../redux';
 import { useDispatch, useSelector } from 'react-redux';
+import { Modification } from '../../../types';
+import InsertButton from './InsertCode';
 
 const CodeContainer = styled.div<{ $dynamicStyle: React.CSSProperties }>`
   border-radius: 4px !important;
@@ -58,16 +60,12 @@ const OtherCodeBlock = styled.code`
 const MAX_LINES = 10;
 type RenderCodeProviderProps = {
   value: {
-    hljsTheme: keyof typeof hljs;
-    setHljsTheme: (theme: keyof typeof hljs) => void;
     handleOpenApplyChangesAlert: (updatedModifications: Modification[]) => void;
   };
   children: React.ReactNode;
 };
 
 const RendererCodeContext = createContext({
-  hljsTheme: 'darcula' as keyof typeof hljs,
-  setHljsTheme: (_theme: keyof typeof hljs) => {},
   handleOpenApplyChangesAlert: (_updatedModifications: Modification[]) => {},
 });
 
@@ -88,6 +86,7 @@ export const RendererCode: { [nodeType: string]: React.ElementType } = {
     const [showSetting, setShowSetting] = useState(false);
     const [expanded, setExpanded] = useState(false);
     const dispatch = useDispatch<AppDispatch>();
+    const { handleOpenApplyChangesAlert } = useContext(RendererCodeContext);
 
     const setHljsTheme = (theme: keyof typeof hljs) => {
       dispatch(updateAndSaveSetting({ key: 'hljsTheme', value: theme }));
