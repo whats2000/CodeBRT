@@ -102,7 +102,10 @@ export class OpenRouterService extends AbstractOpenaiLikeService {
 
     const openai = new OpenAI({
       baseURL: 'https://openrouter.ai/api/v1',
-      apiKey: selectedModelConfig.apiKey,
+      apiKey:
+        selectedModelConfig.apiKey !== ''
+          ? selectedModelConfig.apiKey
+          : undefined,
       defaultHeaders: {
         'HTTP-Referer': 'https://whats2000.github.io/CodeBRT/',
         'X-Title': 'CodeBRT',

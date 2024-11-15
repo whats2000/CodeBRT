@@ -81,7 +81,7 @@ export const MODEL_SERVICE_CONSTANTS: {
   openRouter: {
     name: 'OpenRouter',
     description: 'OpenRouter API Key',
-    apiLink: '',
+    apiLink: 'https://openrouter.ai/settings/keys',
     color: 'volcano',
   },
   custom: {
