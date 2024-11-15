@@ -120,7 +120,10 @@ export const executeCommandTool: ToolServicesApi['executeCommand'] = async ({
     }
     if (output.trim() !== '') {
       // If you have multiple lines of \n, we narrow it down to only 1 line
-      const formattedOutput = output.trim().replace(/\n{2,}/g, '\n');
+      const formattedOutput = output
+        .trim()
+        .replace(/\n{2,}/g, '\n')
+        .replace('\u001b', '');
       result += 'With output:\n' + formattedOutput;
     } else {
       result += 'Without any output.';
