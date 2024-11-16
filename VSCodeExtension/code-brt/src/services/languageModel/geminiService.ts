@@ -197,7 +197,12 @@ export class GeminiService extends AbstractLanguageModelService {
             role: 'model',
             parts: [
               {
-                text: currentEntry.message,
+                // The Message is empty or the message only contains '\n' characters
+                text:
+                  currentEntry.message === '' ||
+                  /^\n+$/.test(currentEntry.message)
+                    ? 'Let continue...'
+                    : currentEntry.message,
               },
             ],
           };
