@@ -93,4 +93,9 @@ export type LanguageModelServiceApi = {
   getLatestAvailableModelNames: (
     modelServiceType: ModelServiceType,
   ) => Promise<string[]>;
+
+  /**
+   * Get the latest available models with more details.
+   */
+  getLatestAvailableModels: () => Promise<OpenRouterModelSettings[]>;
 };

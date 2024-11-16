@@ -75,5 +75,8 @@ export const createLanguageModelServiceApi = (
         modelServiceType
       ].service.getLatestAvailableModelNames();
     },
+    getLatestAvailableModels: async () => {
+      return models.openRouter.service.getLatestAvailableModels();
+    },
   };
 };

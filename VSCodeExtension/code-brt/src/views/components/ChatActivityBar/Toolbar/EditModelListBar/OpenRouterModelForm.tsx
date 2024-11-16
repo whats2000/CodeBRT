@@ -74,6 +74,26 @@ export const OpenRouterModelForm: React.FC<OpenRouterModelFormProps> = ({
         id: '',
         name: 'New Model',
         apiKey: '',
+        created: new Date().getTime(),
+        description: '',
+        context_length: 4096,
+        architecture: {
+          modality: '',
+          tokenizer: '',
+          instruct_type: null,
+        },
+        pricing: {
+          prompt: '',
+          completion: '',
+          image: '',
+          request: '',
+        },
+        top_provider: {
+          context_length: null,
+          max_completion_tokens: null,
+          is_moderated: null,
+        },
+        per_request_limits: null,
       },
     ]);
   };
@@ -144,8 +164,11 @@ export const OpenRouterModelForm: React.FC<OpenRouterModelFormProps> = ({
             ))}
           </SortableContext>
         </DndContext>
-        <Button type='dashed' onClick={handleAddModel} block>
-          Add Model
+        <Button type={'primary'} ghost={true} block={true}>
+          Browse Available Models
+        </Button>
+        <Button type='dashed' onClick={handleAddModel} block={true}>
+          Add Model Manually
         </Button>
       </Space>
     </Form>

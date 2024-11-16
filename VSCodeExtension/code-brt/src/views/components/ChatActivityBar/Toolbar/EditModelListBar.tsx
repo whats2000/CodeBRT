@@ -12,6 +12,7 @@ import { CustomModelForm } from './EditModelListBar/CustomModelForm';
 import { updateAvailableModels } from '../../../redux/slices/modelServiceSlice';
 import { updateAndSaveSetting } from '../../../redux/slices/settingsSlice';
 import { OpenRouterModelForm } from './EditModelListBar/OpenRouterModelForm';
+import { v4 as uuidV4 } from 'uuid';
 
 type EditModelListBarProps = {
   isOpen: boolean;
@@ -45,7 +46,37 @@ export const EditModelListBar: React.FC<EditModelListBarProps> = ({
       if (activeModelService === 'custom') {
         setCustomModels(settings.customModels);
       } else if (activeModelService === 'openRouter') {
-        setOpenRouterModels(settings.openRouterModels);
+        setOpenRouterModels(
+          settings.openRouterModels.map((modelSettings) => ({
+            ...{
+              uuid: uuidV4(),
+              id: '',
+              name: 'New Model',
+              apiKey: '',
+              created: new Date().getTime(),
+              description: '',
+              context_length: 4096,
+              architecture: {
+                modality: '',
+                tokenizer: '',
+                instruct_type: null,
+              },
+              pricing: {
+                prompt: '',
+                completion: '',
+                image: '',
+                request: '',
+              },
+              top_provider: {
+                context_length: null,
+                max_completion_tokens: null,
+                is_moderated: null,
+              },
+              per_request_limits: null,
+            },
+            ...modelSettings,
+          })),
+        );
       } else {
         setAvailableModels(settings[`${activeModelService}AvailableModels`]);
       }

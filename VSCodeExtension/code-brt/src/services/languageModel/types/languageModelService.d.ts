@@ -1,4 +1,8 @@
-import { ToolCallEntry, ToolCallResponse } from '../../../types';
+import {
+  OpenRouterModelSettings,
+  ToolCallEntry,
+  ToolCallResponse,
+} from '../../../types';
 
 import { HistoryManager } from '../../../api';
 
@@ -49,6 +53,12 @@ export type LanguageModelService = {
    * Get the latest version of the language model service
    */
   getLatestAvailableModelNames: () => Promise<string[]>;
+
+  /**
+   * Get the latest available models,
+   * this uses the open router API as it will return almost all the available models online
+   */
+  getLatestAvailableModels: () => Promise<OpenRouterModelSettings[]>;
 
   /**
    * Switch to a different model

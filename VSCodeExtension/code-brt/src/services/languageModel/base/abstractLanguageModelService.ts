@@ -7,7 +7,7 @@ import {
   ResponseWithAction,
 } from '../types';
 import { SettingsManager } from '../../../api';
-import { MODEL_SERVICE_CONSTANTS } from '../../../constants';
+import { OpenRouterModelSettings } from '../../../types';
 
 /**
  * Abstract class for the Language Model Service
@@ -35,15 +35,9 @@ export abstract class AbstractLanguageModelService
           modelServiceType.slice(1) +
           ' Service: ' +
           error,
-        'Get API Key',
         'Troubleshooting',
       )
       .then((selection) => {
-        if (selection === 'Get API Key') {
-          void vscode.env.openExternal(
-            vscode.Uri.parse(MODEL_SERVICE_CONSTANTS[modelServiceType].apiLink),
-          );
-        }
         if (selection === 'Troubleshooting') {
           void vscode.env.openExternal(
             vscode.Uri.parse(
@@ -74,6 +68,14 @@ export abstract class AbstractLanguageModelService
     );
 
     return this.availableModelNames;
+  }
+
+  public async getLatestAvailableModels(): Promise<OpenRouterModelSettings[]> {
+    vscode.window.showErrorMessage(
+      'How can you get here? There might be a bug in the code please report it.',
+    );
+
+    return [];
   }
 
   /**
