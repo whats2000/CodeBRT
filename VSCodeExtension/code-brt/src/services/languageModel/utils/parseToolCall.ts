@@ -9,8 +9,10 @@ type ToolCall = {
 
 // This pattern is common seen in the qwen model
 const POSSIBLE_TOOL_CALLS_XML = [
+  'call',
   'xml',
   'tool_call',
+  'tool-call',
   'tools',
   'tool',
   'response',
@@ -19,7 +21,9 @@ const POSSIBLE_TOOL_CALLS_XML = [
   'functionCall',
   'functionCalls',
   'function_call',
+  'function-call',
   'function_calls',
+  'function-calls',
 ];
 
 // Some models use code blocks to represent tool calls

@@ -7,7 +7,9 @@ import type {
   ConversationEntry,
   ConversationEntryRole,
   ConversationHistory,
+  ExtensionSettings,
   GetLanguageModelResponseParams,
+  ModelServiceType,
   ToolCallEntry,
   ToolCallResponse,
 } from '../../../types';
@@ -43,6 +45,41 @@ const initialState: ConversationHistory & {
   tempId: null,
   isLoading: false,
   isProcessing: false,
+};
+
+const isApiKeyAvailable = (
+  callApi: CallAPI,
+  activeModelService: ModelServiceType,
+  settings: ExtensionSettings,
+) => {
+  // We don't need an API key for Ollama or custom models
+  if (activeModelService === 'ollama' || activeModelService === 'custom') {
+    return true;
+  }
+
+  if (
+    settings[`${activeModelService}ApiKey`] === '' ||
+    !settings[`${activeModelService}ApiKey`]
+  ) {
+    callApi(
+      'alertMessage',
+      `The API key of ${activeModelService} is not set, please configure it first`,
+      'error',
+      // Open the vscode settings with @code-brt as the extension id
+      [
+        {
+          text: 'Set API Key',
+          commandArgs: [
+            'workbench.action.openSettings',
+            `@code-brt:${activeModelService}ApiKey`,
+          ],
+        },
+      ],
+    ).catch(console.error);
+    return false;
+  }
+
+  return true;
 };
 
 export const initLoadHistory = createAsyncThunk<
@@ -168,26 +205,7 @@ export const processMessage = createAsyncThunk<
 
     // Check if the API not set
     const settings = getState().settings.settings;
-    if (
-      activeModelService !== 'ollama' &&
-      activeModelService !== 'custom' &&
-      !settings[`${activeModelService}ApiKey`]
-    ) {
-      callApi(
-        'alertMessage',
-        `The API key of ${activeModelService} is not set, please configure it first`,
-        'error',
-        // Open the vscode settings with @code-brt as the extension id
-        [
-          {
-            text: 'Set API Key',
-            commandArgs: [
-              'workbench.action.openSettings',
-              `@code-brt:${activeModelService}ApiKey`,
-            ],
-          },
-        ],
-      ).catch(console.error);
+    if (!isApiKeyAvailable(callApi, activeModelService, settings)) {
       return;
     }
 
@@ -338,6 +356,12 @@ export const processToolResponse = createAsyncThunk<
   async ({ entry, tempIdRef }, { dispatch, getState, extra: { callApi } }) => {
     const { activeModelService, selectedModel } = getState().modelService;
     if (activeModelService === 'loading...') {
+      return;
+    }
+
+    // Check if the API not set
+    const settings = getState().settings.settings;
+    if (!isApiKeyAvailable(callApi, activeModelService, settings)) {
       return;
     }
 
