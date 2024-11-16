@@ -38,6 +38,11 @@ export const createLanguageModelServiceApi = (
       if (modelServiceType === 'custom') {
         return settingsManager.get('customModels').map((model) => model.name);
       }
+      if (modelServiceType === 'openRouter') {
+        return settingsManager
+          .get('openRouterModels')
+          .map((model) => model.name);
+      }
 
       return settingsManager.get(`${modelServiceType}AvailableModels`);
     },

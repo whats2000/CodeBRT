@@ -61,13 +61,8 @@ export class OpenRouterService extends AbstractOpenaiLikeService {
       },
     });
 
-    const updatedRequestPayload = {
-      ...requestPayload,
-      max_tokens: selectedModelConfig.context_length || undefined,
-    };
-
     return openai.chat.completions.create({
-      ...updatedRequestPayload,
+      ...requestPayload,
       stream: false,
       model: selectedModelConfig.id,
     });
@@ -204,5 +199,20 @@ export class OpenRouterService extends AbstractOpenaiLikeService {
 
   public async stopResponse(): Promise<void> {
     this.stopStreamFlag = true;
+  }
+
+  public async switchModel(modelName: string): Promise<void> {
+    const openRouterModel = this.settingsManager.get('openRouterModels');
+    const selectedModel = openRouterModel.find(
+      (model) => model.name === modelName,
+    );
+
+    if (!selectedModel) {
+      vscode.window.showErrorMessage(
+        `OpenRouter model ${modelName} not found.`,
+      );
+      return;
+    }
+    super.switchModel(modelName);
   }
 }

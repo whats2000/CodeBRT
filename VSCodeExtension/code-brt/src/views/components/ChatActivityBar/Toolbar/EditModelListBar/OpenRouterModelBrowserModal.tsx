@@ -13,7 +13,6 @@ import {
   Tooltip,
   Flex,
   Checkbox,
-  Result,
   Alert,
 } from 'antd';
 import {
