@@ -1,5 +1,5 @@
 import React, { useContext, useEffect, useState } from 'react';
-import { Button, Form, Space } from 'antd';
+import { Button, Form, message, Space } from 'antd';
 import {
   closestCenter,
   DndContext,
@@ -18,6 +18,7 @@ import { v4 as uuidV4 } from 'uuid';
 import type { OpenRouterModelSettings } from '../../../../../types';
 import { WebviewContext } from '../../../../WebviewContext';
 import { OpenRouterSortableItem } from './OpenRouterModelForm/OpenRouterModelFormSortableItem';
+import { OpenRouterModelBrowserModal } from './OpenRouterModelBrowserModal';
 
 type OpenRouterModelFormProps = {
   isOpen: boolean;
@@ -47,6 +48,7 @@ export const OpenRouterModelForm: React.FC<OpenRouterModelFormProps> = ({
   );
 
   const [activeKey, setActiveKey] = useState<string[]>([]);
+  const [isBrowseModalOpen, setIsBrowseModalOpen] = useState(false);
 
   useEffect(() => {
     if (!isOpen) {
@@ -96,6 +98,26 @@ export const OpenRouterModelForm: React.FC<OpenRouterModelFormProps> = ({
         per_request_limits: null,
       },
     ]);
+  };
+
+  const handleAddModelFromBrowser = (model: OpenRouterModelSettings) => {
+    const existingModel = openRouterModels.find((m) => m.id === model.id);
+
+    if (existingModel) {
+      void message.warning(`Model ${model.name} is already in your list.`);
+      return;
+    }
+
+    const newModel: OpenRouterModelSettings = {
+      ...model,
+      uuid: uuidV4(),
+      apiKey: '', // User needs to add their API key
+      created: new Date().getTime(),
+    };
+
+    setOpenRouterModels([...openRouterModels, newModel]);
+    setIsBrowseModalOpen(false);
+    void message.success(`Added ${model.name} to your OpenRouter models.`);
   };
 
   const handleModelChange = (
@@ -164,12 +186,22 @@ export const OpenRouterModelForm: React.FC<OpenRouterModelFormProps> = ({
             ))}
           </SortableContext>
         </DndContext>
-        <Button type={'primary'} ghost={true} block={true}>
+        <Button
+          type={'primary'}
+          ghost={true}
+          block={true}
+          onClick={() => setIsBrowseModalOpen(true)}
+        >
           Browse Available Models
         </Button>
         <Button type='dashed' onClick={handleAddModel} block={true}>
           Add Model Manually
         </Button>
+        <OpenRouterModelBrowserModal
+          isOpen={isBrowseModalOpen}
+          onClose={() => setIsBrowseModalOpen(false)}
+          onAddModel={handleAddModelFromBrowser}
+        />
       </Space>
     </Form>
   );
