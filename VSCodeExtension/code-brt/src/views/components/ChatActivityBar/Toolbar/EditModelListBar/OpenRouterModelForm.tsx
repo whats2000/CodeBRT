@@ -38,6 +38,7 @@ export const OpenRouterModelForm: React.FC<OpenRouterModelFormProps> = ({
   handleEditModelListSave,
 }) => {
   const { callApi } = useContext(WebviewContext);
+  const [messageApi, contextHolder] = message.useMessage();
 
   const sensors = useSensors(
     useSensor(PointerSensor, {
@@ -104,7 +105,7 @@ export const OpenRouterModelForm: React.FC<OpenRouterModelFormProps> = ({
     const existingModel = openRouterModels.find((m) => m.id === model.id);
 
     if (existingModel) {
-      void message.warning(`Model ${model.name} is already in your list.`);
+      void messageApi.warning(`Model ${model.name} is already in your list.`);
       return;
     }
 
@@ -117,7 +118,7 @@ export const OpenRouterModelForm: React.FC<OpenRouterModelFormProps> = ({
 
     setOpenRouterModels([...openRouterModels, newModel]);
     setIsBrowseModalOpen(false);
-    void message.success(`Added ${model.name} to your OpenRouter models.`);
+    void messageApi.success(`Added ${model.name} to your OpenRouter models.`);
   };
 
   const handleModelChange = (
@@ -162,6 +163,7 @@ export const OpenRouterModelForm: React.FC<OpenRouterModelFormProps> = ({
 
   return (
     <Form layout='vertical'>
+      {contextHolder}
       <Space direction='vertical' style={{ width: '100%' }}>
         <DndContext
           sensors={sensors}
