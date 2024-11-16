@@ -13,12 +13,19 @@ import {
   Tooltip,
   Flex,
   Checkbox,
+  Result,
+  Alert,
 } from 'antd';
-import { SearchOutlined, PlusCircleOutlined } from '@ant-design/icons';
+import {
+  SearchOutlined,
+  PlusCircleOutlined,
+  InfoCircleFilled,
+} from '@ant-design/icons';
 import { Virtuoso } from 'react-virtuoso';
 
 import { WebviewContext } from '../../../../WebviewContext';
 import type { OpenRouterModelSettings } from '../../../../../types';
+import ReactMarkdown from 'react-markdown';
 
 const { Text } = Typography;
 
@@ -44,6 +51,7 @@ export const OpenRouterModelBrowserModal: React.FC<
     isFree?: boolean;
   }>({});
   const [loading, setLoading] = useState(false);
+  const [showInfoId, setShowInfoId] = useState<string | null>(null);
 
   useEffect(() => {
     if (isOpen) {
@@ -137,13 +145,22 @@ export const OpenRouterModelBrowserModal: React.FC<
     >
       <Space direction='vertical' style={{ width: '100%' }} wrap={true}>
         <Flex style={{ width: '100%' }} wrap={'wrap'} gap={10}>
-          <Input
-            placeholder='Search models by name or ID'
-            prefix={<SearchOutlined />}
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            style={{ width: '100%' }}
-          />
+          <Space wrap={true}>
+            <Input
+              placeholder='Search models by name or ID'
+              prefix={<SearchOutlined />}
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              style={{ width: '100%' }}
+            />
+            <Checkbox
+              onChange={(e) =>
+                setFilters((prev) => ({ ...prev, isFree: e.target.checked }))
+              }
+            >
+              <Text type='secondary'>Free</Text>
+            </Checkbox>
+          </Space>
           <Space wrap={true}>
             <Select
               placeholder='Modality'
@@ -191,13 +208,6 @@ export const OpenRouterModelBrowserModal: React.FC<
                 { value: 131072, label: '128K' },
               ]}
             />
-            <Checkbox
-              onChange={(e) =>
-                setFilters((prev) => ({ ...prev, isFree: e.target.checked }))
-              }
-            >
-              <Text type='secondary'>Free</Text>
-            </Checkbox>
           </Space>
         </Flex>
         <div style={{ height: '350px', overflow: 'auto' }}>
@@ -206,10 +216,21 @@ export const OpenRouterModelBrowserModal: React.FC<
             itemContent={(index, model) => (
               <>
                 {index > 0 && <Divider style={{ marginTop: 10 }} />}
-                <Row style={{ width: '100%' }} wrap={true}>
+                <Row style={{ width: '100%' }} wrap={true} gutter={10}>
                   <Col xs={24} sm={12} style={{ marginBottom: 10 }}>
                     <Space direction={'vertical'}>
-                      <Text strong>{model.name}</Text>
+                      <Space>
+                        <Text strong>{model.name}</Text>
+                        <Button
+                          icon={<InfoCircleFilled />}
+                          type='text'
+                          onClick={() =>
+                            showInfoId === model.id
+                              ? setShowInfoId(null)
+                              : setShowInfoId(model.id)
+                          }
+                        />
+                      </Space>
                       <Text type='secondary'>{model.id}</Text>
                       <Space wrap={true}>
                         <Tag color='blue'>{model.architecture.modality}</Tag>
@@ -244,6 +265,18 @@ export const OpenRouterModelBrowserModal: React.FC<
                     </Space>
                   </Col>
                 </Row>
+                {showInfoId === model.id && (
+                  <Row style={{ width: '100%' }}>
+                    <Col span={24}>
+                      <Alert
+                        message={
+                          <ReactMarkdown>{model.description}</ReactMarkdown>
+                        }
+                        onClose={() => setShowInfoId(null)}
+                      />
+                    </Col>
+                  </Row>
+                )}
               </>
             )}
           />
