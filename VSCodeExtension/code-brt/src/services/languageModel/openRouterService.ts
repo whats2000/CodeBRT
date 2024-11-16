@@ -54,15 +54,20 @@ export class OpenRouterService extends AbstractOpenaiLikeService {
 
     const openai = new OpenAI({
       baseURL: 'https://openrouter.ai/api/v1',
-      apiKey: selectedModelConfig.apiKey,
+      apiKey: this.settingsManager.get('openRouterApiKey'),
       defaultHeaders: {
         'HTTP-Referer': 'https://whats2000.github.io/CodeBRT/',
         'X-Title': 'CodeBRT',
       },
     });
 
-    return openai.chat.completions.create({
+    const updatedRequestPayload = {
       ...requestPayload,
+      max_tokens: selectedModelConfig.context_length || undefined,
+    };
+
+    return openai.chat.completions.create({
+      ...updatedRequestPayload,
       stream: false,
       model: selectedModelConfig.id,
     });
@@ -78,18 +83,20 @@ export class OpenRouterService extends AbstractOpenaiLikeService {
 
     const openai = new OpenAI({
       baseURL: 'https://openrouter.ai/api/v1',
-      apiKey:
-        selectedModelConfig.apiKey !== ''
-          ? selectedModelConfig.apiKey
-          : undefined,
+      apiKey: this.settingsManager.get('openRouterApiKey'),
       defaultHeaders: {
         'HTTP-Referer': 'https://whats2000.github.io/CodeBRT/',
         'X-Title': 'CodeBRT',
       },
     });
 
-    return openai.chat.completions.create({
+    const updatedRequestPayload = {
       ...requestPayload,
+      max_tokens: selectedModelConfig.context_length || undefined,
+    };
+
+    return openai.chat.completions.create({
+      ...updatedRequestPayload,
       stream: true,
       model: selectedModelConfig.id,
     });
@@ -187,6 +194,7 @@ export class OpenRouterService extends AbstractOpenaiLikeService {
         updateStatus,
       );
     } catch (error) {
+      console.log(error);
       return this.handleGetResponseError(error, 'openRouter');
     } finally {
       this.stopStreamFlag = false;

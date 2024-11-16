@@ -170,7 +170,6 @@ export const processMessage = createAsyncThunk<
     const settings = getState().settings.settings;
     if (
       activeModelService !== 'ollama' &&
-      activeModelService !== 'openRouter' &&
       activeModelService !== 'custom' &&
       !settings[`${activeModelService}ApiKey`]
     ) {

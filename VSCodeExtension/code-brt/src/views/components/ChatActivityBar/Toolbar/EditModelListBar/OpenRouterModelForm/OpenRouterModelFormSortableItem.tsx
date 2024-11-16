@@ -80,18 +80,6 @@ export const OpenRouterSortableItem: React.FC<
           onChange={(e) => onModelChange(uuid, 'name', e.target.value)}
         />
       </Form.Item>
-      <Form.Item
-        label='API Key'
-        tooltip={
-          'The API key for the OpenRouter API you need provide even if the model is free.'
-        }
-      >
-        <Input.Password
-          value={model.apiKey}
-          placeholder='OpenRouter API Key'
-          onChange={(e) => onModelChange(uuid, 'apiKey', e.target.value)}
-        />
-      </Form.Item>
       <Form.Item label='Context Length' tooltip='Maximum number of tokens'>
         <InputNumber
           style={{ width: '100%' }}

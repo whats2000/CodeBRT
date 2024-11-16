@@ -34,7 +34,7 @@ export abstract class AbstractLanguageModelService
           modelServiceType.charAt(0).toUpperCase() +
           modelServiceType.slice(1) +
           ' Service: ' +
-          error,
+          (modelServiceType === 'openRouter' ? JSON.stringify(error) : error),
         'Troubleshooting',
       )
       .then((selection) => {

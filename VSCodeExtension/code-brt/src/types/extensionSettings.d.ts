@@ -103,7 +103,6 @@ type OpenRouterModelSettings = {
   uuid: string;
   id: string;
   name: string;
-  apiKey: string;
   created: number;
   description: string;
   context_length: number;
@@ -253,6 +252,7 @@ export type ExtensionSettingsCrossDevice = {
   groqApiKey: string;
   huggingFaceApiKey: string;
   openaiApiKey: string;
+  openRouterApiKey: string;
   doubleEnterSendMessages: boolean;
   themePrimaryColor: string;
   themeAlgorithm: AvailableThemeAlgorithm | AvailableThemeAlgorithm[];

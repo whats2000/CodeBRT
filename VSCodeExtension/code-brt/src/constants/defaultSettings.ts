@@ -97,6 +97,7 @@ export const DEFAULT_CROSS_DEVICE_SETTINGS: ExtensionSettingsCrossDevice = {
   cohereApiKey: '',
   groqApiKey: '',
   huggingFaceApiKey: '',
+  openRouterApiKey: '',
   doubleEnterSendMessages: false,
   themePrimaryColor: '#007ACC',
   themeAlgorithm: 'darkAlgorithm',
