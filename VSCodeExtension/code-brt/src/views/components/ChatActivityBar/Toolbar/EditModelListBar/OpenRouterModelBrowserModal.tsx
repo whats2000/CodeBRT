@@ -12,6 +12,7 @@ import {
   Divider,
   Tooltip,
   Flex,
+  Checkbox,
 } from 'antd';
 import { SearchOutlined, PlusCircleOutlined } from '@ant-design/icons';
 import { Virtuoso } from 'react-virtuoso';
@@ -40,6 +41,7 @@ export const OpenRouterModelBrowserModal: React.FC<
     modality?: string;
     instruct_type?: string;
     min_context_length?: number;
+    isFree?: boolean;
   }>({});
   const [loading, setLoading] = useState(false);
 
@@ -79,6 +81,14 @@ export const OpenRouterModelBrowserModal: React.FC<
     if (min_context_length) {
       result = result.filter(
         (model) => model.context_length >= min_context_length,
+      );
+    }
+
+    if (filters.isFree) {
+      result = result.filter(
+        (model) =>
+          parseFloat(model.pricing.prompt) === 0.0 &&
+          parseFloat(model.pricing.completion) === 0.0,
       );
     }
 
@@ -181,6 +191,13 @@ export const OpenRouterModelBrowserModal: React.FC<
                 { value: 131072, label: '128K' },
               ]}
             />
+            <Checkbox
+              onChange={(e) =>
+                setFilters((prev) => ({ ...prev, isFree: e.target.checked }))
+              }
+            >
+              <Text type='secondary'>Free</Text>
+            </Checkbox>
           </Space>
         </Flex>
         <div style={{ height: '350px', overflow: 'auto' }}>
