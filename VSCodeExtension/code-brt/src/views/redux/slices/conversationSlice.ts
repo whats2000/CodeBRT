@@ -37,6 +37,7 @@ const initialState: ConversationHistory & {
     topK: undefined,
     presencePenalty: undefined,
     frequencyPenalty: undefined,
+    stop: undefined,
   },
   entries: {},
   tempId: null,
