@@ -61,8 +61,15 @@ export class OpenRouterService extends AbstractOpenaiLikeService {
       },
     });
 
-    return openai.chat.completions.create({
+    const updatedRequestPayload = {
       ...requestPayload,
+      max_tokens: selectedModelConfig.context_length || undefined,
+      max_completion_tokens:
+        selectedModelConfig.top_provider.max_completion_tokens || undefined,
+    };
+
+    return openai.chat.completions.create({
+      ...updatedRequestPayload,
       stream: false,
       model: selectedModelConfig.id,
     });
@@ -88,6 +95,8 @@ export class OpenRouterService extends AbstractOpenaiLikeService {
     const updatedRequestPayload = {
       ...requestPayload,
       max_tokens: selectedModelConfig.context_length || undefined,
+      max_completion_tokens:
+        selectedModelConfig.top_provider.max_completion_tokens || undefined,
     };
 
     return openai.chat.completions.create({
