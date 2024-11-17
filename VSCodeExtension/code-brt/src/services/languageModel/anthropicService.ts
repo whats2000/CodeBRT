@@ -90,6 +90,7 @@ export class AnthropicService extends AbstractLanguageModelService {
           : undefined,
       generationConfig: {
         max_tokens: advanceSettings.maxTokens ?? 4096,
+        stop_sequences: advanceSettings.stop,
         ...generationConfig,
       },
     };

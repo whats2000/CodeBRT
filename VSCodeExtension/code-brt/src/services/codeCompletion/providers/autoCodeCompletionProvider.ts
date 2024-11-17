@@ -1,26 +1,45 @@
-import vscode from 'vscode';
+import * as vscode from 'vscode';
 
-import type { LoadedModelServices } from 'src/types';
 import { AbstractCompletionProvider } from '../base';
 import { SettingsManager } from '../../../api';
+import { AutoCodeCompletionStrategy } from '../strategies';
 import { StatusBarManager } from '../ui/statusBarManager';
+import type { LoadedModelServices } from '../../../types';
 
-// TODO: Implement the AutoCodeCompletionProvider class
 export class AutoCodeCompletionProvider implements AbstractCompletionProvider {
-  constructor(
-    _ctx: vscode.ExtensionContext,
-    _settingsManager: SettingsManager,
-    _loadedModelServices: LoadedModelServices,
-    _statusBarManager: StatusBarManager,
-  ) {}
+  private readonly completionStrategy: AutoCodeCompletionStrategy;
 
-  provideCompletionItems(
-    _document: vscode.TextDocument,
-    _position: vscode.Position,
-    _token: vscode.CancellationToken,
+  constructor(
+    ctx: vscode.ExtensionContext,
+    settingsManager: SettingsManager,
+    loadedModelServices: LoadedModelServices,
+    statusBarManager: StatusBarManager,
+  ) {
+    this.completionStrategy = new AutoCodeCompletionStrategy(
+      ctx,
+      settingsManager,
+      loadedModelServices,
+      statusBarManager,
+    );
+  }
+
+  async provideCompletionItems(
+    document: vscode.TextDocument,
+    position: vscode.Position,
+    token: vscode.CancellationToken,
   ): Promise<
     vscode.InlineCompletionItem[] | vscode.InlineCompletionList | null
   > {
-    return Promise.resolve(null);
+    const completions = await this.completionStrategy.provideCompletion(
+      document,
+      position,
+      token,
+    );
+
+    if (!completions || completions.length === 0) {
+      return null;
+    }
+
+    return new vscode.InlineCompletionList(completions);
   }
 }

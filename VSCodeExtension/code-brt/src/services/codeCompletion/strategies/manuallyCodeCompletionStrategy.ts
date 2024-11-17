@@ -1,7 +1,11 @@
 import * as vscode from 'vscode';
 
-import type { LoadedModelServices, ModelServiceType } from '../../../types';
-import { CompletionStrategy } from './index';
+import type {
+  CodeLanguageId,
+  CompletionStrategy,
+  LoadedModelServices,
+  ModelServiceType,
+} from '../../../types';
 import {
   CHAIN_OF_THOUGHT,
   FEW_SHOT_EXAMPLES,
@@ -11,7 +15,6 @@ import {
   MAIN_PROMPT_TEMPLATE,
   SYSTEM_PROMPT,
 } from '../constants';
-import { CodeLanguageId } from '../types';
 import { HistoryManager, SettingsManager } from '../../../api';
 import { StatusBarManager } from '../ui/statusBarManager';
 import { postProcessCompletion } from '../utils';

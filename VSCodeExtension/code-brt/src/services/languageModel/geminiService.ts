@@ -111,6 +111,7 @@ export class GeminiService extends AbstractLanguageModelService {
         temperature: advanceSettings.temperature,
         topP: advanceSettings.topP,
         topK: advanceSettings.topK,
+        stopSequences: advanceSettings.stop,
       },
     };
   }

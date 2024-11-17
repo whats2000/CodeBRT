@@ -75,6 +75,7 @@ export type ConversationModelAdvanceSettings = {
   topK: number | undefined;
   presencePenalty: number | undefined;
   frequencyPenalty: number | undefined;
+  stop: string[] | undefined;
 };
 
 /**

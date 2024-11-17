@@ -63,6 +63,29 @@ export const ModelAdvanceSettingFormItem: React.FC<
           placeholder='Enter system prompt'
           autoSize={{ minRows: 2, maxRows: 10 }}
         />
+      ) : settingName === 'stop' ? (
+        <Row gutter={8} align={'middle'}>
+          <Col flex={'auto'}>
+            <Input.TextArea
+              value={(value as string[] | undefined)?.join('\n') || ''}
+              onChange={(e) =>
+                handleInputChange(settingName, e.target.value.split('\n'))
+              }
+              placeholder='Enter stop sequence separated by new line'
+              autoSize={{ minRows: 2, maxRows: 10 }}
+            />
+          </Col>
+          <Col>
+            <Tooltip title='Clear field' placement={'right'}>
+              <Button
+                type='text'
+                danger
+                icon={<ClearOutlined />}
+                onClick={() => clearField(settingName)}
+              />
+            </Tooltip>
+          </Col>
+        </Row>
       ) : (
         <Row gutter={8} align={'middle'}>
           <Col flex={'auto'}>

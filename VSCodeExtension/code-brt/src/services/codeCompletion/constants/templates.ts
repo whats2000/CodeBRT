@@ -1,3 +1,5 @@
+import { CompletionTemplate } from '../types';
+
 /**
  * The follow code is modified from the original source code.
  * https://github.com/continuedev/continue/blob/main/core/autocomplete/templates.ts
@@ -113,3 +115,83 @@ export const MAIN_PROMPT_TEMPLATE = `<LANGUAGE>{codeLanguage}</LANGUAGE>
 
 TASK: Fill the {{FILL_HERE}} hole. Answer only with the CORRECT completion inside the <COMPLETION> tag. Do NOT include any explanations, markdown formatting, or extra content. Do it now.
 <COMPLETION>`;
+
+// ==================== Add Ollama Model Template ====================
+export const HOLE_FILLER_TEMPLATE: {
+  [key: string]: CompletionTemplate;
+} = {
+  // StableCode FIM Template (Default)
+  stableCodeFimTemplate: {
+    template: '<fim_prefix>{{{prefix}}}<fim_suffix>{{{suffix}}}<fim_middle>',
+    completionOptions: {
+      stop: [
+        '<fim_prefix>',
+        '<fim_suffix>',
+        '<fim_middle>',
+        '<file_sep>',
+        '<|endoftext|>',
+        '</fim_middle>',
+        '</code>',
+      ],
+    },
+  },
+  // Qwen2.5-Coder Template
+  qwenCoderFimTemplate: {
+    template:
+      '<|fim_prefix|>{{{prefix}}}<|fim_suffix|>{{{suffix}}}<|fim_middle|>',
+    completionOptions: {
+      stop: [
+        '<|endoftext|>',
+        '<|fim_prefix|>',
+        '<|fim_middle|>',
+        '<|fim_suffix|>',
+        '<|fim_pad|>',
+        '<|repo_name|>',
+        '<|file_sep|>',
+        '<|im_start|>',
+        '<|im_end|>',
+      ],
+    },
+  },
+  // Codestral Template
+  codestralFimTemplate: {
+    template: '[SUFFIX]{{{suffix}}}[PREFIX]{{{prefix}}}',
+    completionOptions: {
+      stop: ['[PREFIX]', '[SUFFIX]'],
+    },
+  },
+  // CodeLlama Template
+  codeLlamaFimTemplate: {
+    template: '<PRE> {{{prefix}}} <SUF>{{{suffix}}} <MID>',
+    completionOptions: {
+      stop: ['<PRE>', '<SUF>', '<MID>', '<EOT>'],
+    },
+  },
+  // DeepSeek-Coder Template
+  deepseekFimTemplate: {
+    template:
+      '<｜fim▁begin｜>{{{prefix}}}<｜fim▁hole｜>{{{suffix}}}<｜fim▁end｜>',
+    completionOptions: {
+      stop: [
+        '<｜fim▁begin｜>',
+        '<｜fim▁hole｜>',
+        '<｜fim▁end｜>',
+        '//',
+        '<｜end▁of▁sentence｜>',
+      ],
+    },
+  },
+  // StarCoder Template
+  starCoderFimTemplate: {
+    template: '<fim_prefix>{{{prefix}}}<fim_suffix>{{{suffix}}}<fim_middle>',
+    completionOptions: {
+      stop: [
+        '<fim_prefix>',
+        '<fim_suffix>',
+        '<fim_middle>',
+        '<file_sep>',
+        '<|endoftext|>',
+      ],
+    },
+  },
+};

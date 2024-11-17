@@ -91,4 +91,15 @@ export const MODEL_ADVANCE_SETTINGS: {
     },
     link: 'https://platform.openai.com/docs/guides/text-generation/parameter-details',
   },
+  stop: {
+    description:
+      `A list of tokens where the model should stop generating further tokens. ` +
+      `Separate each token with a new line for multiple tokens. ` +
+      `If you want to stop the model from generating more tokens, you can add a stop token here.`,
+    range: {
+      min: undefined,
+      max: undefined,
+    },
+    link: 'https://platform.openai.com/docs/api-reference/chat/create#chat-create-stop',
+  },
 };
