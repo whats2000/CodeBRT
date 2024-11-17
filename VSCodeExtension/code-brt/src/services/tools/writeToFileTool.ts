@@ -34,5 +34,10 @@ export const writeToFileTool: ToolServicesApi['writeToFile'] = async ({
     return { status: 'error', result: message };
   }
 
+  // TODO: Open the file and show the diff
+  // Focus on the file
+  const document = await vscode.workspace.openTextDocument(filePath);
+  await vscode.window.showTextDocument(document);
+
   return { status: 'success', result: message };
 };
