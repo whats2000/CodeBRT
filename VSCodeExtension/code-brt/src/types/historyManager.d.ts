@@ -31,6 +31,13 @@ export type AddConversationEntryParams = {
   modelName?: string;
 };
 
+type FileSyncOperation = {
+  relativePath: string;
+  newPath?: string; // For renaming operations
+  newContent?: string; // For manual content changes
+  deleted?: boolean; // If the file was deleted
+};
+
 export type IHistoryManager = {
   /**
    * Get the current loaded history
@@ -114,4 +121,14 @@ export type IHistoryManager = {
     historyID: string,
     advanceSettings: ConversationModelAdvanceSettings,
   ): Promise<void>;
+
+  /**
+   * Sync the file changes
+   * @param operations The file sync operations
+   * @param forceSync If the sync should be forced
+   */
+  syncFileChangeContext(
+    operations: FileSyncOperation[] = [],
+    forceSync: boolean = false,
+  ): Promise<ConversationHistory>;
 };

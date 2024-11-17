@@ -4,6 +4,7 @@ import {
   ConversationHistory,
   ConversationHistoryIndexList,
   ConversationModelAdvanceSettings,
+  FileSyncOperation,
 } from '../../../types';
 
 export type HistoryManagerApi = {
@@ -94,4 +95,14 @@ export type HistoryManagerApi = {
   addConversationEntry: (
     entry: AddConversationEntryParams,
   ) => Promise<ConversationEntry>;
+
+  /**
+   * Sync the file change context.
+   * @param operations - The file sync operations to perform.
+   * @param forceSync - Whether to force the sync.
+   */
+  syncFileChangeContext: (
+    operations: FileSyncOperation[] = [],
+    forceSync: boolean = false,
+  ) => Promise<ConversationHistory>;
 };

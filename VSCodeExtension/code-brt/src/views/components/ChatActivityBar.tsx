@@ -23,6 +23,7 @@ import { initModelService } from '../redux/slices/modelServiceSlice';
 import { fetchSettings } from '../redux/slices/settingsSlice';
 import { UserGuildTours } from './ChatActivityBar/UserGuildTours';
 import { setRefId, startTourForNewUser } from '../redux/slices/tourSlice';
+import { SyncFileChangeFloatButton } from './ChatActivityBar/SyncFileChangeFloatButton';
 
 const Container = styled(Content)`
   display: flex;
@@ -150,6 +151,9 @@ export const ChatActivityBar = () => {
             inputContainerRef={inputContainerRef}
           />
         </Container>
+        <SyncFileChangeFloatButton
+          floatButtonBaseYPosition={floatButtonBaseYPosition}
+        />
         <ModelAdvanceSettingBar
           floatButtonBaseYPosition={floatButtonBaseYPosition}
         />
