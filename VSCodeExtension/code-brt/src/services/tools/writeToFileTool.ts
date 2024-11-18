@@ -22,6 +22,14 @@ export const writeToFileTool: ToolServicesApi['writeToFile'] = async ({
 
   const filePath = path.resolve(workspaceFolders.uri.fsPath, relativePath);
 
+  let existingContent = '';
+  try {
+    const document = await vscode.workspace.openTextDocument(filePath);
+    existingContent = document.getText();
+  } catch (error) {
+    existingContent = '';
+  }
+
   const { status, message } = await FileOperationsProvider.writeToFile(
     filePath,
     content,
@@ -34,5 +42,38 @@ export const writeToFileTool: ToolServicesApi['writeToFile'] = async ({
     return { status: 'error', result: message };
   }
 
+  await showDiffInEditor(filePath, existingContent, content);
+
   return { status: 'success', result: message };
+};
+
+const showDiffInEditor = async (
+  filePath: string,
+  originalContent: string,
+  newContent: string
+) => {
+  const originalUri = vscode.Uri.parse(`diff:Original/${path.basename(filePath)}`);
+  const modifiedUri = vscode.Uri.parse(`diff:Modified/${path.basename(filePath)}`);
+
+  const contentProvider = new (class implements vscode.TextDocumentContentProvider {
+    provideTextDocumentContent(uri: vscode.Uri): string {
+      if (uri.toString() === originalUri.toString()) {
+        return originalContent;
+      }
+      if (uri.toString() === modifiedUri.toString()) {
+        return newContent;
+      }
+      return '';
+    }
+  })();
+
+  const scheme = 'diff';
+  vscode.workspace.registerTextDocumentContentProvider(scheme, contentProvider);
+
+  await vscode.commands.executeCommand(
+    'vscode.diff',
+    originalUri,
+    modifiedUri,
+    `Diff: ${path.basename(filePath)}`
+  );
 };
