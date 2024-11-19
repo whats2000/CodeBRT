@@ -272,6 +272,12 @@ export const attemptCompletionSchema: ToolSchema = {
           'This command should be valid for the current operating system. ' +
           'Ensure the command is properly formatted and does not contain any harmful instructions.',
       },
+      relativePath: {
+        type: 'string',
+        description:
+          'The relative path to execute the command in. ' +
+          'If not provided, the command will be executed in the current working directory.',
+      },
       result: {
         type: 'string',
         description:
