@@ -1,4 +1,4 @@
-import React, { useContext } from 'react';
+import React, { useContext, useEffect } from 'react';
 import { SyncOutlined } from '@ant-design/icons';
 import { FloatButton } from 'antd';
 import { useDispatch, useSelector } from 'react-redux';
@@ -10,6 +10,8 @@ import {
   setConversationHistory,
   startLoading,
 } from '../../redux/slices/conversationSlice';
+import { setRefId } from '../../redux/slices/tourSlice';
+import { useRefs } from '../../context/RefContext';
 
 type SyncFileChangeFloatButtonProps = {
   floatButtonBaseYPosition: number;
@@ -19,6 +21,7 @@ export const SyncFileChangeFloatButton: React.FC<
   SyncFileChangeFloatButtonProps
 > = ({ floatButtonBaseYPosition }) => {
   const { callApi } = useContext(WebviewContext);
+  const { registerRef } = useRefs();
 
   const conversationHistory = useSelector(
     (state: RootState) => state.conversation,
@@ -26,6 +29,18 @@ export const SyncFileChangeFloatButton: React.FC<
   const { isLoading } = useSelector((state: RootState) => state.settings);
 
   const dispatch = useDispatch<AppDispatch>();
+
+  const syncFileChangeFloatButton = registerRef('syncFileChangeFloatButton');
+
+  useEffect(() => {
+    dispatch(
+      setRefId({
+        tourName: 'quickStart',
+        stepIndex: 6,
+        targetId: 'syncFileChangeFloatButton',
+      }),
+    );
+  }, []);
 
   const handleSyncFileChange = async () => {
     if (conversationHistory.isLoading || isLoading) {
@@ -43,20 +58,32 @@ export const SyncFileChangeFloatButton: React.FC<
   };
 
   return (
-    <FloatButton
-      tooltip={'Synchronize the file changes to chat history'}
-      icon={
-        conversationHistory.isLoading || isLoading ? (
-          <SyncOutlined spin={true} />
-        ) : (
-          <SyncOutlined />
-        )
-      }
-      style={{
-        insetInlineEnd: 40,
-        bottom: floatButtonBaseYPosition + 110,
-      }}
-      onClick={handleSyncFileChange}
-    />
+    <>
+      <div
+        ref={syncFileChangeFloatButton}
+        style={{
+          position: 'absolute',
+          insetInlineEnd: 40,
+          bottom: floatButtonBaseYPosition + 110,
+          height: 40,
+          width: 40,
+        }}
+      />
+      <FloatButton
+        tooltip={'Synchronize the file changes to chat history'}
+        icon={
+          conversationHistory.isLoading || isLoading ? (
+            <SyncOutlined spin={true} />
+          ) : (
+            <SyncOutlined />
+          )
+        }
+        style={{
+          insetInlineEnd: 40,
+          bottom: floatButtonBaseYPosition + 110,
+        }}
+        onClick={handleSyncFileChange}
+      />
+    </>
   );
 };

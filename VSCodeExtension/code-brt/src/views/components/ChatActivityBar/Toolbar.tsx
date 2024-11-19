@@ -70,20 +70,28 @@ export const Toolbar: React.FC<ToolbarProps> = ({ setTheme }) => {
 
   const modelServiceSelectRef = registerRef('modelServiceSelect');
   const modelSelectRef = registerRef('modelSelect');
+  const settingsButtonRef = registerRef('settingsButton');
 
   useEffect(() => {
     dispatch(
       setRefId({
         tourName: 'quickStart',
-        stepIndex: 6,
+        stepIndex: 7,
         targetId: 'modelServiceSelect',
       }),
     );
     dispatch(
       setRefId({
         tourName: 'quickStart',
-        stepIndex: 7,
+        stepIndex: 8,
         targetId: 'modelSelect',
+      }),
+    );
+    dispatch(
+      setRefId({
+        tourName: 'quickStart',
+        stepIndex: 9,
+        targetId: 'settingsButton',
       }),
     );
   }, []);
@@ -265,7 +273,7 @@ export const Toolbar: React.FC<ToolbarProps> = ({ setTheme }) => {
         </Space>
         {innerWidth < 400 ? (
           <Dropdown menu={{ items: settingMenuItemsSmallWidth }}>
-            <Button icon={<MenuOutlined />} />
+            <Button ref={settingsButtonRef} icon={<MenuOutlined />} />
           </Dropdown>
         ) : (
           <Space>
@@ -279,7 +287,7 @@ export const Toolbar: React.FC<ToolbarProps> = ({ setTheme }) => {
               <Button icon={<PlusOutlined />} onClick={createNewChat} />
             </Tooltip>
             <Dropdown menu={{ items: settingMenuItems }}>
-              <Button icon={<SettingOutlined />} />
+              <Button ref={settingsButtonRef} icon={<SettingOutlined />} />
             </Dropdown>
           </Space>
         )}
