@@ -145,21 +145,21 @@ export const ChatActivityBar = () => {
       <RefProvider>
         <Container ref={dropRef}>
           <Toolbar setTheme={setTheme} />
+          <SyncFileChangeFloatButton
+            floatButtonBaseYPosition={floatButtonBaseYPosition}
+          />
+          <ModelAdvanceSettingBar
+            floatButtonBaseYPosition={floatButtonBaseYPosition}
+          />
+          <ToolActivateFloatButtons
+            floatButtonBaseYPosition={floatButtonBaseYPosition}
+          />
           <MessagesContainer tempIdRef={tempIdRef} />
           <InputContainer
             tempIdRef={tempIdRef}
             inputContainerRef={inputContainerRef}
           />
         </Container>
-        <SyncFileChangeFloatButton
-          floatButtonBaseYPosition={floatButtonBaseYPosition}
-        />
-        <ModelAdvanceSettingBar
-          floatButtonBaseYPosition={floatButtonBaseYPosition}
-        />
-        <ToolActivateFloatButtons
-          floatButtonBaseYPosition={floatButtonBaseYPosition}
-        />
         <UserGuildTours />
       </RefProvider>
     </ConfigProvider>
