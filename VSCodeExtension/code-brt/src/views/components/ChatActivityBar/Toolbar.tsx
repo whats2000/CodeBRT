@@ -27,11 +27,11 @@ import { EditModelListBar } from './Toolbar/EditModelListBar';
 import { HistorySidebar } from './Toolbar/HistorySidebar';
 import { SettingsBar } from './Toolbar/SettingsBar';
 import { VoiceSettingsBar } from './Toolbar/VoiceSettingsBar';
+import { WhatsNewModal } from './Toolbar/WhatsNewModal';
 import { CodeCompletionSettingsBar } from './Toolbar/CodeCompletionSettingsBar';
 import { useWindowSize } from '../../hooks';
 import { AVAILABLE_MODEL_SERVICES } from '../../../constants';
 import { setRefId, startTour } from '../../redux/slices/tourSlice';
-import { WhatsNewModal } from './Toolbar/WhatsNewModal';
 
 const StyledSpace = styled(Space)`
   display: flex;
