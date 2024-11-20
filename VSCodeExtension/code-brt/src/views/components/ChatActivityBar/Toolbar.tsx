@@ -9,6 +9,7 @@ import {
   AudioOutlined,
   PicRightOutlined,
   RocketOutlined,
+  BellOutlined,
 } from '@ant-design/icons';
 import styled from 'styled-components';
 import { useDispatch, useSelector } from 'react-redux';
@@ -30,6 +31,7 @@ import { CodeCompletionSettingsBar } from './Toolbar/CodeCompletionSettingsBar';
 import { useWindowSize } from '../../hooks';
 import { AVAILABLE_MODEL_SERVICES } from '../../../constants';
 import { setRefId, startTour } from '../../redux/slices/tourSlice';
+import { WhatsNewModal } from './Toolbar/WhatsNewModal';
 
 const StyledSpace = styled(Space)`
   display: flex;
@@ -61,6 +63,7 @@ export const Toolbar: React.FC<ToolbarProps> = ({ setTheme }) => {
     useState(false);
   const [isSelectModelOpen, setIsSelectModelOpen] = useState(false);
   const [isEditModelListOpen, setIsEditModelListOpen] = useState(false);
+  const [isWhatsNewOpen, setIsWhatsNewOpen] = useState(false);
 
   const dispatch = useDispatch<AppDispatch>();
   const { activeModelService, availableModels, selectedModel, isLoading } =
@@ -163,6 +166,12 @@ export const Toolbar: React.FC<ToolbarProps> = ({ setTheme }) => {
       onClick: () => dispatch(startTour({ tourName: 'quickStart' })),
       label: 'Quick Start Guide',
       icon: <RocketOutlined />,
+    },
+    {
+      key: `what's new`,
+      onClick: () => setIsWhatsNewOpen(true),
+      label: `What's New`,
+      icon: <BellOutlined />,
     },
   ];
 
@@ -312,6 +321,10 @@ export const Toolbar: React.FC<ToolbarProps> = ({ setTheme }) => {
       <CodeCompletionSettingsBar
         isOpen={isCodeCompletionSettingsOpen}
         onClose={() => setIsCodeCompletionSettingsOpen(false)}
+      />
+      <WhatsNewModal
+        isOpen={isWhatsNewOpen}
+        onClose={() => setIsWhatsNewOpen(false)}
       />
     </>
   );
