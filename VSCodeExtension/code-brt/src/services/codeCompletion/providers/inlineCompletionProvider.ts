@@ -116,11 +116,11 @@ export class InlineCompletionProvider
       const lowerCaseModelName = modelName.toLowerCase();
       const isHoleFillerModel =
         // FIXME: This seems buggy, the model still returns as conversation model so we currently skip qwen2.5-coder
-        !lowerCaseModelName.includes('qwen2.5-coder') ||
-        lowerCaseModelName.includes('code') ||
-        lowerCaseModelName.includes('starchat') ||
-        lowerCaseModelName.includes('stable') ||
-        lowerCaseModelName.includes('deepseek');
+        !lowerCaseModelName.includes('qwen2.5-coder') &&
+        (lowerCaseModelName.includes('code') ||
+          lowerCaseModelName.includes('starchat') ||
+          lowerCaseModelName.includes('stable') ||
+          lowerCaseModelName.includes('deepseek'));
 
       // Use the combined token for completion
       if (isHoleFillerModel) {
