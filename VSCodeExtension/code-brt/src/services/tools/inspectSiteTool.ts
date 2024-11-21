@@ -1,7 +1,7 @@
 import vscode from 'vscode';
 
 import type { ToolServicesApi } from './types';
-import { BrowserIntegrationFactory } from '../../integrations/browser/browserIntegrationFactory';
+import { BrowserIntegrationFactory } from '../../integrations';
 
 export const inspectSiteTool: ToolServicesApi['inspectSite'] = async ({
   url,
