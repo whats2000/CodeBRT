@@ -11,6 +11,7 @@ export class InlineCompletionProvider
   private readonly settingsManager: SettingsManager;
   private readonly chatModelStrategy: ChatModelStrategy;
   private readonly holeFillerModelStrategy: HoleFillerModelStrategy;
+  private isCompletionInProgress: boolean = false;
 
   constructor(
     ctx: vscode.ExtensionContext,
@@ -31,7 +32,25 @@ export class InlineCompletionProvider
     );
   }
 
-  async provideInlineCompletionItems(
+  /**
+   * Create a combined cancellation token that cancels if either of the input tokens is cancelled
+   */
+  private createCombinedCancellationToken(
+    ...tokens: vscode.CancellationToken[]
+  ): vscode.CancellationToken {
+    const combinedToken = new vscode.CancellationTokenSource();
+
+    // Cancel the combined token if any of the input tokens are cancelled
+    tokens.forEach((token) => {
+      token.onCancellationRequested(() => {
+        combinedToken.cancel();
+      });
+    });
+
+    return combinedToken.token;
+  }
+
+  public async provideInlineCompletionItems(
     document: vscode.TextDocument,
     position: vscode.Position,
     context: vscode.InlineCompletionContext,
@@ -39,64 +58,95 @@ export class InlineCompletionProvider
   ): Promise<
     vscode.InlineCompletionItem[] | vscode.InlineCompletionList | null
   > {
-    let modelService: ModelServiceType | null = null;
-    let modelName = '';
-    if (context.triggerKind === vscode.InlineCompletionTriggerKind.Invoke) {
-      if (!this.settingsManager.get('manualTriggerCodeCompletion')) {
-        return null;
-      }
-
-      modelService = this.settingsManager.get(
-        'lastUsedManualCodeCompletionModelService',
-      );
-      modelName = this.settingsManager.get(
-        'lastSelectedManualCodeCompletionModel',
-      )[modelService];
-    } else if (
-      context.triggerKind === vscode.InlineCompletionTriggerKind.Automatic
-    ) {
-      if (!this.settingsManager.get('autoTriggerCodeCompletion')) {
-        return null;
-      }
-      modelService = this.settingsManager.get(
-        'lastUsedAutoCodeCompletionModelService',
-      );
-      modelName = this.settingsManager.get(
-        'lastSelectedAutoCodeCompletionModel',
-      )[modelService];
-    }
-
-    if (!modelService || modelName === '') {
+    // Check if a completion is already in progress
+    if (this.isCompletionInProgress) {
       return null;
     }
 
-    /**
-     * Check if the model is a hole filler model.
-     * This is a temporary solution until we have a better way to determine the model type.
-     */
-    const lowerCaseModelName = modelName.toLowerCase();
-    const isHoleFillerModel =
-      lowerCaseModelName.includes('code') ||
-      lowerCaseModelName.includes('starchat') ||
-      lowerCaseModelName.includes('stable') ||
-      lowerCaseModelName.includes('qwen') ||
-      lowerCaseModelName.includes('deepseek');
+    // Create a new cancellation source to manage request lifecycle
+    const completionCancellation = new vscode.CancellationTokenSource();
 
-    if (isHoleFillerModel) {
-      return this.holeFillerModelStrategy.provideCompletion(
+    // Combine the original token with our new cancellation source
+    const combinedToken = this.createCombinedCancellationToken(
+      token,
+      completionCancellation.token,
+    );
+
+    try {
+      // Set the flag to indicate completion is in progress
+      this.isCompletionInProgress = true;
+
+      let modelService: ModelServiceType | null = null;
+      let modelName = '';
+
+      // (Existing model selection logic remains the same)
+      if (context.triggerKind === vscode.InlineCompletionTriggerKind.Invoke) {
+        if (!this.settingsManager.get('manualTriggerCodeCompletion')) {
+          return null;
+        }
+
+        modelService = this.settingsManager.get(
+          'lastUsedManualCodeCompletionModelService',
+        );
+        modelName = this.settingsManager.get(
+          'lastSelectedManualCodeCompletionModel',
+        )[modelService];
+      } else if (
+        context.triggerKind === vscode.InlineCompletionTriggerKind.Automatic
+      ) {
+        if (!this.settingsManager.get('autoTriggerCodeCompletion')) {
+          return null;
+        }
+        modelService = this.settingsManager.get(
+          'lastUsedAutoCodeCompletionModelService',
+        );
+        modelName = this.settingsManager.get(
+          'lastSelectedAutoCodeCompletionModel',
+        )[modelService];
+      }
+
+      if (!modelService || modelName === '') {
+        return null;
+      }
+
+      /**
+       * Check if the model is a hole filler model.
+       * This is a temporary solution until we have a better way to determine the model type.
+       */
+      const lowerCaseModelName = modelName.toLowerCase();
+      const isHoleFillerModel =
+        // FIXME: This seems buggy, the model still returns as conversation model so we currently skip qwen2.5-coder
+        !lowerCaseModelName.includes('qwen2.5-coder') ||
+        lowerCaseModelName.includes('code') ||
+        lowerCaseModelName.includes('starchat') ||
+        lowerCaseModelName.includes('stable') ||
+        lowerCaseModelName.includes('deepseek');
+
+      // Use the combined token for completion
+      if (isHoleFillerModel) {
+        return this.holeFillerModelStrategy.provideCompletion(
+          document,
+          position,
+          combinedToken,
+          modelService,
+          modelName,
+        );
+      }
+      return this.chatModelStrategy.provideCompletion(
         document,
         position,
-        token,
+        combinedToken,
         modelService,
         modelName,
       );
+    } catch (error) {
+      // Handle any errors that might occur during completion
+      console.error('Completion error:', error);
+      return null;
+    } finally {
+      // Always reset the completion flag and dispose of the cancellation source
+      this.isCompletionInProgress = false;
+      completionCancellation.dispose();
     }
-    return this.chatModelStrategy.provideCompletion(
-      document,
-      position,
-      token,
-      modelService,
-      modelName,
-    );
   }
 }
