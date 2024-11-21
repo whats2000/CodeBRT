@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import {
   Button,
   Flex,
@@ -74,12 +74,16 @@ export const HistoryListItem: React.FC<HistoryListItemProps> = ({
     (state: RootState) => state.conversationIndex,
   );
 
-  const deleteHistory = (historyID: string) => {
-    if (activeModelService === 'loading...') {
+  const [isDeleting, setIsDeleting] = useState(false);
+
+  const deleteHistory = async (historyID: string) => {
+    if (activeModelService === 'loading...' || isDeleting) {
       return;
     }
 
-    dispatch(deleteConversationIndex(historyID));
+    setIsDeleting(true);
+    await dispatch(deleteConversationIndex(historyID));
+    setIsDeleting(false);
   };
 
   return (
@@ -91,11 +95,13 @@ export const HistoryListItem: React.FC<HistoryListItemProps> = ({
           danger={true}
           type='text'
           size='small'
+          loading={isDeleting}
+          disabled={isDeleting}
           icon={<DeleteOutlined />}
           style={{ marginRight: 12 }}
           onClick={(e) => {
             e.stopPropagation();
-            deleteHistory(historyID);
+            void deleteHistory(historyID);
           }}
         />
       }
