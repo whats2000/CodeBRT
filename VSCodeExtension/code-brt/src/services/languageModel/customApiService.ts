@@ -338,7 +338,16 @@ export class CustomApiService extends AbstractLanguageModelService {
     );
 
     if (!selectedModel) {
-      vscode.window.showErrorMessage(`Custom model ${modelName} not found.`);
+      const lastSelectedModel = this.settingsManager.get('lastSelectedModel');
+      this.currentModel = '';
+      lastSelectedModel.custom = '';
+      this.settingsManager
+        .set('lastSelectedModel', lastSelectedModel)
+        .then(() => {
+          void vscode.window.showErrorMessage(
+            `Model ${modelName} is not available.`,
+          );
+        });
       return;
     }
     this.updateSettings(selectedModel);

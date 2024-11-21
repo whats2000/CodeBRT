@@ -217,9 +217,16 @@ export class OpenRouterService extends AbstractOpenaiLikeService {
     );
 
     if (!selectedModel) {
-      vscode.window.showErrorMessage(
-        `OpenRouter model ${modelName} not found.`,
-      );
+      const lastSelectedModel = this.settingsManager.get('lastSelectedModel');
+      this.currentModel = '';
+      lastSelectedModel.openRouter = '';
+      this.settingsManager
+        .set('lastSelectedModel', lastSelectedModel)
+        .then(() => {
+          void vscode.window.showErrorMessage(
+            'Model not found. Please configure the models first.',
+          );
+        });
       return;
     }
     super.switchModel(modelName);
