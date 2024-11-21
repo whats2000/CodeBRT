@@ -39,6 +39,9 @@ export const ToolResponseContainer: React.FC<ToolResponseContainerProps> = ({
   const conversationHistory = useSelector(
     (state: RootState) => state.conversation,
   );
+  const { activeModelService } = useSelector(
+    (state: RootState) => state.modelService,
+  );
 
   const tempIdRef = useRef<string | null>(null);
 
@@ -75,6 +78,7 @@ export const ToolResponseContainer: React.FC<ToolResponseContainerProps> = ({
       processToolCall({
         toolCall: previousToolCall,
         entry: previousEntry,
+        activeModelService,
       }),
     );
   };

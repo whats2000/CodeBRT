@@ -76,6 +76,9 @@ export const ToolActionContainer = React.memo<ToolActionContainerProps>(
     const { isProcessing } = useSelector(
       (state: RootState) => state.conversation,
     );
+    const { activeModelService } = useSelector(
+      (state: RootState) => state.modelService,
+    );
 
     const shouldShowActionButtons =
       showActionButtons &&
@@ -88,7 +91,9 @@ export const ToolActionContainer = React.memo<ToolActionContainerProps>(
       if (isProcessing || !toolCall) {
         return;
       }
-      dispatch(processToolCall({ toolCall, entry, tempIdRef }));
+      dispatch(
+        processToolCall({ toolCall, entry, activeModelService, tempIdRef }),
+      );
     };
 
     const onReject = async (reason: string, entry: ConversationEntry) => {
@@ -100,6 +105,7 @@ export const ToolActionContainer = React.memo<ToolActionContainerProps>(
         processToolCall({
           toolCall: entry.toolCalls?.[0],
           entry,
+          activeModelService,
           rejectByUserMessage: `I reject the ${entry.toolCalls?.[0].toolName} tool call that was made. Reason: ${reason}`,
           tempIdRef,
         }),

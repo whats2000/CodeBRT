@@ -136,6 +136,7 @@ export const InputContainer = React.memo<InputContainerProps>(
           processToolCall({
             toolCall: toolCall,
             entry: currentEntry,
+            activeModelService,
             rejectByUserMessage: inputMessage,
             tempIdRef,
           }),

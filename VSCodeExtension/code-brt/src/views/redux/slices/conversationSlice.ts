@@ -274,6 +274,7 @@ export const processToolCall = createAsyncThunk<
   {
     toolCall: ToolCallEntry;
     entry: ConversationEntry;
+    activeModelService: ModelServiceType | 'loading...';
     rejectByUserMessage?: string;
     tempIdRef?: React.MutableRefObject<string | null>;
   },
@@ -286,12 +287,24 @@ export const processToolCall = createAsyncThunk<
 >(
   'conversation/processToolAction',
   async (
-    { toolCall, entry, rejectByUserMessage, tempIdRef },
+    { toolCall, entry, activeModelService, rejectByUserMessage, tempIdRef },
     { dispatch, getState, extra: { callApi } },
   ) => {
-    if (getState().conversation.isProcessing) {
+    if (
+      getState().conversation.isProcessing ||
+      activeModelService === 'loading...'
+    ) {
       return;
     }
+
+    if (rejectByUserMessage) {
+      // Check if the API not set while rejecting the tool call
+      const settings = getState().settings.settings;
+      if (!isApiKeyAvailable(callApi, activeModelService, settings)) {
+        return;
+      }
+    }
+
     dispatch(startProcessing());
     dispatch(addTempResponseEntry({ parentId: entry.id, role: 'tool' }));
     const toolCallResponse: ToolCallResponse = !rejectByUserMessage
