@@ -1,2 +1,1 @@
-export * from './types';
-export * from './diffIntegrationProvider';
+export * from './diffIntegration';

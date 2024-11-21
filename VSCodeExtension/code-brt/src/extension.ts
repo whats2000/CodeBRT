@@ -13,8 +13,9 @@ import {
 } from './api';
 import { ModelServiceFactory } from './services/languageModel';
 import { VoiceServiceFactory } from './services/voice';
-import { TerminalManager } from './integrations';
+import { DiffIntegration, TerminalManager } from './integrations';
 import { createViewApi } from './api/viewApi/viewApiFactory';
+import { registerDiff } from './api/viewApi/registerDiff';
 
 let extensionContext: vscode.ExtensionContext | undefined = undefined;
 
@@ -23,6 +24,7 @@ export const activate = async (ctx: vscode.ExtensionContext) => {
   const settingsManager = SettingsManager.getInstance(ctx);
   const historyManager = new HistoryManager(ctx);
   const terminalManager = new TerminalManager();
+  const diffIntegration = new DiffIntegration();
 
   // Create a model service factory instance
   const modelServiceFactory = new ModelServiceFactory(ctx, settingsManager);
@@ -51,6 +53,7 @@ export const activate = async (ctx: vscode.ExtensionContext) => {
   void registerAndConnectView(ctx, settingsManager, 'chatActivityBar', api);
   void registerAndConnectView(ctx, settingsManager, 'workPanel', api);
   registerInlineCompletion(ctx, settingsManager, connectedViews);
+  registerDiff(ctx, diffIntegration);
 };
 
 export const deactivate = () => {

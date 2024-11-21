@@ -1,99 +1,65 @@
-import { DiffControllerOptions, DiffResult } from './types';
-import vscode from 'vscode';
+import * as vscode from 'vscode';
+import * as path from 'path';
 
 export class DiffIntegration {
-  private options: DiffControllerOptions;
+  private readonly contentProvider: vscode.TextDocumentContentProvider;
 
-  constructor(options: DiffControllerOptions = {}) {
-    this.options = {
-      tempDiffPath:
-        vscode.workspace.getConfiguration().get('extensionName.tempDiffPath') ||
-        '/tmp/vscode-diff',
-      autoCleanup: true,
-      ...options,
-    };
+  constructor() {
+    this.contentProvider = this.createContentProvider();
   }
 
-  /**
-   * Compute differences between two text contents
-   * @param originalContent Original text content
-   * @param modifiedContent Modified text content
-   * @returns Detailed diff result
-   */
-  computeDiff(originalContent: string, modifiedContent: string): DiffResult {
-    const originalLines = originalContent.split('\n');
-    const modifiedLines = modifiedContent.split('\n');
-
-    let added: number;
-    let removed = 0;
-    let modified = 0;
-
-    // Simple diff algorithm
-    originalLines.forEach((line, index) => {
-      if (index >= modifiedLines.length) {
-        removed++;
-      } else if (line !== modifiedLines[index]) {
-        modified++;
-      }
-    });
-
-    added = Math.max(0, modifiedLines.length - originalLines.length);
-
+  private createContentProvider(): vscode.TextDocumentContentProvider {
     return {
-      hasDifferences: added > 0 || removed > 0 || modified > 0,
-      diffDetails: {
-        added,
-        removed,
-        modified,
+      provideTextDocumentContent(uri: vscode.Uri): string {
+        // Custom logic can be added here if needed
+        return uri.query || '';
       },
     };
   }
 
   /**
-   * Open a diff view in VSCode
-   * @param originalUri URI of the original file
-   * @param modifiedUri URI of the modified file
-   * @param title Optional title for the diff view
+   * Show diff view for two pieces of content
+   * @param filePath Original file path
+   * @param originalContent Original content
+   * @param newContent New content
    */
-  openDiffView(
-    originalUri: vscode.Uri,
-    modifiedUri: vscode.Uri,
-    title: string = 'File Difference',
-  ): void {
-    void vscode.commands.executeCommand(
+  public async showDiff(
+    filePath: string,
+    originalContent: string,
+    newContent: string,
+  ): Promise<void> {
+    // Create unique URIs using the custom 'diff:' scheme
+    const originalUri = vscode.Uri.parse(
+      `diff:Original/${path.basename(filePath)}?${encodeURIComponent(originalContent)}`,
+    );
+    const modifiedUri = vscode.Uri.parse(
+      `diff:Modified/${path.basename(filePath)}?${encodeURIComponent(newContent)}`,
+    );
+
+    // Register the content provider (if not already registered)
+    vscode.workspace.registerTextDocumentContentProvider(
+      'diff',
+      this.contentProvider,
+    );
+
+    // Open diff view
+    await vscode.commands.executeCommand(
       'vscode.diff',
       originalUri,
       modifiedUri,
-      title,
+      `Diff: ${path.basename(filePath)}`,
     );
   }
 
   /**
-   * Create a temporary file with content
-   * @param content Content to write
-   * @returns URI of the created temporary file
+   * Close the active diff editor
+   * Method 2: Focus on the modified file
    */
-  createTempFile(content: string): vscode.Uri {
-    const tempFile = vscode.Uri.file(
-      `${this.options.tempDiffPath}/temp_diff_${Date.now()}.txt`,
-    );
+  public async closeDiffAndFocusModified(): Promise<void> {
+    // First, try to select the modified (right-side) editor
+    await vscode.commands.executeCommand('workbench.action.focusRightGroup');
 
-    const writeEdit = new vscode.WorkspaceEdit();
-    writeEdit.createFile(tempFile, { overwrite: true });
-    writeEdit.insert(tempFile, new vscode.Position(0, 0), content);
-
-    void vscode.workspace.applyEdit(writeEdit);
-
-    if (this.options.autoCleanup) {
-      // Schedule temp file deletion
-      setTimeout(
-        () => {
-          void vscode.workspace.fs.delete(tempFile);
-        },
-        5 * 60 * 1000,
-      ); // 5 minutes
-    }
-
-    return tempFile;
+    // Then close the diff view
+    await vscode.commands.executeCommand('workbench.action.closeActiveEditor');
   }
 }

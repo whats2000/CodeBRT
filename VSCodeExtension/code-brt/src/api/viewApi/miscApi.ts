@@ -106,5 +106,8 @@ export const createMiscApi = (
         console.error(error);
       }
     },
+    closeDiffView: async () => {
+      vscode.commands.executeCommand('code-brt.closeDiff');
+    },
   };
 };

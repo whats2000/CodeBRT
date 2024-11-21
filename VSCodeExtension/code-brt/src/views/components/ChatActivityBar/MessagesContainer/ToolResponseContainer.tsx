@@ -1,4 +1,4 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useContext, useEffect, useRef } from 'react';
 import {
   Collapse,
   Tag,
@@ -17,7 +17,7 @@ import {
   processToolResponse,
 } from '../../../redux/slices/conversationSlice';
 import type { AppDispatch, RootState } from '../../../redux';
-import { DiffViewProvider } from '../../../../services/diff/diffViewProvider'
+import { WebviewContext } from '../../../WebviewContext';
 
 const { Panel } = Collapse;
 
@@ -32,6 +32,8 @@ export const ToolResponseContainer: React.FC<ToolResponseContainerProps> = ({
   toolStatus,
   showActionButtons = true,
 }) => {
+  const { callApi } = useContext(WebviewContext);
+
   const dispatch = useDispatch<AppDispatch>();
 
   const conversationHistory = useSelector(
@@ -51,11 +53,9 @@ export const ToolResponseContainer: React.FC<ToolResponseContainerProps> = ({
         tempIdRef,
       }),
     );
-
     if (entry.toolResponses?.[0]?.toolCallName === 'writeToFile') {
-      await DiffViewProvider.closeDiff();
+      await callApi('closeDiffView');
     }
-
   };
 
   const onRollBack = (_entry: ConversationEntry) => {

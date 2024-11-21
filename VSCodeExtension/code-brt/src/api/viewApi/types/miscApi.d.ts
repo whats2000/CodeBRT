@@ -69,4 +69,9 @@ export type MiscApi = {
    * @param relativePath - The relative path to run the command in
    */
   runCommand: (command: string, relativePath?: string) => Promise<void>;
+
+  /**
+   * Close the diff view.
+   */
+  closeDiffView: () => void;
 };

@@ -4,7 +4,6 @@ import vscode from 'vscode';
 
 import type { ToolServicesApi } from './types';
 import { FileOperationsProvider } from '../../utils';
-import { DiffViewProvider } from '../diff/diffViewProvider';
 
 export const writeToFileTool: ToolServicesApi['writeToFile'] = async ({
   relativePath,
@@ -43,7 +42,13 @@ export const writeToFileTool: ToolServicesApi['writeToFile'] = async ({
     return { status: 'error', result: message };
   }
 
-  await DiffViewProvider.showDiff(filePath, existingContent, content);
+  // Show a diff
+  await vscode.commands.executeCommand(
+    'code-brt.showDiff',
+    filePath,
+    existingContent,
+    content,
+  );
 
   return { status: 'success', result: message };
 };
