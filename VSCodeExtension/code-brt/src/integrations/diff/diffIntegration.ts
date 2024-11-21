@@ -2,6 +2,7 @@ import * as vscode from 'vscode';
 import * as path from 'path';
 
 export class DiffIntegration {
+  private activeFilePath: string | undefined;
   private readonly contentProvider: vscode.TextDocumentContentProvider;
 
   constructor() {
@@ -49,6 +50,9 @@ export class DiffIntegration {
       modifiedUri,
       `Diff: ${path.basename(filePath)}`,
     );
+
+    // Save the active file path
+    this.activeFilePath = filePath;
   }
 
   /**
@@ -61,5 +65,16 @@ export class DiffIntegration {
 
     // Then close the diff view
     await vscode.commands.executeCommand('workbench.action.closeActiveEditor');
+
+    // Open the modified file
+    if (this.activeFilePath) {
+      await vscode.commands.executeCommand(
+        'vscode.open',
+        vscode.Uri.file(this.activeFilePath),
+      );
+    }
+
+    // Reset the active file path
+    this.activeFilePath = undefined;
   }
 }
