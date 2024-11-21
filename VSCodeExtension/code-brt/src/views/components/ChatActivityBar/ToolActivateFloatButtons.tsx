@@ -39,7 +39,7 @@ const TOOLS_MAP: {
         icon={<QuestionCircleOutlined />}
         type='text'
         href={
-          'https://whats2000.github.io/CodeBRT/docs/features/automated-tasks/'
+          'https://whats2000.github.io/CodeBRT/docs/features/automated-tasks/agent-tools'
         }
       />
     ),
