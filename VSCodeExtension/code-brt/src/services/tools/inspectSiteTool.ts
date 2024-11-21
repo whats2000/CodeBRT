@@ -1,7 +1,7 @@
 import vscode from 'vscode';
 
 import type { ToolServicesApi } from './types';
-import { BrowserIntegrationFactory } from '../../integrations';
+import { BrowserIntegrationProvider } from '../../integrations';
 
 export const inspectSiteTool: ToolServicesApi['inspectSite'] = async ({
   url,
@@ -12,7 +12,7 @@ export const inspectSiteTool: ToolServicesApi['inspectSite'] = async ({
 
     // Create a browser service
     const browserService =
-      await BrowserIntegrationFactory.createBrowserIntegration();
+      await BrowserIntegrationProvider.createBrowserIntegration();
 
     // Check the URL
     const result = await browserService.inspect(url);

@@ -1,1 +1,1 @@
-export * from './browserIntegrationFactory';
+export * from './browserIntegrationProvider';
