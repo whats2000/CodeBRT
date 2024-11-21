@@ -17,6 +17,7 @@ import {
   processToolResponse,
 } from '../../../redux/slices/conversationSlice';
 import type { AppDispatch, RootState } from '../../../redux';
+import { DiffViewProvider } from '../../../../services/diff/diffViewProvider'
 
 const { Panel } = Collapse;
 
@@ -50,6 +51,11 @@ export const ToolResponseContainer: React.FC<ToolResponseContainerProps> = ({
         tempIdRef,
       }),
     );
+
+    if (entry.toolResponses?.[0]?.toolCallName === 'writeToFile') {
+      await DiffViewProvider.closeDiff();
+    }
+
   };
 
   const onRollBack = (_entry: ConversationEntry) => {
