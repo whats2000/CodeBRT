@@ -27,6 +27,9 @@ export const SyncFileChangeFloatButton: React.FC<
     (state: RootState) => state.conversation,
   );
   const { isLoading } = useSelector((state: RootState) => state.settings);
+  const { isProcessing } = useSelector(
+    (state: RootState) => state.conversation,
+  );
 
   const dispatch = useDispatch<AppDispatch>();
 
@@ -72,7 +75,7 @@ export const SyncFileChangeFloatButton: React.FC<
       <FloatButton
         tooltip={'Synchronize the file changes to chat history'}
         icon={
-          conversationHistory.isLoading || isLoading ? (
+          conversationHistory.isLoading || isLoading || isProcessing ? (
             <SyncOutlined spin={true} />
           ) : (
             <SyncOutlined />
