@@ -1,16 +1,16 @@
 import * as vscode from 'vscode';
 
-import { AutoCodeCompletionProvider } from './autoCodeCompletionProvider';
-import { ManuallyCodeCompletionProvider } from './manuallyCodeCompletionProvider';
 import { SettingsManager } from '../../../api';
-import { LoadedModelServices } from '../../../types';
+import { LoadedModelServices, ModelServiceType } from '../../../types';
 import { StatusBarManager } from '../ui/statusBarManager';
+import { ChatModelStrategy, HoleFillerModelStrategy } from '../strategies';
 
 export class InlineCompletionProvider
   implements vscode.InlineCompletionItemProvider
 {
-  private readonly autoCodeCompletionProvider: AutoCodeCompletionProvider;
-  private readonly manuallyCodeCompletionProvider: ManuallyCodeCompletionProvider;
+  private readonly settingsManager: SettingsManager;
+  private readonly chatModelStrategy: ChatModelStrategy;
+  private readonly holeFillerModelStrategy: HoleFillerModelStrategy;
 
   constructor(
     ctx: vscode.ExtensionContext,
@@ -18,15 +18,14 @@ export class InlineCompletionProvider
     loadedModelServices: LoadedModelServices,
     statusBarManager: StatusBarManager,
   ) {
-    this.autoCodeCompletionProvider = new AutoCodeCompletionProvider(
+    this.settingsManager = settingsManager;
+    this.chatModelStrategy = new ChatModelStrategy(
       ctx,
-      settingsManager,
       loadedModelServices,
       statusBarManager,
     );
-    this.manuallyCodeCompletionProvider = new ManuallyCodeCompletionProvider(
+    this.holeFillerModelStrategy = new HoleFillerModelStrategy(
       ctx,
-      settingsManager,
       loadedModelServices,
       statusBarManager,
     );
@@ -40,22 +39,64 @@ export class InlineCompletionProvider
   ): Promise<
     vscode.InlineCompletionItem[] | vscode.InlineCompletionList | null
   > {
+    let modelService: ModelServiceType | null = null;
+    let modelName = '';
     if (context.triggerKind === vscode.InlineCompletionTriggerKind.Invoke) {
-      return await this.manuallyCodeCompletionProvider.provideCompletionItems(
-        document,
-        position,
-        token,
+      if (!this.settingsManager.get('manualTriggerCodeCompletion')) {
+        return null;
+      }
+
+      modelService = this.settingsManager.get(
+        'lastUsedManualCodeCompletionModelService',
       );
+      modelName = this.settingsManager.get(
+        'lastSelectedManualCodeCompletionModel',
+      )[modelService];
     } else if (
       context.triggerKind === vscode.InlineCompletionTriggerKind.Automatic
     ) {
-      return await this.autoCodeCompletionProvider.provideCompletionItems(
+      if (!this.settingsManager.get('autoTriggerCodeCompletion')) {
+        return null;
+      }
+      modelService = this.settingsManager.get(
+        'lastUsedAutoCodeCompletionModelService',
+      );
+      modelName = this.settingsManager.get(
+        'lastSelectedAutoCodeCompletionModel',
+      )[modelService];
+    }
+
+    if (!modelService || modelName === '') {
+      return null;
+    }
+
+    /**
+     * Check if the model is a hole filler model.
+     * This is a temporary solution until we have a better way to determine the model type.
+     */
+    const lowerCaseModelName = modelName.toLowerCase();
+    const isHoleFillerModel =
+      lowerCaseModelName.includes('code') ||
+      lowerCaseModelName.includes('starchat') ||
+      lowerCaseModelName.includes('stable') ||
+      lowerCaseModelName.includes('qwen') ||
+      lowerCaseModelName.includes('deepseek');
+
+    if (isHoleFillerModel) {
+      return this.holeFillerModelStrategy.provideCompletion(
         document,
         position,
         token,
+        modelService,
+        modelName,
       );
     }
-
-    return null;
+    return this.chatModelStrategy.provideCompletion(
+      document,
+      position,
+      token,
+      modelService,
+      modelName,
+    );
   }
 }

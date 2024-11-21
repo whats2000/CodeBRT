@@ -1,2 +1,2 @@
-export * from './manuallyCodeCompletionStrategy';
-export * from './autoCodeCompletionStrategy';
+export * from './chatModelStrategy';
+export * from './holeFillerModelStrategy';
