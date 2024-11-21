@@ -53,14 +53,14 @@ export const OpenRouterModelForm: React.FC<OpenRouterModelFormProps> = ({
 
   useEffect(() => {
     if (!isOpen) {
-      handleSave(openRouterModels);
+      void handleSave(openRouterModels);
     }
   }, [isOpen]);
 
-  const handleSave = (modelsToSave: OpenRouterModelSettings[]) => {
+  const handleSave = async (modelsToSave: OpenRouterModelSettings[]) => {
     if (isLoading) return;
 
-    callApi('setOpenRouterModels', modelsToSave)
+    await callApi('setOpenRouterModels', modelsToSave)
       .then(() => {
         handleEditModelListSave(modelsToSave.map((model) => model.name));
       })
@@ -76,7 +76,6 @@ export const OpenRouterModelForm: React.FC<OpenRouterModelFormProps> = ({
         uuid: uuidV4(),
         id: '',
         name: 'New Model',
-        apiKey: '',
         created: new Date().getTime(),
         description: '',
         context_length: 4096,
@@ -101,7 +100,7 @@ export const OpenRouterModelForm: React.FC<OpenRouterModelFormProps> = ({
     ]);
   };
 
-  const handleAddModelFromBrowser = (model: OpenRouterModelSettings) => {
+  const handleAddModelFromBrowser = async (model: OpenRouterModelSettings) => {
     const existingModel = openRouterModels.find((m) => m.id === model.id);
 
     if (existingModel) {
@@ -112,13 +111,11 @@ export const OpenRouterModelForm: React.FC<OpenRouterModelFormProps> = ({
     const newModel: OpenRouterModelSettings = {
       ...model,
       uuid: uuidV4(),
-      apiKey: '', // User needs to add their API key
       created: new Date().getTime(),
     };
 
     setOpenRouterModels([...openRouterModels, newModel]);
-    setIsBrowseModalOpen(false);
-    void messageApi.success(`Added ${model.name} to your OpenRouter models.`);
+    await handleSave([...openRouterModels, newModel]);
   };
 
   const handleModelChange = (
@@ -203,6 +200,8 @@ export const OpenRouterModelForm: React.FC<OpenRouterModelFormProps> = ({
           isOpen={isBrowseModalOpen}
           onClose={() => setIsBrowseModalOpen(false)}
           onAddModel={handleAddModelFromBrowser}
+          onRemoveModel={handleRemoveModel}
+          openRouterModels={openRouterModels}
         />
       </Space>
     </Form>

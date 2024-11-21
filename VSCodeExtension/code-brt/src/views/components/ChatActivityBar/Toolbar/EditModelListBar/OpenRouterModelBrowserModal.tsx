@@ -19,6 +19,7 @@ import {
   SearchOutlined,
   PlusCircleOutlined,
   InfoCircleFilled,
+  MinusCircleOutlined,
 } from '@ant-design/icons';
 import { Virtuoso } from 'react-virtuoso';
 
@@ -32,11 +33,13 @@ type OpenRouterModelBrowserModalProps = {
   isOpen: boolean;
   onClose: () => void;
   onAddModel: (model: OpenRouterModelSettings) => void;
+  onRemoveModel: (uuid: string) => void;
+  openRouterModels: OpenRouterModelSettings[];
 };
 
 export const OpenRouterModelBrowserModal: React.FC<
   OpenRouterModelBrowserModalProps
-> = ({ isOpen, onClose, onAddModel }) => {
+> = ({ isOpen, onClose, onAddModel, onRemoveModel, openRouterModels }) => {
   const { callApi } = useContext(WebviewContext);
   const [models, setModels] = useState<OpenRouterModelSettings[]>([]);
   const [filteredModels, setFilteredModels] = useState<
@@ -130,6 +133,34 @@ export const OpenRouterModelBrowserModal: React.FC<
       Cancel
     </Button>,
   ];
+
+  const renderAddOrRemoveButton = (model: OpenRouterModelSettings) => {
+    const targetModel = openRouterModels.find((m) => m.id === model.id);
+    if (!targetModel) {
+      return (
+        <Button
+          type='primary'
+          ghost={true}
+          size={'small'}
+          icon={<PlusCircleOutlined />}
+          onClick={() => onAddModel(model)}
+        >
+          Add Model
+        </Button>
+      );
+    }
+
+    return (
+      <Button
+        danger={true}
+        size={'small'}
+        icon={<MinusCircleOutlined />}
+        onClick={() => onRemoveModel(targetModel.uuid)}
+      >
+        Remove Model
+      </Button>
+    );
+  };
 
   return (
     <Modal
@@ -252,15 +283,7 @@ export const OpenRouterModelBrowserModal: React.FC<
                         </Tooltip>{' '}
                         $/M tokens
                       </Text>
-                      <Button
-                        type='primary'
-                        ghost={true}
-                        size={'small'}
-                        icon={<PlusCircleOutlined />}
-                        onClick={() => onAddModel(model)}
-                      >
-                        Add Model
-                      </Button>
+                      {renderAddOrRemoveButton(model)}
                     </Space>
                   </Col>
                 </Row>
