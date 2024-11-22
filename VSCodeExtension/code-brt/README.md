@@ -2,7 +2,7 @@
 
 ## Overview
 
-**Version**: 0.4.0
+**Version**: 0.4.1
 
 **Status**: _Under Development_  
 ⚠️ This project is currently in the Beta phase. Some features are still being developed, and you may encounter bugs or
@@ -72,7 +72,7 @@ Here’s an outline of the upcoming features and improvements for CodeBRT:
   - [x] Trigger code completion
   - [ ] Context retrieval
 - [x] Auto code completion
-- [ ] Code integrator to compose code snippets
+- [ ] Code integrator to compose code snippets <- **In Progress**
 
 ### Version 0.4 (WIP)
 
@@ -89,7 +89,7 @@ Here’s an outline of the upcoming features and improvements for CodeBRT:
   - [x] List Code Definitions
   - [ ] Image Generation
   - [ ] Code Interpreter
-- [ ] Show file difference after code completion
+- [x] Show file difference after code completion
 - [ ] Task Scheduling
 - [ ] Auto task scheduling and completion
 - [ ] Auto-debugging
@@ -97,6 +97,7 @@ Here’s an outline of the upcoming features and improvements for CodeBRT:
 
 ### Version 1.0 (Stable Release)
 
+- [ ] Architecture Mode for code generation
 - [ ] Smart localization support (multi-language `.json` generator)
 - [ ] Code-document pairing generation
 - [ ] Code utility test generation
