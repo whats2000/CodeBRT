@@ -5,7 +5,7 @@ import vscode from 'vscode';
 
 import type { BrowserIntegration } from './types';
 
-export class BrowserIntegrationFactory {
+export class BrowserIntegrationProvider {
   private static async checkBrowserAvailability(): Promise<boolean> {
     try {
       // Try to launch a headless browser
@@ -57,8 +57,8 @@ export class BrowserIntegrationFactory {
       default:
         try {
           // Check if Playwright browsers are installed
-          if (!(await BrowserIntegrationFactory.checkBrowserAvailability())) {
-            await BrowserIntegrationFactory.ensurePlaywrightBrowsers();
+          if (!(await BrowserIntegrationProvider.checkBrowserAvailability())) {
+            await BrowserIntegrationProvider.ensurePlaywrightBrowsers();
           }
 
           // Dynamically import the Playwright module

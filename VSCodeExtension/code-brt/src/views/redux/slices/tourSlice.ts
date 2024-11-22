@@ -52,6 +52,13 @@ const initialState: TourState = {
             'Here contain System Prompt, Temperature, Max Tokens and more.',
         },
         {
+          title: 'File Synchronization To History',
+          description:
+            'To prevent the model confidentiality overwrite human edited content. ' +
+            'This feature will synchronize current file status to history. ' +
+            'Use after manually editing the file.',
+        },
+        {
           title: 'Service Provider',
           description:
             'We support multiple model services. You can switch the provider here.',
@@ -61,6 +68,12 @@ const initialState: TourState = {
           description:
             'There is an edit model list button at the end of the model list. ' +
             'Which can let you edit or update the model list for the latest models.',
+        },
+        {
+          title: 'Settings',
+          description:
+            'Before you start, you should set up the API key or Host the server. ' +
+            'Check the "General Settings" first for get the API key or setup for the local server.',
         },
       ],
     },

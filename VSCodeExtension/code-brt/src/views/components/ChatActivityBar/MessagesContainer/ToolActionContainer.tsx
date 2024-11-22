@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useContext } from 'react';
 import {
   Collapse,
   Descriptions,
@@ -19,6 +19,7 @@ import {
   CheckCircleOutlined,
   GlobalOutlined,
   LinkOutlined,
+  PlaySquareOutlined,
 } from '@ant-design/icons';
 
 import type {
@@ -32,6 +33,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import { processToolCall } from '../../../redux/slices/conversationSlice';
 import ReactMarkdown from 'react-markdown';
 import { RendererCode } from '../../common/RenderCode';
+import { WebviewContext } from '../../../WebviewContext';
 
 // Mapping tool names to Antd icons
 const MAP_TOOL_NAME_TO_ICON: {
@@ -67,10 +69,15 @@ type ToolActionContainerProps = {
 
 export const ToolActionContainer = React.memo<ToolActionContainerProps>(
   ({ entry, showActionButtons, tempIdRef }) => {
+    const { callApi } = useContext(WebviewContext);
+
     const dispatch = useDispatch<AppDispatch>();
 
     const { isProcessing } = useSelector(
       (state: RootState) => state.conversation,
+    );
+    const { activeModelService } = useSelector(
+      (state: RootState) => state.modelService,
     );
 
     const shouldShowActionButtons =
@@ -84,7 +91,9 @@ export const ToolActionContainer = React.memo<ToolActionContainerProps>(
       if (isProcessing || !toolCall) {
         return;
       }
-      dispatch(processToolCall({ toolCall, entry, tempIdRef }));
+      dispatch(
+        processToolCall({ toolCall, entry, activeModelService, tempIdRef }),
+      );
     };
 
     const onReject = async (reason: string, entry: ConversationEntry) => {
@@ -96,6 +105,7 @@ export const ToolActionContainer = React.memo<ToolActionContainerProps>(
         processToolCall({
           toolCall: entry.toolCalls?.[0],
           entry,
+          activeModelService,
           rejectByUserMessage: `I reject the ${entry.toolCalls?.[0].toolName} tool call that was made. Reason: ${reason}`,
           tempIdRef,
         }),
@@ -124,6 +134,23 @@ export const ToolActionContainer = React.memo<ToolActionContainerProps>(
         return renderString;
       }
       return `\`\`\`${fileType}\n${renderString}\n\`\`\``;
+    };
+
+    const executeTheFinalResult = (toolCall: ToolCallEntry) => {
+      if (
+        toolCall.toolName !== 'attemptCompletion' ||
+        !toolCall.parameters.command
+      ) {
+        // Well tho this technically should not happen
+        return;
+      }
+
+      // Execute the command
+      void callApi(
+        'runCommand',
+        toolCall.parameters.command,
+        toolCall.parameters.relativePath,
+      );
     };
 
     return (
@@ -201,6 +228,18 @@ export const ToolActionContainer = React.memo<ToolActionContainerProps>(
                 </Dropdown>
               </Space>
             )}
+            {toolCall.toolName === 'attemptCompletion' &&
+              toolCall.parameters.command && (
+                <Button
+                  icon={<PlaySquareOutlined />}
+                  onClick={() => executeTheFinalResult(toolCall)}
+                  type={'primary'}
+                  block={true}
+                  ghost={true}
+                >
+                  Run Command
+                </Button>
+              )}
           </Space>
         ))}
       </div>

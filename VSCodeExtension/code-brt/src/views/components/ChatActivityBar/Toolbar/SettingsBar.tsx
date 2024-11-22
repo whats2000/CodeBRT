@@ -61,6 +61,7 @@ const SETTINGS_GROUPS: { title: string; keys: (keyof ExtensionSettings)[] }[] =
         'cohereApiKey',
         'groqApiKey',
         'huggingFaceApiKey',
+        'openRouterApiKey',
       ],
     },
     {

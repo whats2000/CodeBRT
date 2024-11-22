@@ -5,6 +5,7 @@ import { ToolServiceProvider } from '../../services/tools';
 import { triggerEvent } from '../registerView';
 import { FileOperationsProvider } from '../../utils';
 import { TerminalManager } from '../../integrations';
+import path from 'path';
 
 export const createMiscApi = (
   ctx: vscode.ExtensionContext,
@@ -78,6 +79,35 @@ export const createMiscApi = (
           triggerEvent('updateStatus', status);
         },
       );
+    },
+    runCommand: async (command, relativePath) => {
+      const workspaceFolders = vscode.workspace.workspaceFolders?.[0];
+      if (!workspaceFolders) {
+        return;
+      }
+
+      if (!command || command.trim() === '') {
+        return;
+      }
+
+      const commandWithRelativePath = !relativePath
+        ? workspaceFolders.uri.fsPath
+        : path.resolve(workspaceFolders.uri.fsPath, relativePath);
+
+      try {
+        const terminalInfo = await terminalManager.getOrCreateTerminal(
+          commandWithRelativePath,
+        );
+        terminalInfo.terminal.show();
+
+        const process = terminalManager.runCommand(terminalInfo, command);
+        await process;
+      } catch (error) {
+        console.error(error);
+      }
+    },
+    closeDiffView: async () => {
+      vscode.commands.executeCommand('code-brt.closeDiff');
     },
   };
 };

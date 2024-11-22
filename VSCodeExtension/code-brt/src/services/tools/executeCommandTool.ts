@@ -1,7 +1,8 @@
+import path from 'path';
+
 import * as vscode from 'vscode';
 
 import type { ToolResponseFromToolFunction, ToolServicesApi } from './types';
-import path from 'path';
 
 /**
  * Execute a system command using the terminal manager.
@@ -13,7 +14,7 @@ import path from 'path';
 export const executeCommandTool: ToolServicesApi['executeCommand'] = async ({
   command,
   relativePath,
-  timeoutDuration = 10000,
+  timeoutDuration = 5000,
   updateStatus,
   terminalManager,
 }): Promise<ToolResponseFromToolFunction> => {
@@ -47,8 +48,8 @@ export const executeCommandTool: ToolServicesApi['executeCommand'] = async ({
 
     let output = '';
     let hasError = false;
-    let timedOut = false;
     let isTerminalClosed = false;
+    let completed = false;
 
     const process = terminalManager.runCommand(terminalInfo, command);
 
@@ -57,26 +58,26 @@ export const executeCommandTool: ToolServicesApi['executeCommand'] = async ({
       (closedTerminal) => {
         if (closedTerminal === terminalInfo.terminal) {
           isTerminalClosed = true;
-          clearTimeout(commandTimeout);
           process.terminate();
         }
       },
     );
 
+    // Set up timeout handling
     const commandTimeout = setTimeout(async () => {
-      if (!isTerminalClosed) {
-        timedOut = true;
+      if (!isTerminalClosed && !completed) {
         const userChoice = await vscode.window.showInformationMessage(
-          'The command is taking longer than expected. Would you like to extend the timeout?',
-          'Yes, extend by 20 seconds',
+          'The command is taking longer than expected. Would you like to continue the chat while the command runs?',
+          'Continue',
           'Stop the command',
         );
 
-        if (userChoice === 'Yes, extend by 20 seconds') {
-          timedOut = false;
-          setTimeout(() => commandTimeout, 20000); // extend by 20 seconds
+        if (userChoice === 'Stop the command') {
+          terminalInfo.terminal.sendText('\x03'); // Sends Ctrl+C to stop the command
+          process.terminate();
         } else {
-          terminalInfo.terminal.sendText('\x03'); // Stop command
+          // Let the process continue in the background
+          process.continue();
         }
       }
     }, timeoutDuration);
@@ -88,6 +89,11 @@ export const executeCommandTool: ToolServicesApi['executeCommand'] = async ({
 
     process.on('error', () => {
       hasError = true;
+      clearTimeout(commandTimeout);
+    });
+
+    process.once('completed', () => {
+      completed = true;
       clearTimeout(commandTimeout);
     });
 
@@ -103,34 +109,38 @@ export const executeCommandTool: ToolServicesApi['executeCommand'] = async ({
     clearTimeout(commandTimeout);
     terminalClosedListener.dispose();
 
+    // Allow time for final output processing
     await new Promise((resolve) => setTimeout(resolve, 50));
 
+    // Format output
+    const formattedOutput = output
+      .trim()
+      .replace(/\n{2,}/g, '\n')
+      .replace('\u001b', '');
+
+    // Prepare the result message
     let result = '';
 
-    if (timedOut) {
-      result += `Command timed out after ${timeoutDuration}ms.\n`;
-    }
-    if (hasError) {
-      result +=
-        'Something went wrong while executing the command. Please check the command and try again.\n';
-    }
     if (isTerminalClosed) {
       result +=
         'The terminal was closed by the user before the command completed.\n';
+    } else if (hasError) {
+      result +=
+        'Something went wrong while executing the command. Please check the command and try again.\n';
     }
-    if (output.trim() !== '') {
-      // If you have multiple lines of \n, we narrow it down to only 1 line
-      const formattedOutput = output
-        .trim()
-        .replace(/\n{2,}/g, '\n')
-        .replace('\u001b', '');
-      result += 'With output:\n' + formattedOutput;
-    } else {
-      result += 'Without any output.';
+
+    if (formattedOutput) {
+      result += completed
+        ? 'Execution is completed with the following output:\n' +
+          formattedOutput
+        : 'Execution still running in the terminal. Here is the output so far:\n' +
+          formattedOutput;
+    } else if (!isTerminalClosed && !hasError && completed) {
+      result += 'Execution completed successfully without output.';
     }
 
     return {
-      status: hasError || isTerminalClosed ? 'error' : 'success',
+      status: isTerminalClosed || hasError ? 'error' : 'success',
       result: result,
     };
   } catch (error) {

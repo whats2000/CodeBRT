@@ -55,7 +55,7 @@ export type ToolServicesApi = {
    */
   executeCommand: (args: {
     command: string;
-    relativePath: string;
+    relativePath?: string;
     timeoutDuration?: number;
     terminalManager: TerminalManager;
     updateStatus?: (status: string) => void;

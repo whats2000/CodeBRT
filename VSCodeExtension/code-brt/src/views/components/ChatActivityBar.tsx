@@ -23,6 +23,7 @@ import { initModelService } from '../redux/slices/modelServiceSlice';
 import { fetchSettings } from '../redux/slices/settingsSlice';
 import { UserGuildTours } from './ChatActivityBar/UserGuildTours';
 import { setRefId, startTourForNewUser } from '../redux/slices/tourSlice';
+import { SyncFileChangeFloatButton } from './ChatActivityBar/SyncFileChangeFloatButton';
 
 const Container = styled(Content)`
   display: flex;
@@ -144,18 +145,21 @@ export const ChatActivityBar = () => {
       <RefProvider>
         <Container ref={dropRef}>
           <Toolbar setTheme={setTheme} />
+          <SyncFileChangeFloatButton
+            floatButtonBaseYPosition={floatButtonBaseYPosition}
+          />
+          <ModelAdvanceSettingBar
+            floatButtonBaseYPosition={floatButtonBaseYPosition}
+          />
+          <ToolActivateFloatButtons
+            floatButtonBaseYPosition={floatButtonBaseYPosition}
+          />
           <MessagesContainer tempIdRef={tempIdRef} />
           <InputContainer
             tempIdRef={tempIdRef}
             inputContainerRef={inputContainerRef}
           />
         </Container>
-        <ModelAdvanceSettingBar
-          floatButtonBaseYPosition={floatButtonBaseYPosition}
-        />
-        <ToolActivateFloatButtons
-          floatButtonBaseYPosition={floatButtonBaseYPosition}
-        />
         <UserGuildTours />
       </RefProvider>
     </ConfigProvider>

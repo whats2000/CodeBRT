@@ -4,10 +4,6 @@ import { HOLE_FILLER_TEMPLATE } from '../constants';
 export const getTemplateForModel = (modelName: string): CompletionTemplate => {
   const lowerCaseModel = modelName.toLowerCase();
 
-  if (lowerCaseModel.includes('qwen') && lowerCaseModel.includes('coder')) {
-    return HOLE_FILLER_TEMPLATE.qwenCoderFimTemplate;
-  }
-
   if (
     lowerCaseModel.includes('starcoder') ||
     lowerCaseModel.includes('star-coder')
@@ -17,6 +13,10 @@ export const getTemplateForModel = (modelName: string): CompletionTemplate => {
 
   if (lowerCaseModel.includes('codestral')) {
     return HOLE_FILLER_TEMPLATE.codestralFimTemplate;
+  }
+
+  if (lowerCaseModel.includes('codegemma')) {
+    return HOLE_FILLER_TEMPLATE.codegemmaFimTemplate;
   }
 
   if (lowerCaseModel.includes('codellama')) {

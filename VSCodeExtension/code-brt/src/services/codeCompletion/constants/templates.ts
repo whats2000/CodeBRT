@@ -117,8 +117,19 @@ TASK: Fill the {{FILL_HERE}} hole. Answer only with the CORRECT completion insid
 <COMPLETION>`;
 
 // ==================== Add Ollama Model Template ====================
+const PYTHON_ENCODING = '#- coding: utf-8';
+const CODE_BLOCK_END = '```';
+
+const commonStops = [PYTHON_ENCODING, CODE_BLOCK_END];
+
 export const HOLE_FILLER_TEMPLATE: {
-  [key: string]: CompletionTemplate;
+  [key in
+    | 'stableCodeFimTemplate'
+    | 'codestralFimTemplate'
+    | 'codegemmaFimTemplate'
+    | 'codeLlamaFimTemplate'
+    | 'deepseekFimTemplate'
+    | 'starCoderFimTemplate']: CompletionTemplate;
 } = {
   // StableCode FIM Template (Default)
   stableCodeFimTemplate: {
@@ -132,39 +143,58 @@ export const HOLE_FILLER_TEMPLATE: {
         '<|endoftext|>',
         '</fim_middle>',
         '</code>',
+        ...commonStops,
       ],
     },
   },
-  // Qwen2.5-Coder Template
-  qwenCoderFimTemplate: {
-    template:
-      '<|fim_prefix|>{{{prefix}}}<|fim_suffix|>{{{suffix}}}<|fim_middle|>',
-    completionOptions: {
-      stop: [
-        '<|endoftext|>',
-        '<|fim_prefix|>',
-        '<|fim_middle|>',
-        '<|fim_suffix|>',
-        '<|fim_pad|>',
-        '<|repo_name|>',
-        '<|file_sep|>',
-        '<|im_start|>',
-        '<|im_end|>',
-      ],
-    },
-  },
+  // FIXME: This seems buggy, the model still returns as conversation model
+  // // Qwen2.5-Coder Template
+  // qwenCoderFimTemplate: {
+  //   template:
+  //     '<|fim_prefix|>{{{prefix}}}<|fim_suffix|>{{{suffix}}}<|fim_middle|>',
+  //   completionOptions: {
+  //     stop: [
+  //       '<|endoftext|>',
+  //       '<|fim_prefix|>',
+  //       '<|fim_middle|>',
+  //       '<|fim_suffix|>',
+  //       '<|fim_pad|>',
+  //       '<|repo_name|>',
+  //       '<|file_sep|>',
+  //       '<|im_start|>',
+  //       '<|im_end|>',
+  //       ...commonStops,
+  //     ],
+  //   },
+  // },
   // Codestral Template
   codestralFimTemplate: {
     template: '[SUFFIX]{{{suffix}}}[PREFIX]{{{prefix}}}',
     completionOptions: {
-      stop: ['[PREFIX]', '[SUFFIX]'],
+      stop: ['[PREFIX]', '[SUFFIX]', ...commonStops],
+    },
+  },
+  // CodeGemma Template
+  codegemmaFimTemplate: {
+    template:
+      '<|fim_prefix|>{{{prefix}}}<|fim_suffix|>{{{suffix}}}<|fim_middle|>',
+    completionOptions: {
+      stop: [
+        '<|fim_prefix|>',
+        '<|fim_suffix|>',
+        '<|fim_middle|>',
+        '<|file_separator|>',
+        '<end_of_turn>',
+        '<eos>',
+        ...commonStops,
+      ],
     },
   },
   // CodeLlama Template
   codeLlamaFimTemplate: {
     template: '<PRE> {{{prefix}}} <SUF>{{{suffix}}} <MID>',
     completionOptions: {
-      stop: ['<PRE>', '<SUF>', '<MID>', '<EOT>'],
+      stop: ['<PRE>', '<SUF>', '<MID>', '<EOT>', ...commonStops],
     },
   },
   // DeepSeek-Coder Template
@@ -178,6 +208,7 @@ export const HOLE_FILLER_TEMPLATE: {
         '<｜fim▁end｜>',
         '//',
         '<｜end▁of▁sentence｜>',
+        ...commonStops,
       ],
     },
   },
@@ -191,6 +222,10 @@ export const HOLE_FILLER_TEMPLATE: {
         '<fim_middle>',
         '<file_sep>',
         '<|endoftext|>',
+        't.',
+        '\nt',
+        '<file_sep>',
+        ...commonStops,
       ],
     },
   },

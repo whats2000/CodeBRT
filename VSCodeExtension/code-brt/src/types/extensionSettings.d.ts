@@ -86,6 +86,46 @@ export type CustomModelSettings = {
 };
 
 /**
+ * Represents the settings for an OpenRouter model.
+ * @property uuid - The unique identifier of the OpenRouter model
+ * @property id - The unique identifier of the OpenRouter model
+ * @property name - A user-friendly name for the model
+ * @property apiKey - The API key for the specific provider
+ * @property created - The timestamp when the model was created
+ * @property description - A brief description of the model
+ * @property context_length - The context length of the model
+ * @property architecture - The architecture of the model
+ * @property pricing - The pricing details of the model
+ * @property top_provider - The top provider details of the model
+ * @property per_request_limits - The per-request limits of the model
+ */
+type OpenRouterModelSettings = {
+  uuid: string;
+  id: string;
+  name: string;
+  created: number;
+  description: string;
+  context_length: number;
+  per_request_limits: number | null;
+  architecture: {
+    modality: string;
+    tokenizer: string;
+    instruct_type: string | null;
+  };
+  pricing: {
+    prompt: string;
+    completion: string;
+    image: string;
+    request: string;
+  };
+  top_provider: {
+    context_length: number | null;
+    max_completion_tokens: number | null;
+    is_moderated: boolean | null;
+  };
+};
+
+/**
  * Represents the settings for the extension which are stored locally.
  * @property anthropicAvailableModels - The available models for the Anthropic API
  * @property geminiAvailableModels - The available models for the Gemini API
@@ -117,7 +157,8 @@ export type ModelServiceSettings = {
     [keyof in ModelServiceType]: string;
   };
   customModels: CustomModelSettings[];
-  lastUsedModelForManualCompletion: ModelServiceType;
+  openRouterAvailableModels: string[];
+  openRouterModels: OpenRouterModelSettings[];
 };
 
 /**
@@ -211,6 +252,7 @@ export type ExtensionSettingsCrossDevice = {
   groqApiKey: string;
   huggingFaceApiKey: string;
   openaiApiKey: string;
+  openRouterApiKey: string;
   doubleEnterSendMessages: boolean;
   themePrimaryColor: string;
   themeAlgorithm: AvailableThemeAlgorithm | AvailableThemeAlgorithm[];

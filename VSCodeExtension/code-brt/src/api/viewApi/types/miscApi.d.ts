@@ -62,4 +62,16 @@ export type MiscApi = {
    * @returns The response of the tool call.
    */
   approveToolCall: (toolCall: ToolCallEntry) => Promise<ToolCallResponse>;
+
+  /**
+   * Run a command in the terminal.
+   * @param command - The command to run
+   * @param relativePath - The relative path to run the command in
+   */
+  runCommand: (command: string, relativePath?: string) => Promise<void>;
+
+  /**
+   * Close the diff view.
+   */
+  closeDiffView: () => void;
 };

@@ -2,7 +2,7 @@ import {
   ModelServiceType,
   ResponseWithAction,
 } from '../../../services/languageModel/types';
-import { CustomModelSettings } from '../../../types';
+import { CustomModelSettings, OpenRouterModelSettings } from '../../../types';
 
 /**
  * Represents the API structure for the getLanguageModelResponse method.
@@ -70,9 +70,14 @@ export type LanguageModelServiceApi = {
   /**
    * Set the custom models.
    * @param newCustomModels - The new custom models.
-   * @returns The new custom models.
    */
   setCustomModels: (newCustomModels: CustomModelSettings[]) => void;
+
+  /**
+   * Set the open router models.
+   * @param newOpenRouterModels - The new open router models.
+   */
+  setOpenRouterModels: (newOpenRouterModels: OpenRouterModelSettings[]) => void;
 
   /**
    * Switch to a different model.
@@ -88,4 +93,9 @@ export type LanguageModelServiceApi = {
   getLatestAvailableModelNames: (
     modelServiceType: ModelServiceType,
   ) => Promise<string[]>;
+
+  /**
+   * Get the latest available models with more details.
+   */
+  getLatestAvailableModels: () => Promise<OpenRouterModelSettings[]>;
 };

@@ -9,6 +9,7 @@ import {
   AudioOutlined,
   PicRightOutlined,
   RocketOutlined,
+  BellOutlined,
 } from '@ant-design/icons';
 import styled from 'styled-components';
 import { useDispatch, useSelector } from 'react-redux';
@@ -26,6 +27,7 @@ import { EditModelListBar } from './Toolbar/EditModelListBar';
 import { HistorySidebar } from './Toolbar/HistorySidebar';
 import { SettingsBar } from './Toolbar/SettingsBar';
 import { VoiceSettingsBar } from './Toolbar/VoiceSettingsBar';
+import { WhatsNewModal } from './Toolbar/WhatsNewModal';
 import { CodeCompletionSettingsBar } from './Toolbar/CodeCompletionSettingsBar';
 import { useWindowSize } from '../../hooks';
 import { AVAILABLE_MODEL_SERVICES } from '../../../constants';
@@ -61,6 +63,7 @@ export const Toolbar: React.FC<ToolbarProps> = ({ setTheme }) => {
     useState(false);
   const [isSelectModelOpen, setIsSelectModelOpen] = useState(false);
   const [isEditModelListOpen, setIsEditModelListOpen] = useState(false);
+  const [isWhatsNewOpen, setIsWhatsNewOpen] = useState(false);
 
   const dispatch = useDispatch<AppDispatch>();
   const { activeModelService, availableModels, selectedModel, isLoading } =
@@ -70,20 +73,28 @@ export const Toolbar: React.FC<ToolbarProps> = ({ setTheme }) => {
 
   const modelServiceSelectRef = registerRef('modelServiceSelect');
   const modelSelectRef = registerRef('modelSelect');
+  const settingsButtonRef = registerRef('settingsButton');
 
   useEffect(() => {
     dispatch(
       setRefId({
         tourName: 'quickStart',
-        stepIndex: 6,
+        stepIndex: 7,
         targetId: 'modelServiceSelect',
       }),
     );
     dispatch(
       setRefId({
         tourName: 'quickStart',
-        stepIndex: 7,
+        stepIndex: 8,
         targetId: 'modelSelect',
+      }),
+    );
+    dispatch(
+      setRefId({
+        tourName: 'quickStart',
+        stepIndex: 9,
+        targetId: 'settingsButton',
       }),
     );
   }, []);
@@ -155,6 +166,12 @@ export const Toolbar: React.FC<ToolbarProps> = ({ setTheme }) => {
       onClick: () => dispatch(startTour({ tourName: 'quickStart' })),
       label: 'Quick Start Guide',
       icon: <RocketOutlined />,
+    },
+    {
+      key: `what's new`,
+      onClick: () => setIsWhatsNewOpen(true),
+      label: `What's New`,
+      icon: <BellOutlined />,
     },
   ];
 
@@ -242,7 +259,7 @@ export const Toolbar: React.FC<ToolbarProps> = ({ setTheme }) => {
               value={activeModelService}
               onChange={handleModelServiceChange}
               style={{
-                width: innerWidth >= 550 ? 125 : innerWidth >= 320 ? 200 : 125,
+                width: innerWidth >= 550 ? 125 : innerWidth >= 320 ? 200 : 150,
               }}
               loading={isLoading}
               options={modelServiceOptions}
@@ -255,8 +272,8 @@ export const Toolbar: React.FC<ToolbarProps> = ({ setTheme }) => {
               onChange={handleModelChange}
               style={{
                 width:
-                  innerWidth >= 550 ? '100%' : innerWidth >= 320 ? 200 : 125,
-                minWidth: 100,
+                  innerWidth >= 550 ? '100%' : innerWidth >= 320 ? 200 : 150,
+                minWidth: 150,
               }}
               loading={isLoading}
               options={modelOptions}
@@ -265,7 +282,7 @@ export const Toolbar: React.FC<ToolbarProps> = ({ setTheme }) => {
         </Space>
         {innerWidth < 400 ? (
           <Dropdown menu={{ items: settingMenuItemsSmallWidth }}>
-            <Button icon={<MenuOutlined />} />
+            <Button ref={settingsButtonRef} icon={<MenuOutlined />} />
           </Dropdown>
         ) : (
           <Space>
@@ -279,7 +296,7 @@ export const Toolbar: React.FC<ToolbarProps> = ({ setTheme }) => {
               <Button icon={<PlusOutlined />} onClick={createNewChat} />
             </Tooltip>
             <Dropdown menu={{ items: settingMenuItems }}>
-              <Button icon={<SettingOutlined />} />
+              <Button ref={settingsButtonRef} icon={<SettingOutlined />} />
             </Dropdown>
           </Space>
         )}
@@ -304,6 +321,10 @@ export const Toolbar: React.FC<ToolbarProps> = ({ setTheme }) => {
       <CodeCompletionSettingsBar
         isOpen={isCodeCompletionSettingsOpen}
         onClose={() => setIsCodeCompletionSettingsOpen(false)}
+      />
+      <WhatsNewModal
+        isOpen={isWhatsNewOpen}
+        onClose={() => setIsWhatsNewOpen(false)}
       />
     </>
   );

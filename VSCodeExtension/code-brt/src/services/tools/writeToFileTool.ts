@@ -22,6 +22,14 @@ export const writeToFileTool: ToolServicesApi['writeToFile'] = async ({
 
   const filePath = path.resolve(workspaceFolders.uri.fsPath, relativePath);
 
+  let existingContent: string;
+  try {
+    const document = await vscode.workspace.openTextDocument(filePath);
+    existingContent = document.getText();
+  } catch (error) {
+    existingContent = '';
+  }
+
   const { status, message } = await FileOperationsProvider.writeToFile(
     filePath,
     content,
@@ -33,6 +41,14 @@ export const writeToFileTool: ToolServicesApi['writeToFile'] = async ({
   if (status === 'error') {
     return { status: 'error', result: message };
   }
+
+  // Show a diff
+  await vscode.commands.executeCommand(
+    'code-brt.showDiff',
+    filePath,
+    existingContent,
+    content,
+  );
 
   return { status: 'success', result: message };
 };

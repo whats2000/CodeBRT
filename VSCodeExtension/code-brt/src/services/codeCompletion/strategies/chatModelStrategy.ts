@@ -15,27 +15,24 @@ import {
   MAIN_PROMPT_TEMPLATE,
   SYSTEM_PROMPT,
 } from '../constants';
-import { HistoryManager, SettingsManager } from '../../../api';
+import { HistoryManager } from '../../../api';
 import { StatusBarManager } from '../ui/statusBarManager';
 import { postProcessCompletion } from '../utils';
 
-export class ManuallyCodeCompletionStrategy implements CompletionStrategy {
-  private readonly settingsManager: SettingsManager;
+export class ChatModelStrategy implements CompletionStrategy {
   private readonly historyManager: HistoryManager;
   private readonly loadedModelServices: LoadedModelServices;
   private readonly statusBarManager: StatusBarManager;
 
   constructor(
     ctx: vscode.ExtensionContext,
-    settingsManager: SettingsManager,
     loadedModelServices: LoadedModelServices,
     statusBarManager: StatusBarManager,
   ) {
-    this.settingsManager = settingsManager;
     this.historyManager = new HistoryManager(
       ctx,
-      'manuallyCodeCompletionIndex.json',
-      'manuallyCodeCompletionHistories',
+      'chatModelIndex.json',
+      'chatModelHistories',
     );
     this.loadedModelServices = loadedModelServices;
     this.statusBarManager = statusBarManager;
@@ -215,20 +212,17 @@ export class ManuallyCodeCompletionStrategy implements CompletionStrategy {
    * @param document The document in which the completion was triggered.
    * @param position The position at which the completion was triggered.
    * @param token A cancellation token.
+   * @param modelService The model service to use for completion.
+   * @param modelName The model name to use for completion.
    * @returns An array of inline completion items or null.
    */
   public async provideCompletion(
     document: vscode.TextDocument,
     position: vscode.Position,
     token: vscode.CancellationToken,
+    modelService: ModelServiceType,
+    modelName: string,
   ): Promise<vscode.InlineCompletionItem[] | null> {
-    if (!this.settingsManager.get('manualTriggerCodeCompletion')) {
-      vscode.window.showWarningMessage(
-        'Manual code completion is disabled. Please enable it in the code completion settings.',
-      );
-      return null;
-    }
-
     // Step 1: Detect the language of the document
     const languageId = this.detectLanguage(document);
 
@@ -255,12 +249,6 @@ export class ManuallyCodeCompletionStrategy implements CompletionStrategy {
       const prompt = this.buildPrompt(prefix, suffix, languageName);
 
       // Step 6: Call the language model
-      const modelService = this.settingsManager.get(
-        'lastUsedManualCodeCompletionModelService',
-      );
-      const modelName = this.settingsManager.get(
-        'lastSelectedManualCodeCompletionModel',
-      )[modelService];
       const completion = await this.getCompletionWithTimeout(
         prompt,
         token,

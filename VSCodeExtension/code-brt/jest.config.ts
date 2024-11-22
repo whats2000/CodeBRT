@@ -6,6 +6,8 @@ const jestConfig: JestConfigWithTsJest = {
     globby: '<rootDir>/mocks/globby.ts',
     'node-mic': '<rootDir>/mocks/node-mic.ts',
     'pdfjs-dist': '<rootDir>/mocks/pdfjs-dist.ts',
+    'p-wait-for': '<rootDir>/mocks/p-wait-for.ts',
+    'strip-ansi': '<rootDir>/mocks/strip-ansi.ts',
     vscode: '<rootDir>/mocks/vscode.ts',
   },
   transform: {

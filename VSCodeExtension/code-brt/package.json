@@ -223,6 +223,12 @@
           "description": "HuggingFace API Key",
           "markdownDescription": "API key for HuggingFace model"
         },
+        "code-brt.openRouterApiKey": {
+          "type": "string",
+          "default": "",
+          "description": "OpenRouter API Key",
+          "markdownDescription": "API key for OpenRouter model"
+        },
         "code-brt.themePrimaryColor": {
           "type": "string",
           "default": "#007ACC",

@@ -12,7 +12,7 @@ export const createHistoryManagerApi = (
       return await historyManager.addNewConversationHistory();
     },
     editLanguageModelConversationHistory: (entryID, newMessage) => {
-      historyManager.editConversationEntry(entryID, newMessage);
+      void historyManager.editConversationEntry(entryID, newMessage);
     },
     getHistoryIndexes: () => {
       return historyManager.getHistoryIndexes();
@@ -24,22 +24,25 @@ export const createHistoryManagerApi = (
       return await historyManager.deleteHistory(historyID);
     },
     updateHistoryTitleById: (historyID, title) => {
-      historyManager.updateHistoryTitleById(historyID, title);
+      void historyManager.updateHistoryTitleById(historyID, title);
     },
     addHistoryTag: (historyID, tag) => {
-      historyManager.addTagToHistory(historyID, tag);
+      void historyManager.addTagToHistory(historyID, tag);
     },
     removeHistoryTag: (historyID, tag) => {
-      historyManager.removeTagFromHistory(historyID, tag);
+      void historyManager.removeTagFromHistory(historyID, tag);
     },
     updateHistoryModelAdvanceSettings: (historyID, advanceSettings) => {
-      historyManager.updateHistoryModelAdvanceSettings(
+      void historyManager.updateHistoryModelAdvanceSettings(
         historyID,
         advanceSettings,
       );
     },
     addConversationEntry: async (entry) => {
       return await historyManager.addConversationEntry(entry);
+    },
+    syncFileChangeContext: async (operation, forceSync) => {
+      return await historyManager.syncFileChangeContext(operation, forceSync);
     },
   };
 };

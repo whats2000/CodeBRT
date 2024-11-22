@@ -38,6 +38,11 @@ export const createLanguageModelServiceApi = (
       if (modelServiceType === 'custom') {
         return settingsManager.get('customModels').map((model) => model.name);
       }
+      if (modelServiceType === 'openRouter') {
+        return settingsManager
+          .get('openRouterModels')
+          .map((model) => model.name);
+      }
 
       return settingsManager.get(`${modelServiceType}AvailableModels`);
     },
@@ -60,6 +65,13 @@ export const createLanguageModelServiceApi = (
         );
       });
     },
+    setOpenRouterModels: (newOpenRouterModels) => {
+      settingsManager.set('openRouterModels', newOpenRouterModels).then(() => {
+        models.openRouter.service.updateAvailableModels(
+          newOpenRouterModels.map((model) => model.name),
+        );
+      });
+    },
     switchModel: (modelServiceType, modelName) => {
       models[modelServiceType].service.switchModel(modelName);
     },
@@ -67,6 +79,9 @@ export const createLanguageModelServiceApi = (
       return await models[
         modelServiceType
       ].service.getLatestAvailableModelNames();
+    },
+    getLatestAvailableModels: async () => {
+      return models.openRouter.service.getLatestAvailableModels();
     },
   };
 };

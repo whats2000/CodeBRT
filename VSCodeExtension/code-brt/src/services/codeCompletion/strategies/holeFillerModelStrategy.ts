@@ -8,27 +8,24 @@ import type {
   ModelServiceType,
 } from '../../../types';
 import { FILE_TO_LANGUAGE, LANGUAGE_NAME_MAPPING } from '../constants';
-import { SettingsManager, HistoryManager } from '../../../api';
+import { HistoryManager } from '../../../api';
 import { StatusBarManager } from '../ui/statusBarManager';
 import { getTemplateForModel, postProcessCompletion } from '../utils';
 
-export class AutoCodeCompletionStrategy implements CompletionStrategy {
-  private readonly settingsManager: SettingsManager;
+export class HoleFillerModelStrategy implements CompletionStrategy {
   private readonly historyManager: HistoryManager;
   private readonly loadedModelServices: LoadedModelServices;
   private readonly statusBarManager: StatusBarManager;
 
   constructor(
     ctx: vscode.ExtensionContext,
-    settingsManager: SettingsManager,
     loadedModelServices: LoadedModelServices,
     statusBarManager: StatusBarManager,
   ) {
-    this.settingsManager = settingsManager;
     this.historyManager = new HistoryManager(
       ctx,
-      'autoCodeCompletionIndex.json',
-      'autoCodeCompletionHistories',
+      'holeFillerIndex.json',
+      'holeFillerHistories',
     );
     this.loadedModelServices = loadedModelServices;
     this.statusBarManager = statusBarManager;
@@ -85,21 +82,12 @@ export class AutoCodeCompletionStrategy implements CompletionStrategy {
     document: vscode.TextDocument,
     position: vscode.Position,
     token: vscode.CancellationToken,
+    modelService: ModelServiceType,
+    modelName: string,
   ): Promise<vscode.InlineCompletionItem[] | null> {
-    if (!this.settingsManager.get('autoTriggerCodeCompletion')) {
-      return null;
-    }
-
     this.statusBarManager.showProcessing();
 
     try {
-      const modelService = this.settingsManager.get(
-        'lastUsedAutoCodeCompletionModelService',
-      ) as ModelServiceType;
-      const modelName = this.settingsManager.get(
-        'lastSelectedAutoCodeCompletionModel',
-      )[modelService];
-
       if (!this.loadedModelServices[modelService]) {
         console.warn(`Model service ${modelService} is not loaded.`);
         return null;

@@ -13,6 +13,7 @@ export const AVAILABLE_MODEL_SERVICES: ModelServiceType[] = [
   'groq',
   'huggingFace',
   'ollama',
+  'openRouter',
   'custom',
 ];
 
@@ -76,6 +77,12 @@ export const MODEL_SERVICE_CONSTANTS: {
     description: 'Ollama Client Host',
     apiLink: 'https://ollama.com/download',
     color: 'magenta',
+  },
+  openRouter: {
+    name: 'OpenRouter',
+    description: 'OpenRouter API Key',
+    apiLink: 'https://openrouter.ai/settings/keys',
+    color: 'volcano',
   },
   custom: {
     name: 'Custom',
