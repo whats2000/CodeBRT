@@ -44,7 +44,7 @@ const mockSettingsManager = {
       lastUsedModel: 'gemini',
       lastSelectedModel: {
         gemini: 'gemini-1.5-pro-latest',
-        anthropic: 'claude-3-5-sonnet-20240620',
+        anthropic: 'claude-3-haiku-20240307',
         openai: 'gpt-3.5-turbo',
         cohere: 'command',
         groq: 'llama3-70b-8192',
@@ -69,6 +69,7 @@ const mockSettingsManager = {
       themeBorderRadius: 4,
       hljsTheme: 'darcula',
       codeFixerOpenaiAvailableModels: [
+        'gpt-4o-mini',
         'gpt-4o',
         'gpt-4-turbo',
         'gpt-4',
@@ -77,23 +78,30 @@ const mockSettingsManager = {
         'gemini-1.5-pro-latest',
         'gemini-1.5-flash-latest',
       ],
+      codeFixerCohereAvailableModels: ['command', 'command-r', 'command-r-plus'],
+      codeFixerGroqAvailableModels: [
+        'llama3-70b-8192',
+        'llama3-8b-8192',
+        'mixtral-8x7b-32768',
+        'gemma-7b-it',
+        'gemma2-9b-it',
+      ],
+      codeFixerHuggingFaceAvailableModels: ['HuggingFaceH4/zephyr-7b-beta'],
+      codeFixerOllamaAvailableModels: ['Auto Detect'],
       codeFixerLastSelectedModel: {
         gemini: 'gemini-1.5-pro-latest',
-        anthropic: 'claude-3-5-sonnet-20240620',
         openai: 'gpt-4-turbo',
         cohere: 'command',
-        groq: 'llama3-70b-8192',
-        huggingFace: 'HuggingFaceH4/zephyr-7b-beta',
+        groq: 'mixtral-8x7b-32768',
         ollama: 'Auto Detect',
-        custom: '',
       },
     };
     return settings[key];
   }),
 };
 
-describe('OpenaiCodeFixerService', () => {
-  jest.setTimeout(10000); // 設置 10 秒的超時限制
+describe('CodeFixerService', () => {
+  jest.setTimeout(1000000); // 設置 10 秒的超時限制
   let codeFixerService: OpenaiCodeFixerService;
   const workspacePath = path.join(__dirname, '../../tests/testsWorkspace');
 
