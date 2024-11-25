@@ -131,8 +131,15 @@ export class DiffIntegration {
    */
   public saveFileVersion(filePath: string): void {
     try {
-      // Read current file content
-      const fileContent = fs.readFileSync(filePath, 'utf8');
+      // Check if the file exists
+      let fileContent = '';
+      if (fs.existsSync(filePath)) {
+        // If file exists, read its content
+        fileContent = fs.readFileSync(filePath, 'utf8');
+      } else {
+        // For newly created files with no content, use empty string
+        fileContent = '';
+      }
 
       // Get or create history for this file
       const fileVersions = this.fileHistory.get(filePath) || [];
