@@ -131,4 +131,9 @@ export type IHistoryManager = {
     operations: FileSyncOperation[] = [],
     forceSync: boolean = false,
   ): Promise<ConversationHistory>;
+
+  /**
+   * Rollback the tool responses
+   */
+  rollbackToolResponses(): Promise<ConversationHistory>;
 };

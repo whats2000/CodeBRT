@@ -105,4 +105,9 @@ export type HistoryManagerApi = {
     operations: FileSyncOperation[] = [],
     forceSync: boolean = false,
   ) => Promise<ConversationHistory>;
+
+  /**
+   * Rollback the tool changes.
+   */
+  rollbackToolResponses: () => Promise<ConversationHistory>;
 };

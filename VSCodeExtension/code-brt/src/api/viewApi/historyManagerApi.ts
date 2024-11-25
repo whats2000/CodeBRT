@@ -44,5 +44,8 @@ export const createHistoryManagerApi = (
     syncFileChangeContext: async (operation, forceSync) => {
       return await historyManager.syncFileChangeContext(operation, forceSync);
     },
+    rollbackToolResponses: async () => {
+      return await historyManager.rollbackToolResponses();
+    },
   };
 };
