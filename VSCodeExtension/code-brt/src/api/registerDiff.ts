@@ -24,8 +24,8 @@ export const registerDiff = (
     ),
     vscode.commands.registerCommand(
       'code-brt.revertFileVersion',
-      async (filePath: string, index?: number) => {
-        await diffIntegration.revertFileVersion(filePath, index);
+      async (filePath: string, index?: number, dropVersion?: boolean) => {
+        await diffIntegration.revertFileVersion(filePath, index, dropVersion);
       },
     ),
   );

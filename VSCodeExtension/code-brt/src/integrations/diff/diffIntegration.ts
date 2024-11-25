@@ -9,7 +9,7 @@ export class DiffIntegration {
   private readonly contentProvider: vscode.TextDocumentContentProvider;
   private readonly historiesFolderPath: string;
   private readonly historyIndexFilePath: string;
-  private readonly MAX_VERSIONS_PER_FILE: number = 5; // Configurable limit
+  private readonly MAX_VERSIONS_PER_FILE: number = 1;
   private activeFilePath: string | undefined;
   private fileHistory: Map<string, FileVersion[]> = new Map();
 
@@ -171,10 +171,12 @@ export class DiffIntegration {
    * Revert file to a previous version
    * @param filePath Path of the file to revert
    * @param versionIndex Optional index of a version to revert to (defaults to most recent)
+   * @param dropVersion Whether to drop the reverted version from history
    */
   public async revertFileVersion(
     filePath: string,
     versionIndex?: number,
+    dropVersion: boolean = false,
   ): Promise<void> {
     try {
       const fileVersions = this.fileHistory.get(filePath);
@@ -203,13 +205,18 @@ export class DiffIntegration {
       // Write version content back to an original file
       fs.writeFileSync(filePath, versionContent);
 
+      // If requested, remove the reverted version
+      if (dropVersion) {
+        fs.unlinkSync(versionToRevert.path);
+        this.fileHistory.set(
+          filePath,
+          fileVersions.filter((v) => v !== versionToRevert),
+        );
+      }
+
       // Reload document in VSCode
       const document = await vscode.workspace.openTextDocument(filePath);
       await vscode.window.showTextDocument(document);
-
-      vscode.window.showInformationMessage(
-        `Reverted ${path.basename(filePath)} to version ${versionToRevert.version}`,
-      );
     } catch (error) {
       vscode.window.showErrorMessage(
         `Failed to revert file version: ${error instanceof Error ? error.message : error}`,

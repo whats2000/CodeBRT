@@ -71,7 +71,12 @@ export const createHistoryManagerApi = (
           workspaceFolders.uri.fsPath,
           relativePath,
         );
-        vscode.commands.executeCommand('code-brt.revertFileVersion', filePath);
+        vscode.commands.executeCommand(
+          'code-brt.revertFileVersion',
+          filePath,
+          undefined,
+          true,
+        );
       }
 
       return await historyManager.rollbackToolResponses();
