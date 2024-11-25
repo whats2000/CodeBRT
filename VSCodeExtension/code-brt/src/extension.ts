@@ -8,6 +8,7 @@ import {
   connectedViews,
   HistoryManager,
   registerAndConnectView,
+  registerDiff,
   registerInlineCompletion,
   SettingsManager,
 } from './api';
@@ -15,7 +16,6 @@ import { ModelServiceFactory } from './services/languageModel';
 import { VoiceServiceFactory } from './services/voice';
 import { DiffIntegration, TerminalManager } from './integrations';
 import { createViewApi } from './api/viewApi/viewApiFactory';
-import { registerDiff } from './api/viewApi/registerDiff';
 
 let extensionContext: vscode.ExtensionContext | undefined = undefined;
 
@@ -24,7 +24,7 @@ export const activate = async (ctx: vscode.ExtensionContext) => {
   const settingsManager = SettingsManager.getInstance(ctx);
   const historyManager = new HistoryManager(ctx);
   const terminalManager = new TerminalManager();
-  const diffIntegration = new DiffIntegration();
+  const diffIntegration = new DiffIntegration(ctx);
 
   // Create a model service factory instance
   const modelServiceFactory = new ModelServiceFactory(ctx, settingsManager);
