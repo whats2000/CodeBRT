@@ -1,13 +1,5 @@
 import React, { useContext, useEffect, useRef, useState } from 'react';
-import {
-  Collapse,
-  Tag,
-  Descriptions,
-  Typography,
-  Space,
-  Button,
-  Popover,
-} from 'antd';
+import { Collapse, Tag, Descriptions, Typography, Space, Button } from 'antd';
 import { useDispatch, useSelector } from 'react-redux';
 
 import type { ConversationEntry } from '../../../../types';
@@ -199,19 +191,15 @@ export const ToolResponseContainer: React.FC<ToolResponseContainerProps> = ({
               >
                 Continue
               </Button>
-              <Popover
-                title={'This feature will be add after agent is implemented'}
+              <Button
+                type='default'
+                danger={true}
+                onClick={() => onRollBack(entry)}
+                disabled={isRollingBack}
+                loading={isRollingBack}
               >
-                <Button
-                  type='default'
-                  danger
-                  onClick={() => onRollBack(entry)}
-                  disabled={isRollingBack}
-                  loading={isRollingBack}
-                >
-                  Rollback
-                </Button>
-              </Popover>
+                Rollback
+              </Button>
             </Space>
           )}
           {entry.toolResponses?.[0].status === 'error' && (

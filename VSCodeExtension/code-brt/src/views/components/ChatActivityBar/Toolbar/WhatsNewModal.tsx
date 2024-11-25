@@ -17,7 +17,12 @@ export const WhatsNewModal: React.FC<WhatsNewModalProps> = ({
       title="What's New"
       footer={<Button onClick={onClose}>Close</Button>}
     >
-      <p>Here are the latest features and improvements in CodeBERT 0.4.0:</p>
+      <p>CodeBERT 0.4.2:</p>
+      <ul>
+        <li>Fixed rollback for writeToFile tool call</li>
+        <li>Add a instruction format for the user feedback</li>
+      </ul>
+      <p>CodeBERT 0.4.0:</p>
       <ul>
         <li>
           Improved code completion suggestions with support hole-filler models

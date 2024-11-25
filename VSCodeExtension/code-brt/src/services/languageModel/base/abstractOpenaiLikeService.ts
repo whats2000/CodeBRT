@@ -239,7 +239,7 @@ export abstract class AbstractOpenaiLikeService extends AbstractLanguageModelSer
             role: 'tool',
             tool_call_id: toolCallResponse.id,
             content: JSON.stringify({
-              error: false,
+              error: toolCallResponse.status !== 'success',
               result: toolCallResponse.result,
             }),
           });
