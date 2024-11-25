@@ -193,7 +193,7 @@ export class AnthropicService extends AbstractLanguageModelService {
                 type: 'tool_result',
                 tool_use_id: toolCallResponse.id,
                 content: JSON.stringify(toolCallResponse.result),
-                is_error: toolCallResponse.status === 'error',
+                is_error: toolCallResponse.status !== 'success',
               },
             ],
           });

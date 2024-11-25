@@ -313,7 +313,10 @@ export const processToolCall = createAsyncThunk<
           id: toolCall.id,
           toolCallName: toolCall.toolName,
           status: 'rejectByUser',
-          result: rejectByUserMessage,
+          result:
+            '[Reject with feedback] The tool calling is not executed and with a user feedback. ' +
+            'Please consider the feedback and make adjustments.\nUser feedback: \n' +
+            rejectByUserMessage,
           create_time: Date.now(),
         };
     const newToolCallResponseEntry = await callApi('addConversationEntry', {

@@ -151,7 +151,7 @@ export class CohereService extends AbstractLanguageModelService {
       },
       outputs: [
         {
-          error: false,
+          error: toolCallResponse.status !== 'success',
           result: toolCallResponse.result,
         },
       ],

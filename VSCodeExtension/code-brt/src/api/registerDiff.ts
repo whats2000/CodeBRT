@@ -1,6 +1,6 @@
 import vscode from 'vscode';
 
-import { DiffIntegration } from '../../integrations';
+import { DiffIntegration } from '../integrations';
 
 export const registerDiff = (
   ctx: vscode.ExtensionContext,
@@ -16,5 +16,17 @@ export const registerDiff = (
     vscode.commands.registerCommand('code-brt.closeDiff', async () => {
       await diffIntegration.closeDiffAndFocusModified();
     }),
+    vscode.commands.registerCommand(
+      'code-brt.saveFileVersion',
+      async (filePath: string) => {
+        diffIntegration.saveFileVersion(filePath);
+      },
+    ),
+    vscode.commands.registerCommand(
+      'code-brt.revertFileVersion',
+      async (filePath: string, index?: number, dropVersion?: boolean) => {
+        await diffIntegration.revertFileVersion(filePath, index, dropVersion);
+      },
+    ),
   );
 };

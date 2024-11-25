@@ -580,4 +580,24 @@ export class HistoryManager implements IHistoryManager {
 
     return this.history;
   }
+
+  public async rollbackToolResponses(): Promise<ConversationHistory> {
+    const lastEntry = this.history.entries[this.history.current];
+    if (!lastEntry || lastEntry.role !== 'tool') {
+      return this.history;
+    }
+
+    // Remove the entry as it is latest and is tool response
+    this.history.current = lastEntry.parent || '';
+    delete this.history.entries[lastEntry.id];
+    this.history.update_time = Date.now();
+
+    await this.saveHistoryById(this.history).catch((error) =>
+      vscode.window.showErrorMessage(
+        'Failed to rollback tool responses: ' + error,
+      ),
+    );
+
+    return this.history;
+  }
 }

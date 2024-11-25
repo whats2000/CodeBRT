@@ -236,7 +236,7 @@ export class GeminiService extends AbstractLanguageModelService {
                 functionResponse: {
                   name: toolCallResponse.toolCallName,
                   response: {
-                    error: toolCallResponse.status === 'error',
+                    error: toolCallResponse.status !== 'success',
                     result: toolCallResponse.result,
                   },
                 },

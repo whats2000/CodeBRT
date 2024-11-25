@@ -1,13 +1,5 @@
-import React, { useContext, useEffect, useRef } from 'react';
-import {
-  Collapse,
-  Tag,
-  Descriptions,
-  Typography,
-  Space,
-  Button,
-  Popover,
-} from 'antd';
+import React, { useContext, useEffect, useRef, useState } from 'react';
+import { Collapse, Tag, Descriptions, Typography, Space, Button } from 'antd';
 import { useDispatch, useSelector } from 'react-redux';
 
 import type { ConversationEntry } from '../../../../types';
@@ -15,6 +7,7 @@ import { ToolStatusBlock } from '../../common/ToolStatusBlock';
 import {
   processToolCall,
   processToolResponse,
+  setConversationHistory,
 } from '../../../redux/slices/conversationSlice';
 import type { AppDispatch, RootState } from '../../../redux';
 import { WebviewContext } from '../../../WebviewContext';
@@ -45,6 +38,8 @@ export const ToolResponseContainer: React.FC<ToolResponseContainerProps> = ({
 
   const tempIdRef = useRef<string | null>(null);
 
+  const [isRollingBack, setIsRollingBack] = useState(false);
+
   useEffect(() => {
     tempIdRef.current = conversationHistory.tempId;
   }, [conversationHistory.tempId]);
@@ -61,8 +56,20 @@ export const ToolResponseContainer: React.FC<ToolResponseContainerProps> = ({
     }
   };
 
-  const onRollBack = (_entry: ConversationEntry) => {
-    console.log('Rolling back changes');
+  const onRollBack = async (entry: ConversationEntry) => {
+    if (!entry.parent || isRollingBack) {
+      return;
+    }
+
+    setIsRollingBack(true);
+    try {
+      const newHistory = await callApi('rollbackToolResponses', entry);
+      dispatch(setConversationHistory(newHistory));
+    } catch (error) {
+      console.error('Error rolling back tool responses:', error);
+    } finally {
+      setIsRollingBack(false);
+    }
   };
 
   const onRerun = (entry: ConversationEntry) => {
@@ -180,16 +187,19 @@ export const ToolResponseContainer: React.FC<ToolResponseContainerProps> = ({
                 type='primary'
                 ghost={true}
                 onClick={() => onContinue(entry)}
+                disabled={isRollingBack}
               >
                 Continue
               </Button>
-              <Popover
-                title={'This feature will be add after agent is implemented'}
+              <Button
+                type='default'
+                danger={true}
+                onClick={() => onRollBack(entry)}
+                disabled={isRollingBack}
+                loading={isRollingBack}
               >
-                <Button type='default' danger onClick={() => onRollBack(entry)}>
-                  Rollback
-                </Button>
-              </Popover>
+                Rollback
+              </Button>
             </Space>
           )}
           {entry.toolResponses?.[0].status === 'error' && (
