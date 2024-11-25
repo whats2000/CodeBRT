@@ -72,9 +72,9 @@ export const MessagesContainer = React.memo<MessagesContainerProps>(
     const [floatButtonsXPosition, setFloatButtonsXPosition] = useState(0);
     const [showFloatButtons, setShowFloatButtons] = useState(false);
     const [toolStatus, setToolStatus] = useState<string>('');
-    const [isAutoScroll, setIsAutoScroll] = useState(true);
-    const [isUserScrolling, setIsUserScrolling] = useState(true);
 
+    const isAutoScrollRef = useRef(false);
+    const isUserScrollingRef = useRef(true);
     const virtualListRef = useRef<VirtuosoHandle>(null);
     const messagesContainerRef = useRef<HTMLDivElement>(null);
 
@@ -135,33 +135,29 @@ export const MessagesContainer = React.memo<MessagesContainerProps>(
       // Only auto-scroll if isAutoScroll is true and not user scrolling,
       // and there's a new message being processed
       if (
-        isAutoScroll &&
-        !isUserScrolling &&
+        isAutoScrollRef.current &&
+        !isUserScrollingRef.current &&
         conversationHistory.isProcessing
       ) {
-        scrollToBottom();
+        if (virtualListRef.current) {
+          virtualListRef.current.scrollToIndex({
+            index: 'LAST',
+            behavior: 'auto',
+            align: 'end',
+          });
+        }
       }
     }, [
       conversationHistory.isProcessing,
       conversationHistoryEntries[conversationHistoryEntries.length - 1]
         ?.message,
-      isAutoScroll,
-      isUserScrolling,
+      isAutoScrollRef.current,
+      isUserScrollingRef.current,
     ]);
-
-    const scrollToBottom = () => {
-      if (virtualListRef.current) {
-        virtualListRef.current.scrollToIndex({
-          index: 'LAST',
-          behavior: 'smooth',
-          align: 'end',
-        });
-      }
-    };
 
     // Disable auto-scroll if the user scrolls up
     const handleUserScroll = (e: React.UIEvent<HTMLDivElement>) => {
-      setIsUserScrolling(true);
+      isUserScrollingRef.current = true;
 
       const scrollContainer = e.currentTarget;
       const currentScrollTop = scrollContainer.scrollTop;
@@ -170,14 +166,14 @@ export const MessagesContainer = React.memo<MessagesContainerProps>(
 
       // Disable auto-scroll if user has scrolled up significantly
       if (currentScrollTop + clientHeight < scrollHeight - 100) {
-        setIsAutoScroll(false);
+        isAutoScrollRef.current = false;
       }
     };
 
     const handleAtBottomStateChange = (atBottom: boolean) => {
       if (atBottom) {
-        setIsAutoScroll(true);
-        setIsUserScrolling(false);
+        isAutoScrollRef.current = true;
+        isUserScrollingRef.current = false;
       }
     };
 
@@ -320,7 +316,6 @@ export const MessagesContainer = React.memo<MessagesContainerProps>(
             totalCount={conversationHistoryEntries.length}
             itemContent={(index) => renderMessage(index)}
             initialTopMostItemIndex={conversationHistoryEntries.length - 1}
-            followOutput={'smooth'}
             atBottomThreshold={100}
             atBottomStateChange={handleAtBottomStateChange}
             style={{ overflowY: 'scroll' }}
