@@ -30,6 +30,9 @@ export const writeToFileTool: ToolServicesApi['writeToFile'] = async ({
     existingContent = '';
   }
 
+  // Save version before writing
+  await vscode.commands.executeCommand('code-brt.saveFileVersion', filePath);
+
   const { status, message } = await FileOperationsProvider.writeToFile(
     filePath,
     content,

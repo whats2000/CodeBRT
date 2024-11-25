@@ -63,7 +63,7 @@ export const ToolResponseContainer: React.FC<ToolResponseContainerProps> = ({
 
     setIsRollingBack(true);
     try {
-      const newHistory = await callApi('rollbackToolResponses');
+      const newHistory = await callApi('rollbackToolResponses', entry);
       dispatch(setConversationHistory(newHistory));
     } catch (error) {
       console.error('Error rolling back tool responses:', error);

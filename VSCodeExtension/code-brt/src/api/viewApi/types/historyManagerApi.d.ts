@@ -109,5 +109,7 @@ export type HistoryManagerApi = {
   /**
    * Rollback the tool changes.
    */
-  rollbackToolResponses: () => Promise<ConversationHistory>;
+  rollbackToolResponses: (
+    entry: ConversationEntry,
+  ) => Promise<ConversationHistory>;
 };

@@ -1,14 +1,17 @@
-import * as vscode from 'vscode';
 import * as path from 'path';
 import * as fs from 'fs';
+
+import * as vscode from 'vscode';
+
+import type { FileVersion } from './types';
 
 export class DiffIntegration {
   private readonly contentProvider: vscode.TextDocumentContentProvider;
   private readonly historiesFolderPath: string;
   private readonly historyIndexFilePath: string;
+  private readonly MAX_VERSIONS_PER_FILE: number = 5; // Configurable limit
   private activeFilePath: string | undefined;
-  private fileHistory: Map<string, { version: number; path: string }[]> =
-    new Map();
+  private fileHistory: Map<string, FileVersion[]> = new Map();
 
   constructor(
     context: vscode.ExtensionContext,
@@ -47,6 +50,14 @@ export class DiffIntegration {
     this.loadHistoryIndex();
   }
 
+  private createContentProvider(): vscode.TextDocumentContentProvider {
+    return {
+      provideTextDocumentContent(uri: vscode.Uri): string {
+        return uri.query || '';
+      },
+    };
+  }
+
   private loadHistoryIndex(): void {
     try {
       if (fs.existsSync(this.historyIndexFilePath)) {
@@ -55,10 +66,7 @@ export class DiffIntegration {
 
         // Rebuild fileHistory from parsed index
         for (const [filePath, versions] of Object.entries(parsedIndex)) {
-          this.fileHistory.set(
-            filePath,
-            versions as { version: number; path: string }[],
-          );
+          this.fileHistory.set(filePath, versions as FileVersion[]);
         }
       }
     } catch (error) {
@@ -82,17 +90,43 @@ export class DiffIntegration {
     }
   }
 
-  // Rest of the existing methods (showDiff, closeDiffAndFocusModified, createContentProvider) remain the same
-  private createContentProvider(): vscode.TextDocumentContentProvider {
-    return {
-      provideTextDocumentContent(uri: vscode.Uri): string {
-        return uri.query || '';
-      },
-    };
+  private cleanupOldVersions(filePath: string): void {
+    const versions = this.fileHistory.get(filePath) || [];
+
+    // If versions exceed max, remove oldest
+    if (versions.length > this.MAX_VERSIONS_PER_FILE) {
+      // Sort by timestamp (oldest first)
+      const sortedVersions = [...versions].sort(
+        (a, b) => a.timestamp - b.timestamp,
+      );
+
+      // Remove excess oldest versions
+      const versionsToRemove = sortedVersions.slice(
+        0,
+        versions.length - this.MAX_VERSIONS_PER_FILE,
+      );
+
+      // Remove files from filesystem
+      versionsToRemove.forEach((version) => {
+        try {
+          if (fs.existsSync(version.path)) {
+            fs.unlinkSync(version.path);
+          }
+        } catch (error) {
+          console.error(`Failed to remove old version: ${version.path}`, error);
+        }
+      });
+
+      // Update file history
+      this.fileHistory.set(
+        filePath,
+        versions.filter((v) => !versionsToRemove.includes(v)),
+      );
+    }
   }
 
   /**
-   * Save a version of the file to file history
+   * Save a version of the file to history
    * @param filePath Path of the file to save
    */
   public saveFileVersion(filePath: string): void {
@@ -105,15 +139,24 @@ export class DiffIntegration {
       const newVersionNumber = fileVersions.length + 1;
 
       // Generate a unique filename for this version
-      const tempFileName = `${path.basename(filePath)}_v${newVersionNumber}`;
+      const timestamp = Date.now();
+      const tempFileName = `${path.basename(filePath)}_v${newVersionNumber}_${timestamp}`;
       const tempFilePath = path.join(this.historiesFolderPath, tempFileName);
 
       // Write file content to history
       fs.writeFileSync(tempFilePath, fileContent);
 
       // Store version information
-      fileVersions.push({ version: newVersionNumber, path: tempFilePath });
+      const newVersion: FileVersion = {
+        version: newVersionNumber,
+        path: tempFilePath,
+        timestamp,
+      };
+      fileVersions.push(newVersion);
       this.fileHistory.set(filePath, fileVersions);
+
+      // Cleanup old versions if needed
+      this.cleanupOldVersions(filePath);
 
       // Save updated index
       this.saveHistoryIndex();
@@ -127,7 +170,7 @@ export class DiffIntegration {
   /**
    * Revert file to a previous version
    * @param filePath Path of the file to revert
-   * @param versionIndex Optional index of version to revert to (defaults to most recent)
+   * @param versionIndex Optional index of a version to revert to (defaults to most recent)
    */
   public async revertFileVersion(
     filePath: string,
@@ -157,7 +200,7 @@ export class DiffIntegration {
       // Read version content
       const versionContent = fs.readFileSync(versionToRevert.path, 'utf8');
 
-      // Write version content back to original file
+      // Write version content back to an original file
       fs.writeFileSync(filePath, versionContent);
 
       // Reload document in VSCode
@@ -174,6 +217,12 @@ export class DiffIntegration {
     }
   }
 
+  /**
+   * Show a diff view between two versions of a file
+   * @param filePath Path of the file to diff
+   * @param originalContent Original content to compare
+   * @param newContent New content to compare
+   */
   public async showDiff(
     filePath: string,
     originalContent: string,
