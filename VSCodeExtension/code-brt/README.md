@@ -85,7 +85,7 @@ Here’s an outline of the upcoming features and improvements for CodeBRT:
   - [x] Search File
   - [x] List Files Usage Context
   - [x] Execute Code
-  - [ ] Website Inspector
+  - [x] Website Inspector
   - [x] List Code Definitions
   - [ ] Image Generation
   - [ ] Code Interpreter
