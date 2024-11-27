@@ -195,8 +195,6 @@ export const EditModelListBar: React.FC<EditModelListBarProps> = ({
           initialModelServiceRef={initialModelServiceRef}
         />
       )}
-      {JSON.stringify(settings.anthropicAvailableModels)}
-      {JSON.stringify(settings.openaiAvailableModels)}
     </Drawer>
   );
 };
