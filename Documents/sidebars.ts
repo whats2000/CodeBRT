@@ -55,6 +55,7 @@ const sidebars: SidebarsConfig = {
           items: [
             "docs/features/automated-tasks/configuration",
             "docs/features/automated-tasks/agent-tools",
+            "docs/features/automated-tasks/agent-tools-introduction",
           ],
         },
       ],
