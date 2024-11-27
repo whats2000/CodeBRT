@@ -17,6 +17,14 @@ export const WhatsNewModal: React.FC<WhatsNewModalProps> = ({
       title="What's New"
       footer={<Button onClick={onClose}>Close</Button>}
     >
+      <p>CodeBERT 0.4.3:</p>
+      <ul>
+        <li>Fixed save version for a file that is not exist in file system</li>
+        <li>
+          Fix swap model service while fetching the model list will save the
+          wrong model list
+        </li>
+      </ul>
       <p>CodeBERT 0.4.2:</p>
       <ul>
         <li>Fixed rollback for writeToFile tool call</li>
