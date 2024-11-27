@@ -2,7 +2,7 @@
 
 ## Overview
 
-**Version**: 0.4.2
+**Version**: 0.4.3
 
 **Status**: _Under Development_  
 ⚠️ This project is currently in the Beta phase. Some features are still being developed, and you may encounter bugs or
