@@ -1,73 +1,46 @@
 # Code Completion
 
-CodeBRT offers a code completion feature designed to enhance coding efficiency and accuracy. This document outlines how to configure and use the Code Completion Settings effectively.
+CodeBRT offers a code completion feature designed to enhance coding efficiency and accuracy.
+This document outlines how to configure and use the Code Completion Settings effectively.
 
----
+## Usage
 
-## Code Completion Settings
+### Manual Trigger Configuration
 
-In the **Code Completion Settings** interface, users can customize the behavior of the code completion feature. The settings are divided into two categories:
-
-### Manually Trigger Configuration
-
-![ManualTriggerCodeCompletion-interface](/img/codeEditor/ManualTriggerCodeCompletion-interface.png)
-
-To activate manual code completion, please press the **Enable Manual Trigger Code Completion** button.
-
-Users can configure manual triggering with the following options:
-
-- **Select Code Completion Model**  
-  Choose the desired model (e.g., OpenAI) for generating code completions.
-  
-| ![Manual-CodeCompletion-ModelService](/img/codeEditor/ManualCodeCompletion-ModelService.png) | ![Manual-CodeCompletion-Model](/img/codeEditor/Manual-CodeCompletion-Model.png) |
-|------------------------------------------------------------------------------------------------|--------------------------------------------------------------------------------|
-
-:::note
-For more detailed instructions on how to Configuration the Model Service, please refer to the [Configuration Guide](/docs/docs/getting-started/configuration.md).
-:::
-
-- **Set Keybinding**  
-  Define a keybinding to activate code completion. The default keybinding is `Ctrl + Shift + X`, but users can customize this based on their preferences.
-
-  ![EditKeybinding](/img/codeEditor/ManualCodeCompletion-EditKeybinding-button.png)
-
-  ![Keybinding-Setting](/img/codeEditor/ManualCodeCompletion-Keybinding-Setting.png)
+This feature is an advanced code completion tool that allows users to manually trigger code suggestions.
+It'll cost more credits than the auto-triggered code completion feature.
+But provide more accurate and able to generate more complex code completions.
 
 - **Usage**  
-  While coding, press the defined keybinding to trigger code suggestions instantly. And press "TAB" to use the suggestions.
+  While coding, press the defined keybinding to trigger code suggestions instantly. And press "TAB" to use the
+  suggestions.
 
   ![ManualCodeCompletion-demo](/img/codeEditor/ManualCodeCompletion-demo.gif)
----
 
 ### Auto Trigger Configuration
 
-Auto-trigger settings provide seamless, on-the-fly code suggestions. Details include:
+This feature provides fast and seamless code suggestions while typing.
+While typing, the code completion feature will automatically suggest code completions based on the context.
+We use a hole-filling model to provide code completions with efficient suggestions.
 
-  ![AutoTriggerConfiguration-interface](/img/codeEditor/AutoTriggerConfiguration-interface.png)
+- **Usage**  
+  While typing, the code completion feature will automatically suggest code completions based on the context.
+  Use the `TAB` key to use the suggestions.
 
-  To activate manual code completion, please press the **Enable Auto Trigger Code Completion** button.
+  ![AutoCodeCompletion-demo](/img/codeEditor/AutoTriggerConfiguration-demo.gif)
 
-- **Supported Model**  
-  Currently, only the **Ollama model** is available for auto-triggered completions.
-  We currently support the following models:
-  - **Stable Code**
-  - **Qwen2.5-Coder**
-  - **Codestral**
-  - **CodeLlama**
-  - **DeepSeek-Coder**
-  - **StarCoder**
+## Status Bar
 
-:::note
-For more detailed instructions on how to download and Configuration the Ollama Model Service, please refer to the [Ollama website](https://ollama.com/).
-:::
+There is a status bar at the bottom of the code editor that displays the current status of the code completion feature.
 
-  After download Ollama Model, please set your Ollama service localhost in Setting Bar.
-
-  ![Ollama-host-setting](/img/codeEditor/Ollama-host-setting.png)
-
-- **Enable Auto-Trigger**  
-  Simply enable this feature, and code suggestions will automatically appear as you type.
-
-  ![AutoTriggerConfiguration-demo](/img/codeEditor/AutoTriggerConfiguration-demo.gif)
+- **Status**  
+  The status bar displays the current status of the code completion feature.
+  It will show whether the code completion feature is processing or ready to use.
+    - **Ready**
+  
+      ![CodeCompletion-Status](/img/codeEditor/CodeCompletion-Status.png)
+    - **Processing**
+  
+      ![CodeCompletion-Status-Processing](/img/codeEditor/CodeCompletion-Status-Processing.png)
 
 
