@@ -1,9 +1,10 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { Drawer } from 'antd';
 import { useDispatch, useSelector } from 'react-redux';
 
 import type {
   CustomModelSettings,
+  ModelServiceType,
   OpenRouterModelSettings,
 } from '../../../../types';
 import type { AppDispatch, RootState } from '../../../redux';
@@ -27,7 +28,17 @@ export const EditModelListBar: React.FC<EditModelListBarProps> = ({
   const [openRouterModels, setOpenRouterModels] = useState<
     OpenRouterModelSettings[]
   >([]);
-  const [availableModels, setAvailableModels] = useState<string[]>([]);
+  const [availableModels, setAvailableModels] = useState<{
+    [key in `${Exclude<ModelServiceType, 'custom' | 'openRouter'>}AvailableModels`]: string[];
+  }>({
+    anthropicAvailableModels: [],
+    cohereAvailableModels: [],
+    geminiAvailableModels: [],
+    groqAvailableModels: [],
+    huggingFaceAvailableModels: [],
+    ollamaAvailableModels: [],
+    openaiAvailableModels: [],
+  });
   const [isLoading, setIsLoading] = useState(true);
 
   const dispatch = useDispatch<AppDispatch>();
@@ -38,50 +49,64 @@ export const EditModelListBar: React.FC<EditModelListBarProps> = ({
 
   const { settings } = useSelector((state: RootState) => state.settings);
 
+  // Ref to track the model service when the form was initially opened
+  const initialModelServiceRef =
+    useRef<typeof activeModelService>('loading...');
+
+  // Track initial model service when form opens
+  useEffect(() => {
+    if (isOpen) {
+      initialModelServiceRef.current = activeModelService;
+    }
+  }, [isOpen, activeModelService]);
+
   useEffect(() => {
     setIsLoading(true);
-    if (activeModelService === 'loading...') return;
+    if (activeModelService === 'loading...' || !isOpen) return;
 
-    if (isOpen) {
-      if (activeModelService === 'custom') {
-        setCustomModels(settings.customModels);
-      } else if (activeModelService === 'openRouter') {
-        setOpenRouterModels(
-          settings.openRouterModels.map((modelSettings) => ({
-            ...{
-              uuid: uuidV4(),
-              id: '',
-              name: 'New Model',
-              apiKey: '',
-              created: new Date().getTime(),
-              description: '',
-              context_length: 4096,
-              architecture: {
-                modality: '',
-                tokenizer: '',
-                instruct_type: null,
-              },
-              pricing: {
-                prompt: '',
-                completion: '',
-                image: '',
-                request: '',
-              },
-              top_provider: {
-                context_length: null,
-                max_completion_tokens: null,
-                is_moderated: null,
-              },
-              per_request_limits: null,
+    if (activeModelService === 'custom') {
+      setCustomModels(settings.customModels);
+    } else if (activeModelService === 'openRouter') {
+      setOpenRouterModels(
+        settings.openRouterModels.map((modelSettings) => ({
+          ...{
+            uuid: uuidV4(),
+            id: '',
+            name: 'New Model',
+            apiKey: '',
+            created: new Date().getTime(),
+            description: '',
+            context_length: 4096,
+            architecture: {
+              modality: '',
+              tokenizer: '',
+              instruct_type: null,
             },
-            ...modelSettings,
-          })),
-        );
-      } else {
-        setAvailableModels(settings[`${activeModelService}AvailableModels`]);
-      }
-      setIsLoading(false);
+            pricing: {
+              prompt: '',
+              completion: '',
+              image: '',
+              request: '',
+            },
+            top_provider: {
+              context_length: null,
+              max_completion_tokens: null,
+              is_moderated: null,
+            },
+            per_request_limits: null,
+          },
+          ...modelSettings,
+        })),
+      );
+    } else {
+      const newAvailableModels = {
+        ...availableModels,
+        [`${activeModelService}AvailableModels`]:
+          settings[`${activeModelService}AvailableModels`],
+      };
+      setAvailableModels(newAvailableModels);
     }
+    setIsLoading(false);
   }, [isOpen, activeModelService]);
 
   const handleEditModelListSave = (newAvailableModels: string[]) => {
@@ -122,6 +147,17 @@ export const EditModelListBar: React.FC<EditModelListBarProps> = ({
     );
   };
 
+  const setNormalModels = (
+    modelService: Exclude<ModelServiceType, 'custom' | 'openRouter'>,
+    models: string[],
+  ) => {
+    if (initialModelServiceRef.current !== modelService) return;
+    setAvailableModels({
+      ...availableModels,
+      [`${modelService}AvailableModels`]: models,
+    });
+  };
+
   return (
     <Drawer
       title='Edit Available Models'
@@ -154,10 +190,13 @@ export const EditModelListBar: React.FC<EditModelListBarProps> = ({
           setIsLoading={setIsLoading}
           activeModelService={activeModelService}
           availableModels={availableModels}
-          setAvailableModels={setAvailableModels}
+          setNormalModels={setNormalModels}
           handleEditModelListSave={handleEditModelListSave}
+          initialModelServiceRef={initialModelServiceRef}
         />
       )}
+      {JSON.stringify(settings.anthropicAvailableModels)}
+      {JSON.stringify(settings.openaiAvailableModels)}
     </Drawer>
   );
 };

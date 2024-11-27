@@ -24,9 +24,17 @@ type ModelFormProps = {
   isLoading: boolean;
   setIsLoading: React.Dispatch<React.SetStateAction<boolean>>;
   activeModelService: Exclude<ModelServiceType, 'custom'> | 'loading...';
-  availableModels: string[];
-  setAvailableModels: React.Dispatch<React.SetStateAction<string[]>>;
+  availableModels: {
+    [key in `${Exclude<ModelServiceType, 'custom' | 'openRouter'>}AvailableModels`]: string[];
+  };
+  setNormalModels: (
+    modelService: Exclude<ModelServiceType, 'custom' | 'openRouter'>,
+    models: string[],
+  ) => void;
   handleEditModelListSave: (models: string[]) => void;
+  initialModelServiceRef: React.MutableRefObject<
+    ModelServiceType | 'loading...'
+  >;
 };
 
 type ModelWithId = {
@@ -40,13 +48,24 @@ export const ModelForm: React.FC<ModelFormProps> = ({
   setIsLoading,
   activeModelService,
   availableModels,
-  setAvailableModels,
+  setNormalModels,
   handleEditModelListSave,
+  initialModelServiceRef,
 }) => {
+  if (
+    activeModelService === 'openRouter' ||
+    activeModelService === 'loading...'
+  ) {
+    return null;
+  }
+
   const { callApi } = useContext(WebviewContext);
 
   const modelsWithId = useRef(
-    availableModels.map((model) => ({ id: uuidV4(), name: model })),
+    availableModels[`${activeModelService}AvailableModels`].map((model) => ({
+      id: uuidV4(),
+      name: model,
+    })),
   );
 
   const sensors = useSensors(
@@ -58,7 +77,7 @@ export const ModelForm: React.FC<ModelFormProps> = ({
   );
 
   const handleSave = async (modelsToSave: ModelWithId[]) => {
-    if (activeModelService === 'loading...' || isLoading) return;
+    if (isLoading) return;
 
     await callApi(
       'setAvailableModels',
@@ -81,24 +100,37 @@ export const ModelForm: React.FC<ModelFormProps> = ({
       });
   };
 
+  // Save models only if service hasn't changed
   useEffect(() => {
     if (!isOpen) {
-      void handleSave(modelsWithId.current);
+      // Only save if the service hasn't changed since the form was opened
+      if (initialModelServiceRef.current === activeModelService) {
+        void handleSave(modelsWithId.current);
+      }
+
+      // Reset the initial service ref
+      initialModelServiceRef.current = 'loading...';
     }
-  }, [isOpen]);
+  }, [isOpen, activeModelService]);
 
   const handleAvailableModelChange = (id: string, value: string) => {
     const updatedModels = modelsWithId.current.map((model) =>
       model.id === id ? { ...model, name: value } : model,
     );
     modelsWithId.current = updatedModels;
-    setAvailableModels(updatedModels.map((model) => model.name));
+    setNormalModels(
+      activeModelService,
+      updatedModels.map((model) => model.name),
+    );
   };
 
   const handleAddAvailableModel = () => {
     const newModel = { id: uuidV4(), name: '' };
     modelsWithId.current = [...modelsWithId.current, newModel];
-    setAvailableModels(modelsWithId.current.map((model) => model.name));
+    setNormalModels(
+      activeModelService,
+      modelsWithId.current.map((model) => model.name),
+    );
   };
 
   const handleRemoveAvailableModel = (id: string) => {
@@ -106,7 +138,10 @@ export const ModelForm: React.FC<ModelFormProps> = ({
       (model) => model.id !== id,
     );
     modelsWithId.current = updatedModels;
-    setAvailableModels(updatedModels.map((model) => model.name));
+    setNormalModels(
+      activeModelService,
+      updatedModels.map((model) => model.name),
+    );
   };
 
   const handleDragEnd = (event: DragEndEvent) => {
@@ -128,13 +163,14 @@ export const ModelForm: React.FC<ModelFormProps> = ({
         overIndex,
       );
       modelsWithId.current = updatedModels;
-      setAvailableModels(updatedModels.map((model) => model.name));
+      setNormalModels(
+        activeModelService,
+        updatedModels.map((model) => model.name),
+      );
     }
   };
 
   const handleFetchLatestAvailableModels = async () => {
-    if (activeModelService === 'loading...') return;
-
     setIsLoading(true);
 
     const latestAvailableModels = (await callApi(
@@ -144,9 +180,13 @@ export const ModelForm: React.FC<ModelFormProps> = ({
 
     setIsLoading(false);
 
-    if (latestAvailableModels === availableModels) return;
+    if (
+      latestAvailableModels ===
+      availableModels[`${activeModelService}AvailableModels`]
+    )
+      return;
 
-    setAvailableModels(latestAvailableModels);
+    setNormalModels(activeModelService, latestAvailableModels);
   };
 
   return (
