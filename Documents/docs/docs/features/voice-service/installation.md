@@ -111,7 +111,7 @@ To configure GPT-SoVits for Text-to-Voice conversion, follow these steps:
 :::note
 The default address of API v1 is `http://127.0.0.1:9880/`
 
-API v2 is `http://http://127.0.0.1:9880/tts/`.
+API v2 is `http://127.0.0.1:9880/tts/`.
 
 Does not close the CMD window while using GPT-SoVits, as the server must remain active for the service to function.
 :::
