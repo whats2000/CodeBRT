@@ -1,9 +1,9 @@
 ---
-name: Bug report
+name: "[Category] Bug report"
 about: Create a report to help us improve
 title: ''
-labels: ''
-assignees: ''
+labels: bug
+assignees: whats2000
 
 ---
 
