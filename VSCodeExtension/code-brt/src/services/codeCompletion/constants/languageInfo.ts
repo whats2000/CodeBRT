@@ -1,71 +1,100 @@
-import { ManuallyCompleteLanguageInfo } from '../../../types';
-
-export const Typescript: ManuallyCompleteLanguageInfo = {
-  topLevelKeywords: ['function', 'class', 'module', 'export', 'import'],
-  singleLineComment: '//',
-  endOfLine: [';'],
-};
-
-// Python
-export const Python: ManuallyCompleteLanguageInfo = {
-  // """"#" is for .ipynb files, where we add '"""' surrounding markdown blocks.
-  // This stops the model from trying to complete the start of a new markdown block
-  topLevelKeywords: ['def', 'class', '"""#'],
-  singleLineComment: '#',
-  endOfLine: [],
-};
-
-// Java
-export const Java: ManuallyCompleteLanguageInfo = {
-  topLevelKeywords: ['class', 'function'],
-  singleLineComment: '//',
-  endOfLine: [';'],
-};
-
-// C++
-export const Cpp: ManuallyCompleteLanguageInfo = {
-  topLevelKeywords: ['class', 'namespace', 'template'],
-  singleLineComment: '//',
-  endOfLine: [';'],
-};
-
-// C#
-export const CSharp: ManuallyCompleteLanguageInfo = {
-  topLevelKeywords: ['class', 'namespace', 'void'],
-  singleLineComment: '//',
-  endOfLine: [';'],
-};
+import { ChatModelCompleteLanguageInfo } from '../types';
 
 // C
-export const C: ManuallyCompleteLanguageInfo = {
+export const C: ChatModelCompleteLanguageInfo = {
   topLevelKeywords: ['if', 'else', 'while', 'for', 'switch', 'case'],
   singleLineComment: '//',
   endOfLine: [';'],
 };
 
-// PHP
-export const PHP: ManuallyCompleteLanguageInfo = {
-  topLevelKeywords: ['function', 'class', 'namespace', 'use'],
+// C++
+export const Cpp: ChatModelCompleteLanguageInfo = {
+  topLevelKeywords: ['class', 'namespace', 'template', 'inline', 'virtual'],
   singleLineComment: '//',
   endOfLine: [';'],
 };
 
-// Ruby
-export const Ruby: ManuallyCompleteLanguageInfo = {
-  topLevelKeywords: ['class', 'module', 'def'],
-  singleLineComment: '#',
-  endOfLine: [],
+// C#
+export const CSharp: ChatModelCompleteLanguageInfo = {
+  topLevelKeywords: ['class', 'namespace', 'void', 'interface', 'enum'],
+  singleLineComment: '//',
+  endOfLine: [';'],
 };
 
 // Clojure
-export const Clojure: ManuallyCompleteLanguageInfo = {
+export const Clojure: ChatModelCompleteLanguageInfo = {
   topLevelKeywords: ['def', 'fn', 'let', 'do', 'if', 'defn', 'ns', 'defmacro'],
   singleLineComment: ';',
   endOfLine: [],
 };
 
+// Go
+export const Go: ChatModelCompleteLanguageInfo = {
+  topLevelKeywords: ['func', 'type', 'package', 'import', 'interface', 'struct'],
+  singleLineComment: '//',
+  endOfLine: [';'],
+};
+
+// Java
+export const Java: ChatModelCompleteLanguageInfo = {
+  topLevelKeywords: ['class', 'public', 'private', 'protected', 'interface', 'enum', 'import'],
+  singleLineComment: '//',
+  endOfLine: [';'],
+};
+
+// TypeScript, JavaScript, TypeScriptReact, JavaScriptReact
+export const Typescript: ChatModelCompleteLanguageInfo = {
+  topLevelKeywords: ['function', 'class', 'module', 'export', 'import', 'interface', 'type'],
+  singleLineComment: '//',
+  endOfLine: [';'],
+};
+
+// Kotlin
+export const Kotlin: ChatModelCompleteLanguageInfo = {
+  topLevelKeywords: ['fun', 'class', 'interface', 'object', 'import', 'package'],
+  singleLineComment: '//',
+  endOfLine: [';'],
+};
+
+// PHP
+export const PHP: ChatModelCompleteLanguageInfo = {
+  topLevelKeywords: ['function', 'class', 'namespace', 'use', 'interface', 'trait'],
+  singleLineComment: '//',
+  endOfLine: [';'],
+};
+
+// Python
+export const Python: ChatModelCompleteLanguageInfo = {
+  // """""#" is for .ipynb files, where we add '"""' surrounding markdown blocks.
+  // This stops the model from trying to complete the start of a new markdown block
+  topLevelKeywords: ['def', 'class', 'import', 'from', '"""#'],
+  singleLineComment: '#',
+  endOfLine: [],
+};
+
+// Ruby
+export const Ruby: ChatModelCompleteLanguageInfo = {
+  topLevelKeywords: ['class', 'module', 'def', 'require', 'include', 'extend'],
+  singleLineComment: '#',
+  endOfLine: [],
+};
+
+// Rust
+export const Rust: ChatModelCompleteLanguageInfo = {
+  topLevelKeywords: ['fn', 'struct', 'impl', 'mod', 'use', 'trait', 'enum'],
+  singleLineComment: '//',
+  endOfLine: [';'],
+};
+
+// Swift
+export const Swift: ChatModelCompleteLanguageInfo = {
+  topLevelKeywords: ['func', 'class', 'struct', 'enum', 'protocol', 'import'],
+  singleLineComment: '//',
+  endOfLine: [';'],
+};
+
 // R
-export const R: ManuallyCompleteLanguageInfo = {
+export const R: ChatModelCompleteLanguageInfo = {
   topLevelKeywords: [
     'function',
     'if',
@@ -75,13 +104,21 @@ export const R: ManuallyCompleteLanguageInfo = {
     'repeat',
     'library',
     'require',
+    'source',
   ],
   singleLineComment: '#',
   endOfLine: [],
 };
 
+// Vue
+export const Vue: ChatModelCompleteLanguageInfo = {
+  topLevelKeywords: ['export', 'import', 'component', 'method', 'computed', 'data'],
+  singleLineComment: '//',
+  endOfLine: [';'],
+};
+
 // YAML
-export const YAML: ManuallyCompleteLanguageInfo = {
+export const YAML: ChatModelCompleteLanguageInfo = {
   topLevelKeywords: [],
   singleLineComment: '#',
   endOfLine: [],
@@ -122,7 +159,7 @@ export const YAML: ManuallyCompleteLanguageInfo = {
 };
 
 //Markdown
-export const Markdown: ManuallyCompleteLanguageInfo = {
+export const Markdown: ChatModelCompleteLanguageInfo = {
   topLevelKeywords: [],
   singleLineComment: '',
   endOfLine: [],
