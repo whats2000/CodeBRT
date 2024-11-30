@@ -1,4 +1,4 @@
 export type * from './codeLanguageId';
 export type * from './completionStrategy';
 export type * from './completionTemplate';
-export type * from './manuallyCodeComplete';
+export type * from './chatModelCodeComplete';
