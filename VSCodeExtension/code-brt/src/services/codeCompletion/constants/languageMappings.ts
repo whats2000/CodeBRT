@@ -1,22 +1,26 @@
-import { ManuallyCompleteLanguageInfo } from '../../../types';
-import { CodeLanguageId } from '../types';
+import { CodeLanguageId, ChatModelCompleteLanguageInfo } from '../types';
 import {
   C,
   Clojure,
   Cpp,
   CSharp,
+  Go,
   Java,
+  Kotlin,
   Markdown,
   PHP,
   Python,
   R,
   Ruby,
+  Rust,
+  Swift,
   Typescript,
+  Vue,
   YAML,
 } from './languageInfo';
 
 export const FILE_TO_LANGUAGE_CONTEXT: {
-  [key in CodeLanguageId]?: ManuallyCompleteLanguageInfo;
+  [key in CodeLanguageId]?: ChatModelCompleteLanguageInfo;
 } = {
   typescript: Typescript,
   javascript: Typescript,
@@ -32,8 +36,13 @@ export const FILE_TO_LANGUAGE_CONTEXT: {
   ruby: Ruby,
   clojure: Clojure,
   r: R,
+  rust: Rust,
   yaml: YAML,
   markdown: Markdown,
+  go: Go,
+  kotlin: Kotlin,
+  swift: Swift,
+  vue: Vue,
 };
 
 export const FILE_PATTERN_MAPPING: { [key in CodeLanguageId]: string[] } = {

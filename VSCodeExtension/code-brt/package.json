@@ -3,7 +3,7 @@
   "private": true,
   "displayName": "CodeBRT",
   "description": "CodeBRT, a LLM/VLM framework for code assistant with multiple models.",
-  "version": "0.4.3",
+  "version": "0.4.4",
   "icon": "static/icon.ico",
   "engines": {
     "vscode": "^1.95.0",

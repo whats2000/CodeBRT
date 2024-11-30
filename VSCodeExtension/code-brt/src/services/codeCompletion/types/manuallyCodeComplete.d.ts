@@ -19,7 +19,7 @@ export type LineFilter = (args: LineFilterArgs) => AsyncGenerator<string>;
  * @property lineFilters - filters to apply to lines before sending them to the model
  * @property useMultiline - function to determine if the completion should be multiline
  */
-export type ManuallyCompleteLanguageInfo = {
+export type ChatModelCompleteLanguageInfo = {
   topLevelKeywords: string[];
   builtInFunctions?: string[];
   commonLibraries?: string[];
