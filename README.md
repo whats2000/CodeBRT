@@ -1,5 +1,7 @@
 # CodeBRT
 
+[简体中文](README_zh-CN.md) | [繁體中文](README_zh-TW.md)
+
 ## Overview
 
 **Version**: 0.4.4
