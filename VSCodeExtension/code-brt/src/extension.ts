@@ -6,8 +6,10 @@ import {
 } from './constants';
 import {
   connectedViews,
+  createViewApi,
   HistoryManager,
   registerAndConnectView,
+  registerCodeActions,
   registerDiff,
   registerInlineCompletion,
   SettingsManager,
@@ -15,7 +17,6 @@ import {
 import { ModelServiceFactory } from './services/languageModel';
 import { VoiceServiceFactory } from './services/voice';
 import { DiffIntegration, TerminalManager } from './integrations';
-import { createViewApi } from './api/viewApi/viewApiFactory';
 
 let extensionContext: vscode.ExtensionContext | undefined = undefined;
 
@@ -54,6 +55,7 @@ export const activate = async (ctx: vscode.ExtensionContext) => {
   void registerAndConnectView(ctx, settingsManager, 'workPanel', api);
   registerInlineCompletion(ctx, settingsManager, connectedViews);
   registerDiff(ctx, diffIntegration);
+  registerCodeActions();
 };
 
 export const deactivate = () => {

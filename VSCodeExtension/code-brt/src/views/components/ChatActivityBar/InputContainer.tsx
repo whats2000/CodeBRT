@@ -10,6 +10,7 @@ import {
 } from '@ant-design/icons';
 import { useDispatch, useSelector } from 'react-redux';
 
+import type { SelectedCode } from '../../../types';
 import type { AppDispatch, RootState } from '../../redux';
 import { WebviewContext } from '../../WebviewContext';
 import { useRefs } from '../../context/RefContext';
@@ -50,7 +51,7 @@ type InputContainerProps = {
 
 export const InputContainer = React.memo<InputContainerProps>(
   ({ tempIdRef, inputContainerRef }) => {
-    const { callApi } = useContext(WebviewContext);
+    const { addListener, callApi, removeListener } = useContext(WebviewContext);
     const { registerRef } = useRefs();
     const [enterPressCount, setEnterPressCount] = useState(0);
     const [previewOpen, setPreviewOpen] = useState(false);
@@ -60,6 +61,7 @@ export const InputContainer = React.memo<InputContainerProps>(
     const [inputMessage, setInputMessage] = useState(
       localStorage.getItem(INPUT_MESSAGE_KEY) || '',
     );
+    const [refSelectedCode, setRefSelectedCode] = useState<SelectedCode[]>([]);
 
     const fileInputRef = useRef<HTMLInputElement>(null);
     const uploadFileButtonRef = registerRef('uploadFileButton');
@@ -107,6 +109,22 @@ export const InputContainer = React.memo<InputContainerProps>(
         }),
       );
     }, [dispatch]);
+
+    useEffect(() => {
+      addListener(
+        'sendCodeToChat',
+        ({ codeText, codeLanguage, relativePath }) => {
+          // Append a formatted code block to the input message
+          setInputMessage(
+            `${inputMessage}\n\n### ${relativePath}\n\`\`\`${codeLanguage}\n${codeText}\n\`\`\``,
+          );
+        },
+      );
+
+      return () => {
+        removeListener('sendCodeToChat', () => {});
+      };
+    }, []);
 
     useEffect(() => {
       // Note: The link will break in vscode webview, so we need to remove the href attribute to prevent it.

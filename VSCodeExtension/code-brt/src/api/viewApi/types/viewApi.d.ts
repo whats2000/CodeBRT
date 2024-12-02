@@ -1,8 +1,11 @@
+import type { ModelServiceType, ToolCallResponse } from '../../../types';
 import { SettingApi } from './settingApi';
 import { LanguageModelServiceApi } from './languageModelServiceApi';
 import { HistoryManagerApi } from './historyManagerApi';
 import { VoiceServiceApi } from './voiceServiceApi';
 import { MiscApi } from './miscApi';
+import { EditorApi } from './editorApi';
+import { codeText } from 'micromark-core-commonmark';
 
 /**
  * Represents the API request structure for the view.
@@ -65,11 +68,18 @@ export type GetLanguageModelResponseParams = {
  * Defines the API for the view.
  * If a new API method is added, it should be added here as well.
  */
-export type ViewApi = SettingApi &
+export type ViewApi = EditorApi &
+  SettingApi &
   LanguageModelServiceApi &
   HistoryManagerApi &
   VoiceServiceApi &
   MiscApi;
+
+export type SelectedCode = {
+  codeText: string;
+  codeLanguage: string;
+  relativePath: string;
+};
 
 /**
  * Defines the events that the view can trigger.
@@ -86,4 +96,10 @@ export type ViewEvents = {
    * @param status - The status to update.
    */
   updateStatus: (status: string) => void;
+
+  /**
+   * Send code to chat view.
+   * @param selectedCode - The selected code to send to chat.
+   */
+  sendCodeToChat: (selectedCode: SelectedCode) => void;
 };
