@@ -18,7 +18,13 @@ export const registerCodeActions = () => {
       sendCodeToChatAction.command = {
         title: 'Refers to CodeBRT Chat',
         command: 'code-brt.sendCodeToChat',
-        arguments: [document.getText(range), document.languageId, relativePath],
+        arguments: [
+          document.getText(range),
+          range.start.line,
+          range.end.line,
+          document.languageId,
+          relativePath,
+        ],
       };
       return [sendCodeToChatAction];
     },
@@ -26,11 +32,19 @@ export const registerCodeActions = () => {
 
   vscode.commands.registerCommand(
     'code-brt.sendCodeToChat',
-    (codeText: string, codeLanguage: string, relativePath: string) => {
+    (
+      codeText: string,
+      startLine: number,
+      endLine: number,
+      codeLanguage: string,
+      relativePath: string,
+    ) => {
       if (codeText) {
         triggerEvent('sendCodeToChat', {
           id: Date.now().toString(),
           codeText,
+          startLine,
+          endLine,
           codeLanguage,
           relativePath,
         });

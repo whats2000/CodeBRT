@@ -137,7 +137,7 @@ export const InputContainer = React.memo<InputContainerProps>(
           }),
         );
         setInputMessage('');
-        setRefSelectedCode([]); // Clear selected code
+        setRefSelectedCode([]);
         localStorage.setItem(INPUT_MESSAGE_KEY, '');
         return;
       }

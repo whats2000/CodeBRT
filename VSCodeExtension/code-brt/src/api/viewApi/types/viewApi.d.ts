@@ -79,12 +79,16 @@ export type ViewApi = EditorApi &
  * The structure of the selected code to send to chat.
  * @property id - The ID of the selected code.
  * @property codeText - The text of the selected code.
+ * @property startLine - The start line of the selected code.
+ * @property endLine - The end line of the selected code.
  * @property codeLanguage - The language of the selected code.
  * @property relativePath - The relative path of the selected code.
  */
 export type SelectedCode = {
   id: string;
   codeText: string;
+  startLine: number;
+  endLine: number;
   codeLanguage: string;
   relativePath: string;
 };
