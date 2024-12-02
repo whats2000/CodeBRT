@@ -75,7 +75,15 @@ export type ViewApi = EditorApi &
   VoiceServiceApi &
   MiscApi;
 
+/**
+ * The structure of the selected code to send to chat.
+ * @property id - The ID of the selected code.
+ * @property codeText - The text of the selected code.
+ * @property codeLanguage - The language of the selected code.
+ * @property relativePath - The relative path of the selected code.
+ */
 export type SelectedCode = {
+  id: string;
   codeText: string;
   codeLanguage: string;
   relativePath: string;

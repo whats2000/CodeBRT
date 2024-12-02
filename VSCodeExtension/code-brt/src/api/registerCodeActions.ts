@@ -29,6 +29,7 @@ export const registerCodeActions = () => {
     (codeText: string, codeLanguage: string, relativePath: string) => {
       if (codeText) {
         triggerEvent('sendCodeToChat', {
+          id: Date.now().toString(),
           codeText,
           codeLanguage,
           relativePath,

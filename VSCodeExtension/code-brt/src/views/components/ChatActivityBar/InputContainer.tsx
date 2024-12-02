@@ -1,11 +1,9 @@
 import React, { useState, useContext, useEffect, useRef } from 'react';
 import styled from 'styled-components';
-import type { UploadFile } from 'antd/lib/upload/interface';
-import { Button, Flex, Input, Image, Upload, Tag } from 'antd';
+import { Button, Flex } from 'antd';
 import {
   AudioOutlined,
   LoadingOutlined,
-  SendOutlined,
   UploadOutlined,
 } from '@ant-design/icons';
 import { useDispatch, useSelector } from 'react-redux';
@@ -15,33 +13,21 @@ import type { AppDispatch, RootState } from '../../redux';
 import { WebviewContext } from '../../WebviewContext';
 import { useRefs } from '../../context/RefContext';
 import { useClipboardFiles, useWindowSize } from '../../hooks';
-import {
-  deleteFile,
-  handleFilesUpload,
-} from '../../redux/slices/fileUploadSlice';
-import { CancelOutlined } from '../../icons';
+import { handleFilesUpload } from '../../redux/slices/fileUploadSlice';
 import { INPUT_MESSAGE_KEY } from 'src/constants';
 import {
   processMessage,
   processToolCall,
 } from '../../redux/slices/conversationSlice';
 import { setRefId } from '../../redux/slices/tourSlice';
+import { SelectedCodeDisplay } from './InputContainer/SelectedCodeDisplay';
+import { InputMessageArea } from './InputContainer/InputMessageArea';
+import { FileUploadSection } from './InputContainer/FileUploadSection';
 
 const StyledInputContainer = styled.div`
   display: flex;
   flex-direction: column;
   padding: 10px 15px 10px 10px;
-`;
-
-const UploadedImageContainer = styled.div`
-  display: flex;
-  flex-wrap: wrap;
-`;
-
-const StyledUpload = styled(Upload)`
-  div.ant-upload-list-item-container {
-    margin-bottom: 10px;
-  }
 `;
 
 type InputContainerProps = {
@@ -53,10 +39,6 @@ export const InputContainer = React.memo<InputContainerProps>(
   ({ tempIdRef, inputContainerRef }) => {
     const { addListener, callApi, removeListener } = useContext(WebviewContext);
     const { registerRef } = useRefs();
-    const [enterPressCount, setEnterPressCount] = useState(0);
-    const [previewOpen, setPreviewOpen] = useState(false);
-    const [previewImage, setPreviewImage] = useState('');
-    const [fileList, setFileList] = useState<UploadFile[]>([]);
     const [isRecording, setIsRecording] = useState(false);
     const [inputMessage, setInputMessage] = useState(
       localStorage.getItem(INPUT_MESSAGE_KEY) || '',
@@ -66,7 +48,6 @@ export const InputContainer = React.memo<InputContainerProps>(
     const fileInputRef = useRef<HTMLInputElement>(null);
     const uploadFileButtonRef = registerRef('uploadFileButton');
     const voiceInputButtonRef = registerRef('voiceInputButton');
-    const inputMessageRef = registerRef('inputMessage');
 
     const dispatch = useDispatch<AppDispatch>();
     const { uploadedFiles } = useSelector(
@@ -79,8 +60,6 @@ export const InputContainer = React.memo<InputContainerProps>(
     const conversationHistory = useSelector(
       (state: RootState) => state.conversation,
     );
-
-    const { settings } = useSelector((state: RootState) => state.settings);
 
     useClipboardFiles((files) => dispatch(handleFilesUpload(files)));
 
@@ -101,46 +80,44 @@ export const InputContainer = React.memo<InputContainerProps>(
           stepIndex: 2,
         }),
       );
-      dispatch(
-        setRefId({
-          tourName: 'quickStart',
-          targetId: 'inputMessage',
-          stepIndex: 3,
-        }),
-      );
     }, [dispatch]);
 
     useEffect(() => {
-      addListener(
-        'sendCodeToChat',
-        ({ codeText, codeLanguage, relativePath }) => {
-          // Append a formatted code block to the input message
-          setInputMessage(
-            `${inputMessage}\n\n### ${relativePath}\n\`\`\`${codeLanguage}\n${codeText}\n\`\`\``,
-          );
-        },
-      );
+      addListener('sendCodeToChat', (newSelectedCode) => {
+        // Append to the array of selected codes
+        setRefSelectedCode((prev) => [...prev, newSelectedCode]);
+      });
 
       return () => {
         removeListener('sendCodeToChat', () => {});
       };
-    }, []);
-
-    useEffect(() => {
-      // Note: The link will break in vscode webview, so we need to remove the href attribute to prevent it.
-      const links = document.querySelectorAll<HTMLLinkElement>('a');
-      links.forEach((link) => {
-        link.href = '';
-      });
-    }, [fileList]);
-
-    const resetEnterPressCount = () => setEnterPressCount(0);
+    }, [addListener, removeListener]);
 
     const currentEntry =
       conversationHistory.entries[conversationHistory.current];
     const isToolResponse = currentEntry?.role === 'tool';
 
+    // Function to remove a specific selected code item
+    const removeSelectedCode = (id: string) => {
+      setRefSelectedCode((prev) => prev.filter((code) => code.id !== id));
+    };
+
     const sendMessage = async () => {
+      // Prepare an input message with selected code
+      let finalMessage = inputMessage;
+
+      // Append selected code to the message
+      if (refSelectedCode.length > 0) {
+        const codeBlocks = refSelectedCode
+          .map(
+            (code) =>
+              `### ${code.relativePath}\n\`\`\`${code.codeLanguage}\n${code.codeText}\n\`\`\``,
+          )
+          .join('\n\n');
+
+        finalMessage = `${finalMessage}\n\n${codeBlocks}`;
+      }
+
       // If the current entry is a tool response, we need to prevent a sending message from the input
       if (isToolResponse) {
         return;
@@ -155,56 +132,28 @@ export const InputContainer = React.memo<InputContainerProps>(
             toolCall: toolCall,
             entry: currentEntry,
             activeModelService,
-            rejectByUserMessage: inputMessage,
+            rejectByUserMessage: finalMessage,
             tempIdRef,
           }),
         );
         setInputMessage('');
+        setRefSelectedCode([]); // Clear selected code
         localStorage.setItem(INPUT_MESSAGE_KEY, '');
         return;
       }
 
       dispatch(
         processMessage({
-          message: inputMessage,
+          message: finalMessage,
           parentId: conversationHistory.current,
           tempIdRef,
           files: uploadedFiles,
         }),
       ).then(() => {
         setInputMessage('');
+        setRefSelectedCode([]);
         localStorage.setItem(INPUT_MESSAGE_KEY, '');
       });
-    };
-
-    const handleKeyDown = async (
-      event: React.KeyboardEvent<HTMLTextAreaElement>,
-    ) => {
-      if (conversationHistory.isProcessing) {
-        return;
-      }
-
-      if (event.key === 'Enter' && !event.shiftKey) {
-        const doubleEnterSendMessages = settings.doubleEnterSendMessages;
-
-        if (!doubleEnterSendMessages) {
-          await sendMessage();
-          return;
-        }
-
-        event.preventDefault();
-        if (enterPressCount === 0) {
-          setTimeout(resetEnterPressCount, 500);
-        }
-        setEnterPressCount((prev) => prev + 1);
-
-        if (enterPressCount + 1 >= 2 && !conversationHistory.isProcessing) {
-          await sendMessage();
-          resetEnterPressCount();
-        }
-      } else {
-        resetEnterPressCount();
-      }
     };
 
     const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
@@ -239,88 +188,13 @@ export const InputContainer = React.memo<InputContainerProps>(
       setIsRecording(false);
     };
 
-    useEffect(() => {
-      const updateImageUris = async () => {
-        const urls = await Promise.all(
-          uploadedFiles.map(async (filePath) => {
-            const uri = await callApi('getWebviewUri', filePath);
-            return uri as string;
-          }),
-        );
-
-        setFileList(
-          urls.map((url, index) => ({
-            uid: index.toString(),
-            name: uploadedFiles[index].split('\\').pop() as string,
-            status: 'done',
-            url,
-          })),
-        );
-      };
-      updateImageUris().catch((error) => console.error(error));
-    }, [uploadedFiles, callApi]);
-
-    const handleRemove = (file: UploadFile) => {
-      const index = fileList.indexOf(file);
-      const newFileList = [...fileList];
-      newFileList.splice(index, 1);
-      dispatch(deleteFile(uploadedFiles[index]));
-      setFileList(newFileList);
-    };
-
-    const handlePreview = async (file: UploadFile) => {
-      if (
-        !file.url
-          ?.split('.')
-          .pop()
-          ?.match(/(png|jpe?g|gif|webp)/i)
-      ) {
-        return;
-      }
-
-      setPreviewImage(file.url || (file.preview as string));
-      setPreviewOpen(true);
-    };
-
-    const handleCancelResponse = () => {
-      if (activeModelService === 'loading...') {
-        return;
-      }
-
-      callApi('stopLanguageModelResponse', activeModelService).catch(
-        console.error,
-      );
-    };
-
-    const handleInputMessageChange = (
-      e: React.ChangeEvent<HTMLTextAreaElement>,
-    ) => {
-      setInputMessage(e.target.value);
-      localStorage.setItem(INPUT_MESSAGE_KEY, e.target.value);
-    };
-
     return (
       <StyledInputContainer ref={inputContainerRef}>
-        {previewImage && (
-          <Image
-            wrapperStyle={{ display: 'none' }}
-            preview={{
-              visible: previewOpen,
-              onVisibleChange: (visible) => setPreviewOpen(visible),
-              afterOpenChange: (visible) => !visible && setPreviewImage(''),
-            }}
-            src={previewImage}
-          />
-        )}
-        <UploadedImageContainer>
-          <StyledUpload
-            fileList={conversationHistory.isProcessing ? [] : fileList}
-            listType='picture-card'
-            onRemove={handleRemove}
-            onPreview={handlePreview}
-            supportServerRender={false}
-          />
-        </UploadedImageContainer>
+        <SelectedCodeDisplay
+          selectedCodes={refSelectedCode}
+          onRemoveCode={removeSelectedCode}
+        />
+        <FileUploadSection />
         <Flex gap={10} wrap={innerWidth < 320}>
           <Button
             ref={uploadFileButtonRef}
@@ -344,44 +218,13 @@ export const InputContainer = React.memo<InputContainerProps>(
             onClick={handleVoiceInput}
             disabled={conversationHistory.isProcessing}
           />
-          <Flex gap={10} style={{ width: '100%' }} ref={inputMessageRef}>
-            <Input.TextArea
-              value={inputMessage}
-              onChange={handleInputMessageChange}
-              onKeyDown={handleKeyDown}
-              placeholder={innerWidth > 520 ? 'Paste images...' : 'Ask...'}
-              disabled={conversationHistory.isProcessing || isToolResponse}
-              autoSize={{
-                minRows: 1,
-                maxRows: conversationHistory.isProcessing ? 2 : 10,
-              }}
-              allowClear
-            />
-            <Flex vertical={true}>
-              <Button
-                onClick={
-                  conversationHistory.isProcessing
-                    ? handleCancelResponse
-                    : sendMessage
-                }
-                disabled={isToolResponse}
-              >
-                {conversationHistory.isProcessing ? (
-                  <CancelOutlined />
-                ) : (
-                  <SendOutlined />
-                )}
-              </Button>
-              {inputMessage.length > 100 && (
-                <Tag
-                  color='warning'
-                  style={{ marginTop: 5, width: '100%', textAlign: 'center' }}
-                >
-                  {inputMessage.length}
-                </Tag>
-              )}
-            </Flex>
-          </Flex>
+          <InputMessageArea
+            inputMessage={inputMessage}
+            setInputMessage={setInputMessage}
+            conversationHistory={conversationHistory}
+            sendMessage={sendMessage}
+            isToolResponse={isToolResponse}
+          />
         </Flex>
       </StyledInputContainer>
     );
