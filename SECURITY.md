@@ -49,7 +49,7 @@ We take the security of our project seriously. If you discover a security vulner
 
 ## Package Health
 
-- Total packages: 289
+- Total packages: 288
 - Current vulnerabilities: 0
 
 Thank you for helping us maintain the security of CodeBRT.
