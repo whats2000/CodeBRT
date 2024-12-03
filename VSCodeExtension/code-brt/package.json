@@ -136,14 +136,53 @@
   "contributes": {
     "commands": [
       {
+        "command": "code-brt.codeBRTOptions",
+        "title": "CodeBRT"
+      },
+      {
         "command": "code-brt.triggerInlineCompletion",
         "title": "Trigger Inline Completion"
       },
       {
         "command": "code-brt.openMainView",
         "title": "Open CodeBRT Chat"
+      },
+      {
+        "command": "code-brt.sendCodeToChat",
+        "title": "Send Code to Chat"
       }
     ],
+    "submenus": [
+      {
+        "id": "code-brt.codeBRTSubMenu",
+        "label": "CodeBRT"
+      }
+    ],
+    "menus": {
+        "editor/context": [
+          {
+            "submenu": "code-brt.codeBRTSubMenu",
+            "group": "0_code-brt"
+          }
+        ],
+      "code-brt.codeBRTSubMenu": [
+        {
+          "command": "code-brt.triggerInlineCompletion",
+          "group": "CodeBRT",
+          "when": "editorTextFocus"
+        },
+        {
+          "command": "code-brt.openMainView",
+          "group": "CodeBRT",
+          "when": "editorTextFocus"
+        },
+        {
+          "command": "code-brt.sendCodeToChat",
+          "group": "CodeBRT",
+          "when": "editorHasSelection"
+        }
+      ]
+    },
     "keybindings": [
       {
         "command": "code-brt.triggerInlineCompletion",
