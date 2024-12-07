@@ -527,7 +527,7 @@ export class HistoryManager implements IHistoryManager {
           continue;
         }
 
-        const relativePath = parentEntry.toolCalls[0]?.parameters.relativePath;
+        const relativePath = parentEntry.toolCalls[0]?.parameters.relativeFilePath;
         const activeOperation = operations.find(
           (op) => op.relativePath === relativePath,
         );
