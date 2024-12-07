@@ -9,36 +9,55 @@ import { detectCodeOmission } from './utils';
 /**
  * Detects the End-of-Line (EOL) style of the given text
  * @param content The text to analyze
- * @returns 'CRLF' or 'LF'
+ * @returns Object containing EOL style and trailing newline info
  */
-const detectEOLStyle = (content: string): 'CRLF' | 'LF' => {
+const detectEOLStyle = (content: string): { 
+  style: 'CRLF' | 'LF', 
+  hasTrailingNewline: boolean 
+} => {
   // Check if the content contains Windows-style line endings (CRLF)
   const crlfMatches = content.match(/\r\n/g);
   const lfMatches = content.match(/(?<!\r)\n/g);
 
-  // Prefer CRLF if it's more prevalent, otherwise use LF
-  if (crlfMatches && (!lfMatches || crlfMatches.length >= lfMatches.length)) {
-    return 'CRLF';
-  }
-  return 'LF';
+  // Determine the predominant line ending style
+  const style = (crlfMatches && (!lfMatches || crlfMatches.length >= lfMatches.length)) 
+    ? 'CRLF' 
+    : 'LF';
+
+  // Check for trailing newline
+  const hasTrailingNewline = style === 'CRLF' 
+    ? content.endsWith('\r\n') 
+    : content.endsWith('\n');
+
+  return { style, hasTrailingNewline };
 };
 
 /**
- * Normalizes the content to use the specified EOL style
+ * Normalizes the content to use the specified EOL style and trailing newline
  * @param content The content to normalize
  * @param eolStyle The desired EOL style
+ * @param shouldHaveTrailingNewline Whether to add/preserve trailing newline
  * @returns Content with consistent line endings
  */
 const normalizeEOLStyle = (
   content: string,
   eolStyle: 'CRLF' | 'LF',
+  shouldHaveTrailingNewline: boolean
 ): string => {
-  // First, normalize to LF
-  const normalizedContent = content.replace(/\r\n/g, '\n');
+  // Ensure the content ends with a single newline if required
+  let normalizedContent = content.replace(/\r\n/g, '\n');
+  
+  // Remove any existing trailing newlines if not needed
+  if (!shouldHaveTrailingNewline) {
+    normalizedContent = normalizedContent.replace(/\n+$/, '');
+  } else {
+    // Ensure exactly one newline at the end
+    normalizedContent = normalizedContent.replace(/\n+$/, '\n');
+  }
 
-  // Then convert to the desired style
+  // Convert to the desired line ending style
   return eolStyle === 'CRLF'
-    ? normalizedContent.replace(/\n/g, '\r\n')
+    ? (shouldHaveTrailingNewline ? normalizedContent.replace(/\n/g, '\r\n') : normalizedContent.trimEnd())
     : normalizedContent;
 };
 
@@ -63,14 +82,21 @@ export const writeToFileTool: ToolServicesApi['writeToFile'] = async ({
 
   let existingContent: string;
   let originalEOLStyle: 'CRLF' | 'LF' = 'LF'; // Default to LF
+  let hasOriginalTrailingNewline = true; // Default to true to preserve newline
+
   try {
     const document = await vscode.workspace.openTextDocument(filePath);
     existingContent = document.getText();
 
-    // Detect the original EOL style
-    originalEOLStyle = detectEOLStyle(existingContent);
+    // Detect the original EOL style and trailing newline
+    const eolInfo = detectEOLStyle(existingContent);
+    originalEOLStyle = eolInfo.style;
+    hasOriginalTrailingNewline = eolInfo.hasTrailingNewline;
   } catch (error) {
     existingContent = '';
+    // If file doesn't exist, default to LF with trailing newline
+    originalEOLStyle = 'LF';
+    hasOriginalTrailingNewline = true;
   }
 
   // Save version before writing
@@ -79,7 +105,6 @@ export const writeToFileTool: ToolServicesApi['writeToFile'] = async ({
   let completeContent = content;
 
   // If the content is partial code, fuse it with the existing content
-  // Sometime the LLM will wrongly predict the code as full code, so we need to check if it's partial again for safety
   if (isCodePartial || detectCodeOmission(existingContent, content)) {
     updateStatus?.('[processing] Inserting code snippet to file...');
     const result = await partialCodeFuser.fusePartialCode({
@@ -101,10 +126,11 @@ export const writeToFileTool: ToolServicesApi['writeToFile'] = async ({
     }
   }
 
-  // Normalize the content to match the original file's EOL style
+  // Normalize the content to match the original file's EOL style and trailing newline
   const normalizedContent = normalizeEOLStyle(
     completeContent,
     originalEOLStyle,
+    hasOriginalTrailingNewline
   );
 
   const { status, message } = await FileOperationsProvider.writeToFile(
