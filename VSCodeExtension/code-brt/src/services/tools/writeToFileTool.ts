@@ -11,23 +11,25 @@ import { detectCodeOmission } from './utils';
  * @param content The text to analyze
  * @returns Object containing EOL style and trailing newline info
  */
-const detectEOLStyle = (content: string): { 
-  style: 'CRLF' | 'LF', 
-  hasTrailingNewline: boolean 
+const detectEOLStyle = (
+  content: string,
+): {
+  style: 'CRLF' | 'LF';
+  hasTrailingNewline: boolean;
 } => {
   // Check if the content contains Windows-style line endings (CRLF)
   const crlfMatches = content.match(/\r\n/g);
   const lfMatches = content.match(/(?<!\r)\n/g);
 
   // Determine the predominant line ending style
-  const style = (crlfMatches && (!lfMatches || crlfMatches.length >= lfMatches.length)) 
-    ? 'CRLF' 
-    : 'LF';
+  const style =
+    crlfMatches && (!lfMatches || crlfMatches.length >= lfMatches.length)
+      ? 'CRLF'
+      : 'LF';
 
   // Check for trailing newline
-  const hasTrailingNewline = style === 'CRLF' 
-    ? content.endsWith('\r\n') 
-    : content.endsWith('\n');
+  const hasTrailingNewline =
+    style === 'CRLF' ? content.endsWith('\r\n') : content.endsWith('\n');
 
   return { style, hasTrailingNewline };
 };
@@ -42,11 +44,11 @@ const detectEOLStyle = (content: string): {
 const normalizeEOLStyle = (
   content: string,
   eolStyle: 'CRLF' | 'LF',
-  shouldHaveTrailingNewline: boolean
+  shouldHaveTrailingNewline: boolean,
 ): string => {
   // Ensure the content ends with a single newline if required
   let normalizedContent = content.replace(/\r\n/g, '\n');
-  
+
   // Remove any existing trailing newlines if not needed
   if (!shouldHaveTrailingNewline) {
     normalizedContent = normalizedContent.replace(/\n+$/, '');
@@ -57,7 +59,9 @@ const normalizeEOLStyle = (
 
   // Convert to the desired line ending style
   return eolStyle === 'CRLF'
-    ? (shouldHaveTrailingNewline ? normalizedContent.replace(/\n/g, '\r\n') : normalizedContent.trimEnd())
+    ? shouldHaveTrailingNewline
+      ? normalizedContent.replace(/\n/g, '\r\n')
+      : normalizedContent.trimEnd()
     : normalizedContent;
 };
 
@@ -115,10 +119,17 @@ export const writeToFileTool: ToolServicesApi['writeToFile'] = async ({
 
     if (result) {
       // Clear the ```fileExtension and ``` from the code block
-      completeContent = result
-        .replace(/^```.*\n/, '')
-        .replace(/```\n$/, '')
-        .replace(/```$/, '');
+      // This regex will capture everything between a pair of triple backticks
+      // (with optional language spec) and store it in 'codeBlockContent'.
+      const match = result.match(/```[^\n]*\n([\s\S]*?)```/);
+
+      if (match) {
+        // match[1] is what was inside the code fence
+        completeContent = match[1];
+      } else {
+        // No code block found, just return the original or handle as needed
+        completeContent = result;
+      }
     } else {
       vscode.window.showErrorMessage(
         'The code fuser failed to fuse the partial code. Please manually check the file.',
@@ -130,7 +141,7 @@ export const writeToFileTool: ToolServicesApi['writeToFile'] = async ({
   const normalizedContent = normalizeEOLStyle(
     completeContent,
     originalEOLStyle,
-    hasOriginalTrailingNewline
+    hasOriginalTrailingNewline,
   );
 
   const { status, message } = await FileOperationsProvider.writeToFile(
