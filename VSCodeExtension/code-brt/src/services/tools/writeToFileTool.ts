@@ -32,6 +32,9 @@ export const writeToFileTool: ToolServicesApi['writeToFile'] = async ({
     existingContent = '';
   }
 
+  // A flag to see the end of file style as the LLM tends to not include the last newline
+  const endOfFileStyle = existingContent.endsWith('\n') ? '\n' : '';
+
   // Save version before writing
   await vscode.commands.executeCommand('code-brt.saveFileVersion', filePath);
 
@@ -39,6 +42,7 @@ export const writeToFileTool: ToolServicesApi['writeToFile'] = async ({
 
   // If the content is partial code, fuse it with the existing content
   if (isCodePartial) {
+    updateStatus?.('[processing] Inserting code snippet to file...');
     const result = await partialCodeFuser.fusePartialCode({
       originalCode: existingContent,
       partialCode: content,
@@ -46,12 +50,18 @@ export const writeToFileTool: ToolServicesApi['writeToFile'] = async ({
     });
 
     if (result) {
-      completeContent = result;
+      // Clear the ```fileExtension and ``` from the code block
+      completeContent = result.replace(/^```.*\n/, '').replace(/```$/, '');
     } else {
       vscode.window.showErrorMessage(
         'The code fuser failed to fuse the partial code. Please manually check the file.',
       );
     }
+  }
+
+  // If the original content is EOF with a newline, add a newline to the end of the content if it doesn't have one
+  if (existingContent.endsWith('\n') && !completeContent.endsWith('\n')) {
+    completeContent += '\n';
   }
 
   const { status, message } = await FileOperationsProvider.writeToFile(

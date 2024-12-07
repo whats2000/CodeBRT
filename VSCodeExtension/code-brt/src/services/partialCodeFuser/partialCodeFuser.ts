@@ -4,6 +4,7 @@ import type { LoadedModelServices } from '../../types';
 
 import type { PartialCodeFuserOptions } from './types';
 import { HistoryManager, SettingsManager } from '../../api';
+import { SYSTEM_PROMPT } from './constants';
 
 export class PartialCodeFuser {
   private readonly settingsManager: SettingsManager;
@@ -29,21 +30,16 @@ export class PartialCodeFuser {
     partialCode: string,
     relativeFilePath: string,
   ): string {
-    return `You are an AI code fusion assistant. Complete the partial code based on the original code context.
-
-FILE PATH: ${relativeFilePath}
-
-ORIGINAL CODE:
+    const fileExtension = relativeFilePath.split('.').pop();
+    return `**Original Code**:  
+\`\`\`${fileExtension}
 ${originalCode}
+\`\`\`
 
-PARTIAL CODE TO COMPLETE:
+**Modified Code**:  
+\`\`\`${fileExtension}
 ${partialCode}
-
-Rules:
-1. Provide a complete implementation that fits seamlessly with the original code.
-2. Replace placeholders like "// Other code remain the same" with appropriate code.
-3. Maintain the existing coding style and structure.
-4. Return only the complete, fused code block.`.trim();
+\`\`\``;
   }
 
   /**
@@ -70,8 +66,7 @@ Rules:
         history.root,
         {
           ...history.advanceSettings,
-          systemPrompt:
-            'You are an AI code fusion assistant. Complete partial code precisely in the context of the original code.',
+          systemPrompt: SYSTEM_PROMPT,
           temperature: 0.7,
         },
       );
