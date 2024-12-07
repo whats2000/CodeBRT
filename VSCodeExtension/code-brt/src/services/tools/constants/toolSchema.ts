@@ -123,7 +123,8 @@ export const writeToFileSchema = (
     'This tool will create directories if they do not exist.\n\n' +
     '**CRITICAL INSTRUCTION:** ' +
     'Before using this tool, you must determine whether the provided code is absolutely complete and final. ' +
-    'If there is any doubt, or if the content suggests that more code should follow (for example, placeholders like "remaining code goes here", "insert the rest of the code", "...", or any hint that the code is incomplete), then set `isCodePartial = true`.\n\n' +
+    'The complete mean the code start from the beginning, ends at the end and able to run without any missing part. ' +
+    'If there is any doubt, or the  content if the content suggests that more code should follow (for example, placeholders like "remaining code goes here", "insert the rest of the code", "...", or any hint that the code is incomplete), then set `isCodePartial = true`.\n\n' +
     'Only set `isCodePartial = false` if you are absolutely certain the code is fully complete and requires no further edits or merging. ' +
     'If the code is partial or contains placeholders for additional content, always set `isCodePartial = true`. ' +
     'Failure to do so may cause severe errors later.',
@@ -351,8 +352,8 @@ export const allInOneToolSchema: (enabledTools: {
 - **readFile**: { "relativeFilePath": string }
   - Purpose: Read content from a file at a specified path. **Required**: "relativeFilePath"
 
-- **writeToFile**: { "relativePath": string, "content": string }
-  - Purpose: Write specified content to a file, creating directories if needed. **Required**: "relativePath", "content"
+- **writeToFile**: { "relativePath": string, "content": string, "isCodePartial": boolean }
+  - Purpose: Write specified content to a file, creating directories if needed. If the content is partial, set "isCodePartial" to true. **Required**: "relativePath", "content", "isCodePartial"
 
 - **searchFiles**: { "relativePath": string, "regex": string, "filePattern"?: string (default: "*") }
   - Purpose: Search for a regex pattern in files within the specified directory. **Required**: "relativePath", "regex"
