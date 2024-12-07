@@ -111,7 +111,7 @@ export const InputContainer = React.memo<InputContainerProps>(
         const codeBlocks = refSelectedCode
           .map(
             (code) =>
-              `### ${code.relativePath} in Line ${code.startLine}-${code.endLine}:\n\`\`\`${code.codeLanguage}\n${code.codeText}\n\`\`\``,
+              `### Code snippet from ${code.relativePath} in line position ${code.startLine}-${code.endLine}:\n\`\`\`${code.codeLanguage}\n${code.codeText}\n\`\`\``,
           )
           .join('\n\n');
 

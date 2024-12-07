@@ -3,6 +3,7 @@ import vscode from 'vscode';
 import type { ViewApi } from './types';
 import type { LoadedModelServices } from '../../services/languageModel/types';
 import type { LoadedVoiceServices } from '../../services/voice/types';
+import type { PartialCodeFuser } from '../../services/partialCodeFuser';
 import { SettingsManager } from '../settingsManager';
 import { HistoryManager } from '../historyManager';
 import { TerminalManager } from '../../integrations';
@@ -12,28 +13,32 @@ import { createMiscApi } from './miscApi';
 import { createSettingApi } from './settingApi';
 import { createVoiceServiceApi } from './voiceServiceApi';
 
-export const createViewApi: (
-  ctx: vscode.ExtensionContext,
-  settingsManager: SettingsManager,
-  historyManager: HistoryManager,
-  terminalManager: TerminalManager,
-  models: LoadedModelServices,
-  loadedVoiceServices: LoadedVoiceServices,
-  connectedViews: Partial<Record<string, vscode.WebviewView>>,
-) => ViewApi = (
+type ViewApiFactoryParams = {
+  ctx: vscode.ExtensionContext;
+  settingsManager: SettingsManager;
+  historyManager: HistoryManager;
+  terminalManager: TerminalManager;
+  partialCodeFuser: PartialCodeFuser;
+  models: LoadedModelServices;
+  voiceServices: LoadedVoiceServices;
+  connectedViews: Partial<Record<string, vscode.WebviewView>>;
+};
+
+export const createViewApi: (options: ViewApiFactoryParams) => ViewApi = ({
   ctx,
   settingsManager,
   historyManager,
   terminalManager,
+  partialCodeFuser,
   models,
-  loadedVoiceServices,
+  voiceServices,
   connectedViews,
-) => {
+}): ViewApi => {
   return {
     ...createHistoryManagerApi(historyManager),
     ...createLanguageModelServiceApi(models, historyManager, settingsManager),
-    ...createMiscApi(ctx, terminalManager, connectedViews),
+    ...createMiscApi(ctx, terminalManager, partialCodeFuser, connectedViews),
     ...createSettingApi(settingsManager),
-    ...createVoiceServiceApi(settingsManager, loadedVoiceServices),
+    ...createVoiceServiceApi(settingsManager, voiceServices),
   };
 };

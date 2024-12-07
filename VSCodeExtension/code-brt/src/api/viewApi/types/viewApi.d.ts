@@ -4,7 +4,6 @@ import { LanguageModelServiceApi } from './languageModelServiceApi';
 import { HistoryManagerApi } from './historyManagerApi';
 import { VoiceServiceApi } from './voiceServiceApi';
 import { MiscApi } from './miscApi';
-import { EditorApi } from './editorApi';
 import { codeText } from 'micromark-core-commonmark';
 
 /**
@@ -68,8 +67,7 @@ export type GetLanguageModelResponseParams = {
  * Defines the API for the view.
  * If a new API method is added, it should be added here as well.
  */
-export type ViewApi = EditorApi &
-  SettingApi &
+export type ViewApi = SettingApi &
   LanguageModelServiceApi &
   HistoryManagerApi &
   VoiceServiceApi &

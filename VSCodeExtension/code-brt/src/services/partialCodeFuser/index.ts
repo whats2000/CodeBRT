@@ -1,1 +1,1 @@
-export * from './partialCodeFuserProvider';
+export * from './partialCodeFuser';

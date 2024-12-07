@@ -20,6 +20,7 @@ import { listCodeDefinitionNamesTool } from './listCodeDefinitionNamesTool';
 import { inspectSiteTool } from './inspectSiteTool';
 import { allInOneToolSchema } from './constants';
 import { TerminalManager } from '../../integrations';
+import type { PartialCodeFuser } from '../partialCodeFuser';
 
 export class ToolServiceProvider {
   private static readonly toolServices: {
@@ -198,6 +199,7 @@ export class ToolServiceProvider {
   public static async executeToolCall(
     toolCallEntry: ToolCallEntry,
     terminalManager: TerminalManager,
+    partialCodeFuser: PartialCodeFuser,
     updateStatus: (status: string) => void,
   ): Promise<ToolCallResponse> {
     try {
@@ -213,12 +215,18 @@ export class ToolServiceProvider {
         };
       }
 
-      const args = {
+      const args: any = {
         ...toolCallEntry.parameters,
         updateStatus,
-        terminalManager,
       };
-      const result = await tool(args as any);
+      if (toolCallEntry.toolName === 'executeCommand') {
+        args.terminalManager = terminalManager;
+      }
+      if (toolCallEntry.toolName === 'writeToFile') {
+        args.partialCodeFuser = partialCodeFuser;
+      }
+
+      const result = await tool(args);
 
       if (result.status === 'error') {
         return {

@@ -8,6 +8,8 @@ import { FileOperationsProvider } from '../../utils';
 export const writeToFileTool: ToolServicesApi['writeToFile'] = async ({
   relativePath,
   content,
+  isCodePartial,
+  partialCodeFuser,
   updateStatus,
 }) => {
   const workspaceFolders = vscode.workspace.workspaceFolders?.[0];
@@ -33,9 +35,28 @@ export const writeToFileTool: ToolServicesApi['writeToFile'] = async ({
   // Save version before writing
   await vscode.commands.executeCommand('code-brt.saveFileVersion', filePath);
 
+  let completeContent = content;
+
+  // If the content is partial code, fuse it with the existing content
+  if (isCodePartial) {
+    const result = await partialCodeFuser.fusePartialCode({
+      originalCode: existingContent,
+      partialCode: content,
+      relativeFilePath: filePath,
+    });
+
+    if (result) {
+      completeContent = result;
+    } else {
+      vscode.window.showErrorMessage(
+        'The code fuser failed to fuse the partial code. Please manually check the file.',
+      );
+    }
+  }
+
   const { status, message } = await FileOperationsProvider.writeToFile(
     filePath,
-    content,
+    completeContent,
     true,
   );
 
@@ -50,7 +71,7 @@ export const writeToFileTool: ToolServicesApi['writeToFile'] = async ({
     'code-brt.showDiff',
     filePath,
     existingContent,
-    content,
+    completeContent,
   );
 
   return { status: 'success', result: message };

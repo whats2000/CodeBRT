@@ -3,14 +3,16 @@ import * as vscode from 'vscode';
 import type { LoadedModelServices } from '../../types';
 
 import type { PartialCodeFuserOptions } from './types';
-import { HistoryManager } from '../../api';
+import { HistoryManager, SettingsManager } from '../../api';
 
-export class PartialCodeFuserProvider {
+export class PartialCodeFuser {
+  private readonly settingsManager: SettingsManager;
   private readonly historyManager: HistoryManager;
   private readonly loadedModelServices: LoadedModelServices;
 
   constructor(
     ctx: vscode.ExtensionContext,
+    settingsManager: SettingsManager,
     loadedModelServices: LoadedModelServices,
   ) {
     this.historyManager = new HistoryManager(
@@ -18,6 +20,7 @@ export class PartialCodeFuserProvider {
       'partialCodeFuserIndex.json',
       'partialCodeFuserHistories',
     );
+    this.settingsManager = settingsManager;
     this.loadedModelServices = loadedModelServices;
   }
 
@@ -52,13 +55,7 @@ Rules:
   public async fusePartialCode(
     options: PartialCodeFuserOptions,
   ): Promise<string | null> {
-    const {
-      originalCode,
-      partialCode,
-      relativeFilePath,
-      modelService,
-      modelName,
-    } = options;
+    const { originalCode, partialCode, relativeFilePath } = options;
 
     const prompt = this.constructPrompt(
       originalCode,
@@ -78,6 +75,10 @@ Rules:
           temperature: 0.7,
         },
       );
+
+      const modelService = this.settingsManager.get('lastUsedModelService');
+      const modelName =
+        this.settingsManager.get('lastSelectedModel')[modelService];
 
       // Get response from model service
       const response = await this.loadedModelServices[

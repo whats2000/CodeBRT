@@ -6,10 +6,12 @@ import { triggerEvent } from '../registerView';
 import { FileOperationsProvider } from '../../utils';
 import { TerminalManager } from '../../integrations';
 import path from 'path';
+import type { PartialCodeFuser } from '../../services/partialCodeFuser';
 
 export const createMiscApi = (
   ctx: vscode.ExtensionContext,
   terminalManager: TerminalManager,
+  partialCodeFuser: PartialCodeFuser,
   connectedViews: Partial<Record<string, vscode.WebviewView>>,
 ): MiscApi => {
   return {
@@ -75,6 +77,7 @@ export const createMiscApi = (
       return await ToolServiceProvider.executeToolCall(
         toolCall,
         terminalManager,
+        partialCodeFuser,
         (status) => {
           triggerEvent('updateStatus', status);
         },
