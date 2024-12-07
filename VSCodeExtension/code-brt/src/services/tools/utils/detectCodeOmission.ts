@@ -7,6 +7,8 @@
  * https://github.com/cline/cline/blob/main/src/integrations/editor/detect-omission.ts
  */
 
+import vscode from 'vscode';
+
 /**
  * Detects potential AI-generated code omissions in the given file content.
  * @param originalFileContent The original content of the file.
@@ -42,6 +44,10 @@ export function detectCodeOmission(
       const words = line.toLowerCase().split(/\s+/);
       if (omissionKeywords.some((keyword) => words.includes(keyword))) {
         if (!originalLines.includes(line)) {
+          void vscode.window.showWarningMessage(
+            `Potential AI-generated code omission detected: "${line}"`,
+          );
+
           return true;
         }
       }
