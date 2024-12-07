@@ -121,13 +121,32 @@ export const writeToFileTool: ToolServicesApi['writeToFile'] = async ({
       // Clear the ```fileExtension and ``` from the code block
       // This regex will capture everything between a pair of triple backticks
       // (with optional language spec) and store it in 'codeBlockContent'.
-      const match = result.match(/```[^\n]*\n([\s\S]*?)```/);
+      // Use the global flag 'g' to find all code blocks
+      const startIndex = result.indexOf('```');
+      if (startIndex !== -1) {
+        const endIndex = result.lastIndexOf('```');
 
-      if (match) {
-        // match[1] is what was inside the code fence
-        completeContent = match[1];
+        // Ensure that we have a closing backtick after the starting one
+        if (endIndex !== -1 && endIndex > startIndex) {
+          // Extract everything between the first and last triple backticks
+          let substring = result.substring(startIndex + 3, endIndex);
+
+          // Now remove the language spec line if present.
+          // The first line in 'substring' (up to the first newline) could be the language spec.
+          const firstNewlineIndex = substring.indexOf('\n');
+          if (firstNewlineIndex !== -1) {
+            // Remove the language spec line by taking everything after the first newline
+            completeContent = substring.substring(firstNewlineIndex + 1);
+          } else {
+            // No newline after the triple backticks line, just use as is
+            completeContent = substring;
+          }
+        } else {
+          // If there's no proper closing triple backticks after the start
+          completeContent = result;
+        }
       } else {
-        // No code block found, just return the original or handle as needed
+        // If there are no triple backticks at all
         completeContent = result;
       }
     } else {
