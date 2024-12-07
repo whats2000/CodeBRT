@@ -508,6 +508,7 @@ export class HistoryManager implements IHistoryManager {
           }
 
           writeToFileCall.parameters.content = newContent;
+          writeToFileCall.parameters.isCodePartial = false;
 
           processedFiles.add(relativePath);
         }
