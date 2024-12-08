@@ -17,12 +17,18 @@ export const WhatsNewModal: React.FC<WhatsNewModalProps> = ({
       title="What's New"
       footer={<Button onClick={onClose}>Close</Button>}
     >
+      <p>CodeBRT 0.4.5:</p>
+      <ul>
+        <li>Fixed can not save some settings when the workspace is not open</li>
+        <li>
+          Add a fuser when the write to file operation content contains omission
+          comment or mark as partial code
+        </li>
+      </ul>
       <p>CodeBRT 0.4.4:</p>
       <ul>
         <li>Add more languages for code completion</li>
-        <li>
-          Fix the update note name
-        </li>
+        <li>Fix the update note name</li>
       </ul>
       <p>CodeBRT 0.4.3:</p>
       <ul>
@@ -31,11 +37,6 @@ export const WhatsNewModal: React.FC<WhatsNewModalProps> = ({
           Fix swap model service while fetching the model list will save the
           wrong model list
         </li>
-      </ul>
-      <p>CodeBRT 0.4.2:</p>
-      <ul>
-        <li>Fixed rollback for writeToFile tool call</li>
-        <li>Add a instruction format for the user feedback</li>
       </ul>
     </Modal>
   );
