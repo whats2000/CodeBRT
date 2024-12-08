@@ -119,23 +119,37 @@ export const writeToFileSchema = (
 ): ToolSchema => ({
   name: 'writeToFile',
   description:
-    'Write content to a file at the specified path. If the file exists, it will be overwritten with the provided content. ' +
-    "If the file doesn't exist, it will be created. " +
-    'Always provide the full intended content of the file, without any truncation. ' +
-    'This tool will automatically create any directories needed to write the file.',
+    'Use this tool to write or overwrite content into a specified file. ' +
+    'This tool will create directories if they do not exist.\n\n' +
+    '**CRITICAL INSTRUCTION:** ' +
+    'Before using this tool, you must determine whether the provided code is absolutely complete and final. ' +
+    'The complete mean the code start from the beginning, ends at the end and able to run without any missing part. ' +
+    'If there is any doubt, or the  content if the content suggests that more code should follow (for example, placeholders like "remaining code goes here", "insert the rest of the code", "...", or any hint that the code is incomplete), then set `isCodePartial = true`.\n\n' +
+    'Only set `isCodePartial = false` if you are absolutely certain the code is fully complete and requires no further edits or merging. ' +
+    'If the code is partial or contains placeholders for additional content, always set `isCodePartial = true`. ' +
+    'Failure to do so may cause severe errors later.',
   inputSchema: {
     type: 'object',
     properties: {
       relativePath: {
         type: 'string',
-        description: `The path of the file to write to (relative to the current working directory ${currentWorkspacePath})`,
+        description: `The file path, relative to ${currentWorkspacePath}, where the content will be written.`,
       },
       content: {
         type: 'string',
-        description: 'The full content to write to the file.',
+        description:
+          'The content to write to the file. If `isCodePartial = false`, it must be the final, fully complete code. ' +
+          'If `isCodePartial = true`, this code is known or suspected to be partial, incomplete, or requiring further content.',
+      },
+      isCodePartial: {
+        type: 'boolean',
+        description:
+          'Set this to true if the code is partial, incomplete, or if there is any placeholder or indication that more code should follow. ' +
+          'Set this to false only if you are completely certain that the code is the final, fully complete version. ' +
+          'When in doubt, always set this to true.',
       },
     },
-    required: ['relativePath', 'content'],
+    required: ['relativePath', 'content', 'isCodePartial'],
   },
 });
 
@@ -338,8 +352,8 @@ export const allInOneToolSchema: (enabledTools: {
 - **readFile**: { "relativeFilePath": string }
   - Purpose: Read content from a file at a specified path. **Required**: "relativeFilePath"
 
-- **writeToFile**: { "relativePath": string, "content": string }
-  - Purpose: Write specified content to a file, creating directories if needed. **Required**: "relativePath", "content"
+- **writeToFile**: { "relativePath": string, "content": string, "isCodePartial": boolean }
+  - Purpose: Write specified content to a file, creating directories if needed. If the content is partial, set "isCodePartial" to true. **Required**: "relativePath", "content", "isCodePartial"
 
 - **searchFiles**: { "relativePath": string, "regex": string, "filePattern"?: string (default: "*") }
   - Purpose: Search for a regex pattern in files within the specified directory. **Required**: "relativePath", "regex"

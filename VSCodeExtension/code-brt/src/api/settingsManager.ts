@@ -15,8 +15,9 @@ import {
 export class SettingsManager implements ISettingsManager {
   private static instance: SettingsManager;
   private readonly context: vscode.ExtensionContext;
-  private workspaceConfig: vscode.WorkspaceConfiguration;
   private readonly localSettings: ExtensionSettingsLocal;
+  private readonly isMissingWorkspace: boolean;
+  private workspaceConfig: vscode.WorkspaceConfiguration;
 
   private constructor(context: vscode.ExtensionContext) {
     this.context = context;
@@ -25,6 +26,7 @@ export class SettingsManager implements ISettingsManager {
       DEFAULT_LOCAL_SETTINGS,
     );
     this.localSettings = { ...DEFAULT_LOCAL_SETTINGS, ...storedSettings };
+    this.isMissingWorkspace = !vscode.workspace.workspaceFolders;
     this.workspaceConfig = vscode.workspace.getConfiguration('code-brt');
 
     vscode.workspace.onDidChangeConfiguration(
@@ -109,6 +111,22 @@ export class SettingsManager implements ISettingsManager {
       (this.localSettings as any)[setting] = value;
       await this.saveLocalSettings();
     } else if (setting in DEFAULT_WORKSPACE_SETTINGS) {
+      // Check if the workspace is available
+      if (this.isMissingWorkspace) {
+        vscode.window
+          .showWarningMessage(
+            'Seems like you do not have a workspace open. ' +
+              'Open a workspace to save workspace settings, use agent tools, and save conversation history.',
+            'Open Workspace',
+          )
+          .then((selection) => {
+            if (selection === 'Open Workspace') {
+              vscode.commands.executeCommand('vscode.openFolder');
+            }
+          });
+        return;
+      }
+
       await this.workspaceConfig.update(
         setting,
         value,

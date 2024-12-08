@@ -14,6 +14,7 @@ import {
 import styled from 'styled-components';
 import { useDispatch, useSelector } from 'react-redux';
 
+import packageJson from '../../../../package.json';
 import { ExtensionSettings, ModelServiceType } from '../../../types';
 import type { AppDispatch, RootState } from '../../redux';
 import { setConversationHistory } from '../../redux/slices/conversationSlice';
@@ -97,6 +98,21 @@ export const Toolbar: React.FC<ToolbarProps> = ({ setTheme }) => {
         targetId: 'settingsButton',
       }),
     );
+  }, []);
+
+  useEffect(() => {
+    // Check the local storage for the version update
+    const storedVersion = localStorage.getItem('code-brt.version');
+    const currentVersion = packageJson.version;
+
+    // If no version is stored, this is likely a new user
+    // We don't want to show update notes to a new user
+    if (storedVersion && storedVersion !== currentVersion) {
+      setIsWhatsNewOpen(true);
+    }
+
+    // Always update the version in local storage
+    localStorage.setItem('code-brt.version', currentVersion);
   }, []);
 
   useEffect(() => {

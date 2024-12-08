@@ -1,4 +1,5 @@
-import { TerminalManager } from '../../../integrations';
+import type { TerminalManager } from '../../../integrations';
+import type { PartialCodeFuser } from '../../partialCodeFuser';
 
 export type ToolResponseFromToolFunction = {
   status: 'success' | 'error';
@@ -79,12 +80,17 @@ export type ToolServicesApi = {
   /**
    * List the names of code definitions in the specified file.
    * @param args.relativePath The relative path of the file to list code definitions from.
+   * @param args.content The content to write to the file.
+   * @param args.isCodePartial Whether the content is a partial code.
+   * @param args.partialCodeFuser The partial code fuser to use for applying partial code to full file content.
    * @param args.updateStatus A function to update the status of the listing.
    * @returns The list of code definitions as a string.
    */
   writeToFile: (args: {
     relativePath: string;
     content: string;
+    isCodePartial?: boolean;
+    partialCodeFuser: PartialCodeFuser;
     updateStatus?: (status: string) => void;
   }) => Promise<ToolResponseFromToolFunction>;
 

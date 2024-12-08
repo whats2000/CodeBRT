@@ -480,6 +480,7 @@ export class HistoryManager implements IHistoryManager {
             }
 
             writeToFileCall.parameters.content = newContent;
+            writeToFileCall.parameters.isCodePartial = false;
 
             // Update the path if it's a rename operation
             if (activeOperation.newPath) {
@@ -507,6 +508,7 @@ export class HistoryManager implements IHistoryManager {
           }
 
           writeToFileCall.parameters.content = newContent;
+          writeToFileCall.parameters.isCodePartial = false;
 
           processedFiles.add(relativePath);
         }
@@ -527,7 +529,8 @@ export class HistoryManager implements IHistoryManager {
           continue;
         }
 
-        const relativePath = parentEntry.toolCalls[0]?.parameters.relativePath;
+        const relativePath =
+          parentEntry.toolCalls[0]?.parameters.relativeFilePath;
         const activeOperation = operations.find(
           (op) => op.relativePath === relativePath,
         );
