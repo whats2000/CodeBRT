@@ -72,7 +72,7 @@ Here’s an outline of the upcoming features and improvements for CodeBRT:
   - [x] Trigger code completion
   - [ ] Context retrieval
 - [x] Auto code completion
-- [ ] Code integrator to compose code snippets <- **In Progress**
+- [x] Code integrator to compose code snippets
 
 ### Version 0.4 (WIP)
 
@@ -94,7 +94,7 @@ Here’s an outline of the upcoming features and improvements for CodeBRT:
 - [ ] Auto task scheduling and completion
 - [ ] Auto-debugging
 - [ ] Local advanced data analysis
-- [ ] Localization support for Traditional Chinese/Simplified Chinese
+- [ ] Localization support for Traditional Chinese/Simplified Chinese <- **In Progress**
 
 ### Version 1.0 (Stable Release)
 
