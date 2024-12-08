@@ -89,14 +89,22 @@ const config: Config = {
               label: "Getting Started",
               to: "/docs/getting-started/installation",
             },
+            {
+              label: "Features",
+              to: "/docs/features/overview",
+            },
           ],
         },
         {
-          title: "Community",
+          title: "Community and Support",
           items: [
             {
-              label: "Current Not Available",
-              href: "https://discordapp.com/invite/docusaurus",
+              label: "Bug Reports and Feature Requests",
+              href: "https://github.com/whats2000/CodeBRT/issues",
+            },
+            {
+              label: "GitHub Discussions Forum",
+              href: "https://github.com/whats2000/CodeBRT/discussions",
             },
           ],
         },
@@ -106,6 +114,14 @@ const config: Config = {
             {
               label: "GitHub",
               href: "https://github.com/whats2000/CodeBRT",
+            },
+            {
+              label: "Issues Board",
+              href: "https://github.com/users/whats2000/projects/2/views/3",
+            },
+            {
+              label: "VSCode Marketplace",
+              href: "https://marketplace.visualstudio.com/items?itemName=whats2000.code-brt",
             },
           ],
         },
