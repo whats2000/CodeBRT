@@ -85,8 +85,8 @@ export const writeToFileTool: ToolServicesApi['writeToFile'] = async ({
   const filePath = path.resolve(workspaceFolders.uri.fsPath, relativePath);
 
   let existingContent: string;
-  let originalEOLStyle: 'CRLF' | 'LF' = 'LF'; // Default to LF
-  let hasOriginalTrailingNewline = true; // Default to true to preserve newline
+  let originalEOLStyle: 'CRLF' | 'LF'; // Default to LF
+  let hasOriginalTrailingNewline: boolean; // Default to true to preserve newline
 
   try {
     const document = await vscode.workspace.openTextDocument(filePath);
@@ -98,7 +98,7 @@ export const writeToFileTool: ToolServicesApi['writeToFile'] = async ({
     hasOriginalTrailingNewline = eolInfo.hasTrailingNewline;
   } catch (error) {
     existingContent = '';
-    // If file doesn't exist, default to LF with trailing newline
+    // If the file doesn't exist, default to LF with trailing newline
     originalEOLStyle = 'LF';
     hasOriginalTrailingNewline = true;
   }
@@ -119,7 +119,7 @@ export const writeToFileTool: ToolServicesApi['writeToFile'] = async ({
 
     if (result) {
       // Clear the ```fileExtension and ``` from the code block
-      // This regex will capture everything between a pair of triple backticks
+      // This regular expression will capture everything between a pair of triple backticks
       // (with optional language spec) and store it in 'codeBlockContent'.
       // Use the global flag 'g' to find all code blocks
       const startIndex = result.indexOf('```');
