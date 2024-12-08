@@ -24,6 +24,11 @@ export const WhatsNewModal: React.FC<WhatsNewModalProps> = ({
           Add a fuser when the write to file operation content contains omission
           comment or mark as partial code
         </li>
+        <li>
+          Add a right click menu to fast open the chat activity bar, toggle
+          inline code completion
+        </li>
+        <li>Add a send to chat at menu when select text in editor</li>
       </ul>
       <p>CodeBRT 0.4.4:</p>
       <ul>
