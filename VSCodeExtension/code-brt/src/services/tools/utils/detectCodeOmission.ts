@@ -15,10 +15,10 @@ import vscode from 'vscode';
  * @param newFileContent The new content of the file to check.
  * @returns True if a potential omission is detected, false otherwise.
  */
-export function detectCodeOmission(
+export const detectCodeOmission = (
   originalFileContent: string,
   newFileContent: string,
-): boolean {
+): boolean => {
   const originalLines = originalFileContent.split('\n');
   const newLines = newFileContent.split('\n');
 
@@ -45,33 +45,33 @@ export function detectCodeOmission(
   ];
 
   // Helper to determine if a line is a comment line
-  function isCommentLine(line: string): boolean {
+  const isCommentLine = (line: string): boolean => {
     return commentPatterns.some((pattern) => pattern.test(line));
-  }
+  };
 
   // Helper to detect any of the omission patterns in a line (case-insensitive)
-  function containsOmissionPattern(line: string): boolean {
+  const containsOmissionPattern = (line: string): boolean => {
     const lowerLine = line.toLowerCase();
     return omissionPatterns.some((omission) =>
       lowerLine.includes(omission.toLowerCase()),
     );
-  }
+  };
 
   for (const line of newLines) {
     // Check if it's a comment line
-    if (isCommentLine(line.trim())) {
-      // Check if line contains an omission pattern
-      if (containsOmissionPattern(line)) {
-        // Ensure this suspicious line doesn't appear in the original file
-        if (!originalLines.includes(line)) {
-          void vscode.window.showWarningMessage(
-            `Potential AI-generated code omission detected: "${line.trim()}"`,
-          );
-          return true;
-        }
-      }
+    if (!isCommentLine(line.trim())) {
+      continue;
+    }
+    if (!containsOmissionPattern(line)) {
+      continue;
+    }
+    if (!originalLines.includes(line)) {
+      void vscode.window.showWarningMessage(
+        `Potential AI-generated code omission detected: "${line.trim()}"`,
+      );
+      return true;
     }
   }
 
   return false;
-}
+};
