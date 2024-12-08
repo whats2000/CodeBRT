@@ -21,33 +21,52 @@ export function detectCodeOmission(
 ): boolean {
   const originalLines = originalFileContent.split('\n');
   const newLines = newFileContent.split('\n');
-  const omissionKeywords = [
-    'remain',
-    'remains',
-    'unchanged',
-    'rest',
-    'previous',
-    'existing',
+
+  const omissionPatterns = [
+    // These can be substrings or entire words that commonly appear when LLMs skip code
+    '... (rest omitted)',
+    '... (remaining code unchanged)',
+    'rest remains unchanged',
+    'remaining code is the same',
+    'previous code unchanged',
+    'existing code unchanged',
     '...',
+    'unchanged',
+    'remain',
   ];
 
+  // Common comment starters in various languages
   const commentPatterns = [
-    /^\s*\/\//, // Single-line comment for most languages
-    /^\s*#/, // Single-line comment for Python, Ruby, etc.
-    /^\s*\/\*/, // Multi-line comment opening
-    /^\s*{\s*\/\*/, // JSX comment opening
-    /^\s*<!--/, // HTML comment opening
+    /^\s*\/\//, // Single-line comment for C-like languages
+    /^\s*#/, // Single-line comment for Python, Ruby, Shell
+    /^\s*\/\*/, // Start of block comment for C-like
+    /^\s*\{\s*\/\*/, // JSX block comment start
+    /^\s*<!--/, // HTML/XML comment start
   ];
+
+  // Helper to determine if a line is a comment line
+  function isCommentLine(line: string): boolean {
+    return commentPatterns.some((pattern) => pattern.test(line));
+  }
+
+  // Helper to detect any of the omission patterns in a line (case-insensitive)
+  function containsOmissionPattern(line: string): boolean {
+    const lowerLine = line.toLowerCase();
+    return omissionPatterns.some((omission) =>
+      lowerLine.includes(omission.toLowerCase()),
+    );
+  }
 
   for (const line of newLines) {
-    if (commentPatterns.some((pattern) => pattern.test(line))) {
-      const words = line.toLowerCase().split(/\s+/);
-      if (omissionKeywords.some((keyword) => words.includes(keyword))) {
+    // Check if it's a comment line
+    if (isCommentLine(line.trim())) {
+      // Check if line contains an omission pattern
+      if (containsOmissionPattern(line)) {
+        // Ensure this suspicious line doesn't appear in the original file
         if (!originalLines.includes(line)) {
           void vscode.window.showWarningMessage(
-            `Potential AI-generated code omission detected: "${line}"`,
+            `Potential AI-generated code omission detected: "${line.trim()}"`,
           );
-
           return true;
         }
       }
