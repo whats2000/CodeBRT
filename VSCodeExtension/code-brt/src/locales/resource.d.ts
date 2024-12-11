@@ -1,5 +1,15 @@
 interface Resources {
-  "translation": {},
+  "translation": {
+    "toolBar": {
+      "generalSettings": "General Settings",
+      "voiceSettings": "Voice Settings",
+      "codeCompletionSettings": "Code Completion Settings",
+      "quickGuide": "Quick Start Guide",
+      "whatsNew": "What's New",
+      "history": "History",
+      "newChat": "New Chat"
+    }
+  },
   "userGuildTours": {
     "welcomeMessage": {
       "title": "Welcome to CodeBRT",
@@ -13,7 +23,7 @@ interface Resources {
       "title": "Record Voice",
       "description": "Record your voice. And convert it to text."
     },
-    "translateText": {
+    "textInput": {
       "title": "textInput",
       "description": "Write your message or Paste images from clipboard. You can also drag and drop images with Shift key pressed (Required by VSCode)"
     },

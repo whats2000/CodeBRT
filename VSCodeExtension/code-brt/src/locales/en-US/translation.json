@@ -1,1 +1,11 @@
-{}
+{
+  "toolBar": {
+    "generalSettings": "General Settings",
+    "voiceSettings": "Voice Settings",
+    "codeCompletionSettings": "Code Completion Settings",
+    "quickGuide": "Quick Start Guide",
+    "whatsNew": "What's New",
+    "history": "History",
+    "newChat": "New Chat"
+  }
+}

@@ -13,6 +13,7 @@ import {
 } from '@ant-design/icons';
 import styled from 'styled-components';
 import { useDispatch, useSelector } from 'react-redux';
+import { useTranslation } from 'react-i18next';
 
 import packageJson from '../../../../package.json';
 import { ExtensionSettings, ModelServiceType } from '../../../types';
@@ -54,6 +55,7 @@ type ToolbarProps = {
 };
 
 export const Toolbar: React.FC<ToolbarProps> = ({ setTheme }) => {
+  const { t } = useTranslation('translation');
   const { callApi } = useContext(WebviewContext);
   const { registerRef } = useRefs();
 
@@ -162,31 +164,31 @@ export const Toolbar: React.FC<ToolbarProps> = ({ setTheme }) => {
     {
       key: 'general',
       onClick: () => setIsSettingsOpen(true),
-      label: 'General Settings',
+      label: t('toolBar.generalSettings'),
       icon: <SettingOutlined />,
     },
     {
       key: 'voice',
       onClick: () => setIsVoiceSettingsOpen(true),
-      label: 'Voice Settings',
+      label: t('toolBar.voiceSettings'),
       icon: <AudioOutlined />,
     },
     {
       key: 'code completion',
       onClick: () => setIsCodeCompletionSettingsOpen(true),
-      label: 'Code Completion Settings',
+      label: t('toolBar.codeCompletionSettings'),
       icon: <PicRightOutlined />,
     },
     {
       key: 'quick guide',
       onClick: () => dispatch(startTour({ tourName: 'quickStart' })),
-      label: 'Quick Start Guide',
+      label: t('toolBar.quickGuide'),
       icon: <RocketOutlined />,
     },
     {
       key: `what's new`,
       onClick: () => setIsWhatsNewOpen(true),
-      label: `What's New`,
+      label: t('toolBar.whatsNew'),
       icon: <BellOutlined />,
     },
   ];
@@ -195,13 +197,13 @@ export const Toolbar: React.FC<ToolbarProps> = ({ setTheme }) => {
     {
       key: 'History',
       onClick: toggleHistorySidebar,
-      label: 'History',
+      label: t('toolBar.history'),
       icon: <HistoryOutlined />,
     },
     {
       key: 'New Chat',
       onClick: createNewChat,
-      label: 'New Chat',
+      label: t('toolBar.newChat'),
       icon: <PlusOutlined />,
     },
     ...settingMenuItems,
@@ -302,13 +304,13 @@ export const Toolbar: React.FC<ToolbarProps> = ({ setTheme }) => {
           </Dropdown>
         ) : (
           <Space>
-            <Tooltip title={'History'}>
+            <Tooltip title={t('toolBar.history')}>
               <Button
                 icon={<HistoryOutlined />}
                 onClick={toggleHistorySidebar}
               />
             </Tooltip>
-            <Tooltip title={'New Chat'}>
+            <Tooltip title={t('toolBar.newChat')}>
               <Button icon={<PlusOutlined />} onClick={createNewChat} />
             </Tooltip>
             <Dropdown menu={{ items: settingMenuItems }}>
