@@ -1,12 +1,16 @@
 interface Resources {
   "common": {
+    "previous": "Previous",
+    "next": "Next",
+    "finish": "Finish",
     "disable": "Disable {{tool}}",
     "enable": "Enable {{tool}}",
+    "activate": "Activate {{tool}}",
+    "tools": "Tools",
     "webSearch": "Web Search",
     "urlFetcher": "URL Fetcher",
-    "agentTools": "Agent Tools"
-  },
-  "translation": {
+    "agentTools": "Agent Tools",
+    "modelAdvanceSettings": "Model Advance Settings",
     "toolBar": {
       "generalSettings": "General Settings",
       "voiceSettings": "Voice Settings",
@@ -15,6 +19,9 @@ interface Resources {
       "whatsNew": "What's New",
       "history": "History",
       "newChat": "New Chat"
+    },
+    "floatButton": {
+      "syncDescription": "Synchronize the file changes to chat history"
     }
   },
   "userGuildTours": {
@@ -44,7 +51,7 @@ interface Resources {
     },
     "fileSynchronization": {
       "title": "File Synchronization To History",
-      "description": "To prevent the model confidentiality overwrite human edited content. This feature will synchronize current file status to history. Use after manually editing the file."
+      "description": "To prevent the model overwrite human edited content. This feature will synchronize current file status to history. Use after manually editing the file."
     },
     "serviceProvider": {
       "title": "Service Provider",
