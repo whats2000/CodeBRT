@@ -8,6 +8,7 @@ import {
   RobotOutlined,
 } from '@ant-design/icons';
 import { useDispatch, useSelector } from 'react-redux';
+import { useTranslation } from 'react-i18next';
 
 import type { ToolServiceType } from '../../../types';
 import { useRefs } from '../../context/RefContext';
@@ -16,36 +17,6 @@ import { MagicWandOutlined } from '../../icons';
 import { updateAndSaveSetting } from '../../redux/slices/settingsSlice';
 import { setRefId } from '../../redux/slices/tourSlice';
 
-const TOOLS_MAP: {
-  [key in ToolServiceType]: {
-    icon: React.ReactNode;
-    tooltip: string;
-    moreInfo?: React.ReactNode;
-  };
-} = {
-  webSearch: {
-    icon: <GlobalOutlined />,
-    tooltip: 'Web Search',
-  },
-  urlFetcher: {
-    icon: <FileSearchOutlined />,
-    tooltip: 'URL Fetcher',
-  },
-  agentTools: {
-    icon: <RobotOutlined />,
-    tooltip: 'Agent Tools',
-    moreInfo: (
-      <Button
-        icon={<QuestionCircleOutlined />}
-        type='text'
-        href={
-          'https://whats2000.github.io/CodeBRT/docs/features/automated-tasks/agent-tools'
-        }
-      />
-    ),
-  },
-};
-
 export interface ToolActivateFloatButtonsProps {
   floatButtonBaseYPosition: number;
 }
@@ -53,6 +24,7 @@ export interface ToolActivateFloatButtonsProps {
 export const ToolActivateFloatButtons: React.FC<
   ToolActivateFloatButtonsProps
 > = ({ floatButtonBaseYPosition }) => {
+  const { t } = useTranslation('common');
   const { registerRef } = useRefs();
 
   const dispatch = useDispatch<AppDispatch>();
@@ -66,6 +38,36 @@ export const ToolActivateFloatButtons: React.FC<
   );
 
   const toolFloatButtonsRef = registerRef('toolFloatButtons');
+
+  const TOOLS_MAP: {
+    [key in ToolServiceType]: {
+      icon: React.ReactNode;
+      tooltip: string;
+      moreInfo?: React.ReactNode;
+    };
+  } = {
+    webSearch: {
+      icon: <GlobalOutlined />,
+      tooltip: t('webSearch'),
+    },
+    urlFetcher: {
+      icon: <FileSearchOutlined />,
+      tooltip: t('urlFetcher'),
+    },
+    agentTools: {
+      icon: <RobotOutlined />,
+      tooltip: t('agentTools'),
+      moreInfo: (
+        <Button
+          icon={<QuestionCircleOutlined />}
+          type='text'
+          href={
+            'https://whats2000.github.io/CodeBRT/docs/features/automated-tasks/agent-tools'
+          }
+        />
+      ),
+    },
+  };
 
   useEffect(() => {
     dispatch(
@@ -112,7 +114,7 @@ export const ToolActivateFloatButtons: React.FC<
           )
         }
         trigger='click'
-        tooltip={'Activate Tools'}
+        tooltip={t('activate', { tool: t('tools') })}
         style={{
           bottom: floatButtonBaseYPosition,
           insetInlineEnd: 40,
@@ -129,8 +131,8 @@ export const ToolActivateFloatButtons: React.FC<
               tooltip={
                 <Space size={1}>
                   {isActive
-                    ? `Disable ${tool.tooltip}`
-                    : `Enable ${tool.tooltip}`}
+                    ? t('disable', { tool: tool.tooltip })
+                    : t('enable', { tool: tool.tooltip })}
                   {tool.moreInfo}
                 </Space>
               }
