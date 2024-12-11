@@ -1,0 +1,9 @@
+{
+  "disable": "Disable {{tool}}",
+  "enable": "Enable {{tool}}",
+  "activate": "Activate {{tool}}",
+  "tools": "Tools",
+  "webSearch": "Web Search",
+  "urlFetcher": "URL Fetcher",
+  "agentTools": "Agent Tools"
+}

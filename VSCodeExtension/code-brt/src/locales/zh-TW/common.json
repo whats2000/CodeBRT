@@ -1,0 +1,9 @@
+{
+  "disable": "停用 {{tool}}",
+  "enable": "啟用 {{tool}}",
+  "activate": "啟用{{tool}}",
+  "tools": "工具",
+  "webSearch": "網路搜尋",
+  "urlFetcher": "直接網址訪問",
+  "agentTools": "代理工具"
+}

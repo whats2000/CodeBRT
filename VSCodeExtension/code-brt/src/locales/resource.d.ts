@@ -1,4 +1,11 @@
 interface Resources {
+  "common": {
+    "disable": "Disable {{tool}}",
+    "enable": "Enable {{tool}}",
+    "webSearch": "Web Search",
+    "urlFetcher": "URL Fetcher",
+    "agentTools": "Agent Tools"
+  },
   "translation": {
     "toolBar": {
       "generalSettings": "General Settings",

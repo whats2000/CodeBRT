@@ -1,0 +1,9 @@
+{
+  "disable": "禁用 {{tool}}",
+  "enable": "启用 {{tool}}",
+  "activate": "激活{{tool}}",
+  "tools": "工具",
+  "webSearch": "网络搜索",
+  "urlFetcher": "直接网址访问",
+  "agentTools": "代理工具"
+}
