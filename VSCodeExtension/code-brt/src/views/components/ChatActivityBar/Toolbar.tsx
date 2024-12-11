@@ -10,6 +10,7 @@ import {
   PicRightOutlined,
   RocketOutlined,
   BellOutlined,
+  GlobalOutlined,
 } from '@ant-design/icons';
 import styled from 'styled-components';
 import { useDispatch, useSelector } from 'react-redux';
@@ -34,6 +35,7 @@ import { CodeCompletionSettingsBar } from './Toolbar/CodeCompletionSettingsBar';
 import { useWindowSize } from '../../hooks';
 import { AVAILABLE_MODEL_SERVICES } from '../../../constants';
 import { setRefId, startTour } from '../../redux/slices/tourSlice';
+import { updateAndSaveSetting } from '../../redux/slices/settingsSlice';
 
 const StyledSpace = styled(Space)`
   display: flex;
@@ -55,7 +57,7 @@ type ToolbarProps = {
 };
 
 export const Toolbar: React.FC<ToolbarProps> = ({ setTheme }) => {
-  const { t } = useTranslation('translation');
+  const { t, i18n } = useTranslation('translation');
   const { callApi } = useContext(WebviewContext);
   const { registerRef } = useRefs();
 
@@ -160,6 +162,11 @@ export const Toolbar: React.FC<ToolbarProps> = ({ setTheme }) => {
     setIsEditModelListOpen(true);
   };
 
+  const saveAndSwapLanguage = (language: 'en-US' | 'zh-TW' | 'zh-CN') => {
+    i18n.changeLanguage(language);
+    dispatch(updateAndSaveSetting({ key: 'language', value: language }));
+  };
+
   const settingMenuItems: MenuProps['items'] = [
     {
       key: 'general',
@@ -190,6 +197,28 @@ export const Toolbar: React.FC<ToolbarProps> = ({ setTheme }) => {
       onClick: () => setIsWhatsNewOpen(true),
       label: t('toolBar.whatsNew'),
       icon: <BellOutlined />,
+    },
+    {
+      key: 'language',
+      label: 'Language',
+      icon: <GlobalOutlined />,
+      children: [
+        {
+          key: 'en-US',
+          onClick: () => saveAndSwapLanguage('en-US'),
+          label: 'English',
+        },
+        {
+          key: 'zh-TW',
+          onClick: () => saveAndSwapLanguage('zh-TW'),
+          label: '繁體中文',
+        },
+        {
+          key: 'zh-CN',
+          onClick: () => saveAndSwapLanguage('zh-CN'),
+          label: '简体中文',
+        },
+      ],
     },
   ];
 
