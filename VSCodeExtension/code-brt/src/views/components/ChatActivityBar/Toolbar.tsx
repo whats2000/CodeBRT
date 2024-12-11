@@ -57,7 +57,7 @@ type ToolbarProps = {
 };
 
 export const Toolbar: React.FC<ToolbarProps> = ({ setTheme }) => {
-  const { t, i18n } = useTranslation('translation');
+  const { t, i18n } = useTranslation('common');
   const { callApi } = useContext(WebviewContext);
   const { registerRef } = useRefs();
 

@@ -5,5 +5,18 @@
   "tools": "Tools",
   "webSearch": "Web Search",
   "urlFetcher": "URL Fetcher",
-  "agentTools": "Agent Tools"
+  "agentTools": "Agent Tools",
+  "modelAdvanceSettings": "Model Advance Settings",
+  "toolBar": {
+    "generalSettings": "General Settings",
+    "voiceSettings": "Voice Settings",
+    "codeCompletionSettings": "Code Completion Settings",
+    "quickGuide": "Quick Start Guide",
+    "whatsNew": "What's New",
+    "history": "History",
+    "newChat": "New Chat"
+  },
+  "floatButton": {
+    "syncDescription": "Synchronize the file changes to chat history"
+  }
 }
