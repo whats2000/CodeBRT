@@ -7,9 +7,11 @@ import enUSTranslation from './en-US/translation.json';
 import enUSUserGuildTours from './en-US/userGuildTours.json';
 import zhTWTranslation from './zh-TW/translation.json';
 import zhTWUserGuildTours from './zh-TW/userGuildTours.json';
+import zhCNTranslation from './zh-CN/translation.json';
+import zhCNUserGuildTours from './zh-CN/userGuildTours.json';
 
 // Define supported languages
-export const supportedLanguages = ['en-US', 'zh-TW'] as const;
+export const supportedLanguages = ['en-US', 'zh-TW', 'zh-CN'] as const;
 export type SupportedLanguage = (typeof supportedLanguages)[number];
 
 // Prepare resources with a fallback mechanism
@@ -21,6 +23,10 @@ const resources = {
   'zh-TW': {
     translation: zhTWTranslation,
     userGuildTours: zhTWUserGuildTours,
+  },
+  'zh-CN': {
+    translation: zhCNTranslation,
+    userGuildTours: zhCNUserGuildTours,
   },
 };
 

@@ -11,7 +11,7 @@
     "title": "Record Voice",
     "description": "Record your voice. And convert it to text."
   },
-  "translateText": {
+  "textInput": {
     "title": "textInput",
     "description": "Write your message or Paste images from clipboard. You can also drag and drop images with Shift key pressed (Required by VSCode)"
   },
