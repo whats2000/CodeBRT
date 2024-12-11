@@ -91,6 +91,7 @@ export const DEFAULT_WORKSPACE_SETTINGS: ExtensionSettingsWorkspace = {
   lastUsedHistoryID: '',
 };
 export const DEFAULT_CROSS_DEVICE_SETTINGS: ExtensionSettingsCrossDevice = {
+  language: 'en-US',
   anthropicApiKey: '',
   openaiApiKey: '',
   geminiApiKey: '',
