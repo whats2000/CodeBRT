@@ -4,6 +4,7 @@ import {
   AVAILABLE_MODEL_SERVICES,
   AVAILABLE_VOICE_SERVICES,
 } from './constants';
+import './locales/i18n';
 import {
   connectedViews,
   createViewApi,

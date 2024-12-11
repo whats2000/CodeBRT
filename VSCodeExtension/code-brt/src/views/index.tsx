@@ -1,6 +1,8 @@
 import React from 'react';
 import { createRoot } from 'react-dom/client';
+import { I18nextProvider } from 'react-i18next';
 
+import i18n from '../locales/i18n';
 import { WebviewApi, WithWebviewContext } from './WebviewContext';
 import { ChatActivityBar } from './components/ChatActivityBar';
 import { WorkPanel } from './components/WorkPanel';
@@ -45,8 +47,10 @@ export function render<V extends ViewKey>(
   const root = createRoot(container);
 
   root.render(
-    <WithWebviewContext vscodeApi={vscodeApi}>
-      <Component />
-    </WithWebviewContext>,
+    <I18nextProvider i18n={i18n}>
+      <WithWebviewContext vscodeApi={vscodeApi}>
+        <Component />
+      </WithWebviewContext>
+    </I18nextProvider>,
   );
 }

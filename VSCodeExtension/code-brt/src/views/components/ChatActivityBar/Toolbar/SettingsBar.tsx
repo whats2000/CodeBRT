@@ -18,6 +18,7 @@ import {
   Tag,
 } from 'antd';
 import { useDispatch, useSelector } from 'react-redux';
+import { useTranslation } from 'react-i18next';
 
 import type {
   ExtensionSettings,
@@ -33,6 +34,7 @@ import { WebviewContext } from '../../../WebviewContext';
 import type { AppDispatch, RootState } from '../../../redux';
 import {
   saveSettings,
+  updateAndSaveSetting,
   updateLocalSetting,
 } from '../../../redux/slices/settingsSlice';
 import { QuestionCircleOutlined } from '@ant-design/icons';
@@ -74,7 +76,7 @@ const SETTINGS_GROUPS: { title: string; keys: (keyof ExtensionSettings)[] }[] =
     },
     {
       title: 'Other Settings',
-      keys: ['doubleEnterSendMessages', 'retainContextWhenHidden'],
+      keys: ['language', 'doubleEnterSendMessages', 'retainContextWhenHidden'],
     },
   ];
 
@@ -93,6 +95,7 @@ export const SettingsBar: React.FC<SettingSidebarProps> = ({
   onClose,
   setTheme,
 }) => {
+  const { i18n } = useTranslation();
   const { callApi } = useContext(WebviewContext);
 
   const dispatch = useDispatch<AppDispatch>();
@@ -361,6 +364,22 @@ export const SettingsBar: React.FC<SettingSidebarProps> = ({
                     <Input.Password
                       value={(value as string) || ''}
                       onChange={handleSettingChange(key)}
+                    />
+                  </FormGroup>
+                );
+              } else if (key === 'language') {
+                return (
+                  <FormGroup key={key} label={'Language'}>
+                    <Select
+                      value={value as string}
+                      onSelect={(value) => {
+                        i18n.changeLanguage(value);
+                        dispatch(updateAndSaveSetting({ key, value }));
+                      }}
+                      options={[
+                        { key: 'en-US', value: 'en-US', label: 'English' },
+                        { key: 'zh-TW', value: 'zh-TW', label: '繁體中文' },
+                      ]}
                     />
                   </FormGroup>
                 );
