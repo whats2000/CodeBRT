@@ -25,7 +25,7 @@
   },
   "fileSynchronization": {
     "title": "File Synchronization To History",
-    "description": "To prevent the model confidentiality overwrite human edited content. This feature will synchronize current file status to history. Use after manually editing the file."
+    "description": "To prevent the model overwrite human edited content. This feature will synchronize current file status to history. Use after manually editing the file."
   },
   "serviceProvider": {
     "title": "Service Provider",

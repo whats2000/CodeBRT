@@ -19,7 +19,7 @@ export const UserGuildTours: React.FC<UserGuildTourProps> = ({}) => {
   const mapTourStepsToAntdTourSteps = (
     tourSteps: (Omit<TourStepProps, 'target'> & { targetId?: string })[],
   ) => {
-    return tourSteps.map((step) => {
+    return tourSteps.map((step, index) => {
       const target = step.targetId ? getRefById(step.targetId) : null;
       const { title, description } = step;
       return {
@@ -27,6 +27,17 @@ export const UserGuildTours: React.FC<UserGuildTourProps> = ({}) => {
         title: t(title),
         description: t(description),
         target: target?.current,
+        prevButtonProps: {
+          ...step.prevButtonProps,
+          children: t('common:previous'),
+        },
+        nextButtonProps: {
+          ...step.nextButtonProps,
+          children:
+            index === tourSteps.length - 1
+              ? t('common:finish')
+              : t('common:next'),
+        },
       } as TourStepProps;
     });
   };

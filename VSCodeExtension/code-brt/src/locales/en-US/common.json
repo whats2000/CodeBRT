@@ -1,4 +1,7 @@
 {
+  "previous": "Previous",
+  "next": "Next",
+  "finish": "Finish",
   "disable": "Disable {{tool}}",
   "enable": "Enable {{tool}}",
   "activate": "Activate {{tool}}",
