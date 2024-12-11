@@ -379,6 +379,7 @@ export const SettingsBar: React.FC<SettingSidebarProps> = ({
                       options={[
                         { key: 'en-US', value: 'en-US', label: 'English' },
                         { key: 'zh-TW', value: 'zh-TW', label: '繁體中文' },
+                        { key: 'zh-CN', value: 'zh-CN', label: '简体中文' },
                       ]}
                     />
                   </FormGroup>

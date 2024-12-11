@@ -239,7 +239,8 @@
           "default": "en-US",
           "enum": [
             "en-US",
-            "zh-TW"
+            "zh-TW",
+            "zh-CN"
           ],
           "description": "Set the language for CodeBRT extension"
         },
