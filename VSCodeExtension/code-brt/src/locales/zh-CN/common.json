@@ -5,5 +5,18 @@
   "tools": "工具",
   "webSearch": "网络搜索",
   "urlFetcher": "直接网址访问",
-  "agentTools": "代理工具"
+  "agentTools": "任务代理工具",
+  "modelAdvanceSettings": "模型高级设置",
+  "toolBar": {
+    "generalSettings": "常规设置",
+    "voiceSettings": "语音设置",
+    "codeCompletionSettings": "代码补全设置",
+    "quickGuide": "快速入门指南",
+    "whatsNew": "新功能介绍",
+    "history": "历史",
+    "newChat": "新聊天"
+  },
+  "floatButton": {
+    "syncDescription": "将文件更改同步到聊天历史记录"
+  }
 }

@@ -5,5 +5,18 @@
   "tools": "工具",
   "webSearch": "網路搜尋",
   "urlFetcher": "直接網址訪問",
-  "agentTools": "代理工具"
+  "agentTools": "任務代理工具",
+  "modelAdvanceSettings": "模型進階設定",
+  "toolBar": {
+    "generalSettings": "基礎設定",
+    "voiceSettings": "語音設定",
+    "codeCompletionSettings": "程式碼補全設定",
+    "quickGuide": "快速入門指南",
+    "whatsNew": "新功能介紹",
+    "history": "歷史",
+    "newChat": "新聊天"
+  },
+  "floatButton": {
+    "syncDescription": "將檔案變更同步到聊天歷史記錄"
+  }
 }

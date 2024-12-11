@@ -8,6 +8,7 @@ import {
   SaveOutlined,
 } from '@ant-design/icons';
 import { useDispatch, useSelector } from 'react-redux';
+import { useTranslation } from 'react-i18next';
 
 import type { ConversationModelAdvanceSettings } from '../../../types';
 import type { RootState } from '../../redux';
@@ -38,6 +39,7 @@ export type ModelAdvanceSettingsProps = {
 export const ModelAdvanceSettingBar: React.FC<ModelAdvanceSettingsProps> = ({
   floatButtonBaseYPosition,
 }) => {
+  const { t } = useTranslation('common');
   const { callApi } = useContext(WebviewContext);
   const { registerRef } = useRefs();
 
@@ -129,7 +131,7 @@ export const ModelAdvanceSettingBar: React.FC<ModelAdvanceSettingsProps> = ({
         }}
       />
       <FloatButton
-        tooltip={'Model Advance Settings'}
+        tooltip={t('modelAdvanceSettings')}
         icon={
           conversationHistory.isLoading || isLoading ? (
             <LoadingOutlined />
