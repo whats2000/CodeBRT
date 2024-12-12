@@ -268,7 +268,9 @@ export const VoiceSettingsBar: React.FC<VoiceSettingsBarProps> = ({
                     type={'secondary'}
                     underline={true}
                     onClick={() =>
-                      openLink(MODEL_SERVICE_CONSTANTS.openai.apiLink)
+                      openLink(
+                        'https://platform.openai.com/docs/guides/text-to-speech/voice-options',
+                      )
                     }
                   >
                     {t('learnMore')}
