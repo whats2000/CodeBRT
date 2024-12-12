@@ -11,6 +11,8 @@ import {
   SoundOutlined,
 } from '@ant-design/icons';
 import { FloatButton } from 'antd';
+import { useTranslation } from 'react-i18next';
+
 import type { ConversationEntry } from '../../../../types';
 
 type MessageFloatButtonProps = {
@@ -52,6 +54,8 @@ export const MessageFloatButton: React.FC<MessageFloatButtonProps> = ({
 }) => {
   if (!hoveredBubble.current || !hoveredBubble.entry) return null;
 
+  const { t } = useTranslation('common');
+
   const EditFloatButton = () => (
     <FloatButton
       icon={<EditOutlined />}
@@ -75,7 +79,7 @@ export const MessageFloatButton: React.FC<MessageFloatButtonProps> = ({
       }}
       icon={<EllipsisOutlined />}
       trigger='click'
-      tooltip={'Show Actions'}
+      tooltip={t('showActions')}
       placement={'bottom'}
     >
       {hoveredBubble.entry.id !== editingEntryId ? (
