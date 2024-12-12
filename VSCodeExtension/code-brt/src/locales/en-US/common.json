@@ -47,5 +47,17 @@
     "free": "Free",
     "supportsOffline": "Supports Offline",
     "resetTheme": "Reset Theme"
+  },
+  "historySidebar": {
+    "chatHistoryTitle": "Chat History",
+    "hideFilter": "Hide Filter",
+    "showFilter": "Show Filter",
+    "nothingCurrently": "Nothing Currently",
+    "filterByTags": "Filter by tags",
+    "today": "Today",
+    "yesterday": "Yesterday",
+    "last7Days": "Last 7 Days",
+    "last1Month": "Last 1 Month",
+    "earlier": "Earlier"
   }
 }

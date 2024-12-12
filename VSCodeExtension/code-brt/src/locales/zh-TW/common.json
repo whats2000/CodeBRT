@@ -47,5 +47,17 @@
     "free": "免費",
     "supportsOffline": "支援離線",
     "resetTheme": "重置主題"
+  },
+   "historySidebar": {
+    "chatHistoryTitle": "聊天記錄",
+    "hideFilter": "隱藏過濾器",
+    "showFilter": "顯示過濾器",
+    "nothingCurrently": "目前沒有內容",
+    "filterByTags": "按標籤過濾",
+    "today": "今天",
+    "yesterday": "昨天",
+    "last7Days": "最近 7 天",
+    "last1Month": "最近 1 個月",
+    "earlier": "更早之前"
   }
 }
