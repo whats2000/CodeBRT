@@ -18,7 +18,10 @@
   "github": "GitHub",
   "load": "載入",
   "save": "儲存",
+  "cancel": "取消",
   "setDefault": "設定預設",
+  "description": "描述",
+  "content": "內容",
   "toolBar": {
     "generalSettings": "基礎設定",
     "voiceSettings": "語音設定",
@@ -155,5 +158,11 @@
     "presencePenalty": "存在懲罰",
     "frequencyPenalty": "頻率懲罰",
     "stop": "停止序列"
+  },
+  "saveSystemPromptModal": {
+    "title": "儲存系統提示",
+    "promptName": "提示名稱",
+    "promptNameRequired": "請輸入提示的名稱",
+    "contentRequired": "請輸入提示內容"
   }
 }
