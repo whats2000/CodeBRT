@@ -90,7 +90,7 @@ export const VoiceSettingsBar: React.FC<VoiceSettingsBarProps> = ({
   return (
     <>
       <Drawer
-        title={t('voiceSettingsBar.title')}
+        title={t('toolBar.voiceSettings')}
         placement='left'
         open={isOpen}
         onClose={onClose}

@@ -27,13 +27,13 @@
     "whatsNew": "What's New",
     "history": "History",
     "newChat": "New Chat",
-    "marketplace": "marketplace"
+    "marketplace": "marketplace",
+    "editModelList": "Edit Model List"
   },
   "floatButton": {
     "syncDescription": "Synchronize the file changes to chat history"
   },
   "settingsBar": {
-    "settingsBarTitle": "Settings Bar",
     "settingsReloadRequired": "Some settings require a reload to take effect",
     "apiKeySettings": "API Key Settings",
     "hostServerSettings": "Host Server Settings",
@@ -69,7 +69,6 @@
     "earlier": "Earlier"
   },
   "voiceSettingsBar": {
-    "title": "Voice Settings",
     "voiceServicesConfig": "Voice Services Configuration",
     "textToVoiceService": "Text To Voice Service",
     "voiceToTextService": "Voice To Text Service",
@@ -110,7 +109,6 @@
     "japaneseLabel": "Japanese"
   },
   "codeCompletionSettingsBar": {
-    "title": "Code Completion Settings",
     "manualConfig": "Manually Trigger Configuration",
     "manualTriggerLabel": "Manual Trigger Code Completion",
     "showMoreInfoTooltip": "Click to show more information",

@@ -27,13 +27,13 @@
     "whatsNew": "新功能介紹",
     "history": "歷史",
     "newChat": "新聊天",
-    "marketplace": "應用商店"
+    "marketplace": "應用商店",
+    "editModelList": "編輯模型列表"
   },
   "floatButton": {
     "syncDescription": "將檔案變更同步到聊天歷史記錄"
   },
   "settingsBar": {
-    "settingsBarTitle": "設定欄",
     "settingsReloadRequired": "部分設定需要重新加載才能生效",
     "apiKeySettings": "API 金鑰設定",
     "hostServerSettings": "本地部屬伺服器設定",
@@ -110,7 +110,6 @@
     "japaneseLabel": "日文"
   },
   "codeCompletionSettingsBar": {
-    "title": "程式碼補全設定",
     "manualConfig": "手動觸發設定",
     "manualTriggerLabel": "手動觸發程式碼補全",
     "showMoreInfoTooltip": "點擊顯示更多資訊",
