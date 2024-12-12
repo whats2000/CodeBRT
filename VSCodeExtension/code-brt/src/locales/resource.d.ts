@@ -11,6 +11,12 @@ interface Resources {
     "urlFetcher": "URL Fetcher",
     "agentTools": "Agent Tools",
     "modelAdvanceSettings": "Model Advance Settings",
+    "learnMore": "Learn More",
+    "closeAndSave": "Close and Save",
+    "showActions": "Show Actions",
+    "notSet": "Not Set",
+    "voice": "Voice",
+    "github": "GitHub",
     "toolBar": {
       "generalSettings": "General Settings",
       "voiceSettings": "Voice Settings",
@@ -18,14 +24,14 @@ interface Resources {
       "quickGuide": "Quick Start Guide",
       "whatsNew": "What's New",
       "history": "History",
-      "newChat": "New Chat"
+      "newChat": "New Chat",
+      "marketplace": "marketplace"
     },
     "floatButton": {
       "syncDescription": "Synchronize the file changes to chat history"
     },
     "settingsBar": {
       "settingsBarTitle": "Settings Bar",
-      "learnMore": "Learn More",
       "settingsReloadRequired": "Some settings require a reload to take effect",
       "apiKeySettings": "API Key Settings",
       "hostServerSettings": "Host Server Settings",
@@ -46,8 +52,39 @@ interface Resources {
       "getApiKey": "Get API Key",
       "free": "Free",
       "supportsOffline": "Supports Offline",
-      "resetTheme": "Reset Theme",
-      "closeAndSave": "Close and Save"
+      "resetTheme": "Reset Theme"
+    },
+    "historySidebar": {
+      "chatHistoryTitle": "Chat History",
+      "hideFilter": "Hide Filter",
+      "showFilter": "Show Filter",
+      "nothingCurrently": "Nothing Currently",
+      "filterByTags": "Filter by tags",
+      "today": "Today",
+      "yesterday": "Yesterday",
+      "last7Days": "Last 7 Days",
+      "last1Month": "Last 1 Month",
+      "earlier": "Earlier"
+    },
+    "voiceSettingsBar": {
+      "title": "Voice Settings",
+      "voiceServicesConfig": "Voice Services Configuration",
+      "textToVoiceService": "Text To Voice Service",
+      "voiceToTextService": "Voice To Text Service",
+      "clickToShowMoreInfo": "Click to show more information",
+      "vscodeSpeechExtensionNotice": "Run on local CPU. It will open an temporary text file and close after input is done (Auto Closure after silence). Sorry for but this must be done to use the built-in voice service, if you have any better idea please let us know! This relies on the built-in voice to text service in VSCode. If you have not installed it, you can do so by <marketplace />.",
+      "sox": "SoX",
+      "alsa": "ALSA",
+      "microphoneAccessNotice": "Notice: This will require microphone access with <sox /> installed on Windows/Mac or <alsa /> on Linux. This is required as we use shell for recording audio. (If you have a better way, please suggest on <github />)",
+      "openAIVoiceConfig": "OpenAI Voice Configuration",
+      "openAIVoiceLabel": "(OpenAI)",
+      "openAIPreviewVoices": "Preview voices at OpenAI website",
+      "selectVoice": "Select a voice",
+      "gptSoVitsVoiceConfig": "GPT-SoVits Voice Configuration",
+      "gptSoVitsVoiceLabel": "(GPT-SoVits)",
+      "gptSoVitsLearnMore": "Find out more about set up GPT-SoVits client host",
+      "selectReferenceVoice": "Select a reference voice",
+      "gptSoVitsAdvanceSettings": "GPT-SoVits Advance Settings"
     }
   },
   "userGuildTours": {
