@@ -95,5 +95,15 @@
     "referenceVoicesLabel": "参考声音",
     "addVoiceButton": "添加声音",
     "note": "注意：中文也支持GPT-SoVITS-beta0706版本以上的英文内容。"
+  },
+  "gptSoVitsSettingsBarSortableItem": {
+    "newVoice": "新声音",
+    "nameLabel": "名称",
+    "referWavPathLabel": "参考WAV路径",
+    "referTextLabel": "参考文本",
+    "promptLanguageLabel": "提示语言",
+    "englishLabel": "英文",
+    "chineseLabel": "中文",
+    "japaneseLabel": "日文"
   }
 }

@@ -95,5 +95,15 @@
     "referenceVoicesLabel": "Reference Voices",
     "addVoiceButton": "Add Voice",
     "note": "Note: Chinese also support English content above GPT-SoVITS-beta0706 version."
+  },
+  "gptSoVitsSettingsBarSortableItem": {
+    "newVoice": "New Voice",
+    "nameLabel": "Name",
+    "referWavPathLabel": "Refer WAV Path",
+    "referTextLabel": "Refer Text",
+    "promptLanguageLabel": "Prompt Language",
+    "englishLabel": "English",
+    "chineseLabel": "Chinese",
+    "japaneseLabel": "Japanese"
   }
 }

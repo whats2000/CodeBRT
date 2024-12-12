@@ -85,6 +85,11 @@ export const GptSoVitsSettingsBar: React.FC<GptSoVitsSettingsBarProps> = ({
     field: keyof GptSoVitsVoiceSetting,
     value: string,
   ) => {
+    // Remove the quotes from the referWavPath as some operating systems add them
+    if (field === 'referWavPath') {
+      value = value.replace(/^['"]|['"]$/g, '');
+    }
+
     const updatedVoices = settings.gptSoVitsAvailableReferenceVoices.map(
       (voice) => (voice.id === id ? { ...voice, [field]: value } : voice),
     );
