@@ -18,7 +18,10 @@
   "github": "GitHub",
   "load": "Load",
   "save": "Save",
+  "cancel": "Cancel",
   "setDefault": "Set Default",
+  "description": "Description",
+  "content": "Content",
   "toolBar": {
     "generalSettings": "General Settings",
     "voiceSettings": "Voice Settings",
@@ -154,5 +157,11 @@
     "presencePenalty": "Presence Penalty",
     "frequencyPenalty": "Frequency Penalty",
     "stop": "Stop Sequences"
+  },
+  "saveSystemPromptModal": {
+    "title": "Save System Prompt",
+    "promptName": "Prompt Name",
+    "promptNameRequired": "Please enter a name for the prompt",
+    "contentRequired": "Please enter the prompt content"
   }
 }

@@ -18,7 +18,10 @@
   "github": "GitHub",
   "load": "加载",
   "save": "保存",
+  "cancel": "取消",
   "setDefault": "设置默认",
+  "description": "描述",
+  "content": "内容",
   "toolBar": {
     "generalSettings": "常规设置",
     "voiceSettings": "语音设置",
@@ -155,5 +158,11 @@
     "presencePenalty": "存在惩罚",
     "frequencyPenalty": "频率惩罚",
     "stop": "停止序列"
+  },
+  "saveSystemPromptModal": {
+    "title": "保存系统提示",
+    "promptName": "提示名称",
+    "promptNameRequired": "请输入提示的名称",
+    "contentRequired": "请输入提示内容"
   }
 }
