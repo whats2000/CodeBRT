@@ -21,5 +21,31 @@
   },
   "floatButton": {
     "syncDescription": "將檔案變更同步到聊天歷史記錄"
+  },
+  "settingsBar": {
+    "settingsBarTitle": "設定欄",
+    "learnMore": "了解更多",
+    "settingsReloadRequired": "部分設定需要重新加載才能生效",
+    "apiKeySettings": "API 金鑰設定",
+    "hostServerSettings": "主機伺服器設定",
+    "themeAndCustomize": "主題與自訂",
+    "otherSettings": "其他設定",
+    "themePrimaryColor": "主題主顏色",
+    "themeAlgorithm": "主題演算法",
+    "themeBorderRadius": "主題邊框半徑",
+    "lightTheme": "淺色",
+    "darkTheme": "深色",
+    "compactTheme": "緊湊",
+    "doubleEnterSendMessagesLabel": "雙擊 Enter 發送訊息",
+    "doubleEnterSendMessagesDescription": "雙擊 Enter 發送訊息",
+    "keepLoadedContextLabel": "保持已載入的上下文",
+    "keepLoadedContextDescription": "消耗更多記憶體但加載速度更快",
+    "apiKeyLinkTooltip": "API 金鑰頁面連結",
+    "downloadLinkTooltip": "下載頁面連結",
+    "getApiKey": "取得 API 金鑰",
+    "free": "免費",
+    "supportsOffline": "支援離線",
+    "resetTheme": "重置主題",
+    "closeAndSave": "關閉並儲存"
   }
 }

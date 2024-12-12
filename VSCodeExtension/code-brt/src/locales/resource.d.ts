@@ -22,6 +22,32 @@ interface Resources {
     },
     "floatButton": {
       "syncDescription": "Synchronize the file changes to chat history"
+    },
+    "settingsBar": {
+      "settingsBarTitle": "Settings Bar",
+      "learnMore": "Learn More",
+      "settingsReloadRequired": "Some settings require a reload to take effect",
+      "apiKeySettings": "API Key Settings",
+      "hostServerSettings": "Host Server Settings",
+      "themeAndCustomize": "Theme and Customize",
+      "otherSettings": "Other Settings",
+      "themePrimaryColor": "Theme Primary Color",
+      "themeAlgorithm": "Theme Algorithm",
+      "themeBorderRadius": "Theme Border Radius",
+      "lightTheme": "Light",
+      "darkTheme": "Dark",
+      "compactTheme": "Compact",
+      "doubleEnterSendMessagesLabel": "Send messages with double enter",
+      "doubleEnterSendMessagesDescription": "Send messages with double enter",
+      "keepLoadedContextLabel": "Keep the loaded context",
+      "keepLoadedContextDescription": "Costs more RAM but allows faster loading",
+      "apiKeyLinkTooltip": "Link to the API key page",
+      "downloadLinkTooltip": "Link to the download page",
+      "getApiKey": "Get API Key",
+      "free": "Free",
+      "supportsOffline": "Supports Offline",
+      "resetTheme": "Reset Theme",
+      "closeAndSave": "Close and Save"
     }
   },
   "userGuildTours": {
