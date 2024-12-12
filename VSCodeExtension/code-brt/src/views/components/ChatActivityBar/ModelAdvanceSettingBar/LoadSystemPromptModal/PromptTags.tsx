@@ -1,9 +1,10 @@
 import React, { useRef, useState } from 'react';
 import { AutoComplete, ColorPicker, Space, Tag, theme } from 'antd';
 import { PlusOutlined } from '@ant-design/icons';
+import { BaseSelectRef } from 'rc-select';
+import { useTranslation } from 'react-i18next';
 
 import type { Tag as TagType } from '../../../../../types';
-import { BaseSelectRef } from 'rc-select';
 
 type PromptTagsProps = {
   id: string;
@@ -22,6 +23,7 @@ export const PromptTags: React.FC<PromptTagsProps> = ({
   onTagsChange,
   onTagEdit,
 }) => {
+  const { t } = useTranslation('common');
   const { token } = theme.useToken();
   const inputRef = useRef<BaseSelectRef>(null);
 
@@ -113,7 +115,7 @@ export const PromptTags: React.FC<PromptTagsProps> = ({
                     handleInputConfirm();
                   }
                 }}
-                placeholder='Enter or select tag'
+                placeholder={t('tags.enterOrSelectTag')}
               />
               <ColorPicker
                 size={'small'}
@@ -152,7 +154,7 @@ export const PromptTags: React.FC<PromptTagsProps> = ({
                 handleInputConfirm();
               }
             }}
-            placeholder='Enter or select tag'
+            placeholder={t('tags.enterOrSelectTag')}
           />
           <ColorPicker
             size={'small'}
@@ -169,7 +171,7 @@ export const PromptTags: React.FC<PromptTagsProps> = ({
             borderStyle: 'dashed',
           }}
         >
-          <PlusOutlined /> New Tag
+          <PlusOutlined /> {t('tags.addTag')}
         </Tag>
       )}
     </Space>

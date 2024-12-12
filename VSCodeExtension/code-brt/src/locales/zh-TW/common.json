@@ -175,5 +175,9 @@
     "title": "編輯提示",
     "promptNameRequired": "請輸入提示的名稱",
     "contentRequired": "請輸入提示內容"
+  },
+  "tags": {
+    "enterOrSelectTag": "輸入或選取標籤",
+    "addTag": "新增標籤"
   }
 }

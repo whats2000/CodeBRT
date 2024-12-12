@@ -10,6 +10,7 @@ import {
   addTagToConversation,
   removeTagFromConversation,
 } from '../../../../redux/slices/conversationIndexSlice';
+import { useTranslation } from 'react-i18next';
 
 type HistoryTagsProps = {
   tags?: string[];
@@ -23,7 +24,7 @@ export const HistoryTags: React.FC<HistoryTagsProps> = ({
   if (!tags) {
     return null;
   }
-
+  const { t } = useTranslation('common');
   const { token } = theme.useToken();
 
   const dispatch = useDispatch<AppDispatch>();
@@ -110,7 +111,7 @@ export const HistoryTags: React.FC<HistoryTagsProps> = ({
             borderStyle: 'dashed',
           }}
         >
-          <PlusOutlined /> New Tag
+          <PlusOutlined /> {t('tags.addTag')}
         </Tag>
       )}
     </Space>

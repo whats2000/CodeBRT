@@ -175,5 +175,9 @@
     "title": "Edit Prompt",
     "promptNameRequired": "Please enter a name for the prompt",
     "contentRequired": "Please enter the prompt content"
+  },
+  "tags": {
+    "enterOrSelectTag": "Enter or select tag",
+    "addTag": "New Tag"
   }
 }
