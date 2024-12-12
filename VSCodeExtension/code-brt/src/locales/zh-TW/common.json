@@ -16,6 +16,9 @@
   "notSet": "未設定",
   "voice": "語音",
   "github": "GitHub",
+  "load": "載入",
+  "save": "儲存",
+  "setDefault": "設定預設",
   "toolBar": {
     "generalSettings": "基礎設定",
     "voiceSettings": "語音設定",
@@ -124,5 +127,34 @@
     "autoModelLabel": "自動程式碼補全的模型",
     "autoModelTooltip": "我們目前支援以下模型：<supportModels /> 填空模型範本。如果您有興趣，請在 GitHub 上幫助我們新增更多模型。",
     "autoDescription": "這將在您暫停輸入時使用。這意味著將更快地適用於簡單的程式碼片段。"
+  },
+  "modelAdvanceSettingBar": {
+    "descriptions": {
+      "systemPrompt": "模型的系統提示詞（System Prompt）。這可以用來向模型引入上下文，例如描述到目前為止的對話內容。或者，您可以透過更改提示詞，使模型表現得更專業或更輕鬆。",
+      "maxTokens": "在聊天完成中可生成的最大 token 數量。輸入 token 和生成 token 的總長度受到模型上下文長度的限制。什麼是 token？Token 是大型語言模型（LLMs）用來將文本拆解的單位，可以是單詞、字元組合，或是單詞和標點的組合。",
+      "temperature": "設定使用的取樣溫度（Temperature），範圍在 0 到 2 之間。較高的數值（如 0.8）會使輸出更具隨機性，而較低的數值（如 0.2）則會使輸出更專注且具決定性。我們通常建議調整此值或 `top_p` 或 `top_k`，但不要同時調整多個參數。",
+      "topP": "一種替代溫度取樣的方式，稱為「核取樣（nucleus sampling）」，模型會考慮擁有 top_p 概率質量的 token。比如設定為 0.1，表示僅考慮概率總和前 10% 的 token。我們通常建議調整此值或 `temperature` 或 `top_k`，但不要同時調整多個參數。",
+      "topK": "一種替代溫度取樣的方式，稱為「top-k 取樣」，模型會考慮最可能的前 k 個 token。比如設定為 2，表示僅考慮最可能的前 2 個 token。我們通常建議調整此值或 `temperature` 或 `top_p`，但不要同時調整多個參數。",
+      "presencePenalty": "範圍在 -2.0 到 2.0 之間的數值。正值會根據 token 是否出現在文本中進行懲罰，增加模型討論新主題的可能性。",
+      "frequencyPenalty": "範圍在 -2.0 到 2.0 之間的數值。正值會根據 token 在文本中出現的頻率進行懲罰，減少模型重複生成相同內容的可能性。",
+      "stop": "一個 token 列表，當模型遇到這些 token 時會停止生成更多內容。若有多個 token，請用換行符分隔。如果您希望模型停止生成，可以在此處添加停止 token。"
+    },
+    "notes": {
+      "topK": "部分模型可能不支援 top-k 取樣。"
+    }
+  },
+  "modelAdvanceSettingFormItem": {
+    "clickToShowMoreInfo": "點擊以顯示更多資訊",
+    "enterSystemPrompt": "輸入系統提示",
+    "enterStopSequence": "輸入停止序列，以新行分隔",
+    "clearField": "清除欄位",
+    "systemPrompt": "系統提示",
+    "maxTokens": "最大 Token 數",
+    "temperature": "溫度",
+    "topP": "Top P",
+    "topK": "Top K",
+    "presencePenalty": "存在懲罰",
+    "frequencyPenalty": "頻率懲罰",
+    "stop": "停止序列"
   }
 }

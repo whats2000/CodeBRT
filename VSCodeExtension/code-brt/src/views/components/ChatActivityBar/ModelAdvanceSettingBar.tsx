@@ -1,5 +1,5 @@
 import React, { useContext, useState, useEffect } from 'react';
-import { Drawer, Button, Typography, Space, FloatButton } from 'antd';
+import { Drawer, Button, Typography, Space, FloatButton, Alert } from 'antd';
 import {
   ClearOutlined,
   ControlOutlined,
@@ -20,6 +20,7 @@ import { setAdvanceSettings } from '../../redux/slices/conversationSlice';
 import { useRefs } from '../../context/RefContext';
 import { ModelAdvanceSettingFormItem } from './ModelAdvanceSettingBar/ModelAdvanceSettingFormItem';
 import { Entries } from 'type-fest';
+import Resources from '../../../locales/resource';
 
 const DEFAULT_ADVANCE_SETTINGS: ConversationModelAdvanceSettings = {
   systemPrompt: 'You are a helpful assistant.',
@@ -61,6 +62,15 @@ export const ModelAdvanceSettingBar: React.FC<ModelAdvanceSettingsProps> = ({
   const [isOpen, setIsOpen] = useState(false);
 
   const modelAdvanceSettingButtonRef = registerRef('modelAdvanceSettingButton');
+
+  const modelAdvanceSettingsDescriptions: Resources['common']['modelAdvanceSettingBar']['descriptions'] =
+    t('modelAdvanceSettingBar.descriptions', {
+      returnObjects: true,
+    });
+  const modelAdvanceSettingsNotes: Resources['common']['modelAdvanceSettingBar']['notes'] =
+    t('modelAdvanceSettingBar.notes', {
+      returnObjects: true,
+    });
 
   useEffect(() => {
     if (isOpen) {
@@ -146,7 +156,7 @@ export const ModelAdvanceSettingBar: React.FC<ModelAdvanceSettingsProps> = ({
         }}
       />
       <Drawer
-        title='Model Advance Settings'
+        title={t('modelAdvanceSettings')}
         placement='left'
         closable={true}
         onClose={() => setIsOpen(false)}
@@ -175,30 +185,44 @@ export const ModelAdvanceSettingBar: React.FC<ModelAdvanceSettingsProps> = ({
                 wrap={true}
               >
                 <Button onClick={() => setLoadPromptOpen(true)}>
-                  <ImportOutlined /> Load
+                  <ImportOutlined /> {t('load')}
                 </Button>
                 <Button onClick={() => setSavePromptOpen(true)}>
-                  <SaveOutlined /> Save
+                  <SaveOutlined /> {t('save')}
                 </Button>
                 <Button danger onClick={() => clearField('systemPrompt')}>
-                  <ClearOutlined /> Set Default
+                  <ClearOutlined /> {t('setDefault')}
                 </Button>
               </Space>
             )}
             {showMoreInfoSettingName === key && (
-              <Typography.Paragraph type={'secondary'}>
-                {MODEL_ADVANCE_SETTINGS[key].description}{' '}
-                {MODEL_ADVANCE_SETTINGS[key].link && (
-                  <Typography.Link
-                    href={MODEL_ADVANCE_SETTINGS[key].link}
-                    target='_blank'
-                    rel='noreferrer'
+              <>
+                <Typography.Paragraph type={'secondary'}>
+                  {modelAdvanceSettingsDescriptions[key]}{' '}
+                  {MODEL_ADVANCE_SETTINGS[key].link && (
+                    <Typography.Link
+                      href={MODEL_ADVANCE_SETTINGS[key].link}
+                      target='_blank'
+                      rel='noreferrer'
+                      type={'warning'}
+                    >
+                      {t('learnMore')}
+                    </Typography.Link>
+                  )}
+                </Typography.Paragraph>
+                {key in modelAdvanceSettingsNotes && (
+                  <Alert
                     type={'warning'}
-                  >
-                    Learn more
-                  </Typography.Link>
+                    closable={true}
+                    message={
+                      modelAdvanceSettingsNotes[
+                        key as keyof typeof modelAdvanceSettingsNotes
+                      ]
+                    }
+                    style={{ marginBottom: 15 }}
+                  />
                 )}
-              </Typography.Paragraph>
+              </>
             )}
           </React.Fragment>
         ))}
@@ -208,7 +232,7 @@ export const ModelAdvanceSettingBar: React.FC<ModelAdvanceSettingsProps> = ({
           onClick={() => setIsOpen(false)}
           style={{ marginTop: 20, width: '100%' }}
         >
-          Close and Save
+          {t('closeAndSave')}
         </Button>
       </Drawer>
       <SaveSystemPromptModal
