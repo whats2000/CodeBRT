@@ -105,5 +105,24 @@
     "englishLabel": "English",
     "chineseLabel": "Chinese",
     "japaneseLabel": "Japanese"
+  },
+  "codeCompletionSettingsBar": {
+    "title": "Code Completion Settings",
+    "manualConfig": "Manually Trigger Configuration",
+    "manualTriggerLabel": "Manual Trigger Code Completion",
+    "showMoreInfoTooltip": "Click to show more information",
+    "enableManualTrigger": "Enable Manual Trigger Code Completion",
+    "manualModelServiceLabel": "Model Service for Manual Code Completion",
+    "manualModelLabel": "Model for Manual Code Completion",
+    "editKeybinding": "Edit Keybinding",
+    "manualDescription": "This will use more context, resources and token to provide higher quality completions.",
+    "autoConfig": "Auto Trigger Configuration",
+    "autoTriggerLabel": "Auto Trigger Code Completion",
+    "enableAutoTrigger": "Enable Auto Trigger Code Completion",
+    "autoModelServiceLabel": "Model Service for Auto Code Completion",
+    "ollamaTooltip": "Currently only support ollama",
+    "autoModelLabel": "Model for Auto Code Completion",
+    "autoModelTooltip": "We currently support the model which are in <supportModels /> fill hole model template. Please help us to add more model in GitHub if you interested.",
+    "autoDescription": "This will use when you typing pause for a moment. Which mean will faster suit for simple code snippet."
   }
 }
