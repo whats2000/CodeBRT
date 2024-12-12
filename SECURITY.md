@@ -6,8 +6,8 @@ We are committed to maintaining the security of CodeBRT. Below is the list of ve
 
 | Version | Supported          |
 |---------|--------------------|
-| 0.4.5   | :white_check_mark: |
-| < 0.4.5 | :x:                |
+| 0.4.6   | :white_check_mark: |
+| < 0.4.6 | :x:                |
 
 ## Reporting a Vulnerability
 
@@ -49,7 +49,7 @@ We take the security of our project seriously. If you discover a security vulner
 
 ## Package Health
 
-- Total packages: 289
+- Total packages: 293
 - Current vulnerabilities: 0
 
 Thank you for helping us maintain the security of CodeBRT.
