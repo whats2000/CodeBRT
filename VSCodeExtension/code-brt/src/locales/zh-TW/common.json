@@ -84,5 +84,16 @@
     "gptSoVitsLearnMore": "了解更多關於設定 GPT-SoVits 本地部屬的資訊",
     "selectReferenceVoice": "選取參考語音",
     "gptSoVitsAdvanceSettings": "GPT-SoVits 進階設定"
+  },
+  "GptSoVitsSettingsBar": {
+    "title": "GPT-SoVits 設定",
+    "clientHostLabel": "客戶端主機",
+    "clientHostExample": "(例如：http://127.0.0.1:9880/)",
+    "clientHostNote": "注意：如果您使用的是舊的 API V1，則預設主機是 http://127.0.0.1:9880/，對於 V2，則預設主機是 http://127.0.0.1:9880/tts/",
+    "selectedReferenceVoiceLabel": "選取的參考聲音",
+    "selectReferenceVoicePlaceholder": "選取一個參考聲音",
+    "referenceVoicesLabel": "參考聲音",
+    "addVoiceButton": "新增聲音",
+    "note": "注意：中文也支援 GPT-SoVITS-beta0706 版本以上的英文內容。"
   }
 }

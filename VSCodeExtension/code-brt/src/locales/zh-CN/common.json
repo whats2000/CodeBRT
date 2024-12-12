@@ -84,5 +84,16 @@
     "gptSoVitsLearnMore": "了解有关设置 GPT-SoVits 本地部署的信息",
     "selectReferenceVoice": "选择参考语音",
     "gptSoVitsAdvanceSettings": "GPT-SoVits 高级设置"
+  },
+  "GptSoVitsSettingsBar": {
+    "title": "GPT-SoVits 设置",
+    "clientHostLabel": "客户端主机",
+    "clientHostExample": "(例如 http://127.0.0.1:9880/)",
+    "clientHostNote": "注意：如果您使用的是旧的 API V1，则默认主机是 http://127.0.0.1:9880/，对于 V2，则默认主机是 http://127.0.0.1:9880/tts/",
+    "selectedReferenceVoiceLabel": "选择的参考声音",
+    "selectReferenceVoicePlaceholder": "选择一个参考声音",
+    "referenceVoicesLabel": "参考声音",
+    "addVoiceButton": "添加声音",
+    "note": "注意：中文也支持GPT-SoVITS-beta0706版本以上的英文内容。"
   }
 }

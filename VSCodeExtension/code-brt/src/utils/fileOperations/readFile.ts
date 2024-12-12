@@ -1,8 +1,7 @@
 import * as fs from 'node:fs/promises';
 import path from 'path';
 
-// @ts-ignore
-import pdf from 'pdf-parse/lib/pdf-parse';
+import pdf2md from '@opendocsg/pdf2md';
 import mammoth from 'mammoth';
 import { isBinaryFile } from 'isBinaryFile';
 
@@ -17,7 +16,7 @@ const readPdfContent = async (
 }> => {
   try {
     const pdfData = await fs.readFile(filePath);
-    const textContent = (await pdf(pdfData)).text;
+    const textContent = await pdf2md(pdfData);
 
     return {
       status: 'success',
