@@ -1,6 +1,8 @@
 {
   "previous": "上一個",
   "next": "下一個",
+  "yes": "是",
+  "no": "否",
   "finish": "完成",
   "disable": "停用 {{tool}}",
   "enable": "啟用 {{tool}}",
@@ -22,6 +24,11 @@
   "setDefault": "設定預設",
   "description": "描述",
   "content": "內容",
+  "hideFilter": "隱藏過濾器",
+  "showFilter": "顯示過濾器",
+  "searchByName": "按名稱搜尋",
+  "filterByTags": "按標籤過濾",
+  "promptName": "提示名稱",
   "toolBar": {
     "generalSettings": "基礎設定",
     "voiceSettings": "語音設定",
@@ -61,10 +68,7 @@
   },
   "historySidebar": {
     "chatHistoryTitle": "聊天記錄",
-    "hideFilter": "隱藏過濾器",
-    "showFilter": "顯示過濾器",
     "nothingCurrently": "目前沒有內容",
-    "filterByTags": "按標籤過濾",
     "today": "今天",
     "yesterday": "昨天",
     "last7Days": "最近 7 天",
@@ -72,7 +76,6 @@
     "earlier": "更早之前"
   },
   "voiceSettingsBar": {
-    "title": "語音設定",
     "voiceServicesConfig": "語音服務設定",
     "textToVoiceService": "文字轉語音服務",
     "voiceToTextService": "語音轉文字服務",
@@ -91,7 +94,7 @@
     "selectReferenceVoice": "選取參考語音",
     "gptSoVitsAdvanceSettings": "GPT-SoVits 進階設定"
   },
-  "GptSoVitsSettingsBar": {
+  "gptSoVitsSettingsBar": {
     "title": "GPT-SoVits 設定",
     "clientHostLabel": "客戶端主機",
     "clientHostExample": "(例如：http://127.0.0.1:9880/)",
@@ -161,7 +164,15 @@
   },
   "saveSystemPromptModal": {
     "title": "儲存系統提示",
-    "promptName": "提示名稱",
+    "promptNameRequired": "請輸入提示的名稱",
+    "contentRequired": "請輸入提示內容"
+  },
+  "loadSystemPromptBar": {
+    "title": "載入系統提示",
+    "confirmDelete": "您確定要刪除此系統提示嗎？"
+  },
+  "editPromptForm": {
+    "title": "編輯提示",
     "promptNameRequired": "請輸入提示的名稱",
     "contentRequired": "請輸入提示內容"
   }

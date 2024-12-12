@@ -212,7 +212,7 @@ export const GptSoVitsSettingsBar: React.FC<GptSoVitsSettingsBarProps> = ({
 
   return (
     <Drawer
-      title={t('GptSoVitsSettingsBar.title')}
+      title={t('gptSoVitsSettingsBar.title')}
       placement='left'
       open={isOpen}
       onClose={onCloseAndSave}
@@ -224,9 +224,9 @@ export const GptSoVitsSettingsBar: React.FC<GptSoVitsSettingsBarProps> = ({
           label={
             <Space>
               <span>
-                {t('GptSoVitsSettingsBar.clientHostLabel')}{' '}
+                {t('gptSoVitsSettingsBar.clientHostLabel')}{' '}
                 <Typography.Text type={'secondary'}>
-                  {t('GptSoVitsSettingsBar.clientHostExample')}
+                  {t('gptSoVitsSettingsBar.clientHostExample')}
                 </Typography.Text>
               </span>
               <Tooltip title={t('voiceSettingsBar.gptSoVitsLearnMore')}>
@@ -248,18 +248,18 @@ export const GptSoVitsSettingsBar: React.FC<GptSoVitsSettingsBarProps> = ({
               onChange={(e) => handleClientHostChange(e.target.value)}
             />
             <Typography.Text type={'secondary'}>
-              {t('GptSoVitsSettingsBar.clientHostNote')}
+              {t('gptSoVitsSettingsBar.clientHostNote')}
             </Typography.Text>
           </Space>
         </Form.Item>
         <Form.Item
-          label={t('GptSoVitsSettingsBar.selectedReferenceVoiceLabel')}
+          label={t('gptSoVitsSettingsBar.selectedReferenceVoiceLabel')}
         >
           <Select
             value={settings.gptSoVitsSelectedReferenceVoice}
             onChange={handleSelectedVoiceChange}
             placeholder={t(
-              'GptSoVitsSettingsBar.selectReferenceVoicePlaceholder',
+              'gptSoVitsSettingsBar.selectReferenceVoicePlaceholder',
             )}
             options={settings.gptSoVitsAvailableReferenceVoices.map(
               (voice, index) => ({
@@ -270,7 +270,7 @@ export const GptSoVitsSettingsBar: React.FC<GptSoVitsSettingsBarProps> = ({
             )}
           />
         </Form.Item>
-        <Form.Item label={t('GptSoVitsSettingsBar.referenceVoicesLabel')}>
+        <Form.Item label={t('gptSoVitsSettingsBar.referenceVoicesLabel')}>
           <Space direction='vertical' style={{ width: '100%' }}>
             <DndContext
               sensors={sensors}
@@ -303,10 +303,10 @@ export const GptSoVitsSettingsBar: React.FC<GptSoVitsSettingsBarProps> = ({
               </SortableContext>
             </DndContext>
             <Button type='dashed' onClick={handleAddVoice} block>
-              {t('GptSoVitsSettingsBar.addVoiceButton')}
+              {t('gptSoVitsSettingsBar.addVoiceButton')}
             </Button>
             <Typography.Text type={'secondary'}>
-              {t('GptSoVitsSettingsBar.note')}
+              {t('gptSoVitsSettingsBar.note')}
             </Typography.Text>
           </Space>
         </Form.Item>

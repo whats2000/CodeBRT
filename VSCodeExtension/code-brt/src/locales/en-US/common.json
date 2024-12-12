@@ -1,6 +1,8 @@
 {
   "previous": "Previous",
   "next": "Next",
+  "yes": "Yes",
+  "no": "No",
   "finish": "Finish",
   "disable": "Disable {{tool}}",
   "enable": "Enable {{tool}}",
@@ -22,6 +24,11 @@
   "setDefault": "Set Default",
   "description": "Description",
   "content": "Content",
+  "hideFilter": "Hide Filter",
+  "showFilter": "Show Filter",
+  "searchByName": "Search by name",
+  "filterByTags": "Filter by tags",
+  "promptName": "Prompt Name",
   "toolBar": {
     "generalSettings": "General Settings",
     "voiceSettings": "Voice Settings",
@@ -61,10 +68,7 @@
   },
   "historySidebar": {
     "chatHistoryTitle": "Chat History",
-    "hideFilter": "Hide Filter",
-    "showFilter": "Show Filter",
     "nothingCurrently": "Nothing Currently",
-    "filterByTags": "Filter by tags",
     "today": "Today",
     "yesterday": "Yesterday",
     "last7Days": "Last 7 Days",
@@ -90,7 +94,7 @@
     "selectReferenceVoice": "Select a reference voice",
     "gptSoVitsAdvanceSettings": "GPT-SoVits Advance Settings"
   },
-  "GptSoVitsSettingsBar": {
+  "gptSoVitsSettingsBar": {
     "title": "GPT-SoVits Settings",
     "clientHostLabel": "Client Host",
     "clientHostExample": "(e.g. http://127.0.0.1:9880/)",
@@ -160,7 +164,15 @@
   },
   "saveSystemPromptModal": {
     "title": "Save System Prompt",
-    "promptName": "Prompt Name",
+    "promptNameRequired": "Please enter a name for the prompt",
+    "contentRequired": "Please enter the prompt content"
+  },
+  "loadSystemPromptBar": {
+    "title": "Load System Prompt",
+    "confirmDelete": "Are you sure you want to delete this system prompt?"
+  },
+  "editPromptForm": {
+    "title": "Edit Prompt",
     "promptNameRequired": "Please enter a name for the prompt",
     "contentRequired": "Please enter the prompt content"
   }

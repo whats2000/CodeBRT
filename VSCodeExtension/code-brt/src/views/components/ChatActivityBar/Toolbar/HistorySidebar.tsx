@@ -211,11 +211,7 @@ export const HistorySidebar = React.memo<HistorySidebarProps>(
               {t('historySidebar.chatHistoryTitle')}
             </Typography.Text>
             <Tooltip
-              title={
-                showFilter
-                  ? t('historySidebar.hideFilter')
-                  : t('historySidebar.showFilter')
-              }
+              title={showFilter ? t('hideFilter') : t('showFilter')}
               placement={'right'}
             >
               <Button
@@ -252,7 +248,7 @@ export const HistorySidebar = React.memo<HistorySidebarProps>(
                       value: item,
                       label: item,
                     }))}
-                  placeholder={t('historySidebar.filterByTags')}
+                  placeholder={t('filterByTags')}
                   onChange={(newTags) => dispatch(setFilterTags(newTags))}
                 />
               </div>
