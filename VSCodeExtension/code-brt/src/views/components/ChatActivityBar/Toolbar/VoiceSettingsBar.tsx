@@ -11,6 +11,7 @@ import {
   Alert,
 } from 'antd';
 import { useDispatch, useSelector } from 'react-redux';
+import { Trans, useTranslation } from 'react-i18next';
 
 import type {
   TextToVoiceServiceType,
@@ -35,6 +36,7 @@ export const VoiceSettingsBar: React.FC<VoiceSettingsBarProps> = ({
   isOpen,
   onClose,
 }) => {
+  const { t } = useTranslation('common');
   const { callApi } = useContext(WebviewContext);
   const [isGptSoVitsSettingsOpen, setIsGptSoVitsSettingsOpen] = useState(false);
 
@@ -88,7 +90,7 @@ export const VoiceSettingsBar: React.FC<VoiceSettingsBarProps> = ({
   return (
     <>
       <Drawer
-        title='Voice Settings'
+        title={t('voiceSettingsBar.title')}
         placement='left'
         open={isOpen}
         onClose={onClose}
@@ -104,17 +106,17 @@ export const VoiceSettingsBar: React.FC<VoiceSettingsBarProps> = ({
             icon={<QuestionCircleOutlined />}
             iconPosition={'end'}
           >
-            <Typography.Text type='secondary'>Learn More</Typography.Text>
+            <Typography.Text type='secondary'>{t('learnMore')}</Typography.Text>
           </Button>
         }
       >
         <Form layout='vertical'>
           <Divider orientation={'left'} orientationMargin={0}>
             <Typography.Text type='secondary'>
-              Voice Services Configuration
+              {t('voiceSettingsBar.voiceServicesConfig')}
             </Typography.Text>
           </Divider>
-          <Form.Item label='Text To Voice Service'>
+          <Form.Item label={t('voiceSettingsBar.textToVoiceService')}>
             <Select
               value={settings.selectedTextToVoiceService}
               onChange={(value) =>
@@ -124,7 +126,7 @@ export const VoiceSettingsBar: React.FC<VoiceSettingsBarProps> = ({
                 key: service,
                 label:
                   service === 'not set'
-                    ? 'Not Set'
+                    ? t('notSet')
                     : MODEL_SERVICE_CONSTANTS[service].name,
                 value: service,
               }))}
@@ -133,9 +135,9 @@ export const VoiceSettingsBar: React.FC<VoiceSettingsBarProps> = ({
           <Form.Item
             label={
               <Space>
-                Voice To Text Service
+                {t('voiceSettingsBar.voiceToTextService')}
                 {settings.selectedVoiceToTextService !== 'not set' && (
-                  <Tooltip title='Click to show more information'>
+                  <Tooltip title={t('voiceSettingsBar.clickToShowMoreInfo')}>
                     <Typography.Link
                       type={'secondary'}
                       onClick={() => setShowMoreInfo(!showMoreInfo)}
@@ -156,7 +158,7 @@ export const VoiceSettingsBar: React.FC<VoiceSettingsBarProps> = ({
                 key: service,
                 label:
                   service === 'not set'
-                    ? 'Not Set'
+                    ? t('notSet')
                     : MODEL_SERVICE_CONSTANTS[service].name,
                 value: service,
               }))}
@@ -173,24 +175,26 @@ export const VoiceSettingsBar: React.FC<VoiceSettingsBarProps> = ({
                 onClose={(_) => setTimeout(() => setShowMoreInfo(false), 500)}
                 description={
                   <Typography.Text type={'secondary'}>
-                    {
-                      MODEL_SERVICE_CONSTANTS.visualStudioCodeBuiltIn
-                        .description
-                    }{' '}
-                    This relies on the built-in voice to text service in VSCode.
-                    If you have not installed it, you can do so by{' '}
-                    <Typography.Link
-                      type={'warning'}
-                      onClick={() =>
-                        callApi(
-                          'openExtensionMarketplace',
-                          'ms-vscode.vscode-speech',
-                        )
-                      }
-                    >
-                      marketplace
-                    </Typography.Link>
-                    .
+                    <Trans
+                      i18nKey={t(
+                        'voiceSettingsBar.vscodeSpeechExtensionNotice',
+                      )}
+                      components={{
+                        marketplace: (
+                          <Typography.Link
+                            type={'warning'}
+                            onClick={() =>
+                              callApi(
+                                'openExtensionMarketplace',
+                                'ms-vscode.vscode-speech',
+                              )
+                            }
+                          >
+                            {t('marketplace')}
+                          </Typography.Link>
+                        ),
+                      }}
+                    />
                   </Typography.Text>
                 }
               />
@@ -206,50 +210,60 @@ export const VoiceSettingsBar: React.FC<VoiceSettingsBarProps> = ({
                 onClose={(_) => setTimeout(() => setShowMoreInfo(false), 500)}
                 description={
                   <Typography.Text type={'secondary'}>
-                    Notice: This will require microphone access with{' '}
-                    <Typography.Link
-                      type={'warning'}
-                      onClick={() =>
-                        openLink('https://sourceforge.net/projects/sox/')
-                      }
-                    >
-                      SoX
-                    </Typography.Link>{' '}
-                    installed on Windows/Mac or{' '}
-                    <Typography.Link
-                      type={'warning'}
-                      onClick={() =>
-                        openLink('https://www.alsa-project.org/wiki/Download')
-                      }
-                    >
-                      ALSA
-                    </Typography.Link>{' '}
-                    on Linux. This is required as we use shell for recording
-                    audio. (If you have a better way, please suggest on{' '}
-                    <Typography.Link
-                      type={'warning'}
-                      onClick={() => openLink(PROJECT_LINK.issues)}
-                    >
-                      GitHub
-                    </Typography.Link>
-                    .
+                    <Trans
+                      i18nKey={'voiceSettingsBar.microphoneAccessNotice'}
+                      components={{
+                        sox: (
+                          <Typography.Link
+                            type={'warning'}
+                            onClick={() =>
+                              openLink('https://sourceforge.net/projects/sox/')
+                            }
+                          >
+                            {t('voiceSettingsBar.sox')}
+                          </Typography.Link>
+                        ),
+                        alsa: (
+                          <Typography.Link
+                            type={'warning'}
+                            onClick={() =>
+                              openLink(
+                                'https://www.alsa-project.org/wiki/Download',
+                              )
+                            }
+                          >
+                            {t('voiceSettingsBar.alsa')}
+                          </Typography.Link>
+                        ),
+                        github: (
+                          <Typography.Link
+                            type={'warning'}
+                            onClick={() => openLink(PROJECT_LINK.issues)}
+                          >
+                            {t('github')}
+                          </Typography.Link>
+                        ),
+                      }}
+                    />
                   </Typography.Text>
                 }
               />
             )}
           <Divider orientation={'left'} orientationMargin={0}>
             <Typography.Text type='secondary'>
-              OpenAI Voice Configuration
+              {t('voiceSettingsBar.openAIVoiceConfig')}
             </Typography.Text>
           </Divider>
           <Form.Item
             label={
               <Space>
                 <span>
-                  Voice{' '}
-                  <Typography.Text type={'secondary'}>(OpenAI)</Typography.Text>
+                  {t('voice')}{' '}
+                  <Typography.Text type={'secondary'}>
+                    {t('voiceSettingsBar.openAIVoiceLabel')}
+                  </Typography.Text>
                 </span>
-                <Tooltip title='Preview voices at OpenAI website'>
+                <Tooltip title={t('voiceSettingsBar.openAIPreviewVoices')}>
                   <Typography.Link
                     type={'secondary'}
                     underline={true}
@@ -257,7 +271,7 @@ export const VoiceSettingsBar: React.FC<VoiceSettingsBarProps> = ({
                       openLink(MODEL_SERVICE_CONSTANTS.openai.apiLink)
                     }
                   >
-                    Learn More
+                    {t('learnMore')}
                   </Typography.Link>
                 </Tooltip>
               </Space>
@@ -268,7 +282,7 @@ export const VoiceSettingsBar: React.FC<VoiceSettingsBarProps> = ({
               onChange={(value) =>
                 handleServiceChange('openaiSelectedVoice', value)
               }
-              placeholder='Select a voice'
+              placeholder={t('voiceSettingsBar.selectVoice')}
               options={settings.openaiAvailableVoices?.map((voice, index) => {
                 return {
                   key: `openaiVoice-${index}`,
@@ -280,19 +294,19 @@ export const VoiceSettingsBar: React.FC<VoiceSettingsBarProps> = ({
           </Form.Item>
           <Divider orientation={'left'} orientationMargin={0}>
             <Typography.Text type='secondary'>
-              GPT-SoVits Voice Configuration
+              {t('voiceSettingsBar.gptSoVitsVoiceConfig')}
             </Typography.Text>
           </Divider>
           <Form.Item
             label={
               <Space>
                 <span>
-                  Voice{' '}
+                  {t('voice')}{' '}
                   <Typography.Text type={'secondary'}>
-                    (GPT-SoVits)
+                    {t('voiceSettingsBar.gptSoVitsVoiceLabel')}
                   </Typography.Text>
                 </span>
-                <Tooltip title='Find out more about set up GPT-SoVits client host'>
+                <Tooltip title={t('voiceSettingsBar.gptSoVitsLearnMore')}>
                   <Typography.Link
                     type={'secondary'}
                     underline={true}
@@ -300,7 +314,7 @@ export const VoiceSettingsBar: React.FC<VoiceSettingsBarProps> = ({
                       openLink(MODEL_SERVICE_CONSTANTS.gptSoVits.apiLink)
                     }
                   >
-                    Learn More
+                    {t('learnMore')}
                   </Typography.Link>
                 </Tooltip>
               </Space>
@@ -311,7 +325,7 @@ export const VoiceSettingsBar: React.FC<VoiceSettingsBarProps> = ({
               onChange={(value) =>
                 handleServiceChange('gptSoVitsSelectedReferenceVoice', value)
               }
-              placeholder='Select a reference voice'
+              placeholder={t('voiceSettingsBar.selectReferenceVoice')}
               options={settings.gptSoVitsAvailableReferenceVoices?.map(
                 (voice, index) => {
                   return {
@@ -324,10 +338,10 @@ export const VoiceSettingsBar: React.FC<VoiceSettingsBarProps> = ({
             />
           </Form.Item>
           <Button onClick={() => setIsGptSoVitsSettingsOpen(true)} block>
-            GPT-SoVits Advance Settings
+            {t('voiceSettingsBar.gptSoVitsAdvanceSettings')}
           </Button>
           <Button onClick={onClose} style={{ marginTop: 20 }} block>
-            Close and Save
+            {t('closeAndSave')}
           </Button>
         </Form>
       </Drawer>

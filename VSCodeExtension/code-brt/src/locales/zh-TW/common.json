@@ -12,6 +12,9 @@
   "modelAdvanceSettings": "模型進階設定",
   "learnMore": "了解更多",
   "closeAndSave": "關閉並儲存",
+  "notSet": "未設定",
+  "voice": "語音",
+  "github": "GitHub",
   "toolBar": {
     "generalSettings": "基礎設定",
     "voiceSettings": "語音設定",
@@ -19,7 +22,8 @@
     "quickGuide": "快速入門指南",
     "whatsNew": "新功能介紹",
     "history": "歷史",
-    "newChat": "新聊天"
+    "newChat": "新聊天",
+    "marketplace": "應用商店"
   },
   "floatButton": {
     "syncDescription": "將檔案變更同步到聊天歷史記錄"
@@ -48,7 +52,7 @@
     "supportsOffline": "支援離線",
     "resetTheme": "重置主題"
   },
-   "historySidebar": {
+  "historySidebar": {
     "chatHistoryTitle": "聊天記錄",
     "hideFilter": "隱藏過濾器",
     "showFilter": "顯示過濾器",
@@ -59,5 +63,25 @@
     "last7Days": "最近 7 天",
     "last1Month": "最近 1 個月",
     "earlier": "更早之前"
+  },
+  "voiceSettingsBar": {
+    "title": "語音設定",
+    "voiceServicesConfig": "語音服務設定",
+    "textToVoiceService": "文字轉語音服務",
+    "voiceToTextService": "語音轉文字服務",
+    "clickToShowMoreInfo": "點擊顯示更多資訊",
+    "vscodeSpeechExtensionNotice": "運行於本地 CPU。此功能會開啟一個臨時文字檔案，並在輸入完成後自動關閉（靜默後自動關閉）。抱歉，目前必須這樣做才能使用內建的語音服務。如果您有更好的方法，請告訴我們！此功能依賴於 VSCode 內建的語音轉文字服務。如果尚未安裝，您可以透過 <marketplace /> 進行安裝。",
+    "sox": "SoX",
+    "alsa": "ALSA",
+    "microphoneAccessNotice": "注意：此功能需要麥克風存取權限，且需在 Windows/Mac 上安裝 <sox />，或在 Linux 上安裝 <alsa />。由於錄製音訊需要使用 shell，因此必須具備這些工具。（若您有更好的方法，請在 <github /> 上提供建議）",
+    "openAIVoiceConfig": "OpenAI 語音設定",
+    "openAIVoiceLabel": "(OpenAI)",
+    "openAIPreviewVoices": "在 OpenAI 網站上預覽聲音",
+    "selectVoice": "選取語音",
+    "gptSoVitsVoiceConfig": "GPT-SoVits 語音設定",
+    "gptSoVitsVoiceLabel": "(GPT-SoVits)",
+    "gptSoVitsLearnMore": "了解更多關於設定 GPT-SoVits 本地部屬的資訊",
+    "selectReferenceVoice": "選取參考語音",
+    "gptSoVitsAdvanceSettings": "GPT-SoVits 進階設定"
   }
 }
