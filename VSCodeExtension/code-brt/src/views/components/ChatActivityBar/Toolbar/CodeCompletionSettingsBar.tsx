@@ -19,6 +19,7 @@ import {
   QuestionCircleOutlined,
 } from '@ant-design/icons';
 import styled from 'styled-components';
+import { Trans, useTranslation } from 'react-i18next';
 
 import type {
   CodeCompletionSettings,
@@ -47,8 +48,8 @@ type CodeCompletionSettingsBarProps = {
 export const CodeCompletionSettingsBar: React.FC<
   CodeCompletionSettingsBarProps
 > = ({ isOpen, onClose }) => {
+  const { t } = useTranslation('common');
   const { callApi } = useContext(WebviewContext);
-
   const dispatch = useDispatch<AppDispatch>();
 
   const { isLoading, settings } = useSelector(
@@ -137,7 +138,7 @@ export const CodeCompletionSettingsBar: React.FC<
 
   return (
     <Drawer
-      title='Code Completion Settings'
+      title={t('codeCompletionSettingsBar.title')}
       placement='left'
       open={isOpen}
       onClose={onClose}
@@ -153,22 +154,24 @@ export const CodeCompletionSettingsBar: React.FC<
           icon={<QuestionCircleOutlined />}
           iconPosition={'end'}
         >
-          <Typography.Text type='secondary'>Learn More</Typography.Text>
+          <Typography.Text type={'secondary'}>{t('learnMore')}</Typography.Text>
         </Button>
       }
     >
       <StyledForm layout='vertical'>
         <Divider orientation={'left'} orientationMargin={0}>
-          <Typography.Text type='secondary'>
-            Manually Trigger Configuration
+          <Typography.Text type={'secondary'}>
+            {t('codeCompletionSettingsBar.manualConfig')}
           </Typography.Text>
         </Divider>
         <FormGroup
           key={'manualTriggerCodeCompletion'}
           label={
             <Space>
-              Manual Trigger Code Completion
-              <Tooltip title='Click to show more information'>
+              {t('codeCompletionSettingsBar.manualTriggerLabel')}
+              <Tooltip
+                title={t('codeCompletionSettingsBar.showMoreInfoTooltip')}
+              >
                 <Typography.Link
                   type={'secondary'}
                   onClick={() =>
@@ -189,14 +192,14 @@ export const CodeCompletionSettingsBar: React.FC<
             checked={settings.manualTriggerCodeCompletion}
             onChange={handleCheckboxChange('manualTriggerCodeCompletion')}
           >
-            <Typography.Text type='secondary'>
-              Enable Manual Trigger Code Completion
+            <Typography.Text type={'secondary'}>
+              {t('codeCompletionSettingsBar.enableManualTrigger')}
             </Typography.Text>
           </Checkbox>
         </FormGroup>
         <FormGroup
           key={'lastUsedManualCodeCompletionModelService'}
-          label={'Model Service for Manual Code Completion'}
+          label={t('codeCompletionSettingsBar.manualModelServiceLabel')}
         >
           <Select
             showSearch
@@ -213,7 +216,7 @@ export const CodeCompletionSettingsBar: React.FC<
         </FormGroup>
         <FormGroup
           key={'lastSelectedManualCodeCompletionModel'}
-          label={'Model for Manual Code Completion'}
+          label={t('codeCompletionSettingsBar.manualModelLabel')}
         >
           <Select
             showSearch
@@ -246,7 +249,9 @@ export const CodeCompletionSettingsBar: React.FC<
             callApi('openKeyboardShortcuts', 'code-brt.triggerInlineCompletion')
           }
         >
-          <Typography.Text>Edit Keybinding</Typography.Text>
+          <Typography.Text>
+            {t('codeCompletionSettingsBar.editKeybinding')}
+          </Typography.Text>
         </Button>
         {showMoreInfo === 'manualTriggerCodeCompletion' && (
           <Alert
@@ -255,24 +260,25 @@ export const CodeCompletionSettingsBar: React.FC<
             closable={true}
             onClose={(_) => setTimeout(() => setShowMoreInfo(null), 500)}
             description={
-              <Typography.Text type='secondary'>
-                This will use more context, resources and token to provide
-                higher quality completions.
+              <Typography.Text type={'secondary'}>
+                {t('codeCompletionSettingsBar.manualDescription')}
               </Typography.Text>
             }
           />
         )}
         <Divider orientation={'left'} orientationMargin={0}>
-          <Typography.Text type='secondary'>
-            Auto Trigger Configuration
+          <Typography.Text type={'secondary'}>
+            {t('codeCompletionSettingsBar.autoConfig')}
           </Typography.Text>
         </Divider>
         <FormGroup
           key={'autoTriggerCodeCompletion'}
           label={
             <Space>
-              Auto Trigger Code Completion
-              <Tooltip title='Click to show more information'>
+              {t('codeCompletionSettingsBar.autoTriggerLabel')}
+              <Tooltip
+                title={t('codeCompletionSettingsBar.showMoreInfoTooltip')}
+              >
                 <Typography.Link
                   type={'secondary'}
                   onClick={() =>
@@ -293,16 +299,16 @@ export const CodeCompletionSettingsBar: React.FC<
             checked={settings.autoTriggerCodeCompletion}
             onChange={handleCheckboxChange('autoTriggerCodeCompletion')}
           >
-            <Typography.Text type='secondary'>
-              Enable Auto Trigger Code Completion
+            <Typography.Text type={'secondary'}>
+              {t('codeCompletionSettingsBar.enableAutoTrigger')}
             </Typography.Text>
           </Checkbox>
         </FormGroup>
         <FormGroup
           key={'lastUsedAutoCodeCompletionModelService'}
-          label={'Model Service for Auto Code Completion'}
+          label={t('codeCompletionSettingsBar.autoModelServiceLabel')}
         >
-          <Tooltip title={'Currently only support ollama'}>
+          <Tooltip title={t('codeCompletionSettingsBar.ollamaTooltip')}>
             <Select
               showSearch
               value={settings.lastUsedAutoCodeCompletionModelService}
@@ -326,18 +332,22 @@ export const CodeCompletionSettingsBar: React.FC<
         </FormGroup>
         <FormGroup
           key={'lastSelectedAutoCodeCompletionModel'}
-          label={'Model for Auto Code Completion'}
+          label={t('codeCompletionSettingsBar.autoModelLabel')}
         >
           <Tooltip
             title={
               <Typography.Text>
-                We currently support the model which are in{' '}
-                <Typography.Text type={'warning'}>
-                  Stable Code, Qwen2.5-Coder, Codestral, CodeLlama,
-                  DeepSeek-Coder, StarCoder
-                </Typography.Text>
-                fill hole model template. Please help us to add more model in
-                GitHub if you interested.
+                <Trans
+                  i18nKey={'codeCompletionSettingsBar.autoModelTooltip'}
+                  components={{
+                    supportModels: (
+                      <Typography.Text type={'warning'}>
+                        Stable Code, Qwen2.5-Coder, Codestral, CodeLlama,
+                        DeepSeek-Coder, StarCoder
+                      </Typography.Text>
+                    ),
+                  }}
+                />
               </Typography.Text>
             }
           >
@@ -374,15 +384,14 @@ export const CodeCompletionSettingsBar: React.FC<
             closable={true}
             onClose={(_) => setTimeout(() => setShowMoreInfo(null), 500)}
             description={
-              <Typography.Text type='secondary'>
-                This will use when you typing pause for a moment. Which mean
-                will faster suit for simple code snippet.
+              <Typography.Text type={'secondary'}>
+                {t('codeCompletionSettingsBar.autoDescription')}
               </Typography.Text>
             }
           />
         )}
         <Button onClick={onClose} style={{ marginTop: 20 }}>
-          Close and Save
+          {t('closeAndSave')}
         </Button>
       </StyledForm>
     </Drawer>

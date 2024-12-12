@@ -105,5 +105,24 @@
     "englishLabel": "英文",
     "chineseLabel": "中文",
     "japaneseLabel": "日文"
+  },
+  "codeCompletionSettingsBar": {
+    "title": "代码补全设置",
+    "manualConfig": "手动触发配置",
+    "manualTriggerLabel": "手动触发代码补全",
+    "showMoreInfoTooltip": "点击显示更多信息",
+    "enableManualTrigger": "启用手动触发代码补全",
+    "manualModelServiceLabel": "手动代码补全的模型服务",
+    "manualModelLabel": "手动代码补全的模型",
+    "editKeybinding": "编辑快捷键",
+    "manualDescription": "这将使用更多的上下文、资源和令牌来提供更高质量的补全。",
+    "autoConfig": "自动触发配置",
+    "autoTriggerLabel": "自动触发代码补全",
+    "enableAutoTrigger": "启用自动触发代码补全",
+    "autoModelServiceLabel": "自动代码补全的模型服务",
+    "ollamaTooltip": "目前仅支持 ollama",
+    "autoModelLabel": "自动代码补全的模型",
+    "autoModelTooltip": "我们目前支持以下模型：<supportModels /> 填空模型模板。如果您有兴趣，请在 GitHub 上帮助我们添加更多模型。",
+    "autoDescription": "这将在您暂停输入时使用。这意味着将更快地适用于简单的代码片段。"
   }
 }
