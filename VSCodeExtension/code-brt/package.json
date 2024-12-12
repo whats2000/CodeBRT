@@ -62,6 +62,7 @@
     "@dnd-kit/sortable": "^10.0.0",
     "@google/generative-ai": "^0.21.0",
     "@huggingface/inference": "^2.8.1",
+    "@opendocsg/pdf2md": "^0.2.1",
     "@pmmmwh/react-refresh-webpack-plugin": "^0.5.15",
     "@reduxjs/toolkit": "^2.4.0",
     "@swc/cli": "^0.5.2",

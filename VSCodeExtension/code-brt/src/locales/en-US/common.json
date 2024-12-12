@@ -81,8 +81,19 @@
     "selectVoice": "Select a voice",
     "gptSoVitsVoiceConfig": "GPT-SoVits Voice Configuration",
     "gptSoVitsVoiceLabel": "(GPT-SoVits)",
-    "gptSoVitsLearnMore": "Find out more about set up GPT-SoVits client host",
+    "gptSoVitsLearnMore": "Find out more about how to set up GPT-SoVits model locally",
     "selectReferenceVoice": "Select a reference voice",
     "gptSoVitsAdvanceSettings": "GPT-SoVits Advance Settings"
+  },
+  "GptSoVitsSettingsBar": {
+    "title": "GPT-SoVits Settings",
+    "clientHostLabel": "Client Host",
+    "clientHostExample": "(e.g. http://127.0.0.1:9880/)",
+    "clientHostNote": "Note: If you are using the old API V1, the default host is http://127.0.0.1:9880/, for V2, the default host is http://127.0.0.1:9880/tts/",
+    "selectedReferenceVoiceLabel": "Selected Reference Voice",
+    "selectReferenceVoicePlaceholder": "Select a reference voice",
+    "referenceVoicesLabel": "Reference Voices",
+    "addVoiceButton": "Add Voice",
+    "note": "Note: Chinese also support English content above GPT-SoVITS-beta0706 version."
   }
 }

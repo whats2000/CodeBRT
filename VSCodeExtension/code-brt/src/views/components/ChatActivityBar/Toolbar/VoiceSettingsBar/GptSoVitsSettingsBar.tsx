@@ -24,6 +24,7 @@ import {
 } from '@dnd-kit/sortable';
 import { v4 as uuidV4 } from 'uuid';
 import { useDispatch, useSelector } from 'react-redux';
+import { useTranslation } from 'react-i18next';
 
 import type { GptSoVitsVoiceSetting } from '../../../../../types';
 import type { AppDispatch, RootState } from '../../../../redux';
@@ -44,6 +45,7 @@ export const GptSoVitsSettingsBar: React.FC<GptSoVitsSettingsBarProps> = ({
   isOpen,
   onClose,
 }) => {
+  const { t } = useTranslation('common');
   const { callApi } = useContext(WebviewContext);
 
   const dispatch = useDispatch<AppDispatch>();
@@ -205,7 +207,7 @@ export const GptSoVitsSettingsBar: React.FC<GptSoVitsSettingsBarProps> = ({
 
   return (
     <Drawer
-      title='GPT-SoVits Settings'
+      title={t('GptSoVitsSettingsBar.title')}
       placement='left'
       open={isOpen}
       onClose={onCloseAndSave}
@@ -217,34 +219,43 @@ export const GptSoVitsSettingsBar: React.FC<GptSoVitsSettingsBarProps> = ({
           label={
             <Space>
               <span>
-                Client Host{' '}
+                {t('GptSoVitsSettingsBar.clientHostLabel')}{' '}
                 <Typography.Text type={'secondary'}>
-                  (e.g. http://127.0.0.1:9880/)
+                  {t('GptSoVitsSettingsBar.clientHostExample')}
                 </Typography.Text>
               </span>
-              <Tooltip title='Find out more about set up GPT-SoVits client host'>
+              <Tooltip title={t('voiceSettingsBar.gptSoVitsLearnMore')}>
                 <Typography.Link
                   type={'secondary'}
                   onClick={() =>
                     openLink(MODEL_SERVICE_CONSTANTS.gptSoVits.apiLink)
                   }
                 >
-                  Learn more
+                  {t('learnMore')}
                 </Typography.Link>
               </Tooltip>
             </Space>
           }
         >
-          <Input.Password
-            value={settings.gptSoVitsClientHost}
-            onChange={(e) => handleClientHostChange(e.target.value)}
-          />
+          <Space direction='vertical'>
+            <Input.Password
+              value={settings.gptSoVitsClientHost}
+              onChange={(e) => handleClientHostChange(e.target.value)}
+            />
+            <Typography.Text type={'secondary'}>
+              {t('GptSoVitsSettingsBar.clientHostNote')}
+            </Typography.Text>
+          </Space>
         </Form.Item>
-        <Form.Item label='Selected Reference Voice'>
+        <Form.Item
+          label={t('GptSoVitsSettingsBar.selectedReferenceVoiceLabel')}
+        >
           <Select
             value={settings.gptSoVitsSelectedReferenceVoice}
             onChange={handleSelectedVoiceChange}
-            placeholder='Select a reference voice'
+            placeholder={t(
+              'GptSoVitsSettingsBar.selectReferenceVoicePlaceholder',
+            )}
             options={settings.gptSoVitsAvailableReferenceVoices.map(
               (voice, index) => ({
                 key: `gpvSoVitsVoice-${index}`,
@@ -254,7 +265,7 @@ export const GptSoVitsSettingsBar: React.FC<GptSoVitsSettingsBarProps> = ({
             )}
           />
         </Form.Item>
-        <Form.Item label={'Reference Voices'}>
+        <Form.Item label={t('GptSoVitsSettingsBar.referenceVoicesLabel')}>
           <Space direction='vertical' style={{ width: '100%' }}>
             <DndContext
               sensors={sensors}
@@ -287,11 +298,10 @@ export const GptSoVitsSettingsBar: React.FC<GptSoVitsSettingsBarProps> = ({
               </SortableContext>
             </DndContext>
             <Button type='dashed' onClick={handleAddVoice} block>
-              Add Voice
+              {t('GptSoVitsSettingsBar.addVoiceButton')}
             </Button>
             <Typography.Text type={'secondary'}>
-              Note: Chinese also support English content above
-              GPT-SoVITS-beta0706 version.
+              {t('GptSoVitsSettingsBar.note')}
             </Typography.Text>
           </Space>
         </Form.Item>
