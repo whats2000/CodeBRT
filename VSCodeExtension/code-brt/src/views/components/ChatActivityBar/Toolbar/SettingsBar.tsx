@@ -199,7 +199,7 @@ export const SettingsBar: React.FC<SettingSidebarProps> = ({
 
   return (
     <Drawer
-      title={t('common:settingsBar.settingsBarTitle')}
+      title={t('settingsBar.settingsBarTitle')}
       open={isOpen}
       onClose={handleCloseAndSave}
       placement='left'
@@ -215,15 +215,13 @@ export const SettingsBar: React.FC<SettingSidebarProps> = ({
           icon={<QuestionCircleOutlined />}
           iconPosition={'end'}
         >
-          <Typography.Text type='secondary'>
-            {t('common:settingsBar.learnMore')}
-          </Typography.Text>
+          <Typography.Text type='secondary'>{t('learnMore')}</Typography.Text>
         </Button>
       }
     >
       {needsReload && (
         <Alert
-          message={t('common:settingsBar.settingsReloadRequired')}
+          message={t('settingsBar.settingsReloadRequired')}
           type='warning'
           showIcon
           style={{ marginBottom: 10 }}
@@ -234,7 +232,7 @@ export const SettingsBar: React.FC<SettingSidebarProps> = ({
           <div key={group.title}>
             <Divider orientation='left' orientationMargin={0}>
               <Typography.Text type='secondary'>
-                {t(`common:settingsBar.${group.titleKey}`)}
+                {t(`settingsBar.${group.titleKey}`)}
               </Typography.Text>
             </Divider>
             {group.keys.map((key) => {
@@ -245,7 +243,7 @@ export const SettingsBar: React.FC<SettingSidebarProps> = ({
                 return (
                   <FormGroup
                     key={key}
-                    label={t('common:settingsBar.themePrimaryColor')}
+                    label={t('settingsBar.themePrimaryColor')}
                   >
                     <ColorPicker
                       format='hex'
@@ -257,10 +255,7 @@ export const SettingsBar: React.FC<SettingSidebarProps> = ({
                 );
               } else if (key === 'themeAlgorithm') {
                 return (
-                  <FormGroup
-                    key={key}
-                    label={t('common:settingsBar.themeAlgorithm')}
-                  >
+                  <FormGroup key={key} label={t('settingsBar.themeAlgorithm')}>
                     <Select
                       mode='multiple'
                       value={
@@ -274,17 +269,17 @@ export const SettingsBar: React.FC<SettingSidebarProps> = ({
                         {
                           key: 'defaultAlgorithm',
                           value: 'defaultAlgorithm',
-                          label: t('common:settingsBar.lightTheme'),
+                          label: t('settingsBar.lightTheme'),
                         },
                         {
                           key: 'darkAlgorithm',
                           value: 'darkAlgorithm',
-                          label: t('common:settingsBar.darkTheme'),
+                          label: t('settingsBar.darkTheme'),
                         },
                         {
                           key: 'compactAlgorithm',
                           value: 'compactAlgorithm',
-                          label: t('common:settingsBar.compactTheme'),
+                          label: t('settingsBar.compactTheme'),
                         },
                       ]}
                     />
@@ -294,7 +289,7 @@ export const SettingsBar: React.FC<SettingSidebarProps> = ({
                 return (
                   <FormGroup
                     key={key}
-                    label={t('common:settingsBar.themeBorderRadius')}
+                    label={t('settingsBar.themeBorderRadius')}
                   >
                     <Input
                       type='number'
@@ -309,12 +304,12 @@ export const SettingsBar: React.FC<SettingSidebarProps> = ({
               ) {
                 const label =
                   key === 'doubleEnterSendMessages'
-                    ? t('common:settingsBar.doubleEnterSendMessagesLabel')
-                    : t('common:settingsBar.keepLoadedContextLabel');
+                    ? t('settingsBar.doubleEnterSendMessagesLabel')
+                    : t('settingsBar.keepLoadedContextLabel');
                 const description =
                   key === 'doubleEnterSendMessages'
-                    ? t('common:settingsBar.doubleEnterSendMessagesDescription')
-                    : t('common:settingsBar.keepLoadedContextDescription');
+                    ? t('settingsBar.doubleEnterSendMessagesDescription')
+                    : t('settingsBar.keepLoadedContextDescription');
 
                 return (
                   <FormGroup key={key} label={label}>
@@ -349,8 +344,8 @@ export const SettingsBar: React.FC<SettingSidebarProps> = ({
                           <Tooltip
                             title={
                               key.includes('ApiKey')
-                                ? t('common:settingsBar.apiKeyLinkTooltip')
-                                : t('common:settingsBar.downloadLinkTooltip')
+                                ? t('settingsBar.apiKeyLinkTooltip')
+                                : t('settingsBar.downloadLinkTooltip')
                             }
                           >
                             <Typography.Link
@@ -363,19 +358,19 @@ export const SettingsBar: React.FC<SettingSidebarProps> = ({
                               }
                             >
                               {key.includes('ApiKey')
-                                ? t('common:settingsBar.getApiKey')
-                                : t('common:settingsBar.learnMore')}
+                                ? t('settingsBar.getApiKey')
+                                : t('learnMore')}
                             </Typography.Link>
                           </Tooltip>
                         )}
                         {!PAID_PLAN_ONLY.includes(serviceKey) && (
                           <Tag color='blue' style={{ margin: 0 }}>
-                            {t('common:settingsBar.free')}
+                            {t('settingsBar.free')}
                           </Tag>
                         )}
                         {SUPPORTED_OFFLINE.includes(serviceKey) && (
                           <Tag color='green' style={{ margin: 0 }}>
-                            {t('common:settingsBar.supportsOffline')}
+                            {t('settingsBar.supportsOffline')}
                           </Tag>
                         )}
                       </Space>
@@ -426,10 +421,10 @@ export const SettingsBar: React.FC<SettingSidebarProps> = ({
         onClick={resetTheme}
         style={{ width: '100%' }}
       >
-        {t('common:settingsBar.resetTheme')}
+        {t('settingsBar.resetTheme')}
       </Button>
       <Button onClick={handleCloseAndSave} style={{ marginTop: 20 }} block>
-        {t('common:settingsBar.closeAndSave')}
+        {t('closeAndSave')}
       </Button>
     </Drawer>
   );

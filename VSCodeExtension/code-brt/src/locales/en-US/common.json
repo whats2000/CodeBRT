@@ -10,6 +10,8 @@
   "urlFetcher": "URL Fetcher",
   "agentTools": "Agent Tools",
   "modelAdvanceSettings": "Model Advance Settings",
+  "learnMore": "Learn More",
+  "closeAndSave": "Close and Save",
   "toolBar": {
     "generalSettings": "General Settings",
     "voiceSettings": "Voice Settings",
@@ -24,7 +26,6 @@
   },
   "settingsBar": {
     "settingsBarTitle": "Settings Bar",
-    "learnMore": "Learn More",
     "settingsReloadRequired": "Some settings require a reload to take effect",
     "apiKeySettings": "API Key Settings",
     "hostServerSettings": "Host Server Settings",
@@ -45,7 +46,6 @@
     "getApiKey": "Get API Key",
     "free": "Free",
     "supportsOffline": "Supports Offline",
-    "resetTheme": "Reset Theme",
-    "closeAndSave": "Close and Save"
+    "resetTheme": "Reset Theme"
   }
 }
