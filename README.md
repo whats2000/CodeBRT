@@ -122,11 +122,11 @@ Here’s an outline of the upcoming features and improvements for CodeBRT:
     - [ ] Image Generation
     - [ ] Code Interpreter
 - [x] Show file difference after code completion
-- [ ] Task Scheduling
+- [ ] Task Scheduling <- **In Progress**
 - [ ] Auto task scheduling and completion
 - [ ] Auto-debugging
 - [ ] Local advanced data analysis
-- [ ] Localization support for Traditional Chinese/Simplified Chinese <- **In Progress**
+- [x] Localization support for Traditional Chinese/Simplified Chinese
 
 ### Version 1.0 (Stable Release)
 
