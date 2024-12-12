@@ -3,6 +3,7 @@ import { CSS } from '@dnd-kit/utilities';
 import { Button, Collapse, Flex, Form, Input, Select } from 'antd';
 import { DeleteOutlined, HolderOutlined } from '@ant-design/icons';
 import { useSortable } from '@dnd-kit/sortable';
+import { useTranslation } from 'react-i18next';
 
 import type { GptSoVitsVoiceSetting } from '../../../../../../types';
 
@@ -22,6 +23,7 @@ type GptSoVitsSettingsBarSortableItemProps = {
 export const GptSoVitsSettingsBarSortableItem: React.FC<
   GptSoVitsSettingsBarSortableItemProps
 > = ({ id, voice, onVoiceChange, onRemoveVoice, activeKey, setActiveKey }) => {
+  const { t } = useTranslation('common');
   const {
     attributes,
     listeners,
@@ -55,16 +57,22 @@ export const GptSoVitsSettingsBarSortableItem: React.FC<
         items={[
           {
             key: id,
-            label: voice.name || 'New Voice',
+            label: voice.name || t('gptSoVitsSettingsBarSortableItem.newVoice'),
             children: (
               <>
-                <Form.Item label='Name'>
+                <Form.Item
+                  label={t('gptSoVitsSettingsBarSortableItem.nameLabel')}
+                >
                   <Input
                     value={voice.name}
                     onChange={(e) => onVoiceChange(id, 'name', e.target.value)}
                   />
                 </Form.Item>
-                <Form.Item label='Refer WAV Path'>
+                <Form.Item
+                  label={t(
+                    'gptSoVitsSettingsBarSortableItem.referWavPathLabel',
+                  )}
+                >
                   <Input
                     value={voice.referWavPath}
                     onChange={(e) =>
@@ -72,7 +80,9 @@ export const GptSoVitsSettingsBarSortableItem: React.FC<
                     }
                   />
                 </Form.Item>
-                <Form.Item label='Refer Text'>
+                <Form.Item
+                  label={t('gptSoVitsSettingsBarSortableItem.referTextLabel')}
+                >
                   <Input
                     value={voice.referText}
                     onChange={(e) =>
@@ -80,16 +90,35 @@ export const GptSoVitsSettingsBarSortableItem: React.FC<
                     }
                   />
                 </Form.Item>
-                <Form.Item label='Prompt Language'>
+                <Form.Item
+                  label={t(
+                    'gptSoVitsSettingsBarSortableItem.promptLanguageLabel',
+                  )}
+                >
                   <Select
                     value={voice.promptLanguage}
                     onChange={(value) =>
                       onVoiceChange(id, 'promptLanguage', value)
                     }
                     options={[
-                      { label: 'English', value: 'en' },
-                      { label: 'Chinese', value: 'zh' },
-                      { label: 'Japanese', value: 'ja' },
+                      {
+                        label: t(
+                          'gptSoVitsSettingsBarSortableItem.englishLabel',
+                        ),
+                        value: 'en',
+                      },
+                      {
+                        label: t(
+                          'gptSoVitsSettingsBarSortableItem.chineseLabel',
+                        ),
+                        value: 'zh',
+                      },
+                      {
+                        label: t(
+                          'gptSoVitsSettingsBarSortableItem.japaneseLabel',
+                        ),
+                        value: 'ja',
+                      },
                     ]}
                   />
                 </Form.Item>
