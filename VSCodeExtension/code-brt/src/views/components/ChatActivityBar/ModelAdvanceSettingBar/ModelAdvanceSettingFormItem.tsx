@@ -11,6 +11,7 @@ import {
 } from 'antd';
 import React from 'react';
 import { ClearOutlined, QuestionCircleFilled } from '@ant-design/icons';
+import { useTranslation } from 'react-i18next';
 
 import type { ConversationModelAdvanceSettings } from '../../../../types';
 import { MODEL_ADVANCE_SETTINGS } from '../../../../constants';
@@ -35,15 +36,19 @@ export const ModelAdvanceSettingFormItem: React.FC<
   handleInputChange,
   clearField,
 }) => {
+  const { t, i18n } = useTranslation('common');
   return (
     <Form.Item
       label={
         <Space>
           <span>
-            {settingName.charAt(0).toUpperCase() +
-              settingName.slice(1).replace(/([A-Z])/g, ' $1')}
+            {t(`modelAdvanceSettingFormItem.${settingName}`)}{' '}
+            {i18n.language !== 'en-US' &&
+              `(${t(`modelAdvanceSettingFormItem.${settingName}`, {
+                lng: 'en-US',
+              })})`}
           </span>
-          <Tooltip title='Click to show more information'>
+          <Tooltip title={t('modelAdvanceSettingFormItem.clickToShowMoreInfo')}>
             <Typography.Link
               type={'secondary'}
               onClick={() => handleMoreInfoToggle(settingName)}
@@ -60,7 +65,7 @@ export const ModelAdvanceSettingFormItem: React.FC<
         <Input.TextArea
           value={(value as string) || ''}
           onChange={(e) => handleInputChange(settingName, e.target.value)}
-          placeholder='Enter system prompt'
+          placeholder={t('modelAdvanceSettingFormItem.enterSystemPrompt')}
           autoSize={{ minRows: 2, maxRows: 10 }}
         />
       ) : settingName === 'stop' ? (
@@ -71,14 +76,17 @@ export const ModelAdvanceSettingFormItem: React.FC<
               onChange={(e) =>
                 handleInputChange(settingName, e.target.value.split('\n'))
               }
-              placeholder='Enter stop sequence separated by new line'
+              placeholder={t('modelAdvanceSettingFormItem.enterStopSequence')}
               autoSize={{ minRows: 2, maxRows: 10 }}
             />
           </Col>
           <Col>
-            <Tooltip title='Clear field' placement={'right'}>
+            <Tooltip
+              title={t('modelAdvanceSettingFormItem.clearField')}
+              placement={'right'}
+            >
               <Button
-                type='text'
+                type={'text'}
                 danger
                 icon={<ClearOutlined />}
                 onClick={() => clearField(settingName)}
@@ -95,14 +103,17 @@ export const ModelAdvanceSettingFormItem: React.FC<
               style={{ width: '100%' }}
               value={value as number | null}
               onChange={(val) => handleInputChange(settingName, val)}
-              placeholder={`Enter ${settingName}`}
+              placeholder={t(`modelAdvanceSettingFormItem.${settingName}`)}
               changeOnWheel={true}
             />
           </Col>
           <Col>
-            <Tooltip title='Clear field' placement={'right'}>
+            <Tooltip
+              title={t('modelAdvanceSettingFormItem.clearField')}
+              placement={'right'}
+            >
               <Button
-                type='text'
+                type={'text'}
                 danger
                 icon={<ClearOutlined />}
                 onClick={() => clearField(settingName)}
