@@ -10,6 +10,8 @@
   "urlFetcher": "直接網址訪問",
   "agentTools": "任務代理工具",
   "modelAdvanceSettings": "模型進階設定",
+  "learnMore": "了解更多",
+  "closeAndSave": "關閉並儲存",
   "toolBar": {
     "generalSettings": "基礎設定",
     "voiceSettings": "語音設定",
@@ -24,10 +26,9 @@
   },
   "settingsBar": {
     "settingsBarTitle": "設定欄",
-    "learnMore": "了解更多",
     "settingsReloadRequired": "部分設定需要重新加載才能生效",
     "apiKeySettings": "API 金鑰設定",
-    "hostServerSettings": "主機伺服器設定",
+    "hostServerSettings": "本地部屬伺服器設定",
     "themeAndCustomize": "主題與自訂",
     "otherSettings": "其他設定",
     "themePrimaryColor": "主題主顏色",
@@ -45,7 +46,6 @@
     "getApiKey": "取得 API 金鑰",
     "free": "免費",
     "supportsOffline": "支援離線",
-    "resetTheme": "重置主題",
-    "closeAndSave": "關閉並儲存"
+    "resetTheme": "重置主題"
   }
 }

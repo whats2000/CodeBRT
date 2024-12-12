@@ -10,6 +10,8 @@
   "urlFetcher": "直接网址访问",
   "agentTools": "任务代理工具",
   "modelAdvanceSettings": "模型高级设置",
+  "learnMore": "了解更多",
+  "closeAndSave": "关闭并保存",
   "toolBar": {
     "generalSettings": "常规设置",
     "voiceSettings": "语音设置",
@@ -24,10 +26,9 @@
   },
   "settingsBar": {
     "settingsBarTitle": "设置栏",
-    "learnMore": "了解更多",
     "settingsReloadRequired": "部分设置需要重新加载才能生效",
     "apiKeySettings": "API密钥设置",
-    "hostServerSettings": "主机服务器设置",
+    "hostServerSettings": "本地部署服务器设置",
     "themeAndCustomize": "主题与自定义",
     "otherSettings": "其他设置",
     "themePrimaryColor": "主题主颜色",
@@ -45,7 +46,6 @@
     "getApiKey": "获取API密钥",
     "free": "免费",
     "supportsOffline": "支持离线",
-    "resetTheme": "重置主题",
-    "closeAndSave": "关闭并保存"
+    "resetTheme": "重置主题"
   }
 }
