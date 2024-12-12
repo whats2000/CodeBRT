@@ -259,7 +259,7 @@ export const Toolbar: React.FC<ToolbarProps> = ({ setTheme }) => {
           onClick={openEditModelList}
           style={{ width: '100%' }}
         >
-          Edit Model List
+          {t('toolBar.editModelList')}
         </EditModelListButton>
       ),
       value: 'edit',

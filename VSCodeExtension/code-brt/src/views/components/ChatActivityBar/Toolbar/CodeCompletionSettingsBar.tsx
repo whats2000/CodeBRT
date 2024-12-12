@@ -138,7 +138,7 @@ export const CodeCompletionSettingsBar: React.FC<
 
   return (
     <Drawer
-      title={t('codeCompletionSettingsBar.title')}
+      title={t('toolBar.codeCompletionSettings')}
       placement='left'
       open={isOpen}
       onClose={onClose}

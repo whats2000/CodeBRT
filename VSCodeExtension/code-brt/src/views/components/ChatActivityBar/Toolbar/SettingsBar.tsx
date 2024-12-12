@@ -199,7 +199,7 @@ export const SettingsBar: React.FC<SettingSidebarProps> = ({
 
   return (
     <Drawer
-      title={t('settingsBar.settingsBarTitle')}
+      title={t('toolBar.generalSettings')}
       open={isOpen}
       onClose={handleCloseAndSave}
       placement='left'
