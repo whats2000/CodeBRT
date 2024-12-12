@@ -12,6 +12,9 @@
   "modelAdvanceSettings": "模型高级设置",
   "learnMore": "了解更多",
   "closeAndSave": "关闭并保存",
+  "notSet": "未设置",
+  "voice": "语音",
+  "github": "GitHub",
   "toolBar": {
     "generalSettings": "常规设置",
     "voiceSettings": "语音设置",
@@ -19,7 +22,8 @@
     "quickGuide": "快速入门指南",
     "whatsNew": "新功能介绍",
     "history": "历史",
-    "newChat": "新聊天"
+    "newChat": "新聊天",
+    "marketplace": "应用商店"
   },
   "floatButton": {
     "syncDescription": "将文件更改同步到聊天历史记录"
@@ -59,5 +63,25 @@
     "last7Days": "最近7天",
     "last1Month": "最近1个月",
     "earlier": "更早"
+  },
+  "voiceSettingsBar": {
+    "title": "语音设置",
+    "voiceServicesConfig": "语音服务配置",
+    "textToVoiceService": "文本转语音服务",
+    "voiceToTextService": "语音转文本服务",
+    "clickToShowMoreInfo": "点击显示更多信息",
+    "vscodeSpeechExtensionNotice": "运行于本地 CPU。此功能会打开一个临时文本文件，并在输入完成后自动关闭（静默后自动关闭）。抱歉，目前必须这样做才能使用内置的语音服务。如果您有更好的方法，请告诉我们！此功能依赖于 VSCode 内置的语音转文字服务。如果尚未安装，您可以通过 <marketplace /> 进行安装。",
+    "sox": "SoX",
+    "alsa": "ALSA",
+    "microphoneAccessNotice": "注意：此功能需要麦克风访问权限，并需在 Windows/Mac 上安装 <sox />，或在 Linux 上安装 <alsa />。由于录制音频需要使用 shell，因此必须具备这些工具。（如果您有更好的方法，请在 <github /> 上提供建议）",
+    "openAIVoiceConfig": "OpenAI 语音配置",
+    "openAIVoiceLabel": "(OpenAI)",
+    "openAIPreviewVoices": "在 OpenAI 网站上预览声音",
+    "selectVoice": "选择一个声音",
+    "gptSoVitsVoiceConfig": "GPT-SoVits 语音配置",
+    "gptSoVitsVoiceLabel": "(GPT-SoVits)",
+    "gptSoVitsLearnMore": "了解有关设置 GPT-SoVits 本地部署的信息",
+    "selectReferenceVoice": "选择参考语音",
+    "gptSoVitsAdvanceSettings": "GPT-SoVits 高级设置"
   }
 }
