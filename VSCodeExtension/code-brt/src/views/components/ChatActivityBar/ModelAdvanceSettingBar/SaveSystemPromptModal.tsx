@@ -82,7 +82,7 @@ export const SaveSystemPromptModal: React.FC<SaveSystemPromptModalProps> = ({
     >
       <Form form={form} layout='vertical'>
         <Form.Item
-          label={t('saveSystemPromptModal.promptName')}
+          label={t('promptName')}
           name='name'
           rules={[
             {

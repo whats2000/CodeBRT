@@ -21,6 +21,7 @@ import {
 } from '@ant-design/icons';
 import styled from 'styled-components';
 import { useDispatch, useSelector } from 'react-redux';
+import { useTranslation } from 'react-i18next';
 
 import type {
   ConversationModelAdvanceSettings,
@@ -69,6 +70,7 @@ export const LoadSystemPromptBar: React.FC<LoadSystemPromptBarProps> = ({
   onClose,
   setNewAdvanceSettings,
 }) => {
+  const { t } = useTranslation('common');
   const { token } = theme.useToken();
 
   const [showFilter, setShowFilter] = useState(false);
@@ -211,9 +213,9 @@ export const LoadSystemPromptBar: React.FC<LoadSystemPromptBarProps> = ({
       <StyledDrawer
         title={
           <Flex justify={'space-between'} align={'center'}>
-            <Typography.Text>Load System Prompt</Typography.Text>
+            <Typography.Text>{t('loadSystemPromptBar.title')}</Typography.Text>
             <Tooltip
-              title={showFilter ? 'Hide Filters' : 'Show Filters'}
+              title={showFilter ? t('hideFilter') : t('showFilter')}
               placement={'left'}
             >
               <Button
@@ -233,7 +235,7 @@ export const LoadSystemPromptBar: React.FC<LoadSystemPromptBarProps> = ({
           <div style={{ padding: 16 }}>
             <AutoComplete
               style={{ width: '100%', marginBottom: 16 }}
-              placeholder='Search by name'
+              placeholder={t('searchByName')}
               options={systemPrompts.map((prompt) => ({ value: prompt.name }))}
               value={filterName}
               onChange={(value) => setFilterName(value)}
@@ -246,7 +248,7 @@ export const LoadSystemPromptBar: React.FC<LoadSystemPromptBarProps> = ({
             <Select
               mode='tags'
               style={{ width: '100%' }}
-              placeholder='Filter by tags'
+              placeholder={t('filterByTags')}
               value={filterTags}
               onChange={setFilterTags}
             >
@@ -271,10 +273,10 @@ export const LoadSystemPromptBar: React.FC<LoadSystemPromptBarProps> = ({
                   onClick={() => openEditModal(item)}
                 />,
                 <Popconfirm
-                  title='Are you sure you want to delete this prompt?'
+                  title={t('loadSystemPromptBar.confirmDelete')}
                   onConfirm={() => handleDelete(item.id)}
-                  okText='Yes'
-                  cancelText='No'
+                  okText={t('yes')}
+                  cancelText={t('no')}
                 >
                   <Button
                     type={'text'}

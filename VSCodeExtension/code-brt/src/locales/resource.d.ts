@@ -2,6 +2,8 @@ interface Resources {
   "common": {
     "previous": "Previous",
     "next": "Next",
+    "yes": "Yes",
+    "no": "No",
     "finish": "Finish",
     "disable": "Disable {{tool}}",
     "enable": "Enable {{tool}}",
@@ -19,7 +21,14 @@ interface Resources {
     "github": "GitHub",
     "load": "Load",
     "save": "Save",
+    "cancel": "Cancel",
     "setDefault": "Set Default",
+    "description": "Description",
+    "content": "Content",
+    "hideFilter": "Hide Filter",
+    "showFilter": "Show Filter",
+    "searchByName": "Search by name",
+    "filterByTags": "Filter by tags",
     "toolBar": {
       "generalSettings": "General Settings",
       "voiceSettings": "Voice Settings",
@@ -28,13 +37,13 @@ interface Resources {
       "whatsNew": "What's New",
       "history": "History",
       "newChat": "New Chat",
-      "marketplace": "marketplace"
+      "marketplace": "marketplace",
+      "editModelList": "Edit Model List"
     },
     "floatButton": {
       "syncDescription": "Synchronize the file changes to chat history"
     },
     "settingsBar": {
-      "settingsBarTitle": "Settings Bar",
       "settingsReloadRequired": "Some settings require a reload to take effect",
       "apiKeySettings": "API Key Settings",
       "hostServerSettings": "Host Server Settings",
@@ -59,10 +68,7 @@ interface Resources {
     },
     "historySidebar": {
       "chatHistoryTitle": "Chat History",
-      "hideFilter": "Hide Filter",
-      "showFilter": "Show Filter",
       "nothingCurrently": "Nothing Currently",
-      "filterByTags": "Filter by tags",
       "today": "Today",
       "yesterday": "Yesterday",
       "last7Days": "Last 7 Days",
@@ -70,7 +76,6 @@ interface Resources {
       "earlier": "Earlier"
     },
     "voiceSettingsBar": {
-      "title": "Voice Settings",
       "voiceServicesConfig": "Voice Services Configuration",
       "textToVoiceService": "Text To Voice Service",
       "voiceToTextService": "Voice To Text Service",
@@ -111,7 +116,6 @@ interface Resources {
       "japaneseLabel": "Japanese"
     },
     "codeCompletionSettingsBar": {
-      "title": "Code Completion Settings",
       "manualConfig": "Manually Trigger Configuration",
       "manualTriggerLabel": "Manual Trigger Code Completion",
       "showMoreInfoTooltip": "Click to show more information",
@@ -143,6 +147,30 @@ interface Resources {
       "notes": {
         "topK": "Some models may not support top-k sampling."
       }
+    },
+    "modelAdvanceSettingFormItem": {
+      "clickToShowMoreInfo": "Click to show more information",
+      "enterSystemPrompt": "Enter system prompt",
+      "enterStopSequence": "Enter stop sequence separated by new line",
+      "clearField": "Clear field",
+      "systemPrompt": "System Prompt",
+      "maxTokens": "Max Tokens",
+      "temperature": "Temperature",
+      "topP": "Top P",
+      "topK": "Top K",
+      "presencePenalty": "Presence Penalty",
+      "frequencyPenalty": "Frequency Penalty",
+      "stop": "Stop Sequences"
+    },
+    "saveSystemPromptModal": {
+      "title": "Save System Prompt",
+      "promptName": "Prompt Name",
+      "promptNameRequired": "Please enter a name for the prompt",
+      "contentRequired": "Please enter the prompt content"
+    },
+    "loadSystemPromptBar": {
+      "title": "Load System Prompt",
+      "confirmDelete": "Are you sure you want to delete this system prompt?"
     }
   },
   "userGuildTours": {
