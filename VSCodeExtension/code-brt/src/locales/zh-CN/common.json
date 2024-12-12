@@ -21,5 +21,31 @@
   },
   "floatButton": {
     "syncDescription": "将文件更改同步到聊天历史记录"
+  },
+  "settingsBar": {
+    "settingsBarTitle": "设置栏",
+    "learnMore": "了解更多",
+    "settingsReloadRequired": "部分设置需要重新加载才能生效",
+    "apiKeySettings": "API密钥设置",
+    "hostServerSettings": "主机服务器设置",
+    "themeAndCustomize": "主题与自定义",
+    "otherSettings": "其他设置",
+    "themePrimaryColor": "主题主颜色",
+    "themeAlgorithm": "主题算法",
+    "themeBorderRadius": "主题边框半径",
+    "lightTheme": "浅色",
+    "darkTheme": "深色",
+    "compactTheme": "紧凑",
+    "doubleEnterSendMessagesLabel": "双击回车发送消息",
+    "doubleEnterSendMessagesDescription": "双击回车发送消息",
+    "keepLoadedContextLabel": "保持已加载的上下文",
+    "keepLoadedContextDescription": "占用更多内存，但加载速度更快",
+    "apiKeyLinkTooltip": "API密钥页面链接",
+    "downloadLinkTooltip": "下载页面链接",
+    "getApiKey": "获取API密钥",
+    "free": "免费",
+    "supportsOffline": "支持离线",
+    "resetTheme": "重置主题",
+    "closeAndSave": "关闭并保存"
   }
 }
