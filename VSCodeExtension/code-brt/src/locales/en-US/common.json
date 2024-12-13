@@ -21,6 +21,8 @@
   "load": "Load",
   "save": "Save",
   "cancel": "Cancel",
+  "success": "Success",
+  "error": "Error",
   "setDefault": "Set Default",
   "name": "Name",
   "description": "Description",
@@ -34,6 +36,19 @@
   "addModel": "Add Model",
   "removeModel": "Remove Model",
   "newModel": "New Model",
+  "toolNames": {
+    "executeCommand": "Execute Command",
+    "readFile": "Read File",
+    "writeToFile": "Write To File",
+    "searchFiles": "Search Files",
+    "listFiles": "List Files",
+    "listCodeDefinitionNames": "List Code Definition Names",
+    "inspectSite": "Inspect Site",
+    "askFollowUpQuestion": "Ask Follow Up Question",
+    "attemptCompletion": "Attempt Completion",
+    "webSearch": "Web Search",
+    "urlFetcher": "URL Fetcher"
+  },
   "toolBar": {
     "generalSettings": "General Settings",
     "voiceSettings": "Voice Settings",

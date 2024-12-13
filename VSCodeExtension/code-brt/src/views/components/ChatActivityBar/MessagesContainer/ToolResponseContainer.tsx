@@ -162,7 +162,7 @@ export const ToolResponseContainer: React.FC<ToolResponseContainerProps> = ({
                       <Tag
                         color={response.status === 'success' ? 'green' : 'red'}
                       >
-                        {response.status.toUpperCase()}
+                        {t(response.status).toString().toUpperCase()}
                       </Tag>
                       {response.toolCallName}
                     </span>

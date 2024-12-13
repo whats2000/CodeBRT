@@ -196,8 +196,7 @@ export const ToolActionContainer = React.memo<ToolActionContainerProps>(
                         | NonWorkspaceToolType
                     ] ?? <span>Unknown Tool</span>}
                     <span style={{ textOverflow: 'ellipsis' }}>
-                      {toolCall.toolName.charAt(0).toUpperCase() +
-                        toolCall.toolName.slice(1)}
+                      {toolCall.toolName}
                     </span>
                   </Space>
                 }

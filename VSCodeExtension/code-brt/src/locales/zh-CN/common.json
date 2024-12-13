@@ -21,6 +21,8 @@
   "load": "加载",
   "save": "保存",
   "cancel": "取消",
+  "success": "成功",
+  "error": "错误",
   "setDefault": "设置默认",
   "name": "名称",
   "description": "描述",
@@ -34,6 +36,19 @@
   "addModel": "添加模型",
   "removeModel": "移除模型",
   "newModel": "新模型",
+  "toolNames": {
+    "executeCommand": "执行命令",
+    "readFile": "读取文件",
+    "writeToFile": "写入文件",
+    "searchFiles": "搜索文件",
+    "listFiles": "列出文件",
+    "listCodeDefinitionNames": "列出代码定义名称",
+    "inspectSite": "检查网站",
+    "askFollowUpQuestion": "询问后续问题",
+    "attemptCompletion": "尝试完成",
+    "webSearch": "网络搜索",
+    "urlFetcher": "直接网址访问"
+  },
   "toolBar": {
     "generalSettings": "常规设置",
     "voiceSettings": "语音设置",

@@ -21,6 +21,8 @@
   "load": "載入",
   "save": "儲存",
   "cancel": "取消",
+  "success": "成功",
+  "error": "錯誤",
   "setDefault": "設定預設",
   "name": "名稱",
   "description": "描述",
@@ -34,6 +36,19 @@
   "addModel": "新增模型",
   "removeModel": "移除模型",
   "newModel": "新模型",
+  "toolNames": {
+    "executeCommand": "執行命令",
+    "readFile": "讀取文件",
+    "writeToFile": "寫入文件",
+    "searchFiles": "搜索文件",
+    "listFiles": "列出文件",
+    "listCodeDefinitionNames": "列出程式碼定義名稱",
+    "inspectSite": "檢查網站",
+    "askFollowUpQuestion": "詢問後續問題",
+    "attemptCompletion": "嘗試完成",
+    "webSearch": "網路搜尋",
+    "urlFetcher": "直接網址訪問"
+  },
   "toolBar": {
     "generalSettings": "基礎設定",
     "voiceSettings": "語音設定",
