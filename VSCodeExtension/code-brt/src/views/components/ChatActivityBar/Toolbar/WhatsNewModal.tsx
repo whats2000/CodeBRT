@@ -21,7 +21,7 @@ export const WhatsNewModal: React.FC<WhatsNewModalProps> = ({
       open={isOpen}
       onCancel={onClose}
       title={t('title')}
-      footer={<Button onClick={onClose}>Close</Button>}
+      footer={<Button onClick={onClose}>{t('common:close')}</Button>}
     >
       {updateNotes.map((note) => (
         <>
