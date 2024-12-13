@@ -22,6 +22,7 @@
   "save": "Save",
   "cancel": "Cancel",
   "setDefault": "Set Default",
+  "name": "Name",
   "description": "Description",
   "content": "Content",
   "hideFilter": "Hide Filter",
@@ -207,5 +208,30 @@
     "priceForPrompt": "The price for prompt",
     "priceForCompletion": "The price for completion",
     "perMillionTokens": "/M tokens"
+  },
+  "openRouterModelFormSortableItem": {
+    "basicInformation": "Basic Information",
+    "modelId": "Model ID",
+    "modelIdTooltip": "The model ID will usually be in the format of <organization>/<model-name>",
+    "modelIdPlaceholder": "e.g., openai/gpt-4o-mini",
+    "nameTooltip": "What ever you want to call the model",
+    "namePlaceholder": "Friendly name for the model",
+    "contextLength": "Context Length",
+    "contextLengthTooltip": "Maximum number of tokens",
+    "contextLengthPlaceholder": "Maximum context length",
+    "pricingInformation": "Pricing Information",
+    "promptPrice": "Prompt Price",
+    "promptPricePlaceholder": "Price per 1M tokens for prompts",
+    "completionPrice": "Completion Price",
+    "completionPricePlaceholder": "Price per 1M tokens for completions",
+    "imagePrice": "Image Price",
+    "imagePricePlaceholder": "Price for image processing",
+    "providerInformation": "Provider Information",
+    "providerContextLengthTooltip": "Maximum number of tokens the model can process",
+    "isModerated": "Is Moderated",
+    "isModeratedTooltip": "Whether the model has content moderation",
+    "moderationStatus": "Moderation status",
+    "notSpecified": "Not Specified",
+    "newOpenRouterModel": "New OpenRouter Model"
   }
 }

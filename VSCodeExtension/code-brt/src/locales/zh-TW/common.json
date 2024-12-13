@@ -22,6 +22,7 @@
   "save": "儲存",
   "cancel": "取消",
   "setDefault": "設定預設",
+  "name": "名稱",
   "description": "描述",
   "content": "內容",
   "hideFilter": "隱藏過濾器",
@@ -207,5 +208,30 @@
     "priceForPrompt": "提示的價格",
     "priceForCompletion": "完成的價格",
     "perMillionTokens": "/M tokens"
+  },
+  "openRouterModelFormSortableItem": {
+    "basicInformation": "基本資訊",
+    "modelId": "模型 ID",
+    "modelIdTooltip": "模型 ID 通常格式為 <組織>/<模型名稱>",
+    "modelIdPlaceholder": "例如：openai/gpt-4o-mini",
+    "nameTooltip": "您想要如何稱呼此模型",
+    "namePlaceholder": "此模型的友善名稱",
+    "contextLength": "上下文長度",
+    "contextLengthTooltip": "最大 token 數量",
+    "contextLengthPlaceholder": "最大上下文長度",
+    "pricingInformation": "價格資訊",
+    "promptPrice": "提示價格",
+    "promptPricePlaceholder": "每次提示 1M token 的價格",
+    "completionPrice": "完成價格",
+    "completionPricePlaceholder": "每次完成 1M token 的價格",
+    "imagePrice": "圖像價格",
+    "imagePricePlaceholder": "圖像處理的價格",
+    "providerInformation": "供應商資訊",
+    "providerContextLengthTooltip": "模型可以處理的最大 token 數",
+    "isModerated": "是否經過審核",
+    "isModeratedTooltip": "模型是否具有內容審核",
+    "moderationStatus": "審核狀態",
+    "notSpecified": "未指定",
+    "newOpenRouterModel": "新 OpenRouter 模型"
   }
 }

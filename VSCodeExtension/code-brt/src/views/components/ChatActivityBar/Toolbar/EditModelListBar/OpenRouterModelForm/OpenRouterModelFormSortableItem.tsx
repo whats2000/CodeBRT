@@ -13,6 +13,7 @@ import {
   Typography,
 } from 'antd';
 import { DeleteOutlined, HolderOutlined } from '@ant-design/icons';
+import { useTranslation } from 'react-i18next';
 
 import type { OpenRouterModelSettings } from '../../../../../../types';
 
@@ -40,6 +41,7 @@ export const OpenRouterSortableItem: React.FC<
   activeKey,
   setActiveKey,
 }) => {
+  const { t } = useTranslation('common');
   const {
     attributes,
     listeners,
@@ -59,32 +61,40 @@ export const OpenRouterSortableItem: React.FC<
   const renderBasicFields = () => (
     <>
       <Divider orientation='left' orientationMargin={0}>
-        <Typography.Text type={'secondary'}>Basic Information</Typography.Text>
+        <Typography.Text type={'secondary'}>
+          {t('openRouterModelFormSortableItem.basicInformation')}
+        </Typography.Text>
       </Divider>
       <Form.Item
-        label='Model ID'
-        tooltip={
-          'The model ID will usually be in the format of <organization>/<model-name>'
-        }
+        label={t('openRouterModelFormSortableItem.modelId')}
+        tooltip={t('openRouterModelFormSortableItem.modelIdTooltip')}
       >
         <Input
           value={model.id}
-          placeholder='e.g., openai/gpt-4o-mini'
+          placeholder={t('openRouterModelFormSortableItem.modelIdPlaceholder')}
           onChange={(e) => onModelChange(uuid, 'id', e.target.value)}
         />
       </Form.Item>
-      <Form.Item label='Name' tooltip={'What ever you want to call the model'}>
+      <Form.Item
+        label={t('name')}
+        tooltip={t('openRouterModelFormSortableItem.nameTooltip')}
+      >
         <Input
           value={model.name}
-          placeholder='Friendly name for the model'
+          placeholder={t('openRouterModelFormSortableItem.namePlaceholder')}
           onChange={(e) => onModelChange(uuid, 'name', e.target.value)}
         />
       </Form.Item>
-      <Form.Item label='Context Length' tooltip='Maximum number of tokens'>
+      <Form.Item
+        label={t('openRouterModelFormSortableItem.contextLength')}
+        tooltip={t('openRouterModelFormSortableItem.contextLengthTooltip')}
+      >
         <InputNumber
           style={{ width: '100%' }}
           value={model.context_length}
-          placeholder='Maximum context length'
+          placeholder={t(
+            'openRouterModelFormSortableItem.contextLengthPlaceholder',
+          )}
           onChange={(value) => onModelChange(uuid, 'context_length', value)}
         />
       </Form.Item>
@@ -96,13 +106,15 @@ export const OpenRouterSortableItem: React.FC<
     <>
       <Divider orientation='left' orientationMargin={0}>
         <Typography.Text type={'secondary'}>
-          Pricing Information
+          {t('openRouterModelFormSortableItem.pricingInformation')}
         </Typography.Text>
       </Divider>
-      <Form.Item label='Prompt Price'>
+      <Form.Item label={t('openRouterModelFormSortableItem.promptPrice')}>
         <Input
           value={model.pricing.prompt}
-          placeholder='Price per 1M tokens for prompts'
+          placeholder={t(
+            'openRouterModelFormSortableItem.promptPricePlaceholder',
+          )}
           onChange={(e) =>
             onModelChange(uuid, 'pricing', {
               ...model.pricing,
@@ -111,10 +123,12 @@ export const OpenRouterSortableItem: React.FC<
           }
         />
       </Form.Item>
-      <Form.Item label='Completion Price'>
+      <Form.Item label={t('openRouterModelFormSortableItem.completionPrice')}>
         <Input
           value={model.pricing.completion}
-          placeholder='Price per 1M tokens for completions'
+          placeholder={t(
+            'openRouterModelFormSortableItem.completionPricePlaceholder',
+          )}
           onChange={(e) =>
             onModelChange(uuid, 'pricing', {
               ...model.pricing,
@@ -123,10 +137,12 @@ export const OpenRouterSortableItem: React.FC<
           }
         />
       </Form.Item>
-      <Form.Item label='Image Price'>
+      <Form.Item label={t('openRouterModelFormSortableItem.imagePrice')}>
         <Input
           value={model.pricing.image}
-          placeholder='Price for image processing'
+          placeholder={t(
+            'openRouterModelFormSortableItem.imagePricePlaceholder',
+          )}
           onChange={(e) =>
             onModelChange(uuid, 'pricing', {
               ...model.pricing,
@@ -143,27 +159,31 @@ export const OpenRouterSortableItem: React.FC<
     <>
       <Divider orientation='left' orientationMargin={0}>
         <Typography.Text type={'secondary'}>
-          Provider Information
+          {t('openRouterModelFormSortableItem.providerInformation')}
         </Typography.Text>
       </Divider>
       <Form.Item
-        label='Context Length'
-        tooltip='Maximum number of tokens the model can process'
+        label={t('openRouterModelFormSortableItem.contextLength')}
+        tooltip={t(
+          'openRouterModelFormSortableItem.providerContextLengthTooltip',
+        )}
       >
         <InputNumber
           style={{ width: '100%' }}
           value={model.context_length}
-          placeholder='Maximum context length'
+          placeholder={t(
+            'openRouterModelFormSortableItem.contextLengthPlaceholder',
+          )}
           onChange={(value) => onModelChange(uuid, 'context_length', value)}
         />
       </Form.Item>
       <Form.Item
-        label='Is Moderated'
-        tooltip='Whether the model has content moderation'
+        label={t('openRouterModelFormSortableItem.isModerated')}
+        tooltip={t('openRouterModelFormSortableItem.isModeratedTooltip')}
       >
         <Select
           value={model.top_provider.is_moderated}
-          placeholder='Moderation status'
+          placeholder={t('openRouterModelFormSortableItem.moderationStatus')}
           onChange={(value) =>
             onModelChange(uuid, 'top_provider', {
               ...model.top_provider,
@@ -171,9 +191,12 @@ export const OpenRouterSortableItem: React.FC<
             })
           }
           options={[
-            { value: null, label: 'Not Specified' },
-            { value: true, label: 'Yes' },
-            { value: false, label: 'No' },
+            {
+              value: null,
+              label: t('openRouterModelFormSortableItem.notSpecified'),
+            },
+            { value: true, label: t('yes') },
+            { value: false, label: t('no') },
           ]}
         />
       </Form.Item>
@@ -198,7 +221,9 @@ export const OpenRouterSortableItem: React.FC<
         items={[
           {
             key: uuid,
-            label: model.name || 'New OpenRouter Model',
+            label:
+              model.name ||
+              t('openRouterModelFormSortableItem.newOpenRouterModel'),
             children: (
               <>
                 {renderBasicFields()}
