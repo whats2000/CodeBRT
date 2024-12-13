@@ -531,7 +531,7 @@ export class GeminiService extends AbstractLanguageModelService {
             toolCall.parameters.content = content.replace(/\\r\n/g, '\n');
           }
 
-          // If the file is JSON, we might need to replace \" with "
+          // We might need to replace `\"` with `"` as the escape character is not needed when writing to file
           if (content && typeof content === 'string') {
             toolCall.parameters.content = toolCall.parameters.content.replace(
               /\\"/g,
