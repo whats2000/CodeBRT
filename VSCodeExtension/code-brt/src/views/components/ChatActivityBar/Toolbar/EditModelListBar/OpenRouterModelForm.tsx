@@ -77,7 +77,7 @@ export const OpenRouterModelForm: React.FC<OpenRouterModelFormProps> = ({
       {
         uuid: uuidV4(),
         id: '',
-        name: t('common:openRouterModelForm.newModel'),
+        name: t('newModel'),
         created: new Date().getTime(),
         description: '',
         context_length: 4096,
@@ -106,7 +106,9 @@ export const OpenRouterModelForm: React.FC<OpenRouterModelFormProps> = ({
     const existingModel = openRouterModels.find((m) => m.id === model.id);
 
     if (existingModel) {
-      void messageApi.warning(t('common:openRouterModelForm.modelAlreadyInList', {name: model.name}));
+      void messageApi.warning(
+        t('openRouterModelForm.modelAlreadyInList', { name: model.name }),
+      );
       return;
     }
 
@@ -193,10 +195,10 @@ export const OpenRouterModelForm: React.FC<OpenRouterModelFormProps> = ({
           block={true}
           onClick={() => setIsBrowseModalOpen(true)}
         >
-          {t('common:openRouterModelForm.browseAvailableModels')}
+          {t('openRouterModelForm.browseAvailableModels')}
         </Button>
         <Button type='dashed' onClick={handleAddModel} block={true}>
-          {t('common:openRouterModelForm.addModelManually')}
+          {t('openRouterModelForm.addModelManually')}
         </Button>
         <OpenRouterModelBrowserModal
           isOpen={isBrowseModalOpen}

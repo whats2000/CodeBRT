@@ -33,6 +33,7 @@
   "model": "Model",
   "addModel": "Add Model",
   "removeModel": "Remove Model",
+  "newModel": "New Model",
   "toolBar": {
     "generalSettings": "General Settings",
     "voiceSettings": "Voice Settings",
@@ -192,8 +193,7 @@
   "openRouterModelForm": {
     "browseAvailableModels": "Browse Available Models",
     "addModelManually": "Add Model Manually",
-    "modelAlreadyInList": "Model {{name}} is already in your list.",
-    "newModel": "New Model"
+    "modelAlreadyInList": "Model {{name}} is already in your list."
   },
   "openRouterModelBrowserModal": {
     "browseModelsTitle": "Browse OpenRouter Models (Current Show: {{count}})",
@@ -232,5 +232,14 @@
     "moderationStatus": "Moderation status",
     "notSpecified": "Not Specified",
     "newOpenRouterModel": "New OpenRouter Model"
+  },
+  "customModelFormSortableItem": {
+    "apiUrl": "API URL",
+    "apiMethod": "API Method",
+    "textParameter": "Text Parameter",
+    "imageParameter": "Image Parameter",
+    "queryParameter": "Query Parameter",
+    "includeQueryInHistory": "Include Query in History",
+    "checkToAppendQueryToHistory": "Check to append user's latest query to history"
   }
 }

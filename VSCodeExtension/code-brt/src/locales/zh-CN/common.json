@@ -33,6 +33,7 @@
   "model": "模型",
   "addModel": "添加模型",
   "removeModel": "移除模型",
+  "newModel": "新模型",
   "toolBar": {
     "generalSettings": "常规设置",
     "voiceSettings": "语音设置",
@@ -192,8 +193,7 @@
   "openRouterModelForm": {
     "browseAvailableModels": "浏览可用模型",
     "addModelManually": "手动添加模型",
-    "modelAlreadyInList": "模型 {{name}} 已经在您的列表中。",
-    "newModel": "新模型"
+    "modelAlreadyInList": "模型 {{name}} 已经在您的列表中。"
   },
   "openRouterModelBrowserModal": {
     "browseModelsTitle": "浏览 OpenRouter 模型（当前显示：{{count}}）",
@@ -232,5 +232,14 @@
     "moderationStatus": "审核状态",
     "notSpecified": "未指定",
     "newOpenRouterModel": "新 OpenRouter 模型"
+  },
+  "customModelFormSortableItem": {
+    "apiUrl": "API 网址",
+    "apiMethod": "API 方法",
+    "textParameter": "文本参数",
+    "imageParameter": "图片参数",
+    "queryParameter": "查询参数",
+    "includeQueryInHistory": "在历史记录中包含查询",
+    "checkToAppendQueryToHistory": "选中以将用户最新信息附加到历史记录"
   }
 }

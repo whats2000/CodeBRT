@@ -71,9 +71,13 @@ export const CustomModelForm: React.FC<CustomModelFormProps> = ({
   };
 
   const handleAddModel = () => {
+    let newName = `${t('model')} ${customModels.length + 1}`;
+    if (customModels.some((model) => model.name === newName)) {
+      newName = `${newName} (${customModels.filter((model) => model.name.includes(newName)).length})`;
+    }
     const newModel: CustomModelSettings = {
       id: uuidV4(),
-      name: '',
+      name: newName,
       apiUrl: '',
       apiMethod: 'POST',
       apiTextParam: '',
