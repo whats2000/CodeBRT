@@ -524,6 +524,21 @@ export class GeminiService extends AbstractLanguageModelService {
             }
           }
 
+          const content = toolCall.parameters.content;
+
+          // Fix the end with \r at each line as the model tends to add it even not at the end of the file
+          if (content && typeof content === 'string') {
+            toolCall.parameters.content = content.replace(/\\r\n/g, '\n');
+          }
+
+          // If the file is JSON, we might need to replace \" with "
+          if (content && typeof content === 'string') {
+            toolCall.parameters.content = toolCall.parameters.content.replace(
+              /\\"/g,
+              '"',
+            );
+          }
+
           return {
             textResponse: responseText,
             toolCall,
