@@ -14,6 +14,7 @@ import {
   verticalListSortingStrategy,
 } from '@dnd-kit/sortable';
 import { v4 as uuidV4 } from 'uuid';
+import { useTranslation } from 'react-i18next';
 
 import type { OpenRouterModelSettings } from '../../../../../types';
 import { WebviewContext } from '../../../../WebviewContext';
@@ -37,6 +38,7 @@ export const OpenRouterModelForm: React.FC<OpenRouterModelFormProps> = ({
   setOpenRouterModels,
   handleEditModelListSave,
 }) => {
+  const { t } = useTranslation('common');
   const { callApi } = useContext(WebviewContext);
   const [messageApi, contextHolder] = message.useMessage();
 
@@ -75,7 +77,7 @@ export const OpenRouterModelForm: React.FC<OpenRouterModelFormProps> = ({
       {
         uuid: uuidV4(),
         id: '',
-        name: 'New Model',
+        name: t('common:openRouterModelForm.newModel'),
         created: new Date().getTime(),
         description: '',
         context_length: 4096,
@@ -104,7 +106,7 @@ export const OpenRouterModelForm: React.FC<OpenRouterModelFormProps> = ({
     const existingModel = openRouterModels.find((m) => m.id === model.id);
 
     if (existingModel) {
-      void messageApi.warning(`Model ${model.name} is already in your list.`);
+      void messageApi.warning(t('common:openRouterModelForm.modelAlreadyInList', {name: model.name}));
       return;
     }
 
@@ -191,10 +193,10 @@ export const OpenRouterModelForm: React.FC<OpenRouterModelFormProps> = ({
           block={true}
           onClick={() => setIsBrowseModalOpen(true)}
         >
-          Browse Available Models
+          {t('common:openRouterModelForm.browseAvailableModels')}
         </Button>
         <Button type='dashed' onClick={handleAddModel} block={true}>
-          Add Model Manually
+          {t('common:openRouterModelForm.addModelManually')}
         </Button>
         <OpenRouterModelBrowserModal
           isOpen={isBrowseModalOpen}

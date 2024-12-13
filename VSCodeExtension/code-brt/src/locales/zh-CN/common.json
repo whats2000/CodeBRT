@@ -186,5 +186,11 @@
     "fetchOllamaModels": "从主机服务器获取可用模型",
     "fetchLatestModels": "获取最新的可用模型",
     "addModel": "添加模型"
+  },
+   "openRouterModelForm": {
+    "browseAvailableModels": "浏览可用模型",
+    "addModelManually": "手动添加模型",
+     "modelAlreadyInList": "模型 {{name}} 已经在您的列表中。",
+    "newModel": "新模型"
   }
 }

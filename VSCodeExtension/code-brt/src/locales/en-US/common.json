@@ -186,5 +186,11 @@
     "fetchOllamaModels": "Fetch available models from host server",
     "fetchLatestModels": "Fetch Latest Available Models",
     "addModel": "Add Model"
+  },
+  "openRouterModelForm": {
+    "browseAvailableModels": "Browse Available Models",
+    "addModelManually": "Add Model Manually",
+     "modelAlreadyInList": "Model {{name}} is already in your list.",
+    "newModel": "New Model"
   }
 }
