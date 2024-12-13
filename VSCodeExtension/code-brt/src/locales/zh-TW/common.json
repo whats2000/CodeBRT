@@ -29,6 +29,7 @@
   "searchByName": "按名稱搜尋",
   "filterByTags": "按標籤過濾",
   "promptName": "提示名稱",
+  "model": "模型",
   "toolBar": {
     "generalSettings": "基礎設定",
     "voiceSettings": "語音設定",
@@ -179,5 +180,11 @@
   "tags": {
     "enterOrSelectTag": "輸入或選取標籤",
     "addTag": "新增標籤"
+  },
+  "modelForm": {
+    "removeOutdatedModelsNotice": "注意：此操作還會從列表中移除過時的模型",
+    "fetchOllamaModels": "從主機伺服器擷取可用模型",
+    "fetchLatestModels": "擷取最新的可用模型",
+    "addModel": "新增模型"
   }
 }

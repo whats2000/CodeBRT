@@ -29,6 +29,7 @@
   "searchByName": "Search by name",
   "filterByTags": "Filter by tags",
   "promptName": "Prompt Name",
+  "model": "Model",
   "toolBar": {
     "generalSettings": "General Settings",
     "voiceSettings": "Voice Settings",
@@ -179,5 +180,11 @@
   "tags": {
     "enterOrSelectTag": "Enter or select tag",
     "addTag": "New Tag"
+  },
+  "modelForm": {
+    "removeOutdatedModelsNotice": "Notice: This will also remove the outdated models from the list",
+    "fetchOllamaModels": "Fetch available models from host server",
+    "fetchLatestModels": "Fetch Latest Available Models",
+    "addModel": "Add Model"
   }
 }

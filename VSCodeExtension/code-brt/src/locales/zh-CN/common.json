@@ -29,6 +29,7 @@
   "searchByName": "按名称搜索",
   "filterByTags": "按标签过滤",
   "promptName": "提示名称",
+  "model": "模型",
   "toolBar": {
     "generalSettings": "常规设置",
     "voiceSettings": "语音设置",
@@ -179,5 +180,11 @@
   "tags": {
     "enterOrSelectTag": "输入或选择标签",
     "addTag": "添加标签"
+  },
+  "modelForm": {
+    "removeOutdatedModelsNotice": "注意：此操作还会从列表中删除过时的模型",
+    "fetchOllamaModels": "从主机服务器获取可用模型",
+    "fetchLatestModels": "获取最新的可用模型",
+    "addModel": "添加模型"
   }
 }

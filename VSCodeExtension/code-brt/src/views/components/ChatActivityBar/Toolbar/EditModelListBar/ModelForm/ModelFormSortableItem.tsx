@@ -3,6 +3,7 @@ import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { Button, Form, Input, Flex } from 'antd';
 import { HolderOutlined, DeleteOutlined } from '@ant-design/icons';
+import { useTranslation } from 'react-i18next';
 
 type ModelFormSortableItemProps = {
   id: string;
@@ -19,6 +20,7 @@ export const ModelFormSortableItem: React.FC<ModelFormSortableItemProps> = ({
   onChange,
   onRemove,
 }) => {
+  const { t } = useTranslation('common');
   const { attributes, listeners, setNodeRef, transform, transition } =
     useSortable({ id });
 
@@ -38,7 +40,7 @@ export const ModelFormSortableItem: React.FC<ModelFormSortableItemProps> = ({
           {...listeners}
         />
       </Form.Item>
-      <Form.Item label={`Model ${index + 1}`} style={{ width: '100%' }}>
+      <Form.Item label={`${t('model')} ${index + 1}`} style={{ width: '100%' }}>
         <Input value={value} onChange={(e) => onChange(id, e.target.value)} />
       </Form.Item>
       <Form.Item label=' '>
