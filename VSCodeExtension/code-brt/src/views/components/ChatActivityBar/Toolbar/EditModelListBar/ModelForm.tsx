@@ -237,7 +237,7 @@ export const ModelForm: React.FC<ModelFormProps> = ({
           </Button>
         </Tooltip>
         <Button type='dashed' onClick={handleAddAvailableModel} block>
-          {t('modelForm.addModel')}
+          {t('addModel')}
         </Button>
       </Space>
     </Form>

@@ -31,6 +31,8 @@
   "filterByTags": "按标签过滤",
   "promptName": "提示名称",
   "model": "模型",
+  "addModel": "添加模型",
+  "removeModel": "移除模型",
   "toolBar": {
     "generalSettings": "常规设置",
     "voiceSettings": "语音设置",
@@ -185,8 +187,7 @@
   "modelForm": {
     "removeOutdatedModelsNotice": "注意：此操作还会从列表中删除过时的模型",
     "fetchOllamaModels": "从主机服务器获取可用模型",
-    "fetchLatestModels": "获取最新的可用模型",
-    "addModel": "添加模型"
+    "fetchLatestModels": "获取最新的可用模型"
   },
   "openRouterModelForm": {
     "browseAvailableModels": "浏览可用模型",
@@ -196,8 +197,6 @@
   },
   "openRouterModelBrowserModal": {
     "browseModelsTitle": "浏览 OpenRouter 模型（当前显示：{{count}}）",
-    "addModel": "添加模型",
-    "removeModel": "移除模型",
     "searchModels": "按名称或 ID 搜索模型",
     "free": "免费",
     "modality": "模态",

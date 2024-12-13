@@ -31,6 +31,8 @@
   "filterByTags": "Filter by tags",
   "promptName": "Prompt Name",
   "model": "Model",
+  "addModel": "Add Model",
+  "removeModel": "Remove Model",
   "toolBar": {
     "generalSettings": "General Settings",
     "voiceSettings": "Voice Settings",
@@ -185,8 +187,7 @@
   "modelForm": {
     "removeOutdatedModelsNotice": "Notice: This will also remove the outdated models from the list",
     "fetchOllamaModels": "Fetch available models from host server",
-    "fetchLatestModels": "Fetch Latest Available Models",
-    "addModel": "Add Model"
+    "fetchLatestModels": "Fetch Latest Available Models"
   },
   "openRouterModelForm": {
     "browseAvailableModels": "Browse Available Models",
@@ -196,8 +197,6 @@
   },
   "openRouterModelBrowserModal": {
     "browseModelsTitle": "Browse OpenRouter Models (Current Show: {{count}})",
-    "addModel": "Add Model",
-    "removeModel": "Remove Model",
     "searchModels": "Search models by name or ID",
     "free": "Free",
     "modality": "Modality",

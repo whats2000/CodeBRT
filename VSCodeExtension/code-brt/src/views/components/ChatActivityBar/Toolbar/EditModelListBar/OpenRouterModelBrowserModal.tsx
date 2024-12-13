@@ -147,7 +147,7 @@ export const OpenRouterModelBrowserModal: React.FC<
           icon={<PlusCircleOutlined />}
           onClick={() => onAddModel(model)}
         >
-          {t('openRouterModelBrowserModal.addModel')}
+          {t('addModel')}
         </Button>
       );
     }
@@ -159,7 +159,7 @@ export const OpenRouterModelBrowserModal: React.FC<
         icon={<MinusCircleOutlined />}
         onClick={() => onRemoveModel(targetModel.uuid)}
       >
-        {t('openRouterModelBrowserModal.removeModel')}
+        {t('removeModel')}
       </Button>
     );
   };

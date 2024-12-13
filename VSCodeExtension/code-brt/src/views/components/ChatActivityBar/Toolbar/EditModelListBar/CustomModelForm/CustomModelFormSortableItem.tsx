@@ -12,6 +12,7 @@ import {
   Typography,
 } from 'antd';
 import { DeleteOutlined, HolderOutlined } from '@ant-design/icons';
+import { useTranslation } from 'react-i18next';
 
 import type { CustomModelSettings } from '../../../../../../types';
 
@@ -32,6 +33,7 @@ type CustomModelSortableItemProps = {
 export const CustomModelSortableItem: React.FC<
   CustomModelSortableItemProps
 > = ({ id, model, onModelChange, onRemoveModel, activeKey, setActiveKey }) => {
+  const { t } = useTranslation('common');
   const {
     attributes,
     listeners,
@@ -68,7 +70,7 @@ export const CustomModelSortableItem: React.FC<
             label: model.name || 'New Model',
             children: (
               <>
-                <Form.Item label='Name'>
+                <Form.Item label={t('name')}>
                   <Input
                     value={model.name}
                     onChange={(e) => onModelChange(id, 'name', e.target.value)}

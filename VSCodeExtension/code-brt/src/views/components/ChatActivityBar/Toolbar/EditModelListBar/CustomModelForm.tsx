@@ -14,6 +14,7 @@ import {
   verticalListSortingStrategy,
 } from '@dnd-kit/sortable';
 import { v4 as uuidV4 } from 'uuid';
+import { useTranslation } from 'react-i18next';
 
 import type { CustomModelSettings } from '../../../../../types';
 import { WebviewContext } from '../../../../WebviewContext';
@@ -34,6 +35,7 @@ export const CustomModelForm: React.FC<CustomModelFormProps> = ({
   setCustomModels,
   handleEditModelListSave,
 }) => {
+  const { t } = useTranslation('common');
   const { callApi } = useContext(WebviewContext);
 
   const sensors = useSensors(
@@ -147,7 +149,7 @@ export const CustomModelForm: React.FC<CustomModelFormProps> = ({
           </SortableContext>
         </DndContext>
         <Button type='dashed' onClick={handleAddModel} block>
-          Add Model
+          {t('addModel')}
         </Button>
       </Space>
     </Form>
