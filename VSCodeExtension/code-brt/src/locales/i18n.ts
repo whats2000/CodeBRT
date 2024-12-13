@@ -5,10 +5,13 @@ import LanguageDetector from 'i18next-browser-languagedetector';
 // Import resources directly for fallback
 import enUSCommon from './en-US/common.json';
 import enUSUserGuildTours from './en-US/userGuildTours.json';
+import enUpdateNotes from './en-US/updateNotes.json';
 import zhTWCommon from './zh-TW/common.json';
 import zhTWUserGuildTours from './zh-TW/userGuildTours.json';
+import zhTWUpdateNotes from './zh-TW/updateNotes.json';
 import zhCNCommon from './zh-CN/common.json';
 import zhCNUserGuildTours from './zh-CN/userGuildTours.json';
+import zhCNUpdateNotes from './zh-CN/updateNotes.json';
 
 // Define supported languages
 export const supportedLanguages = ['en-US', 'zh-TW', 'zh-CN'] as const;
@@ -19,14 +22,17 @@ const resources = {
   'en-US': {
     common: enUSCommon,
     userGuildTours: enUSUserGuildTours,
+    updateNotes: enUpdateNotes,
   },
   'zh-TW': {
     common: zhTWCommon,
     userGuildTours: zhTWUserGuildTours,
+    updateNotes: zhTWUpdateNotes,
   },
   'zh-CN': {
     common: zhCNCommon,
     userGuildTours: zhCNUserGuildTours,
+    updateNotes: zhCNUpdateNotes,
   },
 };
 
@@ -43,7 +49,7 @@ try {
       supportedLngs: supportedLanguages,
 
       // Namespaces
-      ns: ['common', 'userGuildTours'],
+      ns: ['common', 'userGuildTours', 'updateNotes'],
       defaultNS: 'common',
 
       // Debug and interpolation
@@ -51,6 +57,9 @@ try {
       interpolation: {
         escapeValue: false, // React already escapes
       },
+
+      // Load strategy
+      load: 'currentOnly',
     });
 
   // Add error handling
