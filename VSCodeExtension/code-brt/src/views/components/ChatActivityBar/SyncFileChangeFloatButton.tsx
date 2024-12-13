@@ -2,9 +2,10 @@ import React, { useContext, useEffect } from 'react';
 import { SyncOutlined } from '@ant-design/icons';
 import { FloatButton } from 'antd';
 import { useDispatch, useSelector } from 'react-redux';
-import type { AppDispatch, RootState } from '../../redux';
+import { useTranslation } from 'react-i18next';
 
 import { WebviewContext } from '../../WebviewContext';
+import type { AppDispatch, RootState } from '../../redux';
 import {
   finishLoading,
   setConversationHistory,
@@ -20,6 +21,7 @@ type SyncFileChangeFloatButtonProps = {
 export const SyncFileChangeFloatButton: React.FC<
   SyncFileChangeFloatButtonProps
 > = ({ floatButtonBaseYPosition }) => {
+  const { t } = useTranslation('common');
   const { callApi } = useContext(WebviewContext);
   const { registerRef } = useRefs();
 
@@ -73,7 +75,7 @@ export const SyncFileChangeFloatButton: React.FC<
         }}
       />
       <FloatButton
-        tooltip={'Synchronize the file changes to chat history'}
+        tooltip={t('floatButton.syncDescription')}
         icon={
           conversationHistory.isLoading || isLoading || isProcessing ? (
             <SyncOutlined spin={true} />

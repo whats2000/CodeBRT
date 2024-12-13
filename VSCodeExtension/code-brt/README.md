@@ -2,7 +2,7 @@
 
 ## Overview
 
-**Version**: 0.4.6
+**Version**: 0.4.7
 
 **Status**: _Under Development_  
 ⚠️ This project is currently in the Beta phase. Some features are still being developed, and you may encounter bugs or
@@ -90,11 +90,11 @@ Here’s an outline of the upcoming features and improvements for CodeBRT:
   - [ ] Image Generation
   - [ ] Code Interpreter
 - [x] Show file difference after code completion
-- [ ] Task Scheduling
+- [ ] Task Scheduling <- **In Progress**
 - [ ] Auto task scheduling and completion
 - [ ] Auto-debugging
 - [ ] Local advanced data analysis
-- [ ] Localization support for Traditional Chinese/Simplified Chinese <- **In Progress**
+- [x] Localization support for Traditional Chinese/Simplified Chinese
 
 ### Version 1.0 (Stable Release)
 

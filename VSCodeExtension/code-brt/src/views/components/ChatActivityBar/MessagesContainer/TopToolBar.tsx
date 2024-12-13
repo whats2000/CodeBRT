@@ -12,6 +12,7 @@ import {
 } from '@ant-design/icons';
 import styled from 'styled-components';
 import { useDispatch, useSelector } from 'react-redux';
+import { useTranslation } from 'react-i18next';
 
 import type { ConversationEntry, ConversationHistory } from '../../../../types';
 import type { RootState } from '../../../redux';
@@ -52,6 +53,7 @@ export const TopToolBar: React.FC<MessagesTopToolBarProps> = ({
   handleCopy,
   handleRedo,
 }) => {
+  const { t } = useTranslation('common');
   const { token } = theme.useToken();
 
   const dispatch = useDispatch();
@@ -142,10 +144,17 @@ export const TopToolBar: React.FC<MessagesTopToolBarProps> = ({
           activeModelService.slice(1);
       break;
     case 'tool':
-      displayRole = entry.toolResponses?.[0].toolCallName
-        ? entry.toolResponses[0].toolCallName.charAt(0).toUpperCase() +
-          entry.toolResponses[0].toolCallName.slice(1)
-        : 'Tool';
+      const toolResponseName = entry.toolResponses?.[0].toolCallName;
+      if (!toolResponseName) {
+        displayRole = 'Tool';
+      } else {
+        const localeToolName = t(`toolNames.${toolResponseName}`);
+        displayRole =
+          localeToolName === `toolNames.${toolResponseName}`
+            ? toolResponseName.charAt(0).toUpperCase() +
+              toolResponseName.slice(1)
+            : `${localeToolName} (${toolResponseName})`;
+      }
       break;
     default:
       displayRole = entry.role;

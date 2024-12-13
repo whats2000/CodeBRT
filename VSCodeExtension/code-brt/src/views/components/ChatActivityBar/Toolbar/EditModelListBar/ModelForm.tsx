@@ -14,6 +14,7 @@ import {
   verticalListSortingStrategy,
 } from '@dnd-kit/sortable';
 import { v4 as uuidV4 } from 'uuid';
+import { useTranslation } from 'react-i18next';
 
 import type { ModelServiceType } from '../../../../../types';
 import { WebviewContext } from '../../../../WebviewContext';
@@ -52,6 +53,7 @@ export const ModelForm: React.FC<ModelFormProps> = ({
   handleEditModelListSave,
   initialModelServiceRef,
 }) => {
+  const { t } = useTranslation('common');
   if (
     activeModelService === 'openRouter' ||
     activeModelService === 'loading...'
@@ -222,7 +224,7 @@ export const ModelForm: React.FC<ModelFormProps> = ({
               ))}
           </SortableContext>
         </DndContext>
-        <Tooltip title='Notice: This will also remove the outdated models from the list'>
+        <Tooltip title={t('modelForm.removeOutdatedModelsNotice')}>
           <Button
             type='primary'
             ghost={true}
@@ -230,12 +232,12 @@ export const ModelForm: React.FC<ModelFormProps> = ({
             block
           >
             {activeModelService === 'ollama'
-              ? 'Fetch available models from host server'
-              : 'Fetch Latest Available Models'}
+              ? t('modelForm.fetchOllamaModels')
+              : t('modelForm.fetchLatestModels')}
           </Button>
         </Tooltip>
         <Button type='dashed' onClick={handleAddAvailableModel} block>
-          Add Model
+          {t('addModel')}
         </Button>
       </Space>
     </Form>

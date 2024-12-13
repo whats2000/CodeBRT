@@ -10,9 +10,11 @@ import {
   PicRightOutlined,
   RocketOutlined,
   BellOutlined,
+  GlobalOutlined,
 } from '@ant-design/icons';
 import styled from 'styled-components';
 import { useDispatch, useSelector } from 'react-redux';
+import { useTranslation } from 'react-i18next';
 
 import packageJson from '../../../../package.json';
 import { ExtensionSettings, ModelServiceType } from '../../../types';
@@ -33,6 +35,7 @@ import { CodeCompletionSettingsBar } from './Toolbar/CodeCompletionSettingsBar';
 import { useWindowSize } from '../../hooks';
 import { AVAILABLE_MODEL_SERVICES } from '../../../constants';
 import { setRefId, startTour } from '../../redux/slices/tourSlice';
+import { updateAndSaveSetting } from '../../redux/slices/settingsSlice';
 
 const StyledSpace = styled(Space)`
   display: flex;
@@ -54,6 +57,7 @@ type ToolbarProps = {
 };
 
 export const Toolbar: React.FC<ToolbarProps> = ({ setTheme }) => {
+  const { t, i18n } = useTranslation('common');
   const { callApi } = useContext(WebviewContext);
   const { registerRef } = useRefs();
 
@@ -158,36 +162,63 @@ export const Toolbar: React.FC<ToolbarProps> = ({ setTheme }) => {
     setIsEditModelListOpen(true);
   };
 
+  const saveAndSwapLanguage = (language: 'en-US' | 'zh-TW' | 'zh-CN') => {
+    i18n.changeLanguage(language);
+    dispatch(updateAndSaveSetting({ key: 'language', value: language }));
+  };
+
   const settingMenuItems: MenuProps['items'] = [
     {
       key: 'general',
       onClick: () => setIsSettingsOpen(true),
-      label: 'General Settings',
+      label: t('toolBar.generalSettings'),
       icon: <SettingOutlined />,
     },
     {
       key: 'voice',
       onClick: () => setIsVoiceSettingsOpen(true),
-      label: 'Voice Settings',
+      label: t('toolBar.voiceSettings'),
       icon: <AudioOutlined />,
     },
     {
       key: 'code completion',
       onClick: () => setIsCodeCompletionSettingsOpen(true),
-      label: 'Code Completion Settings',
+      label: t('toolBar.codeCompletionSettings'),
       icon: <PicRightOutlined />,
     },
     {
       key: 'quick guide',
       onClick: () => dispatch(startTour({ tourName: 'quickStart' })),
-      label: 'Quick Start Guide',
+      label: t('toolBar.quickGuide'),
       icon: <RocketOutlined />,
     },
     {
       key: `what's new`,
       onClick: () => setIsWhatsNewOpen(true),
-      label: `What's New`,
+      label: t('toolBar.whatsNew'),
       icon: <BellOutlined />,
+    },
+    {
+      key: 'language',
+      label: 'Language',
+      icon: <GlobalOutlined />,
+      children: [
+        {
+          key: 'en-US',
+          onClick: () => saveAndSwapLanguage('en-US'),
+          label: 'English',
+        },
+        {
+          key: 'zh-TW',
+          onClick: () => saveAndSwapLanguage('zh-TW'),
+          label: '繁體中文',
+        },
+        {
+          key: 'zh-CN',
+          onClick: () => saveAndSwapLanguage('zh-CN'),
+          label: '简体中文',
+        },
+      ],
     },
   ];
 
@@ -195,13 +226,13 @@ export const Toolbar: React.FC<ToolbarProps> = ({ setTheme }) => {
     {
       key: 'History',
       onClick: toggleHistorySidebar,
-      label: 'History',
+      label: t('toolBar.history'),
       icon: <HistoryOutlined />,
     },
     {
       key: 'New Chat',
       onClick: createNewChat,
-      label: 'New Chat',
+      label: t('toolBar.newChat'),
       icon: <PlusOutlined />,
     },
     ...settingMenuItems,
@@ -228,7 +259,7 @@ export const Toolbar: React.FC<ToolbarProps> = ({ setTheme }) => {
           onClick={openEditModelList}
           style={{ width: '100%' }}
         >
-          Edit Model List
+          {t('toolBar.editModelList')}
         </EditModelListButton>
       ),
       value: 'edit',
@@ -302,13 +333,13 @@ export const Toolbar: React.FC<ToolbarProps> = ({ setTheme }) => {
           </Dropdown>
         ) : (
           <Space>
-            <Tooltip title={'History'}>
+            <Tooltip title={t('toolBar.history')}>
               <Button
                 icon={<HistoryOutlined />}
                 onClick={toggleHistorySidebar}
               />
             </Tooltip>
-            <Tooltip title={'New Chat'}>
+            <Tooltip title={t('toolBar.newChat')}>
               <Button icon={<PlusOutlined />} onClick={createNewChat} />
             </Tooltip>
             <Dropdown menu={{ items: settingMenuItems }}>

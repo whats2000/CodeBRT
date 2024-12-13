@@ -1,5 +1,6 @@
 import React, { useEffect } from 'react';
 import { Modal, Form, Input, Button } from 'antd';
+import { useTranslation } from 'react-i18next';
 
 import type { SystemPrompt } from '../../../../../types';
 
@@ -16,6 +17,7 @@ export const EditPromptForm: React.FC<EditPromptFormProps> = ({
   onClose,
   onSave,
 }) => {
+  const { t } = useTranslation('common');
   const [form] = Form.useForm<{
     name: string;
     description: string;
@@ -48,37 +50,37 @@ export const EditPromptForm: React.FC<EditPromptFormProps> = ({
 
   return (
     <Modal
-      title='Edit System Prompt'
+      title={t('editPromptForm.title')}
       open={open}
       onCancel={onClose}
       zIndex={2000}
       footer={[
         <Button key='cancel' onClick={onClose}>
-          Cancel
+          {t('cancel')}
         </Button>,
         <Button key='save' type='primary' onClick={handleSave}>
-          Save
+          {t('save')}
         </Button>,
       ]}
     >
       <Form form={form} layout='vertical'>
         <Form.Item
-          label='Prompt Name'
+          label={t('promptName')}
           name='name'
           rules={[
-            { required: true, message: 'Please enter a name for the prompt' },
+            { required: true, message: t('editPromptForm.promptNameRequired') },
           ]}
         >
           <Input />
         </Form.Item>
-        <Form.Item label='Description' name='description'>
+        <Form.Item label={t('description')} name='description'>
           <Input.TextArea rows={3} />
         </Form.Item>
         <Form.Item
-          label='Content'
+          label={t('content')}
           name='content'
           rules={[
-            { required: true, message: 'Please enter the prompt content' },
+            { required: true, message: t('editPromptForm.contentRequired') },
           ]}
         >
           <Input.TextArea rows={5} />

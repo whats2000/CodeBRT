@@ -1,0 +1,42 @@
+{
+  "welcomeMessage": {
+    "title": "欢迎使用 CodeBRT",
+    "description": "这是一个快速指南，帮助您开始使用 CodeBRT。"
+  },
+  "uploadFiles": {
+    "title": "上传文件",
+    "description": "上传图片。（支持多张图片）"
+  },
+  "recordVoice": {
+    "title": "录制语音",
+    "description": "录制您的语音，并将其转换为文字。"
+  },
+  "textInput": {
+    "title": "输入文本",
+    "description": "输入您的消息或从剪贴板粘贴图片。您也可以按住 Shift 键拖放图片（VSCode 必需）。"
+  },
+  "activateTools": {
+    "title": "启用工具",
+    "description": "此功能可以切换以让大型语言模型执行各种任务，例如网页搜索、URL 获取，以及通过代理工具控制您的 IDE。启用您需要的工具。注意：某些模型不支持工具功能。"
+  },
+  "advanceSettings": {
+    "title": "模型高级设置",
+    "description": "此处包含系统提示词、温度、最大 Token 数等设置。"
+  },
+  "fileSynchronization": {
+    "title": "文件同步到历史记录",
+    "description": "为防止模型的内容覆盖人工编辑内容，该功能会将当前文件状态同步到历史记录。手动编辑文件后使用。"
+  },
+  "serviceProvider": {
+    "title": "服务提供商",
+    "description": "我们支持多个模型服务，您可以在此切换服务提供商。"
+  },
+  "modelList": {
+    "title": "模型列表",
+    "description": "在模型列表的末尾有一个编辑按钮，您可以用它来编辑或更新模型列表以获取最新模型。"
+  },
+  "settings": {
+    "title": "设置",
+    "description": "在开始之前，您需要设置 API 密钥或托管服务器。请先查看“常规设置”以获取 API 密钥或设置本地服务器。"
+  }
+}

@@ -1,6 +1,7 @@
 import React, { useEffect } from 'react';
 import { Modal, Form, Input } from 'antd';
 import { useDispatch, useSelector } from 'react-redux';
+import { useTranslation } from 'react-i18next';
 
 import type { SystemPrompt } from '../../../../types';
 import type { AppDispatch, RootState } from '../../../redux';
@@ -25,6 +26,7 @@ export const SaveSystemPromptModal: React.FC<SaveSystemPromptModalProps> = ({
   }>();
 
   const dispatch = useDispatch<AppDispatch>();
+  const { t } = useTranslation('common');
 
   const { settings, isLoading } = useSelector(
     (state: RootState) => state.settings,
@@ -70,32 +72,38 @@ export const SaveSystemPromptModal: React.FC<SaveSystemPromptModalProps> = ({
 
   return (
     <Modal
-      title='Save System Prompt'
+      title={t('saveSystemPromptModal.title')}
       open={open}
       onCancel={onClose}
       onOk={handleSave}
-      okText='Save'
-      cancelText='Cancel'
+      okText={t('save')}
+      cancelText={t('cancel')}
       loading={isLoading}
     >
       <Form form={form} layout='vertical'>
         <Form.Item
-          label='Prompt Name'
+          label={t('promptName')}
           name='name'
           rules={[
-            { required: true, message: 'Please enter a name for the prompt' },
+            {
+              required: true,
+              message: t('saveSystemPromptModal.promptNameRequired'),
+            },
           ]}
         >
           <Input />
         </Form.Item>
-        <Form.Item label='Description' name='description'>
+        <Form.Item label={t('description')} name='description'>
           <Input.TextArea autoSize={{ minRows: 2, maxRows: 10 }} />
         </Form.Item>
         <Form.Item
-          label='Content'
+          label={t('content')}
           name='content'
           rules={[
-            { required: true, message: 'Please enter the prompt content' },
+            {
+              required: true,
+              message: t('saveSystemPromptModal.contentRequired'),
+            },
           ]}
         >
           <Input.TextArea autoSize={{ minRows: 2, maxRows: 10 }} />

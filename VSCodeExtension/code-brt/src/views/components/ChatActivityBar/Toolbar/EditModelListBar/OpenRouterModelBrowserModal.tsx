@@ -22,6 +22,7 @@ import {
   MinusCircleOutlined,
 } from '@ant-design/icons';
 import { Virtuoso } from 'react-virtuoso';
+import { useTranslation } from 'react-i18next';
 
 import { WebviewContext } from '../../../../WebviewContext';
 import type { OpenRouterModelSettings } from '../../../../../types';
@@ -40,6 +41,7 @@ type OpenRouterModelBrowserModalProps = {
 export const OpenRouterModelBrowserModal: React.FC<
   OpenRouterModelBrowserModalProps
 > = ({ isOpen, onClose, onAddModel, onRemoveModel, openRouterModels }) => {
+  const { t } = useTranslation('common');
   const { callApi } = useContext(WebviewContext);
   const [models, setModels] = useState<OpenRouterModelSettings[]>([]);
   const [filteredModels, setFilteredModels] = useState<
@@ -130,7 +132,7 @@ export const OpenRouterModelBrowserModal: React.FC<
 
   const modalFooter = [
     <Button key='back' onClick={onClose}>
-      Cancel
+      {t('cancel')}
     </Button>,
   ];
 
@@ -145,7 +147,7 @@ export const OpenRouterModelBrowserModal: React.FC<
           icon={<PlusCircleOutlined />}
           onClick={() => onAddModel(model)}
         >
-          Add Model
+          {t('addModel')}
         </Button>
       );
     }
@@ -157,16 +159,16 @@ export const OpenRouterModelBrowserModal: React.FC<
         icon={<MinusCircleOutlined />}
         onClick={() => onRemoveModel(targetModel.uuid)}
       >
-        Remove Model
+        {t('removeModel')}
       </Button>
     );
   };
 
   return (
     <Modal
-      title={
-        'Browse OpenRouter Models (Current Show: ' + filteredModels.length + ')'
-      }
+      title={t('openRouterModelBrowserModal.browseModelsTitle', {
+        count: filteredModels.length,
+      })}
       loading={loading}
       open={isOpen}
       onCancel={onClose}
@@ -177,7 +179,7 @@ export const OpenRouterModelBrowserModal: React.FC<
         <Flex style={{ width: '100%' }} wrap={'wrap'} gap={10}>
           <Space wrap={true}>
             <Input
-              placeholder='Search models by name or ID'
+              placeholder={t('openRouterModelBrowserModal.searchModels')}
               prefix={<SearchOutlined />}
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
@@ -188,12 +190,14 @@ export const OpenRouterModelBrowserModal: React.FC<
                 setFilters((prev) => ({ ...prev, isFree: e.target.checked }))
               }
             >
-              <Text type='secondary'>Free</Text>
+              <Text type='secondary'>
+                {t('openRouterModelBrowserModal.free')}
+              </Text>
             </Checkbox>
           </Space>
           <Space wrap={true}>
             <Select
-              placeholder='Modality'
+              placeholder={t('openRouterModelBrowserModal.modality')}
               style={{ width: 150 }}
               allowClear
               onChange={(value) =>
@@ -208,7 +212,7 @@ export const OpenRouterModelBrowserModal: React.FC<
               ].map((modality) => ({ value: modality, label: modality }))}
             />
             <Select
-              placeholder='Instruct Type'
+              placeholder={t('openRouterModelBrowserModal.instructType')}
               style={{ width: 150 }}
               allowClear
               onChange={(value) =>
@@ -223,7 +227,7 @@ export const OpenRouterModelBrowserModal: React.FC<
               ].map((type) => ({ value: type, label: type }))}
             />
             <Select
-              placeholder='Min Context Length'
+              placeholder={t('openRouterModelBrowserModal.minContextLength')}
               style={{ width: '100%' }}
               allowClear
               onChange={(value) =>
@@ -265,23 +269,36 @@ export const OpenRouterModelBrowserModal: React.FC<
                       <Space wrap={true}>
                         <Tag color='blue'>{model.architecture.modality}</Tag>
                         <Tag color='green'>
-                          {model.architecture.instruct_type || 'N/A'}
+                          {model.architecture.instruct_type ||
+                            t('openRouterModelBrowserModal.notApplicable')}
                         </Tag>
                       </Space>
                     </Space>
                   </Col>
                   <Col xs={24} sm={12} style={{ marginBottom: 10 }}>
                     <Space direction={'vertical'}>
-                      <Text>{`Max ${formatToken(model.context_length)} tokens`}</Text>
                       <Text>
-                        <Tooltip title='The price for prompt'>
+                        {t('openRouterModelBrowserModal.maxTokens', {
+                          token: formatToken(model.context_length),
+                        })}
+                      </Text>
+                      <Text>
+                        <Tooltip
+                          title={t(
+                            'openRouterModelBrowserModal.priceForPrompt',
+                          )}
+                        >
                           {model.pricing.prompt}
                         </Tooltip>{' '}
                         /{' '}
-                        <Tooltip title='The price for completion'>
+                        <Tooltip
+                          title={t(
+                            'openRouterModelBrowserModal.priceForCompletion',
+                          )}
+                        >
                           {model.pricing.completion}
                         </Tooltip>{' '}
-                        $/M tokens
+                        {t('openRouterModelBrowserModal.perMillionTokens')}
                       </Text>
                       {renderAddOrRemoveButton(model)}
                     </Space>

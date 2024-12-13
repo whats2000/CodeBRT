@@ -1,6 +1,8 @@
+import { v4 as uuidV4 } from 'uuid';
 import React, { useEffect, useRef, useState } from 'react';
 import { Drawer } from 'antd';
 import { useDispatch, useSelector } from 'react-redux';
+import { useTranslation } from 'react-i18next';
 
 import type {
   CustomModelSettings,
@@ -13,7 +15,6 @@ import { CustomModelForm } from './EditModelListBar/CustomModelForm';
 import { updateAvailableModels } from '../../../redux/slices/modelServiceSlice';
 import { updateAndSaveSetting } from '../../../redux/slices/settingsSlice';
 import { OpenRouterModelForm } from './EditModelListBar/OpenRouterModelForm';
-import { v4 as uuidV4 } from 'uuid';
 
 type EditModelListBarProps = {
   isOpen: boolean;
@@ -24,6 +25,7 @@ export const EditModelListBar: React.FC<EditModelListBarProps> = ({
   isOpen,
   onClose,
 }) => {
+  const { t } = useTranslation('common');
   const [customModels, setCustomModels] = useState<CustomModelSettings[]>([]);
   const [openRouterModels, setOpenRouterModels] = useState<
     OpenRouterModelSettings[]
@@ -160,7 +162,7 @@ export const EditModelListBar: React.FC<EditModelListBarProps> = ({
 
   return (
     <Drawer
-      title='Edit Available Models'
+      title={t('toolBar.editModelList')}
       placement='right'
       open={isOpen}
       onClose={onClose}

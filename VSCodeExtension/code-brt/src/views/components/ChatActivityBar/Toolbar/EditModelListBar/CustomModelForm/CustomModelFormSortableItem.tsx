@@ -12,6 +12,7 @@ import {
   Typography,
 } from 'antd';
 import { DeleteOutlined, HolderOutlined } from '@ant-design/icons';
+import { useTranslation } from 'react-i18next';
 
 import type { CustomModelSettings } from '../../../../../../types';
 
@@ -32,6 +33,7 @@ type CustomModelSortableItemProps = {
 export const CustomModelSortableItem: React.FC<
   CustomModelSortableItemProps
 > = ({ id, model, onModelChange, onRemoveModel, activeKey, setActiveKey }) => {
+  const { t } = useTranslation('common');
   const {
     attributes,
     listeners,
@@ -65,16 +67,16 @@ export const CustomModelSortableItem: React.FC<
         items={[
           {
             key: id,
-            label: model.name || 'New Model',
+            label: model.name || t('newModel'),
             children: (
               <>
-                <Form.Item label='Name'>
+                <Form.Item label={t('name')}>
                   <Input
                     value={model.name}
                     onChange={(e) => onModelChange(id, 'name', e.target.value)}
                   />
                 </Form.Item>
-                <Form.Item label='API URL'>
+                <Form.Item label={t('customModelFormSortableItem.apiUrl')}>
                   <Input
                     value={model.apiUrl}
                     onChange={(e) =>
@@ -82,7 +84,7 @@ export const CustomModelSortableItem: React.FC<
                     }
                   />
                 </Form.Item>
-                <Form.Item label='API Method'>
+                <Form.Item label={t('customModelFormSortableItem.apiMethod')}>
                   <Select
                     value={model.apiMethod}
                     onChange={(value) => onModelChange(id, 'apiMethod', value)}
@@ -91,7 +93,9 @@ export const CustomModelSortableItem: React.FC<
                     <Select.Option value='POST'>POST</Select.Option>
                   </Select>
                 </Form.Item>
-                <Form.Item label='Text Parameter'>
+                <Form.Item
+                  label={t('customModelFormSortableItem.textParameter')}
+                >
                   <Input
                     value={model.apiTextParam}
                     onChange={(e) =>
@@ -99,7 +103,9 @@ export const CustomModelSortableItem: React.FC<
                     }
                   />
                 </Form.Item>
-                <Form.Item label='Image Parameter'>
+                <Form.Item
+                  label={t('customModelFormSortableItem.imageParameter')}
+                >
                   <Input
                     value={model.apiImageParam}
                     onChange={(e) =>
@@ -107,7 +113,9 @@ export const CustomModelSortableItem: React.FC<
                     }
                   />
                 </Form.Item>
-                <Form.Item label='Query Parameter'>
+                <Form.Item
+                  label={t('customModelFormSortableItem.queryParameter')}
+                >
                   <Input
                     value={model.apiQueryParam}
                     onChange={(e) =>
@@ -115,7 +123,9 @@ export const CustomModelSortableItem: React.FC<
                     }
                   />
                 </Form.Item>
-                <Form.Item label='Include Query in History'>
+                <Form.Item
+                  label={t('customModelFormSortableItem.includeQueryInHistory')}
+                >
                   <Checkbox
                     checked={model.includeQueryInHistory}
                     onChange={(e) =>
@@ -127,7 +137,9 @@ export const CustomModelSortableItem: React.FC<
                     }
                   >
                     <Typography.Text type='secondary'>
-                      Check to append query to history
+                      {t(
+                        'customModelFormSortableItem.checkToAppendQueryToHistory',
+                      )}
                     </Typography.Text>
                   </Checkbox>
                 </Form.Item>

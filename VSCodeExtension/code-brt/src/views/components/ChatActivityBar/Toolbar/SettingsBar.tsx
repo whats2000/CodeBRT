@@ -18,6 +18,7 @@ import {
   Tag,
 } from 'antd';
 import { useDispatch, useSelector } from 'react-redux';
+import { useTranslation } from 'react-i18next';
 
 import type {
   ExtensionSettings,
@@ -33,6 +34,7 @@ import { WebviewContext } from '../../../WebviewContext';
 import type { AppDispatch, RootState } from '../../../redux';
 import {
   saveSettings,
+  updateAndSaveSetting,
   updateLocalSetting,
 } from '../../../redux/slices/settingsSlice';
 import { QuestionCircleOutlined } from '@ant-design/icons';
@@ -50,33 +52,40 @@ const PAID_PLAN_ONLY = ['anthropic', 'openai'];
 const SUPPORTED_OFFLINE = ['ollama', 'gptSoVits'];
 
 // Define the desired order of settings
-const SETTINGS_GROUPS: { title: string; keys: (keyof ExtensionSettings)[] }[] =
-  [
-    {
-      title: 'API Key Settings',
-      keys: [
-        'anthropicApiKey',
-        'openaiApiKey',
-        'geminiApiKey',
-        'cohereApiKey',
-        'groqApiKey',
-        'huggingFaceApiKey',
-        'openRouterApiKey',
-      ],
-    },
-    {
-      title: 'Host Server Settings',
-      keys: ['ollamaClientHost', 'gptSoVitsClientHost'],
-    },
-    {
-      title: 'Theme and Customize',
-      keys: ['themePrimaryColor', 'themeAlgorithm', 'themeBorderRadius'],
-    },
-    {
-      title: 'Other Settings',
-      keys: ['doubleEnterSendMessages', 'retainContextWhenHidden'],
-    },
-  ];
+const SETTINGS_GROUPS: {
+  titleKey: string;
+  title: string;
+  keys: (keyof ExtensionSettings)[];
+}[] = [
+  {
+    title: 'API Key Settings',
+    titleKey: 'apiKeySettings',
+    keys: [
+      'anthropicApiKey',
+      'openaiApiKey',
+      'geminiApiKey',
+      'cohereApiKey',
+      'groqApiKey',
+      'huggingFaceApiKey',
+      'openRouterApiKey',
+    ],
+  },
+  {
+    title: 'Host Server Settings',
+    titleKey: 'hostServerSettings',
+    keys: ['ollamaClientHost', 'gptSoVitsClientHost'],
+  },
+  {
+    title: 'Theme and Customize',
+    titleKey: 'themeAndCustomize',
+    keys: ['themePrimaryColor', 'themeAlgorithm', 'themeBorderRadius'],
+  },
+  {
+    title: 'Other Settings',
+    titleKey: 'otherSettings',
+    keys: ['language', 'doubleEnterSendMessages', 'retainContextWhenHidden'],
+  },
+];
 
 type SettingSidebarProps = {
   isOpen: boolean;
@@ -93,6 +102,7 @@ export const SettingsBar: React.FC<SettingSidebarProps> = ({
   onClose,
   setTheme,
 }) => {
+  const { t, i18n } = useTranslation('common');
   const { callApi } = useContext(WebviewContext);
 
   const dispatch = useDispatch<AppDispatch>();
@@ -189,7 +199,7 @@ export const SettingsBar: React.FC<SettingSidebarProps> = ({
 
   return (
     <Drawer
-      title='Settings Bar'
+      title={t('toolBar.generalSettings')}
       open={isOpen}
       onClose={handleCloseAndSave}
       placement='left'
@@ -201,17 +211,17 @@ export const SettingsBar: React.FC<SettingSidebarProps> = ({
           href={
             'https://whats2000.github.io/CodeBRT/docs/getting-started/configuration'
           }
-          target={'_blank'}
+          target='_blank'
           icon={<QuestionCircleOutlined />}
           iconPosition={'end'}
         >
-          <Typography.Text type='secondary'>Learn More</Typography.Text>
+          <Typography.Text type='secondary'>{t('learnMore')}</Typography.Text>
         </Button>
       }
     >
       {needsReload && (
         <Alert
-          message='Some settings require a reload to take effect'
+          message={t('settingsBar.settingsReloadRequired')}
           type='warning'
           showIcon
           style={{ marginBottom: 10 }}
@@ -220,8 +230,10 @@ export const SettingsBar: React.FC<SettingSidebarProps> = ({
       <StyledForm layout='vertical'>
         {SETTINGS_GROUPS.map((group) => (
           <div key={group.title}>
-            <Divider orientation={'left'} orientationMargin={0}>
-              <Typography.Text type='secondary'>{group.title}</Typography.Text>
+            <Divider orientation='left' orientationMargin={0}>
+              <Typography.Text type='secondary'>
+                {t(`settingsBar.${group.titleKey}`)}
+              </Typography.Text>
             </Divider>
             {group.keys.map((key) => {
               const value = settings[key];
@@ -229,7 +241,10 @@ export const SettingsBar: React.FC<SettingSidebarProps> = ({
               // Render the form controls based on the key
               if (key === 'themePrimaryColor') {
                 return (
-                  <FormGroup key={key} label={'Theme Primary Color'}>
+                  <FormGroup
+                    key={key}
+                    label={t('settingsBar.themePrimaryColor')}
+                  >
                     <ColorPicker
                       format='hex'
                       defaultValue={value}
@@ -240,7 +255,7 @@ export const SettingsBar: React.FC<SettingSidebarProps> = ({
                 );
               } else if (key === 'themeAlgorithm') {
                 return (
-                  <FormGroup key={key} label={'Theme Algorithm'}>
+                  <FormGroup key={key} label={t('settingsBar.themeAlgorithm')}>
                     <Select
                       mode='multiple'
                       value={
@@ -254,17 +269,17 @@ export const SettingsBar: React.FC<SettingSidebarProps> = ({
                         {
                           key: 'defaultAlgorithm',
                           value: 'defaultAlgorithm',
-                          label: 'Light',
+                          label: t('settingsBar.lightTheme'),
                         },
                         {
                           key: 'darkAlgorithm',
                           value: 'darkAlgorithm',
-                          label: 'Dark',
+                          label: t('settingsBar.darkTheme'),
                         },
                         {
                           key: 'compactAlgorithm',
                           value: 'compactAlgorithm',
-                          label: 'Compact',
+                          label: t('settingsBar.compactTheme'),
                         },
                       ]}
                     />
@@ -272,7 +287,10 @@ export const SettingsBar: React.FC<SettingSidebarProps> = ({
                 );
               } else if (key === 'themeBorderRadius') {
                 return (
-                  <FormGroup key={key} label={'Theme Border Radius'}>
+                  <FormGroup
+                    key={key}
+                    label={t('settingsBar.themeBorderRadius')}
+                  >
                     <Input
                       type='number'
                       value={value}
@@ -286,12 +304,12 @@ export const SettingsBar: React.FC<SettingSidebarProps> = ({
               ) {
                 const label =
                   key === 'doubleEnterSendMessages'
-                    ? 'Send messages with double enter'
-                    : 'Keep the loaded context';
+                    ? t('settingsBar.doubleEnterSendMessagesLabel')
+                    : t('settingsBar.keepLoadedContextLabel');
                 const description =
                   key === 'doubleEnterSendMessages'
-                    ? 'Send messages with double enter'
-                    : 'Costs more RAM but allows faster loading';
+                    ? t('settingsBar.doubleEnterSendMessagesDescription')
+                    : t('settingsBar.keepLoadedContextDescription');
 
                 return (
                   <FormGroup key={key} label={label}>
@@ -326,12 +344,12 @@ export const SettingsBar: React.FC<SettingSidebarProps> = ({
                           <Tooltip
                             title={
                               key.includes('ApiKey')
-                                ? 'Link to the API key page'
-                                : 'Link to the download page'
+                                ? t('settingsBar.apiKeyLinkTooltip')
+                                : t('settingsBar.downloadLinkTooltip')
                             }
                           >
                             <Typography.Link
-                              type={'secondary'}
+                              type='secondary'
                               underline={true}
                               onClick={() =>
                                 openModelServiceLink(
@@ -340,19 +358,19 @@ export const SettingsBar: React.FC<SettingSidebarProps> = ({
                               }
                             >
                               {key.includes('ApiKey')
-                                ? 'Get API Key'
-                                : 'Learn More'}
+                                ? t('settingsBar.getApiKey')
+                                : t('learnMore')}
                             </Typography.Link>
                           </Tooltip>
                         )}
                         {!PAID_PLAN_ONLY.includes(serviceKey) && (
-                          <Tag color={'blue'} style={{ margin: 0 }}>
-                            Free
+                          <Tag color='blue' style={{ margin: 0 }}>
+                            {t('settingsBar.free')}
                           </Tag>
                         )}
                         {SUPPORTED_OFFLINE.includes(serviceKey) && (
-                          <Tag color={'green'} style={{ margin: 0 }}>
-                            Supports Offline
+                          <Tag color='green' style={{ margin: 0 }}>
+                            {t('settingsBar.supportsOffline')}
                           </Tag>
                         )}
                       </Space>
@@ -361,6 +379,23 @@ export const SettingsBar: React.FC<SettingSidebarProps> = ({
                     <Input.Password
                       value={(value as string) || ''}
                       onChange={handleSettingChange(key)}
+                    />
+                  </FormGroup>
+                );
+              } else if (key === 'language') {
+                return (
+                  <FormGroup key={key} label={'Language'}>
+                    <Select
+                      value={value as string}
+                      onSelect={(value) => {
+                        i18n.changeLanguage(value);
+                        dispatch(updateAndSaveSetting({ key, value }));
+                      }}
+                      options={[
+                        { key: 'en-US', value: 'en-US', label: 'English' },
+                        { key: 'zh-TW', value: 'zh-TW', label: '繁體中文' },
+                        { key: 'zh-CN', value: 'zh-CN', label: '简体中文' },
+                      ]}
                     />
                   </FormGroup>
                 );
@@ -386,10 +421,10 @@ export const SettingsBar: React.FC<SettingSidebarProps> = ({
         onClick={resetTheme}
         style={{ width: '100%' }}
       >
-        Reset Theme
+        {t('settingsBar.resetTheme')}
       </Button>
       <Button onClick={handleCloseAndSave} style={{ marginTop: 20 }} block>
-        Close and Save
+        {t('closeAndSave')}
       </Button>
     </Drawer>
   );

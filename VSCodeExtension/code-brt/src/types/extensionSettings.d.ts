@@ -6,6 +6,7 @@ import {
 } from '../services/voice/types';
 import { ModelServiceType } from '../services/languageModel/types';
 import { NonWorkspaceToolType } from '../services/tools/types';
+import { SupportedLanguage } from '../locales/i18n';
 
 /**
  * Represents the available theme algorithms for the Ant Design theme.
@@ -246,6 +247,7 @@ export type ExtensionSettingsWorkspace = {
  * @property hljsTheme - The theme for the code highlighter
  */
 export type ExtensionSettingsCrossDevice = {
+  language: SupportedLanguage;
   anthropicApiKey: string;
   cohereApiKey: string;
   geminiApiKey: string;

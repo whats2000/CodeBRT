@@ -5,6 +5,7 @@ import { Drawer, List, Typography, Button, theme, Flex } from 'antd';
 import { FilterOutlined } from '@ant-design/icons';
 import { useDispatch, useSelector } from 'react-redux';
 import { differenceInDays, isBefore, isToday, isYesterday } from 'date-fns';
+import { useTranslation } from 'react-i18next';
 
 import type { ConversationHistoryIndexList } from '../../../../types';
 import type { AppDispatch, RootState } from '../../../redux';
@@ -51,6 +52,7 @@ type HistorySidebarProps = {
 export const HistorySidebar = React.memo<HistorySidebarProps>(
   ({ isOpen, onClose }) => {
     const { callApi } = useContext(WebviewContext);
+    const { t } = useTranslation('common');
 
     const dispatch = useDispatch<AppDispatch>();
     const conversationHistory = useSelector(
@@ -182,17 +184,17 @@ export const HistorySidebar = React.memo<HistorySidebarProps>(
     // Helper function to get the time period for a date
     const getTimePeriod = (date: Date, now: Date): string => {
       if (isToday(date) || isBefore(now, date)) {
-        return 'Today';
+        return t('historySidebar.today');
       } else if (isYesterday(date)) {
-        return 'Yesterday';
+        return t('historySidebar.yesterday');
       } else {
         const daysDifference = differenceInDays(now, date);
         if (daysDifference <= 7) {
-          return 'Last 7 Days';
+          return t('historySidebar.last7Days');
         } else if (daysDifference <= 30) {
-          return 'Last 1 Month';
+          return t('historySidebar.last1Month');
         } else {
-          return 'Earlier';
+          return t('HistorySidebar.earlier');
         }
       }
     };
@@ -205,9 +207,11 @@ export const HistorySidebar = React.memo<HistorySidebarProps>(
       <StyledDrawer
         title={
           <Flex justify={'space-between'} align={'center'}>
-            <Typography.Text>Chat History</Typography.Text>
+            <Typography.Text>
+              {t('historySidebar.chatHistoryTitle')}
+            </Typography.Text>
             <Tooltip
-              title={showFilter ? 'Hide Filter' : 'Show Filter'}
+              title={showFilter ? t('hideFilter') : t('showFilter')}
               placement={'right'}
             >
               <Button
@@ -225,7 +229,9 @@ export const HistorySidebar = React.memo<HistorySidebarProps>(
       >
         {Object.keys(historyIndexes).length === 0 ? (
           <NoHistoryMessageContainer>
-            <Typography.Text>Nothing Currently</Typography.Text>
+            <Typography.Text>
+              {t('historySidebar.nothingCurrently')}
+            </Typography.Text>
           </NoHistoryMessageContainer>
         ) : (
           <>
@@ -242,7 +248,7 @@ export const HistorySidebar = React.memo<HistorySidebarProps>(
                       value: item,
                       label: item,
                     }))}
-                  placeholder={'Filter by tags'}
+                  placeholder={t('filterByTags')}
                   onChange={(newTags) => dispatch(setFilterTags(newTags))}
                 />
               </div>
