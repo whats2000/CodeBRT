@@ -1,6 +1,8 @@
 import React, { useContext, useEffect, useRef, useState } from 'react';
 import { Collapse, Tag, Descriptions, Typography, Space, Button } from 'antd';
 import { useDispatch, useSelector } from 'react-redux';
+import ReactMarkdown from 'react-markdown';
+import { useTranslation } from 'react-i18next';
 
 import type { ConversationEntry } from '../../../../types';
 import { ToolStatusBlock } from '../../common/ToolStatusBlock';
@@ -11,6 +13,7 @@ import {
 } from '../../../redux/slices/conversationSlice';
 import type { AppDispatch, RootState } from '../../../redux';
 import { WebviewContext } from '../../../WebviewContext';
+import { RendererCode } from '../../common/RenderCode';
 
 const { Panel } = Collapse;
 
@@ -25,6 +28,7 @@ export const ToolResponseContainer: React.FC<ToolResponseContainerProps> = ({
   toolStatus,
   showActionButtons = true,
 }) => {
+  const { t } = useTranslation('common');
   const { callApi } = useContext(WebviewContext);
 
   const dispatch = useDispatch<AppDispatch>();
@@ -132,14 +136,18 @@ export const ToolResponseContainer: React.FC<ToolResponseContainerProps> = ({
           {response.status === 'rejectByUser' ? (
             <Space direction={'vertical'}>
               <div>
-                <Tag color='warning'>Feedback From User</Tag>
+                <Tag color='warning'>
+                  {t('toolResponseContainer.feedbackFromUser')}
+                </Tag>
                 <Typography.Text type='secondary'>
                   {new Date(response.create_time).toLocaleString()}
                 </Typography.Text>
               </div>
               <Typography.Paragraph>
                 {typeof response.result === 'string' ? (
-                  response.result
+                  <ReactMarkdown components={RendererCode}>
+                    {response.result}
+                  </ReactMarkdown>
                 ) : (
                   <pre>{JSON.stringify(response.result, null, 2)}</pre>
                 )}
@@ -189,7 +197,7 @@ export const ToolResponseContainer: React.FC<ToolResponseContainerProps> = ({
                 onClick={() => onContinue(entry)}
                 disabled={isRollingBack}
               >
-                Continue
+                {t('toolResponseContainer.continue')}
               </Button>
               <Button
                 type='default'
@@ -198,7 +206,7 @@ export const ToolResponseContainer: React.FC<ToolResponseContainerProps> = ({
                 disabled={isRollingBack}
                 loading={isRollingBack}
               >
-                Rollback
+                {t('toolResponseContainer.rollback')}
               </Button>
             </Space>
           )}
@@ -209,10 +217,10 @@ export const ToolResponseContainer: React.FC<ToolResponseContainerProps> = ({
                 ghost={true}
                 onClick={() => onContinue(entry)}
               >
-                Fix it
+                {t('toolResponseContainer.fixIt')}
               </Button>
               <Button type='default' danger onClick={() => onRerun(entry)}>
-                Retry
+                {t('toolResponseContainer.retry')}
               </Button>
             </Space>
           )}

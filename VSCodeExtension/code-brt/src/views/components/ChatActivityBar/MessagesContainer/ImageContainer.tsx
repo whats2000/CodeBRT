@@ -1,6 +1,7 @@
 import React, { useContext, useEffect, useState } from 'react';
 import { Card, Flex, Image as ImageComponent, Typography } from 'antd';
 import { WarningOutlined } from '@ant-design/icons';
+import { useTranslation } from 'react-i18next';
 
 import type { ConversationEntry } from '../../../../types';
 import { WebviewContext } from '../../../WebviewContext';
@@ -10,6 +11,7 @@ type ImageContainerProps = {
 };
 
 export const ImageContainer: React.FC<ImageContainerProps> = ({ entry }) => {
+  const { t } = useTranslation('common');
   const { callApi } = useContext(WebviewContext);
 
   const [imageUrls, setImageUrls] = useState<Record<string, string>>({});
@@ -56,8 +58,7 @@ export const ImageContainer: React.FC<ImageContainerProps> = ({ entry }) => {
                 <Card.Meta
                   description={
                     <Typography.Text type={'warning'}>
-                      <WarningOutlined /> Referenced image not found, might have
-                      been deleted.
+                      <WarningOutlined /> {t('imageContainer.imageNotFound')}
                     </Typography.Text>
                   }
                 />

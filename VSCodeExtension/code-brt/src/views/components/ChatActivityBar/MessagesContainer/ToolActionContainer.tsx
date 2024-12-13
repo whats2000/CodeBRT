@@ -21,6 +21,7 @@ import {
   LinkOutlined,
   PlaySquareOutlined,
 } from '@ant-design/icons';
+import { useTranslation } from 'react-i18next';
 
 import type {
   ConversationEntry,
@@ -52,15 +53,6 @@ const MAP_TOOL_NAME_TO_ICON: {
   urlFetcher: <LinkOutlined />,
 };
 
-const REJECTION_REASONS = [
-  'Today is ' + new Date().toLocaleDateString(),
-  'Incorrect parameters',
-  'Select wrong tool',
-  'Unnecessary tool usage',
-  'Security concern',
-  'Other',
-];
-
 type ToolActionContainerProps = {
   entry: ConversationEntry;
   showActionButtons?: boolean;
@@ -69,6 +61,7 @@ type ToolActionContainerProps = {
 
 export const ToolActionContainer = React.memo<ToolActionContainerProps>(
   ({ entry, showActionButtons, tempIdRef }) => {
+    const { t } = useTranslation('common');
     const { callApi } = useContext(WebviewContext);
 
     const dispatch = useDispatch<AppDispatch>();
@@ -79,6 +72,15 @@ export const ToolActionContainer = React.memo<ToolActionContainerProps>(
     const { activeModelService } = useSelector(
       (state: RootState) => state.modelService,
     );
+
+    const REJECTION_REASONS = [
+      'today',
+      'incorrectParameters',
+      'selectWrongTool',
+      'unnecessaryToolUsage',
+      'securityConcern',
+      'other',
+    ];
 
     const shouldShowActionButtons =
       showActionButtons &&
@@ -101,12 +103,27 @@ export const ToolActionContainer = React.memo<ToolActionContainerProps>(
         return;
       }
 
+      // We currently always use English for the rejection reasons
+      const reasonText =
+        reason === 'today'
+          ? t('toolActionContainer.rejectionReasons.today', {
+              date: new Date().toLocaleDateString(),
+              lng: 'en-US',
+            })
+          : t(`toolActionContainer.rejectionReasons.${reason}`, {
+              lng: 'en-US',
+            });
+
       dispatch(
         processToolCall({
           toolCall: entry.toolCalls?.[0],
           entry,
           activeModelService,
-          rejectByUserMessage: `I reject the ${entry.toolCalls?.[0].toolName} tool call that was made. Reason: ${reason}`,
+          rejectByUserMessage: t('toolActionContainer.rejectByUserMessage', {
+            toolName: entry.toolCalls?.[0].toolName,
+            reason: reasonText,
+            lng: 'en-US',
+          }),
           tempIdRef,
         }),
       );
@@ -115,7 +132,12 @@ export const ToolActionContainer = React.memo<ToolActionContainerProps>(
     const rejectionMenu: Required<MenuProps>['items'][number][] =
       REJECTION_REASONS.map((reason) => ({
         key: reason,
-        label: reason,
+        label:
+          reason === 'today'
+            ? t('toolActionContainer.rejectionReasons.today', {
+                date: new Date().toLocaleDateString(),
+              })
+            : t(`toolActionContainer.rejectionReasons.${reason}`),
         onClick: () => onReject(reason, entry),
       }));
 
@@ -219,11 +241,11 @@ export const ToolActionContainer = React.memo<ToolActionContainerProps>(
                   onClick={() => onApprove(entry)}
                   loading={isProcessing}
                 >
-                  Approve
+                  {t('toolActionContainer.approve')}
                 </Button>
                 <Dropdown menu={{ items: rejectionMenu }} trigger={['hover']}>
                   <Button type='default' danger>
-                    Reject
+                    {t('toolActionContainer.reject')}
                   </Button>
                 </Dropdown>
               </Space>
@@ -237,7 +259,7 @@ export const ToolActionContainer = React.memo<ToolActionContainerProps>(
                   block={true}
                   ghost={true}
                 >
-                  Run Command
+                  {t('toolActionContainer.runCommand')}
                 </Button>
               )}
           </Space>

@@ -241,5 +241,29 @@
     "queryParameter": "Query Parameter",
     "includeQueryInHistory": "Include Query in History",
     "checkToAppendQueryToHistory": "Check to append user's latest query to history"
+  },
+  "imageContainer": {
+    "imageNotFound": "Referenced image not found, might have been deleted."
+  },
+  "toolActionContainer": {
+    "approve": "Approve",
+    "reject": "Reject",
+    "runCommand": "Run Command",
+    "rejectByUserMessage": "I reject the {{toolName}} tool call request that you made. \n**Reason**: \n{{reason}}",
+    "rejectionReasons": {
+      "today": "Today is {{date}}",
+      "incorrectParameters": "Some of your request parameters are incorrect",
+      "selectWrongTool": "You selected the wrong tool, try another one",
+      "unnecessaryToolUsage": "This tool is not necessary for the current task",
+      "securityConcern": "The tool you selected may have security concerns or risks",
+      "other": "Other reasons"
+    }
+  },
+  "toolResponseContainer": {
+    "feedbackFromUser": "Feedback from user",
+    "continue": "Continue",
+    "rollback": "Rollback",
+    "fixIt": "Fix It",
+    "retry": "Retry"
   }
 }

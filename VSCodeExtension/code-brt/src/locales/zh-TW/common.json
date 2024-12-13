@@ -241,5 +241,29 @@
     "queryParameter": "查詢參數",
     "includeQueryInHistory": "在歷史紀錄中包含查詢",
     "checkToAppendQueryToHistory": "選取以將用戶最新信息附加到歷史紀錄"
+  },
+  "imageContainer": {
+    "imageNotFound": "附加的圖片未找到，可能已被刪除。"
+  },
+  "toolActionContainer": {
+    "approve": "批准",
+    "reject": "拒絕",
+    "runCommand": "執行命令",
+    "rejectByUserMessage": "我拒絕了您發出的 {{toolName}} 工具調用請求。\n**原因**：\n{{reason}}",
+    "rejectionReasons": {
+      "today": "今天是 {{date}}",
+      "incorrectParameters": "您的一些請求參數不正確",
+      "selectWrongTool": "您選擇了錯誤的工具，請嘗試其他工具",
+      "unnecessaryToolUsage": "當前任務不需要此工具",
+      "securityConcern": "您選擇的工具可能存在安全性問題或風險",
+      "other": "其他原因"
+    }
+  },
+  "toolResponseContainer": {
+    "feedbackFromUser": "用戶反饋",
+    "continue": "繼續",
+    "rollback": "回滾",
+    "fixIt": "修正",
+    "retry": "重試"
   }
 }
