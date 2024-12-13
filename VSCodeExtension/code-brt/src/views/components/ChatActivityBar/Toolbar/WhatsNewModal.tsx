@@ -17,6 +17,13 @@ export const WhatsNewModal: React.FC<WhatsNewModalProps> = ({
       title="What's New"
       footer={<Button onClick={onClose}>Close</Button>}
     >
+      <p>CodeBRT 0.4.7:</p>
+      <ul>
+        <li>
+          Now CodeBRT will support two new language localizations: Traditional
+          Chinese and Simplified Chinese
+        </li>
+      </ul>
       <p>CodeBRT 0.4.6:</p>
       <ul>
         <li>Fixed can not save some settings when the workspace is not open</li>
@@ -38,14 +45,6 @@ export const WhatsNewModal: React.FC<WhatsNewModalProps> = ({
       <ul>
         <li>Add more languages for code completion</li>
         <li>Fix the update note name</li>
-      </ul>
-      <p>CodeBRT 0.4.3:</p>
-      <ul>
-        <li>Fixed save version for a file that is not exist in file system</li>
-        <li>
-          Fix swap model service while fetching the model list will save the
-          wrong model list
-        </li>
       </ul>
     </Modal>
   );
