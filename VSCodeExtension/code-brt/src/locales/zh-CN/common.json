@@ -187,10 +187,25 @@
     "fetchLatestModels": "获取最新的可用模型",
     "addModel": "添加模型"
   },
-   "openRouterModelForm": {
+  "openRouterModelForm": {
     "browseAvailableModels": "浏览可用模型",
     "addModelManually": "手动添加模型",
-     "modelAlreadyInList": "模型 {{name}} 已经在您的列表中。",
+    "modelAlreadyInList": "模型 {{name}} 已经在您的列表中。",
     "newModel": "新模型"
+  },
+  "openRouterModelBrowserModal": {
+    "browseModelsTitle": "浏览 OpenRouter 模型（当前显示：{{count}}）",
+    "addModel": "添加模型",
+    "removeModel": "移除模型",
+    "searchModels": "按名称或 ID 搜索模型",
+    "free": "免费",
+    "modality": "模态",
+    "instructType": "指令类型",
+    "minContextLength": "最小上下文长度",
+    "notApplicable": "不适用",
+    "maxTokens": "最大 {{token}} tokens",
+    "priceForPrompt": "提示的价格",
+    "priceForCompletion": "完成的价格",
+    "perMillionTokens": "/M tokens"
   }
 }

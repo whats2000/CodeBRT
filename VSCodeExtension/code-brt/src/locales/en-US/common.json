@@ -190,7 +190,22 @@
   "openRouterModelForm": {
     "browseAvailableModels": "Browse Available Models",
     "addModelManually": "Add Model Manually",
-     "modelAlreadyInList": "Model {{name}} is already in your list.",
+    "modelAlreadyInList": "Model {{name}} is already in your list.",
     "newModel": "New Model"
+  },
+  "openRouterModelBrowserModal": {
+    "browseModelsTitle": "Browse OpenRouter Models (Current Show: {{count}})",
+    "addModel": "Add Model",
+    "removeModel": "Remove Model",
+    "searchModels": "Search models by name or ID",
+    "free": "Free",
+    "modality": "Modality",
+    "instructType": "Instruct Type",
+    "minContextLength": "Min Context Length",
+    "notApplicable": "N/A",
+    "maxTokens": "Max {{token}} tokens",
+    "priceForPrompt": "The price for prompt",
+    "priceForCompletion": "The price for completion",
+    "perMillionTokens": "/M tokens"
   }
 }
