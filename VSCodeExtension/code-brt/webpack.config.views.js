@@ -41,10 +41,6 @@ module.exports = (env, { mode }) => {
           test: /\.css$/,
           use: ['css-loader'],
         },
-        {
-          test: /\.json$/,
-          use: ['json-loader'],
-        },
       ],
     },
     devServer: {

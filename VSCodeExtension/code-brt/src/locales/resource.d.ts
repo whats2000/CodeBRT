@@ -22,13 +22,34 @@ interface Resources {
     "load": "Load",
     "save": "Save",
     "cancel": "Cancel",
+    "success": "Success",
+    "error": "Error",
     "setDefault": "Set Default",
+    "name": "Name",
     "description": "Description",
     "content": "Content",
     "hideFilter": "Hide Filter",
     "showFilter": "Show Filter",
     "searchByName": "Search by name",
     "filterByTags": "Filter by tags",
+    "promptName": "Prompt Name",
+    "model": "Model",
+    "addModel": "Add Model",
+    "removeModel": "Remove Model",
+    "newModel": "New Model",
+    "toolNames": {
+      "executeCommand": "Execute Command",
+      "readFile": "Read File",
+      "writeToFile": "Write To File",
+      "searchFiles": "Search Files",
+      "listFiles": "List Files",
+      "listCodeDefinitionNames": "List Code Definition Names",
+      "inspectSite": "Inspect Site",
+      "askFollowUpQuestion": "Ask Follow Up Question",
+      "attemptCompletion": "Attempt Completion",
+      "webSearch": "Web Search",
+      "urlFetcher": "URL Fetcher"
+    },
     "toolBar": {
       "generalSettings": "General Settings",
       "voiceSettings": "Voice Settings",
@@ -94,7 +115,7 @@ interface Resources {
       "selectReferenceVoice": "Select a reference voice",
       "gptSoVitsAdvanceSettings": "GPT-SoVits Advance Settings"
     },
-    "GptSoVitsSettingsBar": {
+    "gptSoVitsSettingsBar": {
       "title": "GPT-SoVits Settings",
       "clientHostLabel": "Client Host",
       "clientHostExample": "(e.g. http://127.0.0.1:9880/)",
@@ -164,13 +185,102 @@ interface Resources {
     },
     "saveSystemPromptModal": {
       "title": "Save System Prompt",
-      "promptName": "Prompt Name",
       "promptNameRequired": "Please enter a name for the prompt",
       "contentRequired": "Please enter the prompt content"
     },
     "loadSystemPromptBar": {
       "title": "Load System Prompt",
       "confirmDelete": "Are you sure you want to delete this system prompt?"
+    },
+    "editPromptForm": {
+      "title": "Edit Prompt",
+      "promptNameRequired": "Please enter a name for the prompt",
+      "contentRequired": "Please enter the prompt content"
+    },
+    "tags": {
+      "enterOrSelectTag": "Enter or select tag",
+      "addTag": "New Tag"
+    },
+    "modelForm": {
+      "removeOutdatedModelsNotice": "Notice: This will also remove the outdated models from the list",
+      "fetchOllamaModels": "Fetch available models from host server",
+      "fetchLatestModels": "Fetch Latest Available Models"
+    },
+    "openRouterModelForm": {
+      "browseAvailableModels": "Browse Available Models",
+      "addModelManually": "Add Model Manually",
+      "modelAlreadyInList": "Model {{name}} is already in your list."
+    },
+    "openRouterModelBrowserModal": {
+      "browseModelsTitle": "Browse OpenRouter Models (Current Show: {{count}})",
+      "searchModels": "Search models by name or ID",
+      "free": "Free",
+      "modality": "Modality",
+      "instructType": "Instruct Type",
+      "minContextLength": "Min Context Length",
+      "notApplicable": "N/A",
+      "maxTokens": "Max {{token}} tokens",
+      "priceForPrompt": "The price for prompt",
+      "priceForCompletion": "The price for completion",
+      "perMillionTokens": "/M tokens"
+    },
+    "openRouterModelFormSortableItem": {
+      "basicInformation": "Basic Information",
+      "modelId": "Model ID",
+      "modelIdTooltip": "The model ID will usually be in the format of <organization>/<model-name>",
+      "modelIdPlaceholder": "e.g., openai/gpt-4o-mini",
+      "nameTooltip": "What ever you want to call the model",
+      "namePlaceholder": "Friendly name for the model",
+      "contextLength": "Context Length",
+      "contextLengthTooltip": "Maximum number of tokens",
+      "contextLengthPlaceholder": "Maximum context length",
+      "pricingInformation": "Pricing Information",
+      "promptPrice": "Prompt Price",
+      "promptPricePlaceholder": "Price per 1M tokens for prompts",
+      "completionPrice": "Completion Price",
+      "completionPricePlaceholder": "Price per 1M tokens for completions",
+      "imagePrice": "Image Price",
+      "imagePricePlaceholder": "Price for image processing",
+      "providerInformation": "Provider Information",
+      "providerContextLengthTooltip": "Maximum number of tokens the model can process",
+      "isModerated": "Is Moderated",
+      "isModeratedTooltip": "Whether the model has content moderation",
+      "moderationStatus": "Moderation status",
+      "notSpecified": "Not Specified",
+      "newOpenRouterModel": "New OpenRouter Model"
+    },
+    "customModelFormSortableItem": {
+      "apiUrl": "API URL",
+      "apiMethod": "API Method",
+      "textParameter": "Text Parameter",
+      "imageParameter": "Image Parameter",
+      "queryParameter": "Query Parameter",
+      "includeQueryInHistory": "Include Query in History",
+      "checkToAppendQueryToHistory": "Check to append user's latest query to history"
+    },
+    "imageContainer": {
+      "imageNotFound": "Referenced image not found, might have been deleted."
+    },
+    "toolActionContainer": {
+      "approve": "Approve",
+      "reject": "Reject",
+      "runCommand": "Run Command",
+      "rejectByUserMessage": "I reject the {{toolName}} tool call request that you made. \n**Reason**: \n{{reason}}",
+      "rejectionReasons": {
+        "today": "Today is {{date}}",
+        "incorrectParameters": "Some of your request parameters are incorrect",
+        "selectWrongTool": "You selected the wrong tool, try another one",
+        "unnecessaryToolUsage": "This tool is not necessary for the current task",
+        "securityConcern": "The tool you selected may have security concerns or risks",
+        "other": "Other reasons"
+      }
+    },
+    "toolResponseContainer": {
+      "feedbackFromUser": "Feedback from user",
+      "continue": "Continue",
+      "rollback": "Rollback",
+      "fixIt": "Fix It",
+      "retry": "Retry"
     }
   },
   "userGuildTours": {
