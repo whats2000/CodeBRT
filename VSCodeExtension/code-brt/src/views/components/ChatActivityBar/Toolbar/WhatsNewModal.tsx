@@ -17,7 +17,7 @@ export const WhatsNewModal: React.FC<WhatsNewModalProps> = ({
       title="What's New"
       footer={<Button onClick={onClose}>Close</Button>}
     >
-      <p>CodeBRT 0.4.5:</p>
+      <p>CodeBRT 0.4.6:</p>
       <ul>
         <li>Fixed can not save some settings when the workspace is not open</li>
         <li>
@@ -29,6 +29,10 @@ export const WhatsNewModal: React.FC<WhatsNewModalProps> = ({
           inline code completion
         </li>
         <li>Add a send to chat at menu when select text in editor</li>
+        <li>
+          Fix the Gemini response string may contain `\"` and "\r\n" that will
+          break the code when write to file
+        </li>
       </ul>
       <p>CodeBRT 0.4.4:</p>
       <ul>
