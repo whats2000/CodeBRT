@@ -559,7 +559,7 @@ export class GeminiService extends AbstractLanguageModelService {
         conversationHistory.push({
           // As the get response might be invoke by handleToolResponse, the role should be function in this case
           // Otherwise, the role should be user
-          role: queryParts[queryParts.length - 1].functionResponse ? 'function' : 'user',
+          role: queryParts[0].functionResponse ? 'function' : 'user',
           parts: queryParts,
         });
         conversationHistory.push({
