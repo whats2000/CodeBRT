@@ -93,8 +93,16 @@ const readNotebookContent = async (
         let outputSection = '';
         if (includeOutputs && cellType === 'CODE' && Array.isArray(cell.outputs)) {
           const outputs = cell.outputs.map((output: any, i: number) => {
-            const outputData = output.text || output.data?.['text/plain'] || '[NO OUTPUT]';
-            return `  - OUTPUT ${i + 1}:\n    ${Array.isArray(outputData) ? outputData.join('') : outputData}`;
+            // Capture text outputs or errors
+            const outputText = output.text
+              || output.data?.['text/plain']
+              || output.traceback?.join('\n') // For error traceback
+              || '[NO OUTPUT]';
+
+            const outputType = output.output_type?.toUpperCase() || 'UNKNOWN';
+            return `  - OUTPUT ${i + 1} (${outputType}):\n    ${
+              Array.isArray(outputText) ? outputText.join('') : outputText
+            }`;
           });
           outputSection = outputs.length > 0 ? `\nOutputs:\n${outputs.join('\n')}` : '\nOutputs:\n[NO OUTPUTS]';
         }
