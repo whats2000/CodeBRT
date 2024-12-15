@@ -54,18 +54,52 @@ const readDocxContent = async (
 // Helper function to read IPYNB content
 const readNotebookContent = async (
   filePath: string,
+  options = {
+    maxCells: undefined,
+    includeOutputs: true,
+    trimSource: false,
+    trimLength: 1024,
+  }
 ): Promise<{
   status: 'success' | 'error';
   message: string;
 }> => {
+  const { maxCells, includeOutputs, trimSource, trimLength = 500 } = options;
+
   try {
     const notebookJson = await fs.readFile(filePath, 'utf-8');
     const notebook = JSON.parse(notebookJson);
-    const notebookContent = notebook.cells
+
+    // Safely parse notebook cells
+    const cells = Array.isArray(notebook.cells) ? notebook.cells : [];
+    const limitedCells = maxCells ? cells.slice(0, maxCells) : cells;
+
+    // Process each cell
+    const notebookContent = limitedCells
       .map((cell: any, index: number) => {
-        const cellType = cell.cell_type.toUpperCase();
-        const source = cell.source.join('');
-        return `[CELL ${index + 1}](${cellType}):\n${source}\n`;
+        const cellType = cell.cell_type?.toUpperCase() || 'UNKNOWN';
+
+        // Process cell source
+        let source =
+          Array.isArray(cell.source) && cell.source.length > 0
+            ? cell.source.join('')
+            : '[EMPTY CELL]';
+
+        // Trim source if needed
+        if (trimSource && source.length > trimLength) {
+          source = source.slice(0, trimLength) + '... [TRIMMED]';
+        }
+
+        let outputSection = '';
+        if (includeOutputs && cellType === 'CODE' && Array.isArray(cell.outputs)) {
+          const outputs = cell.outputs.map((output: any, i: number) => {
+            const outputData = output.text || output.data?.['text/plain'] || '[NO OUTPUT]';
+            return `  - OUTPUT ${i + 1}:\n    ${Array.isArray(outputData) ? outputData.join('') : outputData}`;
+          });
+          outputSection = outputs.length > 0 ? `\nOutputs:\n${outputs.join('\n')}` : '\nOutputs:\n[NO OUTPUTS]';
+        }
+
+        return `[CELL ${index + 1}] (${cellType}):\n${source}${outputSection}\n`;
       })
       .join('\n---\n');
 
@@ -76,7 +110,9 @@ const readNotebookContent = async (
   } catch (error) {
     return {
       status: 'error',
-      message: `Failed to read IPYNB file: ${error instanceof Error ? error.message : 'Unknown error'}`,
+      message: `Failed to read IPYNB file: ${
+        error instanceof Error ? error.message : 'Unknown error'
+      }`,
     };
   }
 };
