@@ -6,7 +6,7 @@ We are committed to maintaining the security of CodeBRT. Below is the list of ve
 
 | Version | Supported          |
 |---------|--------------------|
-| 0.4.7   | :white_check_mark: |
+| 0.4.8   | :white_check_mark: |
 | < 0.4.7 | :x:                |
 
 ## Reporting a Vulnerability
