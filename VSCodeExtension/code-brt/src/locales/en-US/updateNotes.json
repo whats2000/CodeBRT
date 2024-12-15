@@ -2,9 +2,11 @@
   "title": "What's New",
   "notes": [
     {
-      "version": "0.4.7",
+      "version": "0.4.8",
       "notes": [
-        "Now CodeBRT will support two new language localizations: Traditional Chinese and Simplified Chinese"
+        "Add: Now CodeBRT will support two new language localizations: Traditional Chinese and Simplified Chinese",
+        "Fix: Fix the Gemini response string may contain `\\'` that will break the code when write to file",
+        "Fix: Fix the response feedback by function take incorrect role in Gemini"
       ]
     },
     {

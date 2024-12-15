@@ -526,16 +526,26 @@ export class GeminiService extends AbstractLanguageModelService {
 
           const content = toolCall.parameters.content;
 
+          // FIXME: This is a temporary fix for the issue where the model adds \r at the end of each line
           // Fix the end with \r at each line as the model tends to add it even not at the end of the file
           if (content && typeof content === 'string') {
             toolCall.parameters.content = content.replace(/\\r\n/g, '\n');
           }
 
+          // FIXME: This is a temporary fix for the issue where the model adds additional escape characters sometimes
           // We might need to replace `\"` with `"` as the escape character is not needed when writing to file
           if (content && typeof content === 'string') {
             toolCall.parameters.content = toolCall.parameters.content.replace(
               /\\"/g,
               '"',
+            );
+          }
+
+          // Also for `\'` with `'`
+          if (content && typeof content === 'string') {
+            toolCall.parameters.content = toolCall.parameters.content.replace(
+              /\\'/g,
+              "'",
             );
           }
 
@@ -547,7 +557,9 @@ export class GeminiService extends AbstractLanguageModelService {
 
         // Otherwise, add the tool call feedback to the conversation history and retry
         conversationHistory.push({
-          role: 'user',
+          // As the get response might be invoke by handleToolResponse, the role should be function in this case
+          // Otherwise, the role should be user
+          role: queryParts[queryParts.length - 1].functionResponse ? 'function' : 'user',
           parts: queryParts,
         });
         conversationHistory.push({
