@@ -95,6 +95,7 @@ Here’s an outline of the upcoming features and improvements for CodeBRT:
 - [ ] Auto-debugging
 - [ ] Local advanced data analysis
 - [x] Localization support for Traditional Chinese/Simplified Chinese
+- [ ] Model Context Protocol Support (MCP) <- **In Progress**
 
 ### Version 1.0 (Stable Release)
 
