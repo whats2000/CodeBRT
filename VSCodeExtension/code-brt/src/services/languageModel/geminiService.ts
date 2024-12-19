@@ -549,6 +549,22 @@ export class GeminiService extends AbstractLanguageModelService {
             );
           }
 
+          // Also for `\\n`, `\\r`, `\\t` with `\n`, `\r`, `\t`
+          if (content && typeof content === 'string') {
+            toolCall.parameters.content = toolCall.parameters.content.replace(
+              /\\\\n/g,
+              '\\n',
+            );
+            toolCall.parameters.content = toolCall.parameters.content.replace(
+              /\\\\r/g,
+              '\\r',
+            );
+            toolCall.parameters.content = toolCall.parameters.content.replace(
+              /\\\\t/g,
+              '\\t',
+            );
+          }
+
           return {
             textResponse: responseText,
             toolCall,
