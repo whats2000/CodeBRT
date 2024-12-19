@@ -54,7 +54,7 @@
   },
   "devDependencies": {
     "@ant-design/icons": "^5.5.2",
-    "@anthropic-ai/sdk": "^0.32.1",
+    "@anthropic-ai/sdk": "^0.33.1",
     "@babel/core": "^7.26.0",
     "@babel/preset-env": "^7.26.0",
     "@babel/preset-typescript": "^7.26.0",
@@ -103,7 +103,7 @@
     "node-mic": "^1.0.1",
     "null-loader": "^4.0.1",
     "ollama": "^0.5.11",
-    "openai": "^4.76.3",
+    "openai": "^4.77.0",
     "p-wait-for": "^5.0.2",
     "pdf-parse": "^1.1.1",
     "pdfjs-dist": "^4.9.155",
@@ -137,6 +137,7 @@
     "webpack-dev-server": "^5.2.0"
   },
   "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.0.4",
     "playwright-core": "^1.49.1"
   },
   "activationEvents": [],
