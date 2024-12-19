@@ -14,8 +14,8 @@ import type {
 import type {
   MessageCreateParamsBase,
   MessageCreateParamsNonStreaming,
-  MessageStream,
 } from '@anthropic-ai/sdk/resources/messages';
+import { MessageStream } from '@anthropic-ai/sdk/lib/MessageStream';
 import Anthropic from '@anthropic-ai/sdk';
 
 import {
@@ -148,7 +148,7 @@ export class AnthropicService extends AbstractLanguageModelService {
               {
                 type: 'text',
                 text:
-                  // Message is empty or the message only contains '\n' characters
+                  // The Message is empty or the message only contains '\n' characters
                   currentEntry.message === '' ||
                   /^\n+$/.test(currentEntry.message)
                     ? 'Let continue...'
