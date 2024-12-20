@@ -2,6 +2,8 @@ import * as fs from 'node:fs/promises';
 import * as path from 'node:path';
 
 import { filePathExists } from './utils';
+import vscode from 'vscode';
+import { DiagnosticsProvider } from '../../integrations';
 
 /**
  * Writes content to a file, with optional overwrite protection.
@@ -19,13 +21,9 @@ export const writeToFile = async (
     const absolutePath = path.resolve(filePath);
     const dirPath = path.dirname(absolutePath);
 
-    // Ensure the directory exists
     await fs.mkdir(dirPath, { recursive: true });
 
-    // Check if the file exists
     const isFileExists = await filePathExists(absolutePath);
-
-    // If a file exists and overwrite is false, return an error message
     if (isFileExists && !overwrite) {
       return {
         status: 'error',
@@ -33,17 +31,65 @@ export const writeToFile = async (
       };
     }
 
-    // Write content to the file, overwriting if necessary
+    // Capture old diagnostics specifically for this file’s URI
+    const targetUri = vscode.Uri.file(absolutePath);
+    const oldDiagnostics = vscode.languages.getDiagnostics(targetUri);
+
     await fs.writeFile(absolutePath, content);
+    const document = await vscode.workspace.openTextDocument(filePath);
+    await document.save();
+    await vscode.window.showTextDocument(document);
+
+    // Wait for a few milliseconds to ensure the document is saved
+    await new Promise((resolve) => setTimeout(resolve, 500));
+
+    // Instead of immediately checking diagnostics, set up a listener for when they change
+    let resolveDiagnostics: (value: vscode.Diagnostic[]) => void;
+    const diagnosticsPromise = new Promise<vscode.Diagnostic[]>((resolve) => {
+      resolveDiagnostics = resolve;
+    });
+
+    const diagnosticsListener = vscode.languages.onDidChangeDiagnostics((e) => {
+      // Check if the changed diagnostics include our document
+      if (e.uris.some((uri) => uri.toString() === targetUri.toString())) {
+        const updatedDiagnostics = vscode.languages.getDiagnostics(targetUri);
+        // Once we have updated diagnostics, resolve the promise and dispose the listener
+        resolveDiagnostics(updatedDiagnostics);
+        diagnosticsListener.dispose();
+      }
+    });
+
+    // Wait for diagnostics to be updated
+    const newDiagnostics = await diagnosticsPromise;
+
+    // Compare old and new diagnostics
+    const newDiagnosticsMap = new Map([[targetUri, newDiagnostics]]);
+    const oldDiagnosticsMap = new Map([[targetUri, oldDiagnostics]]);
+
+    const deltaDiagnostics = DiagnosticsProvider.getDeltaDiagnostics(
+      oldDiagnosticsMap,
+      newDiagnosticsMap,
+    );
+
+    const filteredDiagnostics = DiagnosticsProvider.filterDiagnosticsBySeverity(
+      deltaDiagnostics,
+      vscode.DiagnosticSeverity.Error,
+    );
+
+    const diagnosticsMessage =
+      DiagnosticsProvider.formatDiagnostics(filteredDiagnostics);
+
     return {
       status: 'success',
-      message: `File successfully written to ${filePath}.`,
+      message: `File successfully written to ${filePath}. ${diagnosticsMessage}`,
     };
   } catch (error) {
     console.error(`Failed to write file at ${filePath}:`, error);
     return {
       status: 'error',
-      message: `Failed to write file at ${filePath}: ${error instanceof Error ? error.message : 'Unknown error'}`,
+      message: `Failed to write file at ${filePath}: ${
+        error instanceof Error ? error.message : 'Unknown error'
+      }`,
     };
   }
 };
