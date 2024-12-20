@@ -37,30 +37,43 @@ export const writeToFile = async (
 
     await fs.writeFile(absolutePath, content);
     const document = await vscode.workspace.openTextDocument(filePath);
-    await document.save();
+    let fileSaveSuccess = false;
+    let retries = 0;
+
+    // Try to save the file until it is saved successfully as this will update the diagnostics
+    while (!fileSaveSuccess && retries < 5) {
+      fileSaveSuccess = await document.save();
+      await new Promise((resolve) => setTimeout(resolve, 200));
+      retries++;
+    }
+
     await vscode.window.showTextDocument(document);
 
-    // Wait for a few milliseconds to ensure the document is saved
-    await new Promise((resolve) => setTimeout(resolve, 500));
+    let newDiagnostics = oldDiagnostics;
+    // As we need save to be successful to get updated diagnostics, we will skip diagnostics check if save fails
+    if (fileSaveSuccess) {
+      // Instead of immediately checking diagnostics, set up a listener for when they change
+      let resolveDiagnostics: (value: vscode.Diagnostic[]) => void;
+      const diagnosticsPromise = new Promise<vscode.Diagnostic[]>((resolve) => {
+        resolveDiagnostics = resolve;
+      });
 
-    // Instead of immediately checking diagnostics, set up a listener for when they change
-    let resolveDiagnostics: (value: vscode.Diagnostic[]) => void;
-    const diagnosticsPromise = new Promise<vscode.Diagnostic[]>((resolve) => {
-      resolveDiagnostics = resolve;
-    });
+      const diagnosticsListener = vscode.languages.onDidChangeDiagnostics(
+        (e) => {
+          // Check if the changed diagnostics include our document
+          if (e.uris.some((uri) => uri.toString() === targetUri.toString())) {
+            const updatedDiagnostics =
+              vscode.languages.getDiagnostics(targetUri);
+            // Once we have updated diagnostics, resolve the promise and dispose the listener
+            resolveDiagnostics(updatedDiagnostics);
+            diagnosticsListener.dispose();
+          }
+        },
+      );
 
-    const diagnosticsListener = vscode.languages.onDidChangeDiagnostics((e) => {
-      // Check if the changed diagnostics include our document
-      if (e.uris.some((uri) => uri.toString() === targetUri.toString())) {
-        const updatedDiagnostics = vscode.languages.getDiagnostics(targetUri);
-        // Once we have updated diagnostics, resolve the promise and dispose the listener
-        resolveDiagnostics(updatedDiagnostics);
-        diagnosticsListener.dispose();
-      }
-    });
-
-    // Wait for diagnostics to be updated
-    const newDiagnostics = await diagnosticsPromise;
+      // Wait for diagnostics to be updated
+      newDiagnostics = await diagnosticsPromise;
+    }
 
     // Compare old and new diagnostics
     const newDiagnosticsMap = new Map([[targetUri, newDiagnostics]]);
@@ -76,8 +89,10 @@ export const writeToFile = async (
       vscode.DiagnosticSeverity.Error,
     );
 
-    const diagnosticsMessage =
-      DiagnosticsProvider.formatDiagnostics(filteredDiagnostics);
+    // When the file is saved successfully, show the diagnostics message otherwise show a generic message
+    const diagnosticsMessage = !fileSaveSuccess
+      ? 'With unknown diagnostics status.'
+      : DiagnosticsProvider.formatDiagnostics(filteredDiagnostics);
 
     return {
       status: 'success',
