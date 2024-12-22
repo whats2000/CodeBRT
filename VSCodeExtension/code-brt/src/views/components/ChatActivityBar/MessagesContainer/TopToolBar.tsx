@@ -98,7 +98,10 @@ export const TopToolBar: React.FC<MessagesTopToolBarProps> = ({
       let nextEntry = conversationHistory.entries[nextChildId];
 
       // Navigate to the leftmost leaf node
-      while (nextEntry.children.length > 0) {
+      while (nextEntry?.children?.length > 0) {
+        if (!conversationHistory.entries[nextEntry.children[0]]) {
+          break;
+        }
         nextEntry = conversationHistory.entries[nextEntry.children[0]];
       }
       dispatch(updateCurrentEntry(nextEntry.id));
@@ -126,9 +129,12 @@ export const TopToolBar: React.FC<MessagesTopToolBarProps> = ({
       const nextRootId = history.top[nextIndex];
       let nextEntry = history.entries[nextRootId];
       while (nextEntry?.children?.length > 0) {
+        if (!history.entries[nextEntry.children[0]]) {
+          break;
+        }
         nextEntry = history.entries[nextEntry.children[0]];
       }
-      dispatch(updateCurrentEntry(nextEntry.id));
+      dispatch(updateCurrentEntry(nextEntry?.id));
     }
   };
 

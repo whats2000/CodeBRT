@@ -10,12 +10,14 @@ import { DiagnosticsProvider } from '../../integrations';
  * @param filePath - The path to the file.
  * @param content - The content to write to the file.
  * @param overwrite - Flag indicating whether to overwrite the file if it exists.
+ * @param updateStatus - Optional function to update the status message.
  * @returns A status message indicating success or failure.
  */
 export const writeToFile = async (
   filePath: string,
   content: string,
   overwrite = false,
+  updateStatus?: (status: string) => void,
 ): Promise<{ status: 'success' | 'error'; message: string }> => {
   try {
     const absolutePath = path.resolve(filePath);
@@ -39,6 +41,11 @@ export const writeToFile = async (
     const document = await vscode.workspace.openTextDocument(filePath);
     let fileSaveSuccess = false;
     let retries = 0;
+
+    // Update status message if provided
+    if (updateStatus) {
+      updateStatus('[processing] Updating diagnostics...');
+    }
 
     // Try to save the file until it is saved successfully as this will update the diagnostics
     while (!fileSaveSuccess && retries < 5) {
@@ -71,8 +78,18 @@ export const writeToFile = async (
         },
       );
 
-      // Wait for diagnostics to be updated
-      newDiagnostics = await diagnosticsPromise;
+      // Wait for diagnostics to be updated with a timeout of 5 seconds
+      const timeoutPromise = new Promise<vscode.Diagnostic[]>((resolve) =>
+        setTimeout(() => {
+          console.warn(
+            `Diagnostics not updated for ${filePath} after 5 seconds.`,
+          );
+          resolve(oldDiagnostics);
+        }, 5000),
+      );
+
+      // Use whichever resolves first
+      newDiagnostics = await Promise.race([diagnosticsPromise, timeoutPromise]);
     }
 
     // Compare old and new diagnostics
@@ -89,7 +106,7 @@ export const writeToFile = async (
       vscode.DiagnosticSeverity.Error,
     );
 
-    // When the file is saved successfully, show the diagnostics message otherwise show a generic message
+    // When the file is saved successfully, show the diagnostics message otherwise shows a generic message
     const diagnosticsMessage = !fileSaveSuccess
       ? 'With unknown diagnostics status.'
       : DiagnosticsProvider.formatDiagnostics(filteredDiagnostics);

@@ -134,7 +134,7 @@ export const ToolResponseContainer: React.FC<ToolResponseContainerProps> = ({
       {entry.toolResponses?.map((response) => (
         <div key={response.id}>
           {response.status === 'rejectByUser' ? (
-            <Space direction={'vertical'}>
+            <Space direction={'vertical'} style={{ width: '100%' }}>
               <div>
                 <Tag color='warning'>
                   {t('toolResponseContainer.feedbackFromUser')}

@@ -167,6 +167,7 @@ export const writeToFileTool: ToolServicesApi['writeToFile'] = async ({
     filePath,
     normalizedContent,
     true,
+    updateStatus,
   );
 
   updateStatus?.('');

@@ -70,13 +70,15 @@ export abstract class FileOperationsProvider {
    * @param filePath - The path to the file.
    * @param content - The content to write to the file.
    * @param overwrite - Whether to overwrite the file if it already exists.
+   * @param updateStatus - Optional function to update the status message.
    */
   static async writeToFile(
     filePath: string,
     content: string,
     overwrite = false,
+    updateStatus?: (status: string) => void,
   ): Promise<{ status: 'success' | 'error'; message: string }> {
-    return writeToFile(filePath, content, overwrite);
+    return writeToFile(filePath, content, overwrite, updateStatus);
   }
 
   /**
