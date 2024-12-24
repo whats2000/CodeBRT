@@ -4,35 +4,35 @@
     "description": "The label for version current"
   },
   "sidebar.docs.category.Getting Started": {
-    "message": "Getting Started",
+    "message": "入門",
     "description": "The label for category Getting Started in sidebar docs"
   },
   "sidebar.docs.category.Features": {
-    "message": "Features",
+    "message": "特性",
     "description": "The label for category Features in sidebar docs"
   },
   "sidebar.docs.category.Voice Service": {
-    "message": "Voice Service",
+    "message": "語音服務",
     "description": "The label for category Voice Service in sidebar docs"
   },
   "sidebar.docs.category.Image Service": {
-    "message": "Image Service",
+    "message": "圖像服務",
     "description": "The label for category Image Service in sidebar docs"
   },
   "sidebar.docs.category.Code Editor": {
-    "message": "Code Editor",
+    "message": "程式碼編輯器",
     "description": "The label for category Code Editor in sidebar docs"
   },
   "sidebar.docs.category.Automated Tasks": {
-    "message": "Automated Tasks",
+    "message": "自動化任務",
     "description": "The label for category Automated Tasks in sidebar docs"
   },
   "sidebar.docs.category.FAQ": {
-    "message": "FAQ",
+    "message": "常見問題",
     "description": "The label for category FAQ in sidebar docs"
   },
   "sidebar.docs.category.Troubleshooting": {
-    "message": "Troubleshooting",
+    "message": "疑難排解",
     "description": "The label for category Troubleshooting in sidebar docs"
   }
 }
