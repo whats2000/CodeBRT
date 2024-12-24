@@ -329,5 +329,13 @@
   "homepage.feature.based_on_vscode.description": {
     "message": "CodeBRT 基於 VSCode 的功能，讓您可以更有效率地使用。",
     "description": "The based on VSCode feature of CodeBRT"
+  },
+  "homepage.get_started": {
+    "message": "CodeBRT 簡介 - 30s ⏱️",
+    "description": "The get started button on the homepage"
+  },
+  "homepage.tagline": {
+    "message": "一個免費且開源的工具，利用人工智慧提高程式碼品質和生產力。",
+    "description": "The tagline of CodeBRT"
   }
 }
