@@ -1,0 +1,50 @@
+{
+  "link.title.Docs": {
+    "message": "文檔",
+    "description": "The title of the footer links column with title=Docs in the footer"
+  },
+  "link.title.Community and Support": {
+    "message": "社群與支援",
+    "description": "The title of the footer links column with title=Community and Support in the footer"
+  },
+  "link.title.More": {
+    "message": "更多",
+    "description": "The title of the footer links column with title=More in the footer"
+  },
+  "link.item.label.Introduction": {
+    "message": "CodeBRT 簡介",
+    "description": "The label of footer link with label=Introduction linking to /docs/introduction"
+  },
+  "link.item.label.Getting Started": {
+    "message": "CodeBRT 入門",
+    "description": "The label of footer link with label=Getting Started linking to /docs/getting-started/installation"
+  },
+  "link.item.label.Features": {
+    "message": "CodeBRT 特性",
+    "description": "The label of footer link with label=Features linking to /docs/features/overview"
+  },
+  "link.item.label.Bug Reports and Feature Requests": {
+    "message": "錯誤報告和功能請求",
+    "description": "The label of footer link with label=Bug Reports and Feature Requests linking to https://github.com/whats2000/CodeBRT/issues"
+  },
+  "link.item.label.GitHub Discussions Forum": {
+    "message": "GitHub 討論區",
+    "description": "The label of footer link with label=GitHub Discussions Forum linking to https://github.com/whats2000/CodeBRT/discussions"
+  },
+  "link.item.label.GitHub": {
+    "message": "GitHub",
+    "description": "The label of footer link with label=GitHub linking to https://github.com/whats2000/CodeBRT"
+  },
+  "link.item.label.Issues Board": {
+    "message": "問題與開發進度看板",
+    "description": "The label of footer link with label=Issues Board linking to https://github.com/users/whats2000/projects/2/views/3"
+  },
+  "link.item.label.VSCode Marketplace": {
+    "message": "VSCode 市集",
+    "description": "The label of footer link with label=VSCode Marketplace linking to https://marketplace.visualstudio.com/items?itemName=whats2000.code-brt"
+  },
+  "copyright": {
+    "message": "版權所有 © 2024 CodeBRT 專案。使用 Docusaurus 建置。",
+    "description": "The footer copyright"
+  }
+}

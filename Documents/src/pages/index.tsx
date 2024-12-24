@@ -4,6 +4,7 @@ import useDocusaurusContext from "@docusaurus/useDocusaurusContext";
 import Layout from "@theme/Layout";
 import HomepageFeatures from "@site/src/components/HomepageFeatures";
 import Heading from "@theme/Heading";
+import Translate, { translate } from "@docusaurus/Translate";
 
 import styles from "./index.module.css";
 
@@ -15,13 +16,23 @@ function HomepageHeader() {
         <Heading as="h1" className="hero__title">
           {siteConfig.title}
         </Heading>
-        <p className="hero__subtitle">{siteConfig.tagline}</p>
+        <p className="hero__subtitle">
+          <Translate id="homepage.tagline" description="The tagline of CodeBRT">
+            A free and open-source tool for improved code quality and
+            productivity with artificial intelligence.
+          </Translate>
+        </p>
         <div className={styles.buttons}>
           <Link
             className="button button--secondary button--lg"
             to="/docs/introduction"
           >
-            CodeBRT Introduction - 30s ⏱️
+            <Translate
+              id="homepage.get_started"
+              description="The get started button on the homepage"
+            >
+              CodeBRT Introduction - 30s ⏱️
+            </Translate>
           </Link>
         </div>
       </div>

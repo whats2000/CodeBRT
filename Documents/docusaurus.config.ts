@@ -22,7 +22,7 @@ const config: Config = {
 
   i18n: {
     defaultLocale: "en",
-    locales: ["en"],
+    locales: ["en", "zh-TW", "zh-CN"],
   },
 
   presets: [
@@ -67,6 +67,10 @@ const config: Config = {
           sidebarId: "docs",
           position: "left",
           label: "Documentation",
+        },
+        {
+          type: 'localeDropdown',
+          position: 'right',
         },
         {
           href: "https://github.com/whats2000/CodeBRT/",
