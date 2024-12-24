@@ -305,5 +305,29 @@
   "theme.tags.tagsPageTitle": {
     "message": "標籤",
     "description": "The title of the tag list page"
+  },
+  "homepage.feature.multiple_models.title": {
+    "message": "支持多元模型",
+    "description": "The multiple models feature of CodeBRT"
+  },
+  "homepage.feature.multiple_models.description": {
+    "message": "CodeBRT 提供多家且不同的大型語言模型供使用者選擇。",
+    "description": "The multiple models feature of CodeBRT"
+  },
+  "homepage.feature.high_degree_of_freedom.title": {
+    "message": "高度自由度",
+    "description": "The high degree of freedom feature of CodeBRT"
+  },
+  "homepage.feature.high_degree_of_freedom.description": {
+    "message": "CodeBRT 具有極高的自由度，讓使用者可以自由選擇如何使用。",
+    "description": "The high degree of freedom feature of CodeBRT"
+  },
+  "homepage.feature.based_on_vscode.title": {
+    "message": "基於 VSCode",
+    "description": "The based on VSCode feature of CodeBRT"
+  },
+  "homepage.feature.based_on_vscode.description": {
+    "message": "CodeBRT 基於 VSCode 的功能，讓您可以更有效率地使用。",
+    "description": "The based on VSCode feature of CodeBRT"
   }
 }
