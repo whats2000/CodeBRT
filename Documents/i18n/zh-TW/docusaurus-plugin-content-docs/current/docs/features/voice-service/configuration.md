@@ -29,7 +29,7 @@
    ![OpenAI-Voice-Selection](/img/voice-service/configuration/OpenAI-Voice-Selection.png)
 
 :::note
-有關如何存取設定面板的更詳細說明，請參閱 [設定面板存取指南](docs/docs/getting-started/configuration.md#configuring-the-model-service-api-key)。
+有關如何存取設定面板的更詳細說明，請參閱 [設定面板存取指南](/docs/getting-started/configuration.md#configuring-the-model-service-api-key)。
 :::
 
 ### GPT-SoVits 設定
