@@ -19,7 +19,6 @@ to managing scheduling tasks. The project is free, open-source, and accessible f
 - **Code Scheduling Tasks**: Manage and automate coding tasks.
 - **Code Completion**: Get code suggestions and completions.
 - **Code Analysis**: Analyze code for improvements, errors, or optimizations.
-- **Code Formatting**: Automatically format code to adhere to best practices.
 - **Voice Assistant**: Hands-free interaction through voice commands and responses.
 - **Image Analysis**: Analyze and understand images for tasks related to code and more.
 
