@@ -24,14 +24,14 @@ export const WhatsNewModal: React.FC<WhatsNewModalProps> = ({
       footer={<Button onClick={onClose}>{t('common:close')}</Button>}
     >
       {updateNotes.map((note) => (
-        <>
+        <div key={note.version}>
           <p>CodeBRT {note.version}:</p>
           <ul>
             {note.notes.map((item, index) => (
               <li key={index}>{item}</li>
             ))}
           </ul>
-        </>
+        </div>
       ))}
     </Modal>
   );
