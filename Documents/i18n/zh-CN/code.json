@@ -337,5 +337,13 @@
   "homepage.tagline": {
     "message": "一个免费且开源的工具，使用人工智能提高代码质量和生产力。",
     "description": "The tagline of CodeBRT"
+  },
+  "metadata.title": {
+    "message": "CodeBRT | 文档",
+    "description": "The meta title of the homepage"
+  },
+  "metadata.description": {
+    "message": "CodeBRT 是一个免费且开源的代码智能工具，旨在提高代码质量和生产力。",
+    "description": "The meta description of the homepage"
   }
 }

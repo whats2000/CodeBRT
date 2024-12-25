@@ -41,11 +41,19 @@ function HomepageHeader() {
 }
 
 export default function Home(): JSX.Element {
-  const { siteConfig } = useDocusaurusContext();
   return (
     <Layout
-      title={`Hello from ${siteConfig.title}`}
-      description="Description will go into a meta tag in <head />"
+      title={translate({
+        id: "metadata.title",
+        message: `CodeBRT | Documentation`,
+        description: "The meta title of the homepage",
+      })}
+      description={translate({
+        id: "metadata.description",
+        message:
+          "A free and open-source code agent tool for improved code quality and productivity with artificial intelligence.",
+        description: "The meta description of the homepage",
+      })}
     >
       <HomepageHeader />
       <main>
