@@ -23,6 +23,20 @@ const config: Config = {
   i18n: {
     defaultLocale: "en",
     locales: ["en", "zh-TW", "zh-CN"],
+    localeConfigs: {
+      en: {
+        label: "English",
+        direction: "ltr",
+      },
+      "zh-TW": {
+        label: "繁體中文",
+        direction: "ltr",
+      },
+      "zh-CN": {
+        label: "简体中文",
+        direction: "ltr",
+      },
+    },
   },
 
   presets: [
@@ -69,8 +83,8 @@ const config: Config = {
           label: "Documentation",
         },
         {
-          type: 'localeDropdown',
-          position: 'right',
+          type: "localeDropdown",
+          position: "right",
         },
         {
           href: "https://github.com/whats2000/CodeBRT/",
