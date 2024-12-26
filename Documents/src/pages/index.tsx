@@ -45,7 +45,7 @@ export default function Home(): JSX.Element {
     <Layout
       title={translate({
         id: "metadata.title",
-        message: `CodeBRT | Documentation`,
+        message: `Documentation`,
         description: "The meta title of the homepage",
       })}
       description={translate({
