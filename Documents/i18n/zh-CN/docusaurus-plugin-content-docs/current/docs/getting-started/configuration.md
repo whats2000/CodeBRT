@@ -3,12 +3,12 @@
 本指南提供了关于如何为 CodeBRT 扩展配置**模型服务 API 密钥**的说明。您将学习如何访问设置，输入各种模型服务的 API 密钥，以及保存您的配置。
 
 ## 目录
-- [概述](#overview)
-- [先决条件](#prerequisites)
-- [访问配置面板](#accessing-the-configuration-panel)
-- [配置模型服务 API 密钥](#configuring-the-model-service-api-key)
-- [其他设置：语音服务](#additional-settings-voice-service)
-- [故障排除](#troubleshooting)
+- [概述](#概述)
+- [先决条件](#先决条件)
+- [访问配置面板](#访问配置面板)
+- [配置模型服务 API 密钥](#配置模型服务-api-密钥)
+- [其他设置：语音服务](#其他设置语音服务)
+- [故障排除](#故障排除)
 
 ---
 

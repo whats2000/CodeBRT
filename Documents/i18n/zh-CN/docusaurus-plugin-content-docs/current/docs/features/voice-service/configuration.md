@@ -3,13 +3,13 @@
 本指南将引导您配置语音服务，其中包括文本转语音和语音转文本设置。以下列出每个服务的可用选项。
 
 ## 目录
-- [文本转语音配置](#text-to-voice-configuration)
-  - [OpenAI](#openai-text-to-voice-configuration)
-  - [GPT-SoVits](#gpt-sovits-configuration)
-- [语音转文本配置](#voice-to-text-configuration)
-  - [OpenAI](#openai-voice-to-text-configuration)
-  - [Groq](#groq-configuration)
-  - [VSCode 内置](#vscode-built-in-configuration)
+- [文本转语音配置](#文本转语音配置)
+  - [OpenAI](#openai-文本转语音配置)
+  - [GPT-SoVits](#gpt-sovits-配置)
+- [语音转文本配置](#语音转文本配置)
+  - [OpenAI](#openai-和-groq-语音转文本配置)
+  - [Groq](#openai-和-groq-语音转文本配置)
+  - [VSCode 内置](#vscode-内置配置)
 
 ---
 
@@ -29,7 +29,7 @@
    ![OpenAI-Voice-Selection](/img/voice-service/configuration/OpenAI-Voice-Selection.png)
 
 :::note
-有关如何访问配置面板的更详细说明，请参阅 [配置面板访问指南](/docs/getting-started/configuration.md#configuring-the-model-service-api-key)。
+有关如何访问配置面板的更详细说明，请参阅 [配置面板访问指南](/docs/getting-started/configuration.md#配置模型服务-api-密钥)。
 :::
 
 ### GPT-SoVits 配置
@@ -42,7 +42,7 @@
 
 ![GPT-SoVits-port-setting](/img/voice-service/configuration/GPT-SoVits-port-setting.png)
 
-您可以在 [GPT-SoVits 安装](./installation.md#gpt-sovits-installation) 中找到有关如何构建和配置端口的说明。
+您可以在 [GPT-SoVits 安装](./installation.md#gpt-sovits-安装) 中找到有关如何构建和配置端口的说明。
 
 #### 2. 导航至语音设置
 
@@ -97,7 +97,7 @@
 安装并正确配置 SoX 后，即可执行 Groq 或 OpenAI 音频录制。
 如果 SoX 未正确设置，Groq 或 OpenAI 很可能会显示与音频处理相关的错误消息。
 如果您在 SoX 安装期间或运行 Groq 或 OpenAI 时遇到任何错误，
-并需要进一步帮助，请先查看 [SoX 安装](./installation.md#sox-installation)。
+并需要进一步帮助，请先查看 [SoX 安装](./installation.md#sox-安装)。
 
 ### VSCode 内置配置
 
