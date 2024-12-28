@@ -101,6 +101,7 @@ export const ToolResponseContainer: React.FC<ToolResponseContainerProps> = ({
           ellipsis={{
             rows: 5,
             expandable: 'collapsible',
+            symbol: (expanded) => (expanded ? t('showLess') : t('showMore')),
           }}
           style={{ whiteSpace: 'pre-wrap' }}
         >
@@ -146,7 +147,12 @@ export const ToolResponseContainer: React.FC<ToolResponseContainerProps> = ({
               <Typography.Paragraph>
                 {typeof response.result === 'string' ? (
                   <ReactMarkdown components={RendererCode}>
-                    {response.result}
+                    {/* Remove the default feedback message as this is not needed to be displayed */}
+                    {response.result.replace(
+                      '[Reject with feedback] The tool calling is not executed and with a user feedback. ' +
+                        'Please consider the feedback and make adjustments.\nUser feedback: \n',
+                      '',
+                    )}
                   </ReactMarkdown>
                 ) : (
                   <pre>{JSON.stringify(response.result, null, 2)}</pre>

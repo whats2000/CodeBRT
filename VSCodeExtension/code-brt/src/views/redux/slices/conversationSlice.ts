@@ -2,7 +2,7 @@ import { createAsyncThunk, PayloadAction } from '@reduxjs/toolkit';
 import { createSlice } from '@reduxjs/toolkit';
 import { v4 as uuidV4 } from 'uuid';
 
-import type {
+import {
   AddConversationEntryParams,
   ConversationEntry,
   ConversationEntryRole,
@@ -10,8 +10,10 @@ import type {
   ExtensionSettings,
   GetLanguageModelResponseParams,
   ModelServiceType,
+  NonWorkspaceToolType,
   ToolCallEntry,
   ToolCallResponse,
+  WorkspaceToolType,
 } from '../../../types';
 import type { CallAPI } from '../../WebviewContext';
 import type { RootState } from '../store';
@@ -80,6 +82,24 @@ const isApiKeyAvailable = (
   }
 
   return true;
+};
+
+const formatRejectionMessage = (
+  rejectByUserMessage: string,
+  toolName: NonWorkspaceToolType | WorkspaceToolType | string,
+) => {
+  switch (toolName) {
+    // We will not add instructions for these tools as they are not operation tools, it is a status marker message
+    case 'askFollowUpQuestion':
+    case 'attemptCompletion':
+      return rejectByUserMessage;
+    default:
+      return (
+        '[Reject with feedback] The tool calling is not executed and with a user feedback. ' +
+        'Please consider the feedback and make adjustments.\nUser feedback: \n' +
+        rejectByUserMessage
+      );
+  }
 };
 
 export const initLoadHistory = createAsyncThunk<
@@ -277,6 +297,7 @@ export const processToolCall = createAsyncThunk<
     activeModelService: ModelServiceType | 'loading...';
     rejectByUserMessage?: string;
     tempIdRef?: React.MutableRefObject<string | null>;
+    files?: string[];
   },
   {
     state: RootState;
@@ -287,7 +308,14 @@ export const processToolCall = createAsyncThunk<
 >(
   'conversation/processToolAction',
   async (
-    { toolCall, entry, activeModelService, rejectByUserMessage, tempIdRef },
+    {
+      toolCall,
+      entry,
+      activeModelService,
+      rejectByUserMessage,
+      tempIdRef,
+      files,
+    },
     { dispatch, getState, extra: { callApi } },
   ) => {
     if (
@@ -307,17 +335,22 @@ export const processToolCall = createAsyncThunk<
 
     dispatch(startProcessing());
     dispatch(addTempResponseEntry({ parentId: entry.id, role: 'tool' }));
+
+    // TODO: Support PDF Extractor at later version current only pass the images
+    const images = files?.filter((file: string) => !file.endsWith('.pdf'));
+
     const toolCallResponse: ToolCallResponse = !rejectByUserMessage
       ? await callApi('approveToolCall', toolCall)
       : {
           id: toolCall.id,
           toolCallName: toolCall.toolName,
           status: 'rejectByUser',
-          result:
-            '[Reject with feedback] The tool calling is not executed and with a user feedback. ' +
-            'Please consider the feedback and make adjustments.\nUser feedback: \n' +
+          result: formatRejectionMessage(
             rejectByUserMessage,
+            toolCall.toolName,
+          ),
           create_time: Date.now(),
+          images: images,
         };
     const newToolCallResponseEntry = await callApi('addConversationEntry', {
       parentID: entry.id,
@@ -327,8 +360,13 @@ export const processToolCall = createAsyncThunk<
           ? 'The tool call was executed successfully'
           : toolCallResponse,
       toolResponses: [toolCallResponse],
+      images: images,
     } as AddConversationEntryParams);
     dispatch(replaceTempEntry(newToolCallResponseEntry));
+
+    if (files) {
+      dispatch(clearUploadedFiles());
+    }
 
     // We will continue processing instead returning
     // - Only when tempIdRef is set, and one of the following conditions is met:

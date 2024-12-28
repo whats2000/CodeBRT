@@ -126,14 +126,17 @@ export const MessageItem = React.memo<MessageItemProps>(
     const renderContainer = () => {
       if (entry.role === 'tool') {
         return (
-          <ToolResponseContainer
-            entry={entry}
-            toolStatus={toolStatus}
-            showActionButtons={
-              conversationHistory.current === entry.id &&
-              !entry.id.startsWith('temp')
-            }
-          />
+          <>
+            <ToolResponseContainer
+              entry={entry}
+              toolStatus={toolStatus}
+              showActionButtons={
+                conversationHistory.current === entry.id &&
+                !entry.id.startsWith('temp')
+              }
+            />
+            <ImageContainer entry={entry} />
+          </>
         );
       }
       if (entry.id === editingEntryId) {

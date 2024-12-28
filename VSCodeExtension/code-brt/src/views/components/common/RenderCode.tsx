@@ -8,11 +8,12 @@ import {
   ShrinkOutlined,
 } from '@ant-design/icons';
 import styled from 'styled-components';
+import { useDispatch, useSelector } from 'react-redux';
+import { useTranslation } from 'react-i18next';
 
 import { CopyButton } from './CopyButton';
 import { updateAndSaveSetting } from '../../redux/slices/settingsSlice';
 import { AppDispatch, RootState } from '../../redux';
-import { useDispatch, useSelector } from 'react-redux';
 
 const CodeContainer = styled.div<{ $dynamicStyle: React.CSSProperties }>`
   border-radius: 4px !important;
@@ -59,6 +60,7 @@ const MAX_LINES = 10;
 
 export const RendererCode: { [nodeType: string]: React.ElementType } = {
   code: ({ node, inline, className, children, ...props }) => {
+    const { t } = useTranslation('common');
     const [copied, setCopied] = useState(false);
     const [showSetting, setShowSetting] = useState(false);
     const [expanded, setExpanded] = useState(false);
@@ -149,7 +151,7 @@ export const RendererCode: { [nodeType: string]: React.ElementType } = {
             type='text'
             onClick={() => setExpanded(!expanded)}
           >
-            {expanded ? 'Show Less' : 'Show More'}
+            {expanded ? t('showLess') : t('showMore')}
           </Button>
         )}
       </CodeContainer>
