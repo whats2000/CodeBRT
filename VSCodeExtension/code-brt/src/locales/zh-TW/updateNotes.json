@@ -2,6 +2,14 @@
   "title": "更新内容",
   "notes": [
     {
+      "version": "0.4.10",
+      "notes": [
+        "新增：在一些 UI 組件中添加缺失的國際化",
+        "修復：修復了在向模型提供反饋時無法提供圖像",
+        "功能：現在默認提示將使用“Step Agent Prompt”而不是“You are a helpful assistant”"
+      ]
+    },
+    {
       "version": "0.4.9",
       "notes": [
         "新增：為語言模型編寫的程式碼添加診斷錯誤檢測",

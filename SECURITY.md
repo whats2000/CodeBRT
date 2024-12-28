@@ -4,10 +4,10 @@
 
 We are committed to maintaining the security of CodeBRT. Below is the list of versions currently supported with security updates:
 
-| Version | Supported          |
-|---------|--------------------|
-| 0.4.8   | :white_check_mark: |
-| < 0.4.7 | :x:                |
+| Version  | Supported          |
+|----------|--------------------|
+| 0.4.10   | :white_check_mark: |
+| < 0.4.10 | :x:                |
 
 ## Reporting a Vulnerability
 
