@@ -146,7 +146,11 @@ export const ToolResponseContainer: React.FC<ToolResponseContainerProps> = ({
               <Typography.Paragraph>
                 {typeof response.result === 'string' ? (
                   <ReactMarkdown components={RendererCode}>
-                    {response.result}
+                    {response.result.replace(
+                      '[Reject with feedback] The tool calling is not executed and with a user feedback. ' +
+                        'Please consider the feedback and make adjustments.\nUser feedback: \n',
+                      '',
+                    )}
                   </ReactMarkdown>
                 ) : (
                   <pre>{JSON.stringify(response.result, null, 2)}</pre>
