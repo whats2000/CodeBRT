@@ -101,6 +101,7 @@ export const ToolResponseContainer: React.FC<ToolResponseContainerProps> = ({
           ellipsis={{
             rows: 5,
             expandable: 'collapsible',
+            symbol: (expanded) => (expanded ? t('showLess') : t('showMore')),
           }}
           style={{ whiteSpace: 'pre-wrap' }}
         >
