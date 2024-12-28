@@ -7,10 +7,9 @@ import type {
 
 export const DEFAULT_LOCAL_SETTINGS: ExtensionSettingsLocal = {
   anthropicAvailableModels: [
-    'claude-3-5-sonnet-20240620',
-    'claude-3-haiku-20240307',
-    'claude-3-opus-20240229',
-    'claude-3-sonnet-20240229',
+    'claude-3-5-sonnet-latest',
+    'claude-3-5-haiku-latest',
+    'claude-3-opus-latest',
   ],
   openaiAvailableModels: [
     'gpt-4o-mini',
@@ -40,7 +39,7 @@ export const DEFAULT_LOCAL_SETTINGS: ExtensionSettingsLocal = {
   lastUsedModelService: 'gemini',
   lastSelectedModel: {
     gemini: 'gemini-1.5-flash',
-    anthropic: 'claude-3-5-sonnet-20240620',
+    anthropic: 'claude-3-5-sonnet-latest',
     openai: 'gpt-4o-mini',
     cohere: 'command',
     groq: 'llama3-70b-8192',
@@ -68,7 +67,7 @@ export const DEFAULT_LOCAL_SETTINGS: ExtensionSettingsLocal = {
   lastUsedManualCodeCompletionModelService: 'gemini',
   lastSelectedManualCodeCompletionModel: {
     gemini: 'gemini-1.5-flash',
-    anthropic: 'claude-3-5-sonnet-20240620',
+    anthropic: 'claude-3-5-sonnet-latest',
     openai: 'gpt-4o-mini',
     cohere: 'command',
     groq: 'llama3-70b-8192',
@@ -81,7 +80,7 @@ export const DEFAULT_LOCAL_SETTINGS: ExtensionSettingsLocal = {
   lastUsedAutoCodeCompletionModelService: 'ollama',
   lastSelectedAutoCodeCompletionModel: {
     gemini: 'gemini-1.5-flash',
-    anthropic: 'claude-3-5-sonnet-20240620',
+    anthropic: 'claude-3-5-sonnet-latest',
     openai: 'gpt-4o-mini',
     cohere: 'command',
     groq: 'llama3-70b-8192',
