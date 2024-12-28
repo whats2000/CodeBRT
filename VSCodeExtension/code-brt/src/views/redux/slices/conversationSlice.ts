@@ -20,6 +20,7 @@ import type { RootState } from '../store';
 import { updateAndSaveSetting } from './settingsSlice';
 import { clearUploadedFiles } from './fileUploadSlice';
 import React from 'react';
+import { DEFAULT_SYSTEM_PROMPT } from '../../../constants';
 
 const WAIT_FOR_USER_CONFIRM_TOOLS = ['writeToFile', 'executeCommand'];
 
@@ -34,7 +35,7 @@ const initialState: ConversationHistory & {
   top: [],
   current: '',
   advanceSettings: {
-    systemPrompt: 'You are a helpful assistant.',
+    systemPrompt: DEFAULT_SYSTEM_PROMPT,
     maxTokens: undefined,
     temperature: undefined,
     topP: undefined,

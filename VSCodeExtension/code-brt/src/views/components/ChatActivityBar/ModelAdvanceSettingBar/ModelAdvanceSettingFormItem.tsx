@@ -63,6 +63,7 @@ export const ModelAdvanceSettingFormItem: React.FC<
     >
       {settingName === 'systemPrompt' ? (
         <Input.TextArea
+          allowClear={true}
           value={(value as string) || ''}
           onChange={(e) => handleInputChange(settingName, e.target.value)}
           placeholder={t('modelAdvanceSettingFormItem.enterSystemPrompt')}

@@ -14,6 +14,7 @@ import {
   IHistoryManager,
 } from '../types';
 import { FileOperationsProvider } from '../utils';
+import { DEFAULT_SYSTEM_PROMPT } from '../constants';
 
 export class HistoryManager implements IHistoryManager {
   private readonly historiesFolderPath: string;
@@ -86,7 +87,7 @@ export class HistoryManager implements IHistoryManager {
       create_time: Date.now(),
       update_time: Date.now(),
       advanceSettings: {
-        systemPrompt: 'You are a helpful assistant.',
+        systemPrompt: DEFAULT_SYSTEM_PROMPT,
         maxTokens: undefined,
         temperature: undefined,
         topP: undefined,

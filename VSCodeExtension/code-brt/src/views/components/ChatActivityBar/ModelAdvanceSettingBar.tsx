@@ -13,7 +13,10 @@ import { useTranslation } from 'react-i18next';
 import type { ConversationModelAdvanceSettings } from '../../../types';
 import type { RootState } from '../../redux';
 import { WebviewContext } from '../../WebviewContext';
-import { MODEL_ADVANCE_SETTINGS } from '../../../constants';
+import {
+  DEFAULT_SYSTEM_PROMPT,
+  MODEL_ADVANCE_SETTINGS,
+} from '../../../constants';
 import { SaveSystemPromptModal } from './ModelAdvanceSettingBar/SaveSystemPromptModal';
 import { LoadSystemPromptBar } from './ModelAdvanceSettingBar/LoadSystemPromptBar';
 import { setAdvanceSettings } from '../../redux/slices/conversationSlice';
@@ -23,7 +26,7 @@ import { Entries } from 'type-fest';
 import Resources from '../../../locales/resource';
 
 const DEFAULT_ADVANCE_SETTINGS: ConversationModelAdvanceSettings = {
-  systemPrompt: 'You are a helpful assistant.',
+  systemPrompt: DEFAULT_SYSTEM_PROMPT,
   maxTokens: undefined,
   temperature: undefined,
   topP: undefined,
@@ -115,7 +118,7 @@ export const ModelAdvanceSettingBar: React.FC<ModelAdvanceSettingsProps> = ({
   const clearField = (field: keyof ConversationModelAdvanceSettings) => {
     setNewAdvanceSettings((prev) => ({
       ...prev,
-      [field]: field === 'systemPrompt' ? 'You are a helpful assistant.' : null,
+      [field]: field === 'systemPrompt' ? DEFAULT_SYSTEM_PROMPT : null,
     }));
   };
 
