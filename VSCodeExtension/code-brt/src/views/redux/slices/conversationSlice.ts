@@ -2,7 +2,7 @@ import { createAsyncThunk, PayloadAction } from '@reduxjs/toolkit';
 import { createSlice } from '@reduxjs/toolkit';
 import { v4 as uuidV4 } from 'uuid';
 
-import type {
+import {
   AddConversationEntryParams,
   ConversationEntry,
   ConversationEntryRole,
@@ -10,8 +10,10 @@ import type {
   ExtensionSettings,
   GetLanguageModelResponseParams,
   ModelServiceType,
+  NonWorkspaceToolType,
   ToolCallEntry,
   ToolCallResponse,
+  WorkspaceToolType,
 } from '../../../types';
 import type { CallAPI } from '../../WebviewContext';
 import type { RootState } from '../store';
@@ -80,6 +82,24 @@ const isApiKeyAvailable = (
   }
 
   return true;
+};
+
+const formatRejectionMessage = (
+  rejectByUserMessage: string,
+  toolName: NonWorkspaceToolType | WorkspaceToolType | string,
+) => {
+  switch (toolName) {
+    // We will not add instructions for these tools as they are not operation tools, it is a status marker message
+    case 'askFollowUpQuestion':
+    case 'attemptCompletion':
+      return rejectByUserMessage;
+    default:
+      return (
+        '[Reject with feedback] The tool calling is not executed and with a user feedback. ' +
+        'Please consider the feedback and make adjustments.\nUser feedback: \n' +
+        rejectByUserMessage
+      );
+  }
 };
 
 export const initLoadHistory = createAsyncThunk<
@@ -325,10 +345,10 @@ export const processToolCall = createAsyncThunk<
           id: toolCall.id,
           toolCallName: toolCall.toolName,
           status: 'rejectByUser',
-          result:
-            '[Reject with feedback] The tool calling is not executed and with a user feedback. ' +
-            'Please consider the feedback and make adjustments.\nUser feedback: \n' +
+          result: formatRejectionMessage(
             rejectByUserMessage,
+            toolCall.toolName,
+          ),
           create_time: Date.now(),
           images: images,
         };
