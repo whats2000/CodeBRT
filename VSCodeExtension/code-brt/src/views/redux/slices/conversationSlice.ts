@@ -277,6 +277,7 @@ export const processToolCall = createAsyncThunk<
     activeModelService: ModelServiceType | 'loading...';
     rejectByUserMessage?: string;
     tempIdRef?: React.MutableRefObject<string | null>;
+    files?: string[];
   },
   {
     state: RootState;
@@ -287,7 +288,14 @@ export const processToolCall = createAsyncThunk<
 >(
   'conversation/processToolAction',
   async (
-    { toolCall, entry, activeModelService, rejectByUserMessage, tempIdRef },
+    {
+      toolCall,
+      entry,
+      activeModelService,
+      rejectByUserMessage,
+      tempIdRef,
+      files,
+    },
     { dispatch, getState, extra: { callApi } },
   ) => {
     if (
@@ -307,6 +315,10 @@ export const processToolCall = createAsyncThunk<
 
     dispatch(startProcessing());
     dispatch(addTempResponseEntry({ parentId: entry.id, role: 'tool' }));
+
+    // TODO: Support PDF Extractor at later version current only pass the images
+    const images = files?.filter((file: string) => !file.endsWith('.pdf'));
+
     const toolCallResponse: ToolCallResponse = !rejectByUserMessage
       ? await callApi('approveToolCall', toolCall)
       : {
@@ -318,6 +330,7 @@ export const processToolCall = createAsyncThunk<
             'Please consider the feedback and make adjustments.\nUser feedback: \n' +
             rejectByUserMessage,
           create_time: Date.now(),
+          images: images,
         };
     const newToolCallResponseEntry = await callApi('addConversationEntry', {
       parentID: entry.id,
@@ -327,8 +340,13 @@ export const processToolCall = createAsyncThunk<
           ? 'The tool call was executed successfully'
           : toolCallResponse,
       toolResponses: [toolCallResponse],
+      images: images,
     } as AddConversationEntryParams);
     dispatch(replaceTempEntry(newToolCallResponseEntry));
+
+    if (files) {
+      dispatch(clearUploadedFiles());
+    }
 
     // We will continue processing instead returning
     // - Only when tempIdRef is set, and one of the following conditions is met:

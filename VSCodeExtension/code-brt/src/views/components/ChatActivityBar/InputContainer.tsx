@@ -134,6 +134,7 @@ export const InputContainer = React.memo<InputContainerProps>(
             activeModelService,
             rejectByUserMessage: finalMessage,
             tempIdRef,
+            files: uploadedFiles,
           }),
         );
         setInputMessage('');
