@@ -21,7 +21,11 @@ export const DEFAULT_LOCAL_SETTINGS: ExtensionSettingsLocal = {
   ],
   openaiAvailableVoices: ['nova', 'alloy', 'echo', 'fable', 'onyx', 'shimmer'],
   openaiSelectedVoice: 'nova',
-  geminiAvailableModels: ['gemini-1.5-pro-latest', 'gemini-1.5-flash-latest'],
+  geminiAvailableModels: [
+    'gemini-2.0-flash-exp',
+    'gemini-1.5-pro-latest',
+    'gemini-1.5-flash-latest',
+  ],
   cohereAvailableModels: ['command', 'command-r', 'command-r-plus'],
   groqAvailableModels: [
     'llama3-70b-8192',
