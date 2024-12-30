@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Card, Button, Flex, Typography } from 'antd';
+import { Card, Button, Flex, Typography, Tooltip } from 'antd';
 import {
   ArrowsAltOutlined,
   CloseOutlined,
@@ -70,11 +70,13 @@ export const SelectedCodeDisplay: React.FC<SelectedCodeDisplayProps> = ({
           size='small'
           title={
             <Flex align={'center'}>
-              <Typography.Text
-                style={{ textOverflow: 'ellipsis', overflow: 'hidden' }}
-              >
-                {code.relativePath}
-              </Typography.Text>
+              <Tooltip title={code.relativePath}>
+                <Typography.Text
+                  style={{ textOverflow: 'ellipsis', overflow: 'hidden' }}
+                >
+                  {code.relativePath}
+                </Typography.Text>
+              </Tooltip>
               <Typography.Text type='secondary' style={{ marginLeft: 10 }}>
                 {`Ln ${code.startLine}-${code.endLine}`}
               </Typography.Text>
