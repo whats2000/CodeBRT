@@ -5,8 +5,8 @@ import React, {
   useCallback,
   useRef,
 } from 'react';
-import { Button, Flex, Mentions, Tag } from 'antd';
-import { SendOutlined } from '@ant-design/icons';
+import { Button, Flex, Mentions, Space, Tag, Typography } from 'antd';
+import { FileOutlined, FolderOutlined, SendOutlined } from '@ant-design/icons';
 import { useDispatch, useSelector } from 'react-redux';
 import { useTranslation } from 'react-i18next';
 import debounce from 'lodash/debounce';
@@ -52,7 +52,7 @@ export const InputMessageArea: React.FC<InputMessageAreaProps> = ({
   const [options, setOptions] = useState<
     {
       key: string;
-      label: string;
+      label: React.ReactNode;
       value: string;
     }[]
   >([]);
@@ -68,7 +68,19 @@ export const InputMessageArea: React.FC<InputMessageAreaProps> = ({
       )) as string[];
       setLoading(false);
       setOptions(
-        files.map((file) => ({ key: file, label: file, value: file })),
+        files.map((file) => ({
+          key: file,
+          label: (
+            <Flex wrap={'wrap'} justify='space-between' gap={5}>
+              <Space>
+                {file.includes('.') ? <FileOutlined /> : <FolderOutlined />}
+                <Typography.Text>{file.split(/[\\/]/).pop()}</Typography.Text>
+              </Space>
+              <Typography.Text type='secondary'>{file}</Typography.Text>
+            </Flex>
+          ),
+          value: file,
+        })),
       );
     }, 300),
     [callApi],
