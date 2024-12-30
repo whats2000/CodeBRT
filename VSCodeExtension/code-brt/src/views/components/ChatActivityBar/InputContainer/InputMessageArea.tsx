@@ -91,7 +91,9 @@ export const InputMessageArea: React.FC<InputMessageAreaProps> = ({
                 {file.includes('.') ? <FileOutlined /> : <FolderOutlined />}
                 <Typography.Text>{file.split(/[\\/]/).pop()}</Typography.Text>
               </Space>
-              <Typography.Text type='secondary'>{file}</Typography.Text>
+              <Tooltip title={file} placement={'right'}>
+                <Typography.Text type='secondary'>{file}</Typography.Text>
+              </Tooltip>
             </Flex>
           ),
           value: file,
@@ -162,28 +164,24 @@ export const InputMessageArea: React.FC<InputMessageAreaProps> = ({
         {
           key: 'workspaceProblem',
           label: (
-            <Tooltip title={t('inputMessageArea.workspaceProblem')}>
-              <Space>
-                <FolderOutlined />
-                <Typography.Text>
-                  {t('inputMessageArea.workspaceProblem')}
-                </Typography.Text>
-              </Space>
-            </Tooltip>
+            <Space>
+              <FolderOutlined />
+              <Typography.Text>
+                {t('inputMessageArea.workspaceProblem')}
+              </Typography.Text>
+            </Space>
           ),
           value: 'workspaceProblem',
         },
         {
           key: 'terminalProblem',
           label: (
-            <Tooltip title={t('inputMessageArea.terminalProblem')}>
-              <Space>
-                <CodeOutlined />
-                <Typography.Text>
-                  {t('inputMessageArea.terminalProblem')}
-                </Typography.Text>
-              </Space>
-            </Tooltip>
+            <Space>
+              <CodeOutlined />
+              <Typography.Text>
+                {t('inputMessageArea.terminalProblem')}
+              </Typography.Text>
+            </Space>
           ),
           value: 'terminalProblem',
         },
