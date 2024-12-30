@@ -1,8 +1,13 @@
 import React, { useState } from 'react';
 import { Card, Button, Flex, Typography } from 'antd';
-import { CloseOutlined, CodeOutlined } from '@ant-design/icons';
+import {
+  ArrowsAltOutlined,
+  CloseOutlined,
+  ShrinkOutlined,
+} from '@ant-design/icons';
 import styled from 'styled-components';
 import ReactMarkdown from 'react-markdown';
+import { useTranslation } from 'react-i18next';
 
 import type { SelectedCode } from '../../../../types';
 import { RendererCode } from '../../common/RenderCode';
@@ -42,6 +47,7 @@ export const SelectedCodeDisplay: React.FC<SelectedCodeDisplayProps> = ({
   selectedCodes,
   onRemoveCode,
 }) => {
+  const { t } = useTranslation('common');
   const [visibleCodes, setVisibleCodes] = useState<{ [key: string]: boolean }>(
     {},
   );
@@ -74,10 +80,16 @@ export const SelectedCodeDisplay: React.FC<SelectedCodeDisplayProps> = ({
               </Typography.Text>
               <CodeToggleButton
                 type='text'
-                icon={<CodeOutlined />}
+                icon={
+                  visibleCodes[code.id] ? (
+                    <ShrinkOutlined />
+                  ) : (
+                    <ArrowsAltOutlined />
+                  )
+                }
                 size='small'
                 onClick={() => toggleCodeVisibility(code.id)}
-                title={visibleCodes[code.id] ? 'Hide Code' : 'Show Code'}
+                title={visibleCodes[code.id] ? t('showLess') : t('showMore')}
               />
             </Flex>
           }
