@@ -283,5 +283,8 @@
     "rollback": "Rollback",
     "fixIt": "Fix It",
     "retry": "Retry"
+  },
+  "inputMessageArea": {
+    "pasteImagesOrMention": "Paste images or @mention"
   }
 }

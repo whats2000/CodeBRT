@@ -1,5 +1,5 @@
 import React, { useContext, useEffect, useState } from 'react';
-import { Button, Flex, Input, Tag } from 'antd';
+import { Button, Flex, Mentions, Tag } from 'antd';
 import { SendOutlined } from '@ant-design/icons';
 import { useDispatch, useSelector } from 'react-redux';
 
@@ -7,10 +7,10 @@ import type { ConversationHistory } from '../../../../types';
 import type { AppDispatch, RootState } from '../../../redux';
 import { INPUT_MESSAGE_KEY } from '../../../../constants';
 import { CancelOutlined } from '../../../icons';
-import { useWindowSize } from '../../../hooks';
 import { useRefs } from '../../../context/RefContext';
 import { setRefId } from '../../../redux/slices/tourSlice';
 import { WebviewContext } from '../../../WebviewContext';
+import { useTranslation } from 'react-i18next';
 
 type InputMessageAreaProps = {
   inputMessage: string;
@@ -31,8 +31,8 @@ export const InputMessageArea: React.FC<InputMessageAreaProps> = ({
   sendMessage,
   isToolResponse,
 }) => {
+  const { t } = useTranslation('common');
   const { callApi } = useContext(WebviewContext);
-  const { innerWidth } = useWindowSize();
   const { registerRef } = useRefs();
   const [enterPressCount, setEnterPressCount] = useState(0);
   const dispatch = useDispatch<AppDispatch>();
@@ -52,11 +52,9 @@ export const InputMessageArea: React.FC<InputMessageAreaProps> = ({
     );
   }, [dispatch]);
 
-  const handleInputMessageChange = (
-    e: React.ChangeEvent<HTMLTextAreaElement>,
-  ) => {
-    setInputMessage(e.target.value);
-    localStorage.setItem(INPUT_MESSAGE_KEY, e.target.value);
+  const handleInputMessageChange = (text: string) => {
+    setInputMessage(text);
+    localStorage.setItem(INPUT_MESSAGE_KEY, text);
   };
 
   const resetEnterPressCount = () => setEnterPressCount(0);
@@ -103,11 +101,11 @@ export const InputMessageArea: React.FC<InputMessageAreaProps> = ({
 
   return (
     <Flex gap={10} style={{ width: '100%' }} ref={inputMessageRef}>
-      <Input.TextArea
+      <Mentions
         value={inputMessage}
         onChange={handleInputMessageChange}
         onKeyDown={handleKeyDown}
-        placeholder={innerWidth > 520 ? 'Paste images...' : 'Ask...'}
+        placeholder={t('inputMessageArea.pasteImagesOrMention')}
         disabled={conversationHistory.isProcessing || isToolResponse}
         autoSize={{
           minRows: 1,

@@ -283,5 +283,8 @@
     "rollback": "回滚",
     "fixIt": "修正",
     "retry": "重试"
+  },
+  "inputMessageArea": {
+    "pasteImagesOrMention": "粘贴图片或@提及"
   }
 }
