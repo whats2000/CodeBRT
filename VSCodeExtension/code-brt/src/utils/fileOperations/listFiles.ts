@@ -14,75 +14,24 @@ import { arePathsEqual } from './utils';
 import { DIRS_TO_IGNORE } from './constants';
 
 /**
- * Breadth-first level-by-level file listing up to a specified limit.
- * @param limit - Maximum number of files to collect.
- * @param options - Globby options.
- * @param pattern - Glob pattern to start with.
- * @returns Array of file paths collected up to the specified limit.
- */
-const globbyLevelByLevel = async (
-  limit: number,
-  options?: Options,
-  pattern = '*',
-): Promise<string[]> => {
-  const results: Set<string> = new Set();
-  const queue: string[] = [pattern]; // Start with a top-level pattern
-
-  // Core process for level-by-level file discovery
-  const globbingProcess = async () => {
-    while (queue.length > 0 && results.size < limit) {
-      const pattern = queue.shift()!;
-      const filesAtLevel = await globby(pattern, options);
-
-      for (const file of filesAtLevel) {
-        if (results.size >= limit) break;
-        results.add(file);
-
-        if (file.endsWith('/')) {
-          // Queue subdirectories for next level
-          queue.push(`${file}*`);
-        }
-      }
-    }
-    return Array.from(results).slice(0, limit);
-  };
-
-  // Timeout to prevent hanging globbing operations
-  const timeoutPromise = new Promise<string[]>((_, reject) => {
-    setTimeout(() => reject(new Error('Globbing timeout')), 10_000);
-  });
-
-  try {
-    return await Promise.race([globbingProcess(), timeoutPromise]);
-  } catch (error) {
-    console.warn('Globbing timed out, returning partial results');
-    return Array.from(results);
-  }
-};
-
-/**
  * List files in a directory with blacklist filtering, recursion, and file limit.
  * @param dirPath - The directory path to list files from.
  * @param recursive - Whether to list files recursively.
  * @param limit - The maximum number of files to return.
- * @param pattern - Glob pattern to start with.
+ * @param userPattern - Glob pattern to start with.
  * @returns An array containing the list of files and a boolean indicating if the limit was reached.
  */
-export const listFiles = async (
+export async function listFiles(
   dirPath: string,
   recursive: boolean,
   limit: number,
-  pattern: string = '*',
-): Promise<{
-  limitReached: boolean;
-  filesList: string[];
-  absoluteFilesList: string[];
-}> => {
+  userPattern: string = '',
+) {
   const absolutePath = path.resolve(dirPath);
-
-  // Restrict listing files in the root or home directory
   const root =
     process.platform === 'win32' ? path.parse(absolutePath).root : '/';
+
+  // Guard: don't let user list home directory or root
   if (
     arePathsEqual(absolutePath, root) ||
     arePathsEqual(absolutePath, os.homedir())
@@ -95,27 +44,68 @@ export const listFiles = async (
     };
   }
 
-  // Set globby options based on whether recursive search is requested
-  const options: Options = {
-    cwd: dirPath,
-    dot: true, // Include hidden files and directories
-    absolute: true, // Return absolute paths
-    markDirectories: true, // Append `/` to directories
-    gitignore: recursive, // Use .gitignore when recursive is true
-    ignore: recursive ? DIRS_TO_IGNORE : undefined, // Ignore specified directories
-    onlyFiles: false, // Include directories in the result
+  // For partial substring matching, we'll check path.includes(userPattern)
+  // But if user didn't supply anything, treat it as "*"
+  const substring = userPattern || '';
+
+  // Globby base options for a single-level listing
+  const baseOptions: Options = {
+    cwd: '', // We’ll change cwd dynamically
+    dot: true,
+    absolute: true,
+    markDirectories: true,
+    onlyFiles: false,
+    gitignore: false, // We'll handle ignore logic ourselves
   };
 
-  // Perform depth-limited globbing to get files up to the specified limit
-  const files = recursive
-    ? await globbyLevelByLevel(limit, options, pattern)
-    : (await globby(pattern, options)).slice(0, limit);
+  // BFS queue
+  const queue: string[] = [absolutePath];
+  const results: string[] = [];
+  const visited: Set<string> = new Set(); // to avoid duplicates or loops
 
-  const relativeFiles = files.map((file) => path.relative(dirPath, file));
+  while (queue.length > 0 && results.length < limit) {
+    const currentDir = queue.shift()!;
+    if (visited.has(currentDir)) {
+      continue;
+    }
+    visited.add(currentDir);
+
+    // Single-level glob inside currentDir
+    const options: Options = {
+      ...baseOptions,
+      cwd: currentDir,
+      ignore: DIRS_TO_IGNORE, // apply your ignore list
+    };
+
+    // get all items (files + directories) at this level
+    const items = await globby('*', options);
+
+    for (const item of items) {
+      if (results.length >= limit) break;
+
+      // If the item ends with '/', it's a directory
+      const isDirectory = item.endsWith('/');
+      if (isDirectory && recursive) {
+        // Enqueue subdirectory for deeper BFS
+        queue.push(item);
+      }
+
+      // Substring match check
+      // (We always do this check; either the user typed something or substring is empty)
+      if (item.includes(substring)) {
+        results.push(item);
+      }
+    }
+  }
+
+  // Convert absolute paths in results to relative, if needed
+  const relativeFiles = results.map((file) =>
+    path.relative(absolutePath, file),
+  );
 
   return {
-    limitReached: relativeFiles.length >= limit,
+    limitReached: results.length >= limit,
     filesList: relativeFiles,
-    absoluteFilesList: files,
+    absoluteFilesList: results,
   };
-};
+}

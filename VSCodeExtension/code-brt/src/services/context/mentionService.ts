@@ -50,9 +50,8 @@ class MentionService {
       workspacePath,
       true,
       100,
-      '*' + query + '*',
+      query,
     );
-    console.log(result);
     if (result && result.filesList) {
       return result.filesList.filter((file) => file.includes(query));
     }
