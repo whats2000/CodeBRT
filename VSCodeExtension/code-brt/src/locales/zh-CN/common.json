@@ -285,6 +285,8 @@
     "retry": "重试"
   },
   "inputMessageArea": {
-    "pasteImagesOrMention": "粘贴图片或@提及"
+    "pasteImagesOrMention": "粘贴图片、@问题、#文件/目录",
+    "workspaceProblem": "工作区问题",
+    "terminalProblem": "终端问题"
   }
 }

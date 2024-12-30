@@ -285,6 +285,8 @@
     "retry": "Retry"
   },
   "inputMessageArea": {
-    "pasteImagesOrMention": "Paste images or @mention"
+    "pasteImagesOrMention": "Paste images, @problem, #file/directory",
+    "workspaceProblem": "Workspace Problem",
+    "terminalProblem": "Terminal Problem"
   }
 }

@@ -5,8 +5,13 @@ import React, {
   useCallback,
   useRef,
 } from 'react';
-import { Button, Flex, Mentions, Space, Tag, Typography } from 'antd';
-import { FileOutlined, FolderOutlined, SendOutlined } from '@ant-design/icons';
+import { Button, Flex, Mentions, Space, Tag, Tooltip, Typography } from 'antd';
+import {
+  CodeOutlined,
+  FileOutlined,
+  FolderOutlined,
+  SendOutlined,
+} from '@ant-design/icons';
 import { useDispatch, useSelector } from 'react-redux';
 import { useTranslation } from 'react-i18next';
 import debounce from 'lodash/debounce';
@@ -58,6 +63,16 @@ export const InputMessageArea: React.FC<InputMessageAreaProps> = ({
   >([]);
   const [loading, setLoading] = useState(false);
 
+  useEffect(() => {
+    dispatch(
+      setRefId({
+        tourName: 'quickStart',
+        targetId: 'inputMessage',
+        stepIndex: 3,
+      }),
+    );
+  }, [dispatch]);
+
   const debounceSearch = useCallback(
     debounce(async (search: string) => {
       const query = search.substring(1);
@@ -85,16 +100,6 @@ export const InputMessageArea: React.FC<InputMessageAreaProps> = ({
     }, 300),
     [callApi],
   );
-
-  useEffect(() => {
-    dispatch(
-      setRefId({
-        tourName: 'quickStart',
-        targetId: 'inputMessage',
-        stepIndex: 3,
-      }),
-    );
-  }, [dispatch]);
 
   const handleInputMessageChange = (text: string) => {
     setInputMessage(text);
@@ -149,8 +154,44 @@ export const InputMessageArea: React.FC<InputMessageAreaProps> = ({
 
     if (prefix === '#') {
       void debounceSearch(search);
+      return;
+    }
+
+    if (prefix === '@') {
+      setOptions([
+        {
+          key: 'workspaceProblem',
+          label: (
+            <Tooltip title={t('inputMessageArea.workspaceProblem')}>
+              <Space>
+                <FolderOutlined />
+                <Typography.Text>
+                  {t('inputMessageArea.workspaceProblem')}
+                </Typography.Text>
+              </Space>
+            </Tooltip>
+          ),
+          value: 'workspaceProblem',
+        },
+        {
+          key: 'terminalProblem',
+          label: (
+            <Tooltip title={t('inputMessageArea.terminalProblem')}>
+              <Space>
+                <CodeOutlined />
+                <Typography.Text>
+                  {t('inputMessageArea.terminalProblem')}
+                </Typography.Text>
+              </Space>
+            </Tooltip>
+          ),
+          value: 'terminalProblem',
+        },
+      ]);
+      return;
     }
   };
+
   return (
     <Flex gap={10} style={{ width: '100%' }} ref={inputMessageRef}>
       <Mentions
