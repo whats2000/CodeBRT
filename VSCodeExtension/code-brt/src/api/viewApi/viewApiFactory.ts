@@ -7,6 +7,7 @@ import type { PartialCodeFuser } from '../../services/partialCodeFuser';
 import { SettingsManager } from '../settingsManager';
 import { HistoryManager } from '../historyManager';
 import { TerminalManager } from '../../integrations';
+import { createContextServiceApi } from './contextServiceApi';
 import { createHistoryManagerApi } from './historyManagerApi';
 import { createLanguageModelServiceApi } from './languageModelServiceApi';
 import { createMiscApi } from './miscApi';
@@ -40,5 +41,6 @@ export const createViewApi: (options: ViewApiFactoryParams) => ViewApi = ({
     ...createMiscApi(ctx, terminalManager, partialCodeFuser, connectedViews),
     ...createSettingApi(settingsManager),
     ...createVoiceServiceApi(settingsManager, voiceServices),
+    ...createContextServiceApi(),
   };
 };

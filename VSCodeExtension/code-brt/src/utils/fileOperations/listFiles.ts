@@ -17,14 +17,16 @@ import { DIRS_TO_IGNORE } from './constants';
  * Breadth-first level-by-level file listing up to a specified limit.
  * @param limit - Maximum number of files to collect.
  * @param options - Globby options.
+ * @param pattern - Glob pattern to start with.
  * @returns Array of file paths collected up to the specified limit.
  */
 const globbyLevelByLevel = async (
   limit: number,
   options?: Options,
+  pattern = '*',
 ): Promise<string[]> => {
   const results: Set<string> = new Set();
-  const queue: string[] = ['*']; // Start with a top-level pattern
+  const queue: string[] = [pattern]; // Start with a top-level pattern
 
   // Core process for level-by-level file discovery
   const globbingProcess = async () => {
@@ -63,12 +65,14 @@ const globbyLevelByLevel = async (
  * @param dirPath - The directory path to list files from.
  * @param recursive - Whether to list files recursively.
  * @param limit - The maximum number of files to return.
+ * @param pattern - Glob pattern to start with.
  * @returns An array containing the list of files and a boolean indicating if the limit was reached.
  */
 export const listFiles = async (
   dirPath: string,
   recursive: boolean,
   limit: number,
+  pattern: string = '*',
 ): Promise<{
   limitReached: boolean;
   filesList: string[];
@@ -104,8 +108,8 @@ export const listFiles = async (
 
   // Perform depth-limited globbing to get files up to the specified limit
   const files = recursive
-    ? await globbyLevelByLevel(limit, options)
-    : (await globby('*', options)).slice(0, limit);
+    ? await globbyLevelByLevel(limit, options, pattern)
+    : (await globby(pattern, options)).slice(0, limit);
 
   const relativeFiles = files.map((file) => path.relative(dirPath, file));
 

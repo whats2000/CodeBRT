@@ -1,7 +1,15 @@
-import React, { useContext, useEffect, useState } from 'react';
+import React, {
+  useContext,
+  useEffect,
+  useState,
+  useCallback,
+  useRef,
+} from 'react';
 import { Button, Flex, Mentions, Tag } from 'antd';
 import { SendOutlined } from '@ant-design/icons';
 import { useDispatch, useSelector } from 'react-redux';
+import { useTranslation } from 'react-i18next';
+import debounce from 'lodash/debounce';
 
 import type { ConversationHistory } from '../../../../types';
 import type { AppDispatch, RootState } from '../../../redux';
@@ -10,7 +18,6 @@ import { CancelOutlined } from '../../../icons';
 import { useRefs } from '../../../context/RefContext';
 import { setRefId } from '../../../redux/slices/tourSlice';
 import { WebviewContext } from '../../../WebviewContext';
-import { useTranslation } from 'react-i18next';
 
 type InputMessageAreaProps = {
   inputMessage: string;
@@ -34,6 +41,7 @@ export const InputMessageArea: React.FC<InputMessageAreaProps> = ({
   const { t } = useTranslation('common');
   const { callApi } = useContext(WebviewContext);
   const { registerRef } = useRefs();
+  const ref = useRef<string>('');
   const [enterPressCount, setEnterPressCount] = useState(0);
   const dispatch = useDispatch<AppDispatch>();
   const { settings } = useSelector((state: RootState) => state.settings);
@@ -41,6 +49,30 @@ export const InputMessageArea: React.FC<InputMessageAreaProps> = ({
     (state: RootState) => state.modelService,
   );
   const inputMessageRef = registerRef('inputMessage');
+  const [options, setOptions] = useState<
+    {
+      key: string;
+      label: string;
+      value: string;
+    }[]
+  >([]);
+  const [loading, setLoading] = useState(false);
+
+  const debounceSearch = useCallback(
+    debounce(async (search: string) => {
+      const query = search.substring(1);
+      setLoading(true);
+      const files = (await callApi(
+        'getFilesOrDirectoriesList',
+        query,
+      )) as string[];
+      setLoading(false);
+      setOptions(
+        files.map((file) => ({ key: file, label: file, value: file })),
+      );
+    }, 300),
+    [callApi],
+  );
 
   useEffect(() => {
     dispatch(
@@ -99,6 +131,14 @@ export const InputMessageArea: React.FC<InputMessageAreaProps> = ({
     );
   };
 
+  const onSearch = (search: string, prefix: string) => {
+    ref.current = search;
+    setOptions([]);
+
+    if (prefix === '#') {
+      void debounceSearch(search);
+    }
+  };
   return (
     <Flex gap={10} style={{ width: '100%' }} ref={inputMessageRef}>
       <Mentions
@@ -112,6 +152,10 @@ export const InputMessageArea: React.FC<InputMessageAreaProps> = ({
           maxRows: conversationHistory.isProcessing ? 2 : 10,
         }}
         allowClear
+        prefix={['@', '#']}
+        onSearch={onSearch}
+        loading={loading}
+        options={options}
       />
       <Flex vertical={true}>
         <Button

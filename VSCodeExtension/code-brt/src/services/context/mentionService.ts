@@ -43,13 +43,16 @@ class MentionService {
   ): Promise<string[]> {
     const workspacePath = vscode.workspace.workspaceFolders?.[0]?.uri.fsPath;
     if (!workspacePath) {
+      console.error('No workspace path found');
       return [];
     }
     const result = await FileOperationsProvider.listFiles(
       workspacePath,
       true,
       100,
+      '*' + query + '*',
     );
+    console.log(result);
     if (result && result.filesList) {
       return result.filesList.filter((file) => file.includes(query));
     }

@@ -52,17 +52,19 @@ export abstract class FileOperationsProvider {
    * @param dirPath - The directory path to list files from.
    * @param recursive - Whether to list files recursively.
    * @param limit - The maximum number of files to return.
+   * @param pattern - Glob pattern to start with.
    */
   static async listFiles(
     dirPath: string,
     recursive: boolean,
     limit: number,
+    pattern?: string,
   ): Promise<{
     limitReached: boolean;
     filesList: string[];
     absoluteFilesList: string[];
   }> {
-    return listFiles(dirPath, recursive, limit);
+    return listFiles(dirPath, recursive, limit, pattern);
   }
 
   /**
