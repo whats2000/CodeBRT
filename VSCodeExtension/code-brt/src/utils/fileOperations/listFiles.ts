@@ -14,6 +14,14 @@ import { arePathsEqual } from './utils';
 import { DIRS_TO_IGNORE } from './constants';
 
 /**
+ * Unify slashes in a string to forward slashes for directory listing.
+ * @param str - The string to replace backslashes in.
+ */
+const unifySlashes = (str: string): string => {
+  return str.replace(/\\/g, '/');
+};
+
+/**
  * List files in a directory with blacklist filtering, recursion, and file limit.
  * @param dirPath - The directory path to list files from.
  * @param recursive - Whether to list files recursively.
@@ -44,24 +52,21 @@ export async function listFiles(
     };
   }
 
-  // For partial substring matching, we'll check path.includes(userPattern)
-  // But if user didn't supply anything, treat it as "*"
-  const substring = userPattern || '';
+  // Normalize the user pattern so any backslashes -> forward slashes
+  const normalizedPattern = unifySlashes(userPattern);
 
-  // Globby base options for a single-level listing
   const baseOptions: Options = {
-    cwd: '', // We’ll change cwd dynamically
+    cwd: '',
     dot: true,
     absolute: true,
     markDirectories: true,
     onlyFiles: false,
-    gitignore: false, // We'll handle ignore logic ourselves
+    gitignore: false,
   };
 
-  // BFS queue
   const queue: string[] = [absolutePath];
   const results: string[] = [];
-  const visited: Set<string> = new Set(); // to avoid duplicates or loops
+  const visited: Set<string> = new Set();
 
   while (queue.length > 0 && results.length < limit) {
     const currentDir = queue.shift()!;
@@ -70,35 +75,34 @@ export async function listFiles(
     }
     visited.add(currentDir);
 
-    // Single-level glob inside currentDir
     const options: Options = {
       ...baseOptions,
       cwd: currentDir,
-      ignore: DIRS_TO_IGNORE, // apply your ignore list
+      ignore: DIRS_TO_IGNORE,
     };
 
-    // get all items (files + directories) at this level
+    // Single-level glob in this directory
     const items = await globby('*', options);
 
     for (const item of items) {
       if (results.length >= limit) break;
 
-      // If the item ends with '/', it's a directory
       const isDirectory = item.endsWith('/');
       if (isDirectory && recursive) {
-        // Enqueue subdirectory for deeper BFS
         queue.push(item);
       }
 
-      // Substring match check
-      // (We always do this check; either the user typed something or substring is empty)
-      if (item.includes(substring)) {
+      // Normalize the discovered path
+      const normalizedItem = unifySlashes(item);
+
+      // If the user's pattern is empty, everything matches;
+      // otherwise, check substring with normalized slashes
+      if (!normalizedPattern || normalizedItem.includes(normalizedPattern)) {
         results.push(item);
       }
     }
   }
 
-  // Convert absolute paths in results to relative, if needed
   const relativeFiles = results.map((file) =>
     path.relative(absolutePath, file),
   );
