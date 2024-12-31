@@ -96,7 +96,7 @@ export const InputMessageArea: React.FC<InputMessageAreaProps> = ({
               </Tooltip>
             </Flex>
           ),
-          value: file,
+          value: file.includes('.') ? `file:${file}` : `folder:${file}`,
         })),
       );
     }, 300),
@@ -171,7 +171,7 @@ export const InputMessageArea: React.FC<InputMessageAreaProps> = ({
               </Typography.Text>
             </Space>
           ),
-          value: 'workspaceProblem',
+          value: 'problem:workspace',
         },
         {
           key: 'terminalProblem',
@@ -183,7 +183,7 @@ export const InputMessageArea: React.FC<InputMessageAreaProps> = ({
               </Typography.Text>
             </Space>
           ),
-          value: 'terminalProblem',
+          value: 'problem:terminal',
         },
       ]);
       return;
