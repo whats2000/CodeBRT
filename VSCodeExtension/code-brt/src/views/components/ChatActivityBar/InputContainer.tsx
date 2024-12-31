@@ -21,6 +21,7 @@ import {
 } from '../../redux/slices/conversationSlice';
 import { setRefId } from '../../redux/slices/tourSlice';
 import { SelectedCodeDisplay } from './InputContainer/SelectedCodeDisplay';
+import { MentionsDisplay } from './InputContainer/MentionsDisplay';
 import { InputMessageArea } from './InputContainer/InputMessageArea';
 import { FileUploadSection } from './InputContainer/FileUploadSection';
 
@@ -194,6 +195,10 @@ export const InputContainer = React.memo<InputContainerProps>(
         <SelectedCodeDisplay
           selectedCodes={refSelectedCode}
           onRemoveCode={removeSelectedCode}
+        />
+        <MentionsDisplay
+          inputMessage={inputMessage}
+          setInputMessage={setInputMessage}
         />
         <FileUploadSection />
         <Flex gap={10} wrap={innerWidth < 320}>

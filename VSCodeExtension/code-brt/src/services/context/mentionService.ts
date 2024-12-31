@@ -46,11 +46,12 @@ class MentionService {
       console.error('No workspace path found');
       return [];
     }
+    const cleanQuery = query.replace(/^(ile:|older:)/, '');
     const result = await FileOperationsProvider.listFiles(
       workspacePath,
       true,
       100,
-      query,
+      cleanQuery,
     );
     if (result && result.filesList) {
       return result.filesList.filter((file) => file.includes(query));

@@ -75,29 +75,33 @@ export const InputMessageArea: React.FC<InputMessageAreaProps> = ({
 
   const debounceSearch = useCallback(
     debounce(async (search: string) => {
-      const query = search.substring(1);
+      const query = search.replace(/^(file:|folder:)/, '');
       setLoading(true);
-      const files = (await callApi(
-        'getFilesOrDirectoriesList',
-        query,
-      )) as string[];
+      const files = (await callApi('getFilesOrDirectoriesList', query)).filter(
+        (file) => file && file.includes(query),
+      );
       setLoading(false);
+      if (files.length === 0) {
+        return;
+      }
       setOptions(
-        files.map((file) => ({
-          key: file,
-          label: (
-            <Flex wrap={'wrap'} justify='space-between' gap={5}>
-              <Space>
-                {file.includes('.') ? <FileOutlined /> : <FolderOutlined />}
-                <Typography.Text>{file.split(/[\\/]/).pop()}</Typography.Text>
-              </Space>
-              <Tooltip title={file} placement={'right'}>
-                <Typography.Text type='secondary'>{file}</Typography.Text>
-              </Tooltip>
-            </Flex>
-          ),
-          value: file.includes('.') ? `file:${file}` : `folder:${file}`,
-        })),
+        files.map((file) => {
+          return {
+            key: file,
+            label: (
+              <Flex wrap={'wrap'} justify='space-between' gap={5}>
+                <Space>
+                  {file.includes('.') ? <FileOutlined /> : <FolderOutlined />}
+                  <Typography.Text>{file.split(/[\\/]/).pop()}</Typography.Text>
+                </Space>
+                <Tooltip title={file} placement={'right'}>
+                  <Typography.Text type='secondary'>{file}</Typography.Text>
+                </Tooltip>
+              </Flex>
+            ),
+            value: file.includes('.') ? `file:${file}` : `folder:${file}`,
+          };
+        }),
       );
     }, 300),
     [callApi],
