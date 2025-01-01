@@ -31,6 +31,10 @@ const StyledInputContainer = styled.div`
   padding: 10px 15px 10px 10px;
 `;
 
+const ContextDisplayContainer = styled.div`
+  padding-right: 55px;
+`;
+
 type InputContainerProps = {
   tempIdRef: React.MutableRefObject<string | null>;
   inputContainerRef: React.RefObject<HTMLDivElement>;
@@ -206,14 +210,16 @@ export const InputContainer = React.memo<InputContainerProps>(
 
     return (
       <StyledInputContainer ref={inputContainerRef}>
-        <SelectedCodeDisplay
-          selectedCodes={refSelectedCode}
-          onRemoveCode={removeSelectedCode}
-        />
-        <MentionsDisplay
-          visibleMentions={visibleMentions}
-          removeMention={removeMention}
-        />
+        <ContextDisplayContainer>
+          <SelectedCodeDisplay
+            selectedCodes={refSelectedCode}
+            onRemoveCode={removeSelectedCode}
+          />
+          <MentionsDisplay
+            visibleMentions={visibleMentions}
+            removeMention={removeMention}
+          />
+        </ContextDisplayContainer>
         <FileUploadSection />
         <Flex gap={10} wrap={innerWidth < 320}>
           <Button
