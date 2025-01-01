@@ -40,13 +40,15 @@ class MentionService {
     // Retrieve an array of [Uri, Diagnostic[]]
     const diagnosticsArray = vscode.languages.getDiagnostics();
 
+    // If empty or undefined, return a fallback message.
     if (!diagnosticsArray || diagnosticsArray.length === 0) {
-      return 'No diagnostics found in the workspace.';
+      return `## Workspace Diagnostics\n\nNo diagnostics found in the workspace.`;
     }
 
     let output = `## Workspace Diagnostics\n\n`;
 
     for (const [uri, diagnostics] of diagnosticsArray) {
+      // If a file has zero diagnostics, skip it.
       if (diagnostics.length === 0) {
         continue;
       }
@@ -54,13 +56,18 @@ class MentionService {
       output += `**File:** \`${uri.fsPath}\`\n\n`;
       for (const diag of diagnostics) {
         const severity = DiagnosticSeverity[diag.severity];
-        const line = diag.range.start.line + 1; // 1-based
-        const character = diag.range.start.character + 1; // 1-based
+        const line = diag.range.start.line + 1; // 1-based indexing
+        const character = diag.range.start.character + 1; // 1-based indexing
         const message = diag.message.replace(/\r?\n|\r/g, ' '); // Flatten multiline
 
         output += `- [${severity}] Line ${line}, Col ${character}: ${message}\n`;
       }
       output += `\n`; // Extra spacing between files
+    }
+
+    // If the loop finishes and nothing was added, that means no file had any diagnostics.
+    if (output === `## Workspace Diagnostics\n\n`) {
+      output += `No diagnostics found in the workspace.`;
     }
 
     return output.trim();
