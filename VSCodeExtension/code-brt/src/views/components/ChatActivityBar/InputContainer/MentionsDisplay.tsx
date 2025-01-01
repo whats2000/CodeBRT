@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import { Card, Tooltip, Typography, Space } from 'antd';
 import styled from 'styled-components';
 import {
@@ -88,24 +88,9 @@ const MentionCard = (props: { mention: string; onRemove: () => void }) => {
 };
 
 export const MentionsDisplay: React.FC<{
-  inputMessage: string;
-  setInputMessage: (value: string) => void;
-}> = ({ inputMessage, setInputMessage }) => {
-  const mentionRegex = /[@#][\w-]+:[\w-\\/.]+\s/g;
-  const [visibleMentions, setVisibleMentions] = useState<string[]>([]);
-
-  useEffect(() => {
-    const mentions = inputMessage.match(mentionRegex) || [];
-    setVisibleMentions(mentions);
-  }, [inputMessage]);
-
-  const removeMention = (mention: string) => {
-    const updatedMentions = visibleMentions.filter((m) => m !== mention);
-    setVisibleMentions(updatedMentions);
-    const updatedMessage = inputMessage.replace(mention, '');
-    setInputMessage(updatedMessage);
-  };
-
+  visibleMentions: string[];
+  removeMention: (mention: string) => void;
+}> = ({ visibleMentions, removeMention }) => {
   if (visibleMentions.length === 0) return null;
 
   return (

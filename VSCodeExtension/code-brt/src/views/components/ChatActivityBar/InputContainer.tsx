@@ -45,6 +45,7 @@ export const InputContainer = React.memo<InputContainerProps>(
       localStorage.getItem(INPUT_MESSAGE_KEY) || '',
     );
     const [refSelectedCode, setRefSelectedCode] = useState<SelectedCode[]>([]);
+    const [visibleMentions, setVisibleMentions] = useState<string[]>([]);
 
     const fileInputRef = useRef<HTMLInputElement>(null);
     const uploadFileButtonRef = registerRef('uploadFileButton');
@@ -93,6 +94,12 @@ export const InputContainer = React.memo<InputContainerProps>(
         removeListener('sendCodeToChat', () => {});
       };
     }, [addListener, removeListener]);
+
+    useEffect(() => {
+      const mentions = inputMessage.match(/[@#][\w-]+:[\w-\\/.]+\s/g) || [];
+      const uniqueMentions = Array.from(new Set(mentions));
+      setVisibleMentions(uniqueMentions);
+    }, [inputMessage]);
 
     const currentEntry =
       conversationHistory.entries[conversationHistory.current];
@@ -190,6 +197,13 @@ export const InputContainer = React.memo<InputContainerProps>(
       setIsRecording(false);
     };
 
+    const removeMention = (mention: string) => {
+      const updatedMentions = visibleMentions.filter((m) => m !== mention);
+      setVisibleMentions(updatedMentions);
+      const updatedMessage = inputMessage.replace(new RegExp(mention, 'g'), '');
+      setInputMessage(updatedMessage);
+    };
+
     return (
       <StyledInputContainer ref={inputContainerRef}>
         <SelectedCodeDisplay
@@ -197,8 +211,8 @@ export const InputContainer = React.memo<InputContainerProps>(
           onRemoveCode={removeSelectedCode}
         />
         <MentionsDisplay
-          inputMessage={inputMessage}
-          setInputMessage={setInputMessage}
+          visibleMentions={visibleMentions}
+          removeMention={removeMention}
         />
         <FileUploadSection />
         <Flex gap={10} wrap={innerWidth < 320}>
