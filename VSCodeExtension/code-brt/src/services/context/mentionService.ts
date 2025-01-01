@@ -46,7 +46,7 @@ class MentionService {
       console.error('No workspace path found');
       return [];
     }
-    const cleanQuery = query.replace(/^(ile:|older:)/, '');
+    const cleanQuery = query.replace(/^(file:|folder:)/, '');
     const result = await FileOperationsProvider.listFiles(
       workspacePath,
       true,

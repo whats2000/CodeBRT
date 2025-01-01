@@ -52,7 +52,7 @@ const MentionCard = (props: { mention: string; onRemove: () => void }) => {
             <Space>
               {icon}
               <Typography.Text>
-                {t(`inputMessageArea.${cleanMention}Problem`)}
+                {t(`inputMessageArea.${cleanMention.trim()}Problem`)}
               </Typography.Text>
             </Space>
           </Tooltip>
@@ -102,7 +102,7 @@ export const MentionsDisplay: React.FC<{
   const removeMention = (mention: string) => {
     const updatedMentions = visibleMentions.filter((m) => m !== mention);
     setVisibleMentions(updatedMentions);
-    const updatedMessage = inputMessage.replace(mention, '').trim();
+    const updatedMessage = inputMessage.replace(mention, '');
     setInputMessage(updatedMessage);
   };
 
