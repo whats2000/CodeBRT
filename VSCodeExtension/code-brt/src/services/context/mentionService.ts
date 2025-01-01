@@ -9,29 +9,61 @@
 import fs from 'fs';
 import path from 'path';
 
-import vscode from 'vscode';
+import vscode, { DiagnosticSeverity } from 'vscode';
 import { isBinaryFile } from 'isBinaryFile';
 
 import { FileOperationsProvider } from '../../utils';
 
 class MentionService {
   private static async readAndFormatFileContent(
-    filePath: string,
+    relativePath: string,
+    absolutePath: string,
   ): Promise<string> {
     try {
-      const isBinary = await isBinaryFile(filePath).catch(() => false);
+      const isBinary = await isBinaryFile(absolutePath).catch(() => false);
       if (isBinary) {
-        return `Path: ${filePath}\n(Binary file, unable to display content)`;
+        return `Path: ${relativePath}\n(Binary file, unable to display content)`;
       }
-      const result = await FileOperationsProvider.readFile(filePath);
+      const result = await FileOperationsProvider.readFile(absolutePath);
       if (result.status === 'success') {
-        const fileExtension = path.extname(filePath).toLowerCase();
-        return `Content in path: ${filePath}\n\`\`\`${fileExtension}\n{result.message}\n\`\`\``;
+        const fileExtension = absolutePath.split('.').pop();
+        // Be sure to place the content in a code block
+        return `Path: ${relativePath}\n\`\`\`${fileExtension}\n${result.message}\n\`\`\``;
       }
-      return `Path: ${filePath}\n(Failed to read file content)`;
+      return `Path: ${relativePath}\n(Failed to read file content)`;
     } catch (error) {
-      return `Path: ${filePath}\n(Failed to read file content: ${error})`;
+      return `Path: ${relativePath}\n(Failed to read file content: ${error})`;
     }
+  }
+
+  private static async getWorkspaceDiagnostics(): Promise<string> {
+    // Retrieve an array of [Uri, Diagnostic[]]
+    const diagnosticsArray = vscode.languages.getDiagnostics();
+
+    if (!diagnosticsArray || diagnosticsArray.length === 0) {
+      return 'No diagnostics found in the workspace.';
+    }
+
+    let output = `## Workspace Diagnostics\n\n`;
+
+    for (const [uri, diagnostics] of diagnosticsArray) {
+      if (diagnostics.length === 0) {
+        continue;
+      }
+
+      output += `**File:** \`${uri.fsPath}\`\n\n`;
+      for (const diag of diagnostics) {
+        const severity = DiagnosticSeverity[diag.severity];
+        const line = diag.range.start.line + 1; // 1-based
+        const character = diag.range.start.character + 1; // 1-based
+        const message = diag.message.replace(/\r?\n|\r/g, ' '); // Flatten multiline
+
+        output += `- [${severity}] Line ${line}, Col ${character}: ${message}\n`;
+      }
+      output += `\n`; // Extra spacing between files
+    }
+
+    return output.trim();
   }
 
   /**
@@ -60,29 +92,29 @@ class MentionService {
   }
 
   /**
-   * Get the context of a file or directory.
-   * If the path is a directory, the context will contain the list of files in the directory.
+   * Get the context of a file or directory (single path).
+   * If the path is a directory, the context will contain the list of files in that directory
+   * plus the content of those files.
    * If the path is a file, the context will contain the file content.
-   * @param mentionPath - The relative path of the file or directory.
+   * @param singleMention - The relative path of the file or directory mention.
+   *                        It should be `#file:<path>` or `#folder:<path>`.
+   * @returns The context of the file or directory.
    */
-  public static async getFileContext(mentionPath: string): Promise<string> {
+  public static async getFileContext(singleMention: string): Promise<string> {
     const workspacePath = vscode.workspace.workspaceFolders?.[0]?.uri.fsPath;
     if (!workspacePath) {
       return '';
     }
-    const absPath = path.resolve(workspacePath, mentionPath);
+    const isFolder = singleMention.startsWith('#folder:');
+    const relativePath = singleMention.replace(/#(file|folder):/, '').trim();
+    const absPath = path.resolve(workspacePath, relativePath);
 
     try {
-      const stats = await fs.promises.stat(absPath);
-
-      if (stats.isFile()) {
-        return MentionService.readAndFormatFileContent(absPath);
+      if (!isFolder) {
+        return this.readAndFormatFileContent(relativePath, absPath);
       }
 
-      if (!stats.isDirectory()) {
-        return `(Failed to read contents of ${mentionPath})`;
-      }
-
+      // Directory flow:
       const entries = await fs.promises.readdir(absPath, {
         withFileTypes: true,
       });
@@ -101,25 +133,90 @@ class MentionService {
           folderContent += `${linePrefix}${entry.name}\n`;
           const absoluteFilePath = path.resolve(absPath, entry.name);
           fileContentPromises.push(
-            MentionService.readAndFormatFileContent(absoluteFilePath),
+            this.readAndFormatFileContent(
+              relativePath + '/' + entry.name,
+              absoluteFilePath,
+            ),
           );
         }
       });
       const fileContents = await Promise.all(fileContentPromises);
       return `${folderContent}\n${fileContents.join('\n\n')}`.trim();
     } catch (error) {
-      return `(Failed to access path ${mentionPath}: ${error})`;
+      return `(Failed to access path ${singleMention}: ${error})`;
     }
   }
 
-  public static async getProblemContext(): Promise<string> {
-    // TODO: Implement problem context retrieval
-    return '';
+  /**
+   * Get the contexts of multiple files or directories.
+   * Each path's context is wrapped and labeled for clarity, so a large language model
+   * can easily reference the corresponding context.
+   * @param mentions - Array of relative file or directory mentions.
+   */
+  public static async getFileContexts(mentions: string[]): Promise<string> {
+    const workspacePath = vscode.workspace.workspaceFolders?.[0]?.uri.fsPath;
+    if (!workspacePath) {
+      return '';
+    }
+
+    const contexts: string[] = [];
+
+    for (const singleMention of mentions) {
+      try {
+        const context = await this.getFileContext(singleMention);
+        // Wrap each path context with a heading or bracketed label
+        contexts.push(`### Context for: \`${singleMention}\`\n\n${context}`);
+      } catch (error) {
+        contexts.push(
+          `### Context for: \`${singleMention}\`\n\n(Failed to retrieve content: ${error})`,
+        );
+      }
+    }
+
+    // Join them all together, separated by blank lines.
+    return contexts.join('\n\n');
   }
 
-  public static async getTerminalContext(): Promise<string> {
-    // TODO: Implement terminal context retrieval
-    return '';
+  /**
+   * Get a summary of all Diagnostics (Problems) in the workspace.
+   * This method collects errors/warnings/etc. from all files.
+   * @param singleMention - The mention to trigger this method.
+   * @returns A formatted string summarizing all problems (LLM-friendly).
+   */
+  public static async getProblemContext(
+    singleMention: string,
+  ): Promise<string> {
+    if (singleMention.startsWith('@problem:workspace')) {
+      return this.getWorkspaceDiagnostics();
+    } else if (singleMention.startsWith('@problem:terminal')) {
+      return 'Currently, terminal problems are not supported.';
+    }
+
+    // If the mention is not recognized
+    return 'Unknown problem context mention.';
+  }
+
+  /**
+   * Get the context of problem mentions.
+   * @param mentions - The mentions to get the context for.
+   */
+  public static async getProblemsContext(mentions: string[]): Promise<string> {
+    const contexts: string[] = [];
+
+    for (const singleMention of mentions) {
+      try {
+        const context = await this.getProblemContext(singleMention);
+        // Wrap each path context with a heading or bracketed label
+        contexts.push(`### Context for: \`${singleMention}\`\n\n${context}`);
+      } catch (error) {
+        contexts.push(
+          `### Context for: \`${singleMention}\`\n\n(Failed to retrieve content: ${error})`,
+        );
+      }
+    }
+
+    // Join them all together, separated by blank lines.
+    return contexts.join('\n\n');
   }
 }
 
