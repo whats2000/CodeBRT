@@ -172,10 +172,10 @@ class MentionService {
       try {
         const context = await this.getFileContext(singleMention);
         // Wrap each path context with a heading or bracketed label
-        contexts.push(`### Context for: \`${singleMention}\`\n\n${context}`);
+        contexts.push(`### Content for: \`${singleMention}\`\n\n${context}`);
       } catch (error) {
         contexts.push(
-          `### Context for: \`${singleMention}\`\n\n(Failed to retrieve content: ${error})`,
+          `### Content for: \`${singleMention}\`\n\n(Failed to retrieve content: ${error})`,
         );
       }
     }
@@ -214,10 +214,10 @@ class MentionService {
       try {
         const context = await this.getProblemContext(singleMention);
         // Wrap each path context with a heading or bracketed label
-        contexts.push(`### Context for: \`${singleMention}\`\n\n${context}`);
+        contexts.push(`### Problems for: \`${singleMention}\`\n\n${context}`);
       } catch (error) {
         contexts.push(
-          `### Context for: \`${singleMention}\`\n\n(Failed to retrieve content: ${error})`,
+          `### Problems for: \`${singleMention}\`\n\n(Failed to retrieve content: ${error})`,
         );
       }
     }
