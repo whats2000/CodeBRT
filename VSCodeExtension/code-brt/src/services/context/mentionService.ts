@@ -148,7 +148,7 @@ class MentionService {
         }
       });
       const fileContents = await Promise.all(fileContentPromises);
-      return `${folderContent}\n${fileContents.join('\n\n')}`.trim();
+      return `\`\`\`\n${folderContent}\`\`\`\n${fileContents.join('\n\n')}`.trim();
     } catch (error) {
       return `(Failed to access path ${singleMention}: ${error})`;
     }
