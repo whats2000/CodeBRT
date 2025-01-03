@@ -283,5 +283,10 @@
     "rollback": "Rollback",
     "fixIt": "Fix It",
     "retry": "Retry"
+  },
+  "inputMessageArea": {
+    "pasteImagesOrMention": "Paste images, @problem, #file/directory",
+    "workspaceProblem": "Workspace Problem",
+    "terminalProblem": "Terminal Problem"
   }
 }

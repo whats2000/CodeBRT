@@ -21,6 +21,7 @@ import {
 } from '../../redux/slices/conversationSlice';
 import { setRefId } from '../../redux/slices/tourSlice';
 import { SelectedCodeDisplay } from './InputContainer/SelectedCodeDisplay';
+import { MentionsDisplay } from './InputContainer/MentionsDisplay';
 import { InputMessageArea } from './InputContainer/InputMessageArea';
 import { FileUploadSection } from './InputContainer/FileUploadSection';
 
@@ -44,6 +45,7 @@ export const InputContainer = React.memo<InputContainerProps>(
       localStorage.getItem(INPUT_MESSAGE_KEY) || '',
     );
     const [refSelectedCode, setRefSelectedCode] = useState<SelectedCode[]>([]);
+    const [visibleMentions, setVisibleMentions] = useState<string[]>([]);
 
     const fileInputRef = useRef<HTMLInputElement>(null);
     const uploadFileButtonRef = registerRef('uploadFileButton');
@@ -93,6 +95,12 @@ export const InputContainer = React.memo<InputContainerProps>(
       };
     }, [addListener, removeListener]);
 
+    useEffect(() => {
+      const mentions = inputMessage.match(/[@#][\w-]+:[\w-\\/.]+\s/g) || [];
+      const uniqueMentions = Array.from(new Set(mentions));
+      setVisibleMentions(uniqueMentions);
+    }, [inputMessage]);
+
     const currentEntry =
       conversationHistory.entries[conversationHistory.current];
     const isToolResponse = currentEntry?.role === 'tool';
@@ -100,6 +108,13 @@ export const InputContainer = React.memo<InputContainerProps>(
     // Function to remove a specific selected code item
     const removeSelectedCode = (id: string) => {
       setRefSelectedCode((prev) => prev.filter((code) => code.id !== id));
+    };
+
+    const resetInputMessage = () => {
+      setInputMessage('');
+      setRefSelectedCode([]);
+      setVisibleMentions([]);
+      localStorage.setItem(INPUT_MESSAGE_KEY, '');
     };
 
     const sendMessage = async () => {
@@ -116,6 +131,31 @@ export const InputContainer = React.memo<InputContainerProps>(
           .join('\n\n');
 
         finalMessage = `${finalMessage}\n\n${codeBlocks}`;
+      }
+
+      // Append visible mentions context to the message
+      if (visibleMentions.length > 0) {
+        const fileFoldersMentions = visibleMentions.filter((mention) =>
+          mention.startsWith('#'),
+        );
+
+        const fileFoldersContext = await callApi(
+          'getFileContexts',
+          fileFoldersMentions,
+        );
+
+        finalMessage = `${finalMessage}\n\n${fileFoldersContext}`;
+
+        const problemMentions = visibleMentions.filter((mention) =>
+          mention.startsWith('@'),
+        );
+
+        const problemContext = await callApi(
+          'getProblemsContext',
+          problemMentions,
+        );
+
+        finalMessage = `${finalMessage}\n\n${problemContext}`;
       }
 
       // If the current entry is a tool response, we need to prevent a sending message from the input
@@ -137,9 +177,7 @@ export const InputContainer = React.memo<InputContainerProps>(
             files: uploadedFiles,
           }),
         );
-        setInputMessage('');
-        setRefSelectedCode([]);
-        localStorage.setItem(INPUT_MESSAGE_KEY, '');
+        resetInputMessage();
         return;
       }
 
@@ -151,9 +189,7 @@ export const InputContainer = React.memo<InputContainerProps>(
           files: uploadedFiles,
         }),
       ).then(() => {
-        setInputMessage('');
-        setRefSelectedCode([]);
-        localStorage.setItem(INPUT_MESSAGE_KEY, '');
+        resetInputMessage();
       });
     };
 
@@ -189,11 +225,22 @@ export const InputContainer = React.memo<InputContainerProps>(
       setIsRecording(false);
     };
 
+    const removeMention = (mention: string) => {
+      const updatedMentions = visibleMentions.filter((m) => m !== mention);
+      setVisibleMentions(updatedMentions);
+      const updatedMessage = inputMessage.replace(new RegExp(mention, 'g'), '');
+      setInputMessage(updatedMessage);
+    };
+
     return (
       <StyledInputContainer ref={inputContainerRef}>
         <SelectedCodeDisplay
           selectedCodes={refSelectedCode}
           onRemoveCode={removeSelectedCode}
+        />
+        <MentionsDisplay
+          visibleMentions={visibleMentions}
+          removeMention={removeMention}
         />
         <FileUploadSection />
         <Flex gap={10} wrap={innerWidth < 320}>

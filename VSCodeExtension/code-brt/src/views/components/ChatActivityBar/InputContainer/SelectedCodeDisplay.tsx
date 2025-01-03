@@ -1,8 +1,13 @@
 import React, { useState } from 'react';
-import { Card, Button, Flex, Typography } from 'antd';
-import { CloseOutlined, CodeOutlined } from '@ant-design/icons';
+import { Card, Button, Flex, Typography, Tooltip } from 'antd';
+import {
+  ArrowsAltOutlined,
+  CloseOutlined,
+  ShrinkOutlined,
+} from '@ant-design/icons';
 import styled from 'styled-components';
 import ReactMarkdown from 'react-markdown';
+import { useTranslation } from 'react-i18next';
 
 import type { SelectedCode } from '../../../../types';
 import { RendererCode } from '../../common/RenderCode';
@@ -42,6 +47,7 @@ export const SelectedCodeDisplay: React.FC<SelectedCodeDisplayProps> = ({
   selectedCodes,
   onRemoveCode,
 }) => {
+  const { t } = useTranslation('common');
   const [visibleCodes, setVisibleCodes] = useState<{ [key: string]: boolean }>(
     {},
   );
@@ -64,20 +70,28 @@ export const SelectedCodeDisplay: React.FC<SelectedCodeDisplayProps> = ({
           size='small'
           title={
             <Flex align={'center'}>
-              <Typography.Text
-                style={{ textOverflow: 'ellipsis', overflow: 'hidden' }}
-              >
-                {code.relativePath}
-              </Typography.Text>
+              <Tooltip title={code.relativePath}>
+                <Typography.Text
+                  style={{ textOverflow: 'ellipsis', overflow: 'hidden' }}
+                >
+                  {code.relativePath}
+                </Typography.Text>
+              </Tooltip>
               <Typography.Text type='secondary' style={{ marginLeft: 10 }}>
                 {`Ln ${code.startLine}-${code.endLine}`}
               </Typography.Text>
               <CodeToggleButton
                 type='text'
-                icon={<CodeOutlined />}
+                icon={
+                  visibleCodes[code.id] ? (
+                    <ShrinkOutlined />
+                  ) : (
+                    <ArrowsAltOutlined />
+                  )
+                }
                 size='small'
                 onClick={() => toggleCodeVisibility(code.id)}
-                title={visibleCodes[code.id] ? 'Hide Code' : 'Show Code'}
+                title={visibleCodes[code.id] ? t('showLess') : t('showMore')}
               />
             </Flex>
           }

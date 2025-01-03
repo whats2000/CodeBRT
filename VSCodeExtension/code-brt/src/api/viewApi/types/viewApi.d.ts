@@ -4,6 +4,7 @@ import { LanguageModelServiceApi } from './languageModelServiceApi';
 import { HistoryManagerApi } from './historyManagerApi';
 import { VoiceServiceApi } from './voiceServiceApi';
 import { MiscApi } from './miscApi';
+import { ContextServiceApi } from './contextServiceApi';
 import { codeText } from 'micromark-core-commonmark';
 
 /**
@@ -71,7 +72,8 @@ export type ViewApi = SettingApi &
   LanguageModelServiceApi &
   HistoryManagerApi &
   VoiceServiceApi &
-  MiscApi;
+  MiscApi &
+  ContextServiceApi;
 
 /**
  * The structure of the selected code to send to chat.

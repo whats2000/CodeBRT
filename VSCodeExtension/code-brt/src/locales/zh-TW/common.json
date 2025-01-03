@@ -283,5 +283,10 @@
     "rollback": "回滾",
     "fixIt": "修正",
     "retry": "重試"
+  },
+  "inputMessageArea": {
+    "pasteImagesOrMention": "黏貼圖片、@問題、#文件/目錄",
+    "workspaceProblem": "工作區問題",
+    "terminalProblem": "終端問題"
   }
 }

@@ -14,48 +14,11 @@ import { arePathsEqual } from './utils';
 import { DIRS_TO_IGNORE } from './constants';
 
 /**
- * Breadth-first level-by-level file listing up to a specified limit.
- * @param limit - Maximum number of files to collect.
- * @param options - Globby options.
- * @returns Array of file paths collected up to the specified limit.
+ * Unify slashes in a string to forward slashes for directory listing.
+ * @param str - The string to replace backslashes in.
  */
-const globbyLevelByLevel = async (
-  limit: number,
-  options?: Options,
-): Promise<string[]> => {
-  const results: Set<string> = new Set();
-  const queue: string[] = ['*']; // Start with a top-level pattern
-
-  // Core process for level-by-level file discovery
-  const globbingProcess = async () => {
-    while (queue.length > 0 && results.size < limit) {
-      const pattern = queue.shift()!;
-      const filesAtLevel = await globby(pattern, options);
-
-      for (const file of filesAtLevel) {
-        if (results.size >= limit) break;
-        results.add(file);
-
-        if (file.endsWith('/')) {
-          // Queue subdirectories for next level
-          queue.push(`${file}*`);
-        }
-      }
-    }
-    return Array.from(results).slice(0, limit);
-  };
-
-  // Timeout to prevent hanging globbing operations
-  const timeoutPromise = new Promise<string[]>((_, reject) => {
-    setTimeout(() => reject(new Error('Globbing timeout')), 10_000);
-  });
-
-  try {
-    return await Promise.race([globbingProcess(), timeoutPromise]);
-  } catch (error) {
-    console.warn('Globbing timed out, returning partial results');
-    return Array.from(results);
-  }
+const unifySlashes = (str: string): string => {
+  return str.replace(/\\/g, '/');
 };
 
 /**
@@ -63,22 +26,20 @@ const globbyLevelByLevel = async (
  * @param dirPath - The directory path to list files from.
  * @param recursive - Whether to list files recursively.
  * @param limit - The maximum number of files to return.
+ * @param userPattern - Glob pattern to start with.
  * @returns An array containing the list of files and a boolean indicating if the limit was reached.
  */
-export const listFiles = async (
+export async function listFiles(
   dirPath: string,
   recursive: boolean,
   limit: number,
-): Promise<{
-  limitReached: boolean;
-  filesList: string[];
-  absoluteFilesList: string[];
-}> => {
+  userPattern: string = '',
+) {
   const absolutePath = path.resolve(dirPath);
-
-  // Restrict listing files in the root or home directory
   const root =
     process.platform === 'win32' ? path.parse(absolutePath).root : '/';
+
+  // Guard: don't let user list home directory or root
   if (
     arePathsEqual(absolutePath, root) ||
     arePathsEqual(absolutePath, os.homedir())
@@ -91,27 +52,64 @@ export const listFiles = async (
     };
   }
 
-  // Set globby options based on whether recursive search is requested
-  const options: Options = {
-    cwd: dirPath,
-    dot: true, // Include hidden files and directories
-    absolute: true, // Return absolute paths
-    markDirectories: true, // Append `/` to directories
-    gitignore: recursive, // Use .gitignore when recursive is true
-    ignore: recursive ? DIRS_TO_IGNORE : undefined, // Ignore specified directories
-    onlyFiles: false, // Include directories in the result
+  // Normalize the user pattern so any backslashes -> forward slashes
+  const normalizedPattern = unifySlashes(userPattern);
+
+  const baseOptions: Options = {
+    cwd: '',
+    dot: true,
+    absolute: true,
+    markDirectories: true,
+    onlyFiles: false,
+    gitignore: false,
   };
 
-  // Perform depth-limited globbing to get files up to the specified limit
-  const files = recursive
-    ? await globbyLevelByLevel(limit, options)
-    : (await globby('*', options)).slice(0, limit);
+  const queue: string[] = [absolutePath];
+  const results: string[] = [];
+  const visited: Set<string> = new Set();
 
-  const relativeFiles = files.map((file) => path.relative(dirPath, file));
+  while (queue.length > 0 && results.length < limit) {
+    const currentDir = queue.shift()!;
+    if (visited.has(currentDir)) {
+      continue;
+    }
+    visited.add(currentDir);
+
+    const options: Options = {
+      ...baseOptions,
+      cwd: currentDir,
+      ignore: DIRS_TO_IGNORE,
+    };
+
+    // Single-level glob in this directory
+    const items = await globby('*', options);
+
+    for (const item of items) {
+      if (results.length >= limit) break;
+
+      const isDirectory = item.endsWith('/');
+      if (isDirectory && recursive) {
+        queue.push(item);
+      }
+
+      // Normalize the discovered path
+      const normalizedItem = unifySlashes(item);
+
+      // If the user's pattern is empty, everything matches;
+      // otherwise, check substring with normalized slashes
+      if (!normalizedPattern || normalizedItem.includes(normalizedPattern)) {
+        results.push(item);
+      }
+    }
+  }
+
+  const relativeFiles = results.map((file) =>
+    path.relative(absolutePath, file),
+  );
 
   return {
-    limitReached: relativeFiles.length >= limit,
+    limitReached: results.length >= limit,
     filesList: relativeFiles,
-    absoluteFilesList: files,
+    absoluteFilesList: results,
   };
-};
+}
