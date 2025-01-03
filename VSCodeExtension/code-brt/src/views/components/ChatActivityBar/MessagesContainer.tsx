@@ -43,7 +43,6 @@ const StyledMessagesContainer = styled.div<{
   flex-grow: 1;
   padding: 10px 0 10px 10px;
   border-top: 1px solid ${({ $token }) => $token.colorBorder};
-  border-bottom: 1px solid ${({ $token }) => $token.colorBorder};
   animation: ${(props) =>
       props.$isLoading ? fadeOutAnimation : fadeInAnimation}
     0.25s ease-in-out;

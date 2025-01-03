@@ -1,9 +1,10 @@
 import React, { useState, useContext, useEffect, useRef } from 'react';
 import styled from 'styled-components';
-import { Button, Flex } from 'antd';
+import { Button, Flex, GlobalToken, Space, theme, Typography } from 'antd';
 import {
   AudioOutlined,
   LoadingOutlined,
+  SendOutlined,
   UploadOutlined,
 } from '@ant-design/icons';
 import { useDispatch, useSelector } from 'react-redux';
@@ -12,7 +13,7 @@ import type { SelectedCode } from '../../../types';
 import type { AppDispatch, RootState } from '../../redux';
 import { WebviewContext } from '../../WebviewContext';
 import { useRefs } from '../../context/RefContext';
-import { useClipboardFiles, useWindowSize } from '../../hooks';
+import { useClipboardFiles } from '../../hooks';
 import { handleFilesUpload } from '../../redux/slices/fileUploadSlice';
 import { INPUT_MESSAGE_KEY } from 'src/constants';
 import {
@@ -24,11 +25,15 @@ import { SelectedCodeDisplay } from './InputContainer/SelectedCodeDisplay';
 import { MentionsDisplay } from './InputContainer/MentionsDisplay';
 import { InputMessageArea } from './InputContainer/InputMessageArea';
 import { FileUploadSection } from './InputContainer/FileUploadSection';
+import { CancelOutlined } from '../../icons';
 
-const StyledInputContainer = styled.div`
+const StyledInputContainer = styled.div<{ $token: GlobalToken }>`
   display: flex;
   flex-direction: column;
   padding: 10px 15px 10px 10px;
+  background-color: ${({ $token }) => $token.colorBorder};
+  border-radius: 5px;
+  margin-bottom: 10px;
 `;
 
 type InputContainerProps = {
@@ -38,6 +43,7 @@ type InputContainerProps = {
 
 export const InputContainer = React.memo<InputContainerProps>(
   ({ tempIdRef, inputContainerRef }) => {
+    const { token } = theme.useToken();
     const { addListener, callApi, removeListener } = useContext(WebviewContext);
     const { registerRef } = useRefs();
     const [isRecording, setIsRecording] = useState(false);
@@ -64,8 +70,6 @@ export const InputContainer = React.memo<InputContainerProps>(
     );
 
     useClipboardFiles((files) => dispatch(handleFilesUpload(files)));
-
-    const { innerWidth } = useWindowSize();
 
     useEffect(() => {
       dispatch(
@@ -236,8 +240,18 @@ export const InputContainer = React.memo<InputContainerProps>(
       setInputMessage(updatedMessage);
     };
 
+    const handleCancelResponse = () => {
+      if (activeModelService === 'loading...') {
+        return;
+      }
+
+      callApi('stopLanguageModelResponse', activeModelService).catch(
+        console.error,
+      );
+    };
+
     return (
-      <StyledInputContainer ref={inputContainerRef}>
+      <StyledInputContainer ref={inputContainerRef} $token={token}>
         <SelectedCodeDisplay
           selectedCodes={refSelectedCode}
           onRemoveCode={removeSelectedCode}
@@ -247,29 +261,7 @@ export const InputContainer = React.memo<InputContainerProps>(
           removeMention={removeMention}
         />
         <FileUploadSection />
-        <Flex gap={10} wrap={innerWidth < 320}>
-          <Button
-            ref={uploadFileButtonRef}
-            type={'text'}
-            icon={<UploadOutlined />}
-            onClick={handleUploadButtonClick}
-            disabled={conversationHistory.isProcessing}
-          />
-          <input
-            type='file'
-            accept='.png,.jpg,.jpeg,.gif,.webp,.pdf'
-            multiple={true}
-            ref={fileInputRef}
-            onInput={handleFileChange}
-            style={{ display: 'none' }}
-          />
-          <Button
-            ref={voiceInputButtonRef}
-            type={'text'}
-            icon={isRecording ? <LoadingOutlined /> : <AudioOutlined />}
-            onClick={handleVoiceInput}
-            disabled={conversationHistory.isProcessing}
-          />
+        <Space direction={'vertical'} size={5}>
           <InputMessageArea
             inputMessage={inputMessage}
             setInputMessage={setInputMessage}
@@ -277,7 +269,59 @@ export const InputContainer = React.memo<InputContainerProps>(
             sendMessage={sendMessage}
             isToolResponse={isToolResponse}
           />
-        </Flex>
+          <Flex justify={'space-between'}>
+            <div>
+              <Button
+                ref={uploadFileButtonRef}
+                size={'small'}
+                type={'text'}
+                icon={<UploadOutlined />}
+                onClick={handleUploadButtonClick}
+                disabled={conversationHistory.isProcessing}
+              />
+              <input
+                type='file'
+                accept='.png,.jpg,.jpeg,.gif,.webp,.pdf'
+                multiple={true}
+                ref={fileInputRef}
+                onInput={handleFileChange}
+                style={{ display: 'none' }}
+              />
+              <Button
+                ref={voiceInputButtonRef}
+                size={'small'}
+                type={'text'}
+                icon={isRecording ? <LoadingOutlined /> : <AudioOutlined />}
+                onClick={handleVoiceInput}
+                disabled={conversationHistory.isProcessing}
+              />
+            </div>
+            <Space>
+              {inputMessage.length > 0 && (
+                <Typography.Text type={'secondary'}>
+                  {inputMessage.length}
+                </Typography.Text>
+              )}
+              <Button
+                size={'small'}
+                type={'text'}
+                onClick={
+                  conversationHistory.isProcessing
+                    ? handleCancelResponse
+                    : sendMessage
+                }
+                disabled={isToolResponse}
+                icon={
+                  conversationHistory.isProcessing ? (
+                    <CancelOutlined />
+                  ) : (
+                    <SendOutlined />
+                  )
+                }
+              />
+            </Space>
+          </Flex>
+        </Space>
       </StyledInputContainer>
     );
   },

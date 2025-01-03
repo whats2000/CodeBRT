@@ -5,8 +5,8 @@ import React, {
   useCallback,
   useRef,
 } from 'react';
-import { Button, Flex, Mentions, Space, Tag, Tooltip, Typography } from 'antd';
-import { FileOutlined, FolderOutlined, SendOutlined } from '@ant-design/icons';
+import { Flex, Mentions, Space, Typography } from 'antd';
+import { FileOutlined, FolderOutlined } from '@ant-design/icons';
 import { useDispatch, useSelector } from 'react-redux';
 import { useTranslation } from 'react-i18next';
 import debounce from 'lodash/debounce';
@@ -16,9 +16,15 @@ import type { ConversationHistory } from '../../../../types';
 import type { AppDispatch, RootState } from '../../../redux';
 import { WebviewContext } from '../../../WebviewContext';
 import { INPUT_MESSAGE_KEY } from '../../../../constants';
-import { CancelOutlined } from '../../../icons';
 import { useRefs } from '../../../context/RefContext';
 import { setRefId } from '../../../redux/slices/tourSlice';
+
+const StyledMentions = styled(Mentions)`
+  textarea {
+    padding: 0 !important;
+  }
+`;
+
 const StyledOption = styled(Flex)`
   max-width: 50vw;
 `;
@@ -53,9 +59,6 @@ export const InputMessageArea: React.FC<InputMessageAreaProps> = ({
   const [enterPressCount, setEnterPressCount] = useState(0);
   const dispatch = useDispatch<AppDispatch>();
   const { settings } = useSelector((state: RootState) => state.settings);
-  const { activeModelService } = useSelector(
-    (state: RootState) => state.modelService,
-  );
   const inputMessageRef = registerRef('inputMessage');
   const [options, setOptions] = useState<
     {
@@ -97,11 +100,7 @@ export const InputMessageArea: React.FC<InputMessageAreaProps> = ({
                   {file.includes('.') ? <FileOutlined /> : <FolderOutlined />}
                   <Typography.Text>{file.split(/[\\/]/).pop()}</Typography.Text>
                 </Space>
-                <Tooltip title={file} placement={'right'}>
-                  <StyledFullFileText type='secondary'>
-                    {file}
-                  </StyledFullFileText>
-                </Tooltip>
+                <StyledFullFileText type='secondary'>{file}</StyledFullFileText>
               </StyledOption>
             ),
             value: file.includes('.') ? `file:${file}` : `folder:${file}`,
@@ -149,16 +148,6 @@ export const InputMessageArea: React.FC<InputMessageAreaProps> = ({
     }
   };
 
-  const handleCancelResponse = () => {
-    if (activeModelService === 'loading...') {
-      return;
-    }
-
-    callApi('stopLanguageModelResponse', activeModelService).catch(
-      console.error,
-    );
-  };
-
   const onSearch = (search: string, prefix: string) => {
     ref.current = search;
     setOptions([]);
@@ -200,8 +189,8 @@ export const InputMessageArea: React.FC<InputMessageAreaProps> = ({
   };
 
   return (
-    <Flex gap={10} style={{ width: '100%' }} ref={inputMessageRef}>
-      <Mentions
+    <div ref={inputMessageRef}>
+      <StyledMentions
         value={inputMessage}
         onChange={handleInputMessageChange}
         onKeyDown={handleKeyDown}
@@ -216,31 +205,8 @@ export const InputMessageArea: React.FC<InputMessageAreaProps> = ({
         onSearch={onSearch}
         loading={loading}
         options={options}
+        variant={'borderless'}
       />
-      <Flex vertical={true}>
-        <Button
-          onClick={
-            conversationHistory.isProcessing
-              ? handleCancelResponse
-              : sendMessage
-          }
-          disabled={isToolResponse}
-        >
-          {conversationHistory.isProcessing ? (
-            <CancelOutlined />
-          ) : (
-            <SendOutlined />
-          )}
-        </Button>
-        {inputMessage.length > 100 && (
-          <Tag
-            color='warning'
-            style={{ marginTop: 5, width: '100%', textAlign: 'center' }}
-          >
-            {inputMessage.length}
-          </Tag>
-        )}
-      </Flex>
-    </Flex>
+    </div>
   );
 };

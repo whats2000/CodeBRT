@@ -42,7 +42,7 @@ const template = (params: {
     <meta http-equiv="Content-Security-Policy" content="${params.csp}" />
   </head>
 
-  <body>
+  <body style="padding: 0 10px;">
     <div id="root"></div>
     <script type="module" nonce="${params.nonce}">
       import { render } from "${params.srcUri}";
