@@ -196,6 +196,7 @@ class MentionService {
     if (singleMention.startsWith('@problem:workspace')) {
       return this.getWorkspaceDiagnostics();
     } else if (singleMention.startsWith('@problem:terminal')) {
+      // TODO: Add the mention for collecting terminal problems
       return 'Currently, terminal problems are not supported.';
     }
 

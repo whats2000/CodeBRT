@@ -2,8 +2,8 @@
   "name": "code-brt",
   "private": true,
   "displayName": "CodeBRT",
-  "description": "CodeBRT, a LLM/VLM framework for code assistant with multiple models.",
-  "version": "0.4.10",
+  "description": "CodeBRT, a all-in-one AI assistant for developers",
+  "version": "0.4.11",
   "icon": "static/icon.ico",
   "engines": {
     "vscode": "^1.96.0",
@@ -30,6 +30,8 @@
   "keywords": [
     "copilot",
     "chatgpt",
+    "agent",
+    "completion",
     "github",
     "claude",
     "sonnet",
