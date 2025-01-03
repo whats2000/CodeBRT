@@ -2,6 +2,13 @@
   "title": "What's New",
   "notes": [
     {
+      "version": "0.4.11",
+      "notes": [
+        "Add: Add mentions, which can direct mention issue, file or folder in chat",
+        "Fix: Add a try error for set settings when the settings.json is unable to write"
+      ]
+    },
+    {
       "version": "0.4.10",
       "notes": [
         "Add: Add missing i18n in some UI components",
@@ -14,14 +21,6 @@
       "notes": [
         "Add: Add diagnostics error detection for the code written by language model",
         "Fix: More replacement for the Gemini response string that will break the code when write to file, (e.g. `\\r`, `\\n`, `\\t`)"
-      ]
-    },
-    {
-      "version": "0.4.8",
-      "notes": [
-        "Add: Now CodeBRT will support two new language localizations: Traditional Chinese and Simplified Chinese",
-        "Fix: Fix the Gemini response string may contain `\\'` that will break the code when write to file",
-        "Fix: Fix the response feedback by function take incorrect role in Gemini"
       ]
     }
   ]
