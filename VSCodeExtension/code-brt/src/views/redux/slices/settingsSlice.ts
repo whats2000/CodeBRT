@@ -66,6 +66,14 @@ export const saveSettings = createAsyncThunk<
       const state = getState();
       const needsReload = state.settings.needsReload;
 
+      // Loop through and update each setting
+      for (const [key, value] of Object.entries(
+        updatedSettings,
+      ) as Entries<ExtensionSettings>) {
+        await callApi('setSettingByKey', key, value);
+      }
+
+      // Tell user to reload after saving settings that require it
       if (needsReload) {
         await callApi(
           'alertMessage',
@@ -73,13 +81,6 @@ export const saveSettings = createAsyncThunk<
           'info',
           [{ text: 'Reload', commandArgs: ['workbench.action.reloadWindow'] }],
         );
-      }
-
-      // Loop through and update each setting
-      for (const [key, value] of Object.entries(
-        updatedSettings,
-      ) as Entries<ExtensionSettings>) {
-        await callApi('setSettingByKey', key, value);
       }
     } catch (error: any) {
       throw new Error(`Failed to save settings: ${error.message}`);
