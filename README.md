@@ -13,6 +13,8 @@ incomplete functionalities.
 **CodeBRT** is an AI-powered assistant designed to help users with code-related tasks, from writing and analyzing code
 to managing scheduling tasks. The project is free, open-source, and accessible for everyone.
 
+**Documentation**: [CodeBRT Documentation](https://whats2000.github.io/CodeBRT/)
+
 ### Key Features
 
 - **Code Conversation Chat**: Interact with the AI to discuss and understand code.

@@ -11,6 +11,8 @@
 
 **CodeBRT** 是一个由人工智能驱动的助手，旨在帮助用户完成代码相关的工作，从编写和分析代码到管理调度任务。该项目是免费的、开源的，并且对所有人开放。
 
+**文档**：[CodeBRT 文档](https://whats2000.github.io/CodeBRT/zh-CN/)
+
 ### 主要功能
 
 - **代码对话聊天**：与AI交互以讨论和理解代码。
@@ -67,7 +69,7 @@
 - **与 AI 聊天**：使用聊天面板与 AI 进行代码相关的对话。
 - **语音指令**：通过发出语音指令启动语音功能。
 
-关于快速入门指南，请参考文档的[快速入门](https://whats2000.github.io/CodeBRT/docs/introduction)部分。
+关于快速入门指南，请参考文档的[快速入门](https://whats2000.github.io/CodeBRT/zh-CN/docs/introduction)部分。
 
 此外，还提供了外部插件以扩展项目的功能。在[此处](https://github.com/whats2000/CodeBRT/tree/main/ExternalPlugIn)探索可用的插件。
 

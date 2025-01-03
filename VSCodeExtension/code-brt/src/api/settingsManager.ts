@@ -106,40 +106,46 @@ export class SettingsManager implements ISettingsManager {
     setting: T,
     value: ExtensionSettings[T],
   ): Promise<void> {
-    // Check if the setting is local
-    if (setting in DEFAULT_LOCAL_SETTINGS) {
-      (this.localSettings as any)[setting] = value;
-      await this.saveLocalSettings();
-    } else if (setting in DEFAULT_WORKSPACE_SETTINGS) {
-      // Check if the workspace is available
-      if (this.isMissingWorkspace) {
-        vscode.window
-          .showWarningMessage(
-            'Seems like you do not have a workspace open. ' +
-              'Open a workspace to save workspace settings, use agent tools, and save conversation history.',
-            'Open Workspace',
-          )
-          .then((selection) => {
-            if (selection === 'Open Workspace') {
-              vscode.commands.executeCommand('vscode.openFolder');
-            }
-          });
-        return;
-      }
+    try {
+      // Check if the setting is local
+      if (setting in DEFAULT_LOCAL_SETTINGS) {
+        (this.localSettings as any)[setting] = value;
+        await this.saveLocalSettings();
+      } else if (setting in DEFAULT_WORKSPACE_SETTINGS) {
+        // Check if the workspace is available
+        if (this.isMissingWorkspace) {
+          vscode.window
+            .showWarningMessage(
+              'Seems like you do not have a workspace open. ' +
+                'Open a workspace to save workspace settings, use agent tools, and save conversation history.',
+              'Open Workspace',
+            )
+            .then((selection) => {
+              if (selection === 'Open Workspace') {
+                vscode.commands.executeCommand('vscode.openFolder');
+              }
+            });
+          return;
+        }
 
-      await this.workspaceConfig.update(
-        setting,
-        value,
-        vscode.ConfigurationTarget.Workspace,
+        await this.workspaceConfig.update(
+          setting,
+          value,
+          vscode.ConfigurationTarget.Workspace,
+        );
+      } else if (setting in DEFAULT_CROSS_DEVICE_SETTINGS) {
+        await this.workspaceConfig.update(
+          setting,
+          value,
+          vscode.ConfigurationTarget.Global,
+        );
+      } else {
+        console.error(`Setting ${setting} not found`);
+      }
+    } catch (error) {
+      vscode.window.showErrorMessage(
+        `Failed to set the setting: ${setting}. ${error}`,
       );
-    } else if (setting in DEFAULT_CROSS_DEVICE_SETTINGS) {
-      await this.workspaceConfig.update(
-        setting,
-        value,
-        vscode.ConfigurationTarget.Global,
-      );
-    } else {
-      throw new Error(`Unknown setting: ${setting}`);
     }
   }
 }

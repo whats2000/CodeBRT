@@ -3,12 +3,12 @@
 本指南提供有關如何為 CodeBRT 擴充功能設定**模型服務 API 金鑰**的說明。您將學習如何存取設定、輸入各種模型服務的 API 金鑰，以及儲存您的設定。
 
 ## 目錄
-- [概述](#overview)
-- [先決條件](#prerequisites)
-- [存取設定面板](#accessing-the-configuration-panel)
-- [設定模型服務 API 金鑰](#configuring-the-model-service-api-key)
-- [其他設定：語音服務](#additional-settings-voice-service)
-- [疑難排解](#troubleshooting)
+- [概述](#概述)
+- [先決條件](#先決條件)
+- [存取設定面板](#存取設定面板)
+- [設定模型服務 API 金鑰](#設定模型服務-api-金鑰)
+- [其他設定：語音服務](#其他設定語音服務)
+- [疑難排解](#疑難排解)
 
 ---
 

@@ -7,8 +7,8 @@ This guide will walk you through configuring the voice service, which includes b
   - [OpenAI](#openai-text-to-voice-configuration)
   - [GPT-SoVits](#gpt-sovits-configuration)
 - [Voice-to-Text Configuration](#voice-to-text-configuration)
-  - [OpenAI](#openai-voice-to-text-configuration)
-  - [Groq](#groq-configuration)
+  - [OpenAI](#openai-and-groq-voice-to-text-configuration)
+  - [Groq](#openai-and-groq-voice-to-text-configuration)
   - [VSCode Built-In](#vscode-built-in-configuration)
 
 ---
