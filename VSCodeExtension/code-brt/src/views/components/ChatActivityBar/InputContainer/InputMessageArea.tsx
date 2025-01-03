@@ -91,9 +91,11 @@ export const InputMessageArea: React.FC<InputMessageAreaProps> = ({
           return {
             key: file,
             label: (
-              <Tooltip title={file}>
-                <Space
-                  direction={'vertical'}
+              <Tooltip title={file} placement={'right'}>
+                <Flex
+                  wrap={'wrap'}
+                  justify={'space-between'}
+                  gap={5}
                   style={{
                     width: innerWidth < 380 ? 100 : '50vw',
                     textOverflow: 'ellipsis',
@@ -105,8 +107,13 @@ export const InputMessageArea: React.FC<InputMessageAreaProps> = ({
                       {file.split(/[\\/]/).pop()}
                     </Typography.Text>
                   </Space>
-                  <Typography.Text type='secondary'>{file}</Typography.Text>
-                </Space>
+                  <Typography.Text
+                    type='secondary'
+                    style={{ marginLeft: 'auto' }}
+                  >
+                    {file}
+                  </Typography.Text>
+                </Flex>
               </Tooltip>
             ),
             value: file.includes('.') ? `file:${file}` : `folder:${file}`,
