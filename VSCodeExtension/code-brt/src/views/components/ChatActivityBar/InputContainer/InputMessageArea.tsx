@@ -23,6 +23,7 @@ import { CancelOutlined } from '../../../icons';
 import { useRefs } from '../../../context/RefContext';
 import { setRefId } from '../../../redux/slices/tourSlice';
 import { WebviewContext } from '../../../WebviewContext';
+import { useWindowSize } from '../../../hooks';
 
 type InputMessageAreaProps = {
   inputMessage: string;
@@ -44,6 +45,7 @@ export const InputMessageArea: React.FC<InputMessageAreaProps> = ({
   isToolResponse,
 }) => {
   const { t } = useTranslation('common');
+  const { innerWidth } = useWindowSize();
   const { callApi } = useContext(WebviewContext);
   const { registerRef } = useRefs();
   const ref = useRef<string>('');
@@ -89,15 +91,23 @@ export const InputMessageArea: React.FC<InputMessageAreaProps> = ({
           return {
             key: file,
             label: (
-              <Flex wrap={'wrap'} justify='space-between' gap={5}>
-                <Space>
-                  {file.includes('.') ? <FileOutlined /> : <FolderOutlined />}
-                  <Typography.Text>{file.split(/[\\/]/).pop()}</Typography.Text>
-                </Space>
-                <Tooltip title={file} placement={'right'}>
+              <Tooltip title={file}>
+                <Space
+                  direction={'vertical'}
+                  style={{
+                    width: innerWidth < 380 ? 100 : '50vw',
+                    textOverflow: 'ellipsis',
+                  }}
+                >
+                  <Space>
+                    {file.includes('.') ? <FileOutlined /> : <FolderOutlined />}
+                    <Typography.Text>
+                      {file.split(/[\\/]/).pop()}
+                    </Typography.Text>
+                  </Space>
                   <Typography.Text type='secondary'>{file}</Typography.Text>
-                </Tooltip>
-              </Flex>
+                </Space>
+              </Tooltip>
             ),
             value: file.includes('.') ? `file:${file}` : `folder:${file}`,
           };
