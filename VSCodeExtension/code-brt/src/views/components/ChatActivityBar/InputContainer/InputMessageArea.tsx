@@ -6,24 +6,26 @@ import React, {
   useRef,
 } from 'react';
 import { Button, Flex, Mentions, Space, Tag, Tooltip, Typography } from 'antd';
-import {
-  CodeOutlined,
-  FileOutlined,
-  FolderOutlined,
-  SendOutlined,
-} from '@ant-design/icons';
+import { FileOutlined, FolderOutlined, SendOutlined } from '@ant-design/icons';
 import { useDispatch, useSelector } from 'react-redux';
 import { useTranslation } from 'react-i18next';
 import debounce from 'lodash/debounce';
+import styled from 'styled-components';
 
 import type { ConversationHistory } from '../../../../types';
 import type { AppDispatch, RootState } from '../../../redux';
+import { WebviewContext } from '../../../WebviewContext';
 import { INPUT_MESSAGE_KEY } from '../../../../constants';
 import { CancelOutlined } from '../../../icons';
 import { useRefs } from '../../../context/RefContext';
 import { setRefId } from '../../../redux/slices/tourSlice';
-import { WebviewContext } from '../../../WebviewContext';
-import { useWindowSize } from '../../../hooks';
+const StyledOption = styled(Flex)`
+  max-width: 50vw;
+`;
+
+const StyledFullFileText = styled(Typography.Text)`
+  margin-left: auto;
+`;
 
 type InputMessageAreaProps = {
   inputMessage: string;
@@ -45,7 +47,6 @@ export const InputMessageArea: React.FC<InputMessageAreaProps> = ({
   isToolResponse,
 }) => {
   const { t } = useTranslation('common');
-  const { innerWidth } = useWindowSize();
   const { callApi } = useContext(WebviewContext);
   const { registerRef } = useRefs();
   const ref = useRef<string>('');
@@ -92,28 +93,17 @@ export const InputMessageArea: React.FC<InputMessageAreaProps> = ({
             key: file,
             label: (
               <Tooltip title={file} placement={'right'}>
-                <Flex
-                  wrap={'wrap'}
-                  justify={'space-between'}
-                  gap={5}
-                  style={{
-                    width: innerWidth < 380 ? 100 : '50vw',
-                    textOverflow: 'ellipsis',
-                  }}
-                >
+                <StyledOption wrap={'wrap'} justify={'space-between'} gap={5}>
                   <Space>
                     {file.includes('.') ? <FileOutlined /> : <FolderOutlined />}
                     <Typography.Text>
                       {file.split(/[\\/]/).pop()}
                     </Typography.Text>
                   </Space>
-                  <Typography.Text
-                    type='secondary'
-                    style={{ marginLeft: 'auto' }}
-                  >
+                  <StyledFullFileText type='secondary'>
                     {file}
-                  </Typography.Text>
-                </Flex>
+                  </StyledFullFileText>
+                </StyledOption>
               </Tooltip>
             ),
             value: file.includes('.') ? `file:${file}` : `folder:${file}`,
@@ -194,18 +184,18 @@ export const InputMessageArea: React.FC<InputMessageAreaProps> = ({
           ),
           value: 'problem:workspace',
         },
-        {
-          key: 'terminalProblem',
-          label: (
-            <Space>
-              <CodeOutlined />
-              <Typography.Text>
-                {t('inputMessageArea.terminalProblem')}
-              </Typography.Text>
-            </Space>
-          ),
-          value: 'problem:terminal',
-        },
+        // {
+        //   key: 'terminalProblem',
+        //   label: (
+        //     <Space>
+        //       <CodeOutlined />
+        //       <Typography.Text>
+        //         {t('inputMessageArea.terminalProblem')}
+        //       </Typography.Text>
+        //     </Space>
+        //   ),
+        //   value: 'problem:terminal',
+        // },
       ]);
       return;
     }
