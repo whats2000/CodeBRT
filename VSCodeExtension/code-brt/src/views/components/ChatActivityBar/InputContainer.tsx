@@ -228,7 +228,11 @@ export const InputContainer = React.memo<InputContainerProps>(
     const removeMention = (mention: string) => {
       const updatedMentions = visibleMentions.filter((m) => m !== mention);
       setVisibleMentions(updatedMentions);
-      const updatedMessage = inputMessage.replace(new RegExp(mention, 'g'), '');
+      const escapedMention = mention.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      const updatedMessage = inputMessage.replace(
+        new RegExp(escapedMention, 'g'),
+        '',
+      );
       setInputMessage(updatedMessage);
     };
 
