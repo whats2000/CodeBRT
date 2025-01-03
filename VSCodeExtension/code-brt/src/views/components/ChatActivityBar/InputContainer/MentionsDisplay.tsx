@@ -1,5 +1,5 @@
 import React from 'react';
-import { Tooltip, Typography, Tag, Space } from 'antd';
+import { Tooltip, Tag, Space } from 'antd';
 import {
   FolderOutlined,
   FileOutlined,
@@ -27,11 +27,14 @@ const MentionTag = (props: { mention: string; onRemove: () => void }) => {
 
   if (mention.startsWith('@')) {
     return (
-      <Tag closable={true} onClose={onRemove} icon={icon}>
+      <Tag
+        closable={true}
+        onClose={onRemove}
+        icon={icon}
+        style={{ marginTop: 3, marginBottom: 3 }}
+      >
         <Tooltip title={mention.replace('@problem:', '')}>
-          <Typography.Text>
-            {t(`inputMessageArea.${cleanMention.trim()}Problem`)}
-          </Typography.Text>
+          {t(`inputMessageArea.${cleanMention.trim()}Problem`)}
         </Tooltip>
       </Tag>
     );
@@ -43,9 +46,14 @@ const MentionTag = (props: { mention: string; onRemove: () => void }) => {
     }
 
     return (
-      <Tag closable={true} onClose={onRemove} icon={icon}>
+      <Tag
+        closable={true}
+        onClose={onRemove}
+        icon={icon}
+        style={{ marginTop: 3, marginBottom: 3 }}
+      >
         <Tooltip title={mention.replace(/#(file|folder):/, '')}>
-          <Typography.Text>{shorterMention}</Typography.Text>
+          {shorterMention}
         </Tooltip>
       </Tag>
     );
@@ -59,9 +67,7 @@ export const MentionsDisplay: React.FC<{
   if (visibleMentions.length === 0) return null;
 
   return (
-    <Space
-      size={'small'}
-      wrap={true}
+    <div
       style={{
         marginBottom: '10px',
       }}
@@ -76,6 +82,6 @@ export const MentionsDisplay: React.FC<{
             />
           ),
       )}
-    </Space>
+    </div>
   );
 };
