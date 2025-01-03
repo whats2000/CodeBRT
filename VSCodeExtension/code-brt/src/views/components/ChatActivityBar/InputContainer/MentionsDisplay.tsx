@@ -1,5 +1,5 @@
 import React from 'react';
-import { Tooltip, Tag, Space } from 'antd';
+import { Tooltip, Tag } from 'antd';
 import {
   FolderOutlined,
   FileOutlined,
