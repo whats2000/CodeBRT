@@ -92,19 +92,17 @@ export const InputMessageArea: React.FC<InputMessageAreaProps> = ({
           return {
             key: file,
             label: (
-              <Tooltip title={file} placement={'right'}>
-                <StyledOption wrap={'wrap'} justify={'space-between'} gap={5}>
-                  <Space>
-                    {file.includes('.') ? <FileOutlined /> : <FolderOutlined />}
-                    <Typography.Text>
-                      {file.split(/[\\/]/).pop()}
-                    </Typography.Text>
-                  </Space>
+              <StyledOption wrap={'wrap'} justify={'space-between'} gap={5}>
+                <Space>
+                  {file.includes('.') ? <FileOutlined /> : <FolderOutlined />}
+                  <Typography.Text>{file.split(/[\\/]/).pop()}</Typography.Text>
+                </Space>
+                <Tooltip title={file} placement={'right'}>
                   <StyledFullFileText type='secondary'>
                     {file}
                   </StyledFullFileText>
-                </StyledOption>
-              </Tooltip>
+                </Tooltip>
+              </StyledOption>
             ),
             value: file.includes('.') ? `file:${file}` : `folder:${file}`,
           };
