@@ -1,30 +1,12 @@
 import React from 'react';
-import { Card, Tooltip, Typography, Space } from 'antd';
-import styled from 'styled-components';
+import { Tooltip, Typography, Tag, Space } from 'antd';
 import {
-  CloseOutlined,
   FolderOutlined,
   FileOutlined,
   CodeOutlined,
   ExclamationCircleOutlined,
 } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
-
-const SelectedCodeContainer = styled.div`
-  display: flex;
-  flex-wrap: wrap;
-  gap: 10px;
-  max-height: 50vh;
-  overflow-y: auto;
-  padding-right: 10px;
-  margin-bottom: 10px;
-`;
-
-const StyledCard = styled(Card)`
-  div.ant-card-body {
-    padding: 0;
-  }
-`;
 
 const getMentionIcon = (mention: string) => {
   if (mention.startsWith('@problem:')) return <ExclamationCircleOutlined />;
@@ -34,7 +16,7 @@ const getMentionIcon = (mention: string) => {
   return null;
 };
 
-const MentionCard = (props: { mention: string; onRemove: () => void }) => {
+const MentionTag = (props: { mention: string; onRemove: () => void }) => {
   const { t } = useTranslation('common');
   const { mention, onRemove } = props;
   const icon = getMentionIcon(mention);
@@ -45,21 +27,13 @@ const MentionCard = (props: { mention: string; onRemove: () => void }) => {
 
   if (mention.startsWith('@')) {
     return (
-      <StyledCard
-        size='small'
-        title={
-          <Tooltip title={mention}>
-            <Space>
-              {icon}
-              <Typography.Text>
-                {t(`inputMessageArea.${cleanMention.trim()}Problem`)}
-              </Typography.Text>
-            </Space>
-          </Tooltip>
-        }
-        extra={<CloseOutlined onClick={onRemove} />}
-        style={{ width: '100%' }}
-      />
+      <Tag closable={true} onClose={onRemove} icon={icon}>
+        <Tooltip title={mention.replace('@problem:', '')}>
+          <Typography.Text>
+            {t(`inputMessageArea.${cleanMention.trim()}Problem`)}
+          </Typography.Text>
+        </Tooltip>
+      </Tag>
     );
   }
   if (mention.startsWith('#')) {
@@ -69,20 +43,11 @@ const MentionCard = (props: { mention: string; onRemove: () => void }) => {
     }
 
     return (
-      <StyledCard
-        size='small'
-        title={
-          <Tooltip title={mention}>
-            <Space>
-              {icon}
-              <Typography.Text>{shorterMention}</Typography.Text>
-              <Typography.Text type='secondary'>{cleanMention}</Typography.Text>
-            </Space>
-          </Tooltip>
-        }
-        extra={<CloseOutlined onClick={onRemove} />}
-        style={{ width: '100%' }}
-      />
+      <Tag closable={true} onClose={onRemove} icon={icon}>
+        <Tooltip title={mention.replace(/#(file|folder):/, '')}>
+          <Typography.Text>{shorterMention}</Typography.Text>
+        </Tooltip>
+      </Tag>
     );
   }
 };
@@ -94,17 +59,23 @@ export const MentionsDisplay: React.FC<{
   if (visibleMentions.length === 0) return null;
 
   return (
-    <SelectedCodeContainer>
+    <Space
+      size={'small'}
+      wrap={true}
+      style={{
+        marginBottom: '10px',
+      }}
+    >
       {visibleMentions.map(
         (mention) =>
           mention && (
-            <MentionCard
+            <MentionTag
               key={mention}
               mention={mention}
               onRemove={() => removeMention(mention)}
             />
           ),
       )}
-    </SelectedCodeContainer>
+    </Space>
   );
 };
