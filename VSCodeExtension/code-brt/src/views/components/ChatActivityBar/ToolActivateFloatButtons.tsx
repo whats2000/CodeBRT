@@ -100,7 +100,7 @@ export const ToolActivateFloatButtons: React.FC<
         style={{
           position: 'absolute',
           bottom: floatButtonBaseYPosition,
-          insetInlineEnd: 40,
+          insetInlineEnd: 35,
           height: 40,
           width: 40,
         }}
@@ -117,7 +117,7 @@ export const ToolActivateFloatButtons: React.FC<
         tooltip={t('activate', { tool: t('tools') })}
         style={{
           bottom: floatButtonBaseYPosition,
-          insetInlineEnd: 40,
+          insetInlineEnd: 35,
         }}
       >
         {(Object.keys(TOOLS_MAP) as ToolServiceType[]).map((toolKey) => {

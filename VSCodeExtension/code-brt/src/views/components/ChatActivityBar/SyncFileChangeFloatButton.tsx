@@ -68,7 +68,7 @@ export const SyncFileChangeFloatButton: React.FC<
         ref={syncFileChangeFloatButton}
         style={{
           position: 'absolute',
-          insetInlineEnd: 40,
+          insetInlineEnd: 35,
           bottom: floatButtonBaseYPosition + 110,
           height: 40,
           width: 40,
@@ -84,7 +84,7 @@ export const SyncFileChangeFloatButton: React.FC<
           )
         }
         style={{
-          insetInlineEnd: 40,
+          insetInlineEnd: 35,
           bottom: floatButtonBaseYPosition + 110,
         }}
         onClick={handleSyncFileChange}

@@ -15,10 +15,13 @@ import { ToolActionContainer } from './ToolActionContainer';
 import { ToolResponseContainer } from './ToolResponseContainer';
 
 const MessageBubbleWrapper = styled.div<{
+  $isLast: boolean;
   $paddingBottom: boolean;
 }>`
   padding: 10px 55px
-    ${({ $paddingBottom }) => ($paddingBottom ? '100px' : '10px')} 0;
+    ${({ $isLast, $paddingBottom }) =>
+      $isLast && $paddingBottom ? '100px' : $isLast ? 0 : '10px'}
+    0;
 `;
 
 const MessageBubble = styled.div<{
@@ -172,10 +175,8 @@ export const MessageItem = React.memo<MessageItemProps>(
     return (
       <>
         <MessageBubbleWrapper
-          $paddingBottom={
-            index === conversationHistoryEntries.length - 1 &&
-            conversationHistory.isProcessing
-          }
+          $isLast={index === conversationHistoryEntries.length - 1}
+          $paddingBottom={conversationHistory.isProcessing}
         >
           <MessageBubble
             key={entry.id}

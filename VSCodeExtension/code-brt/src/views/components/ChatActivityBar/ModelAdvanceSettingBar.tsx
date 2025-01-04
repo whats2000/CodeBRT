@@ -137,7 +137,7 @@ export const ModelAdvanceSettingBar: React.FC<ModelAdvanceSettingsProps> = ({
         ref={modelAdvanceSettingButtonRef}
         style={{
           position: 'absolute',
-          insetInlineEnd: 40,
+          insetInlineEnd: 35,
           bottom: floatButtonBaseYPosition + 55,
           height: 40,
           width: 40,
@@ -154,7 +154,7 @@ export const ModelAdvanceSettingBar: React.FC<ModelAdvanceSettingsProps> = ({
         }
         onClick={openModelAdvanceSettingBar}
         style={{
-          insetInlineEnd: 40,
+          insetInlineEnd: 35,
           bottom: floatButtonBaseYPosition + 55,
         }}
       />

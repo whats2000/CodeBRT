@@ -74,7 +74,7 @@ export const MessageFloatButton: React.FC<MessageFloatButtonProps> = ({
       shape='circle'
       style={{
         bottom: window.innerHeight - floatButtonsPosition.yTop - 37,
-        insetInlineEnd: 40,
+        insetInlineEnd: 35,
         visibility: hoveredBubble ? 'visible' : 'hidden',
       }}
       icon={<EllipsisOutlined />}
