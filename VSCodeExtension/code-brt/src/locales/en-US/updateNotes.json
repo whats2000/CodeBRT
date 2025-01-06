@@ -2,6 +2,13 @@
   "title": "What's New",
   "notes": [
     {
+      "version": "0.4.12",
+      "notes": [
+        "Fix: Fix the float button position in the chat window",
+        "Feat: Adjust the human-in-loop feedback user prefix prompt, now it is better to understand by the model"
+      ]
+    },
+    {
       "version": "0.4.11",
       "notes": [
         "Add: Add mentions, which can direct mention issue, file or folder in chat",
@@ -14,13 +21,6 @@
         "Add: Add missing i18n in some UI components",
         "Fix: Fix not able to provide image when feedback to the model",
         "Feat: Now the default prompt will use \"Step Agent Prompt\" instead of \"You are a helpful assistant\""
-      ]
-    },
-    {
-      "version": "0.4.9",
-      "notes": [
-        "Add: Add diagnostics error detection for the code written by language model",
-        "Fix: More replacement for the Gemini response string that will break the code when write to file, (e.g. `\\r`, `\\n`, `\\t`)"
       ]
     }
   ]
