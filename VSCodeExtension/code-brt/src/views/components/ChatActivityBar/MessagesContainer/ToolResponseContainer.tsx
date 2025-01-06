@@ -14,6 +14,7 @@ import {
 import type { AppDispatch, RootState } from '../../../redux';
 import { WebviewContext } from '../../../WebviewContext';
 import { RendererCode } from '../../common/RenderCode';
+import { TOOL_FEEDBACK_MESSAGE } from '../../../../services/tools/constants';
 
 const { Panel } = Collapse;
 
@@ -148,11 +149,10 @@ export const ToolResponseContainer: React.FC<ToolResponseContainerProps> = ({
                 {typeof response.result === 'string' ? (
                   <ReactMarkdown components={RendererCode}>
                     {/* Remove the default feedback message as this is not needed to be displayed */}
-                    {response.result.replace(
-                      '[Reject with feedback] The tool calling is not executed and with a user feedback. ' +
-                        'Please consider the feedback and make adjustments.\nUser feedback: \n',
-                      '',
-                    )}
+                    {response.result
+                      .replace(TOOL_FEEDBACK_MESSAGE.default, '')
+                      .replace(TOOL_FEEDBACK_MESSAGE.askFollowUpQuestion, '')
+                      .replace(TOOL_FEEDBACK_MESSAGE.attemptCompletion, '')}
                   </ReactMarkdown>
                 ) : (
                   <pre>{JSON.stringify(response.result, null, 2)}</pre>

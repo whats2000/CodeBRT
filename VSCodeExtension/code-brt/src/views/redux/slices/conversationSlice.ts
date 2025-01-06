@@ -20,7 +20,10 @@ import type { RootState } from '../store';
 import { updateAndSaveSetting } from './settingsSlice';
 import { clearUploadedFiles } from './fileUploadSlice';
 import React from 'react';
-import { DEFAULT_SYSTEM_PROMPT } from '../../../constants';
+import {
+  DEFAULT_SYSTEM_PROMPT,
+  TOOL_FEEDBACK_MESSAGE,
+} from '../../../constants';
 
 const WAIT_FOR_USER_CONFIRM_TOOLS = ['writeToFile', 'executeCommand'];
 
@@ -90,16 +93,12 @@ const formatRejectionMessage = (
   toolName: NonWorkspaceToolType | WorkspaceToolType | string,
 ) => {
   switch (toolName) {
-    // We will not add instructions for these tools as they are not operation tools, it is a status marker message
     case 'askFollowUpQuestion':
+      return TOOL_FEEDBACK_MESSAGE.askFollowUpQuestion + rejectByUserMessage;
     case 'attemptCompletion':
-      return rejectByUserMessage;
+      return TOOL_FEEDBACK_MESSAGE.attemptCompletion + rejectByUserMessage;
     default:
-      return (
-        '[Reject with feedback] The tool calling is not executed and with a user feedback. ' +
-        'Please consider the feedback and make adjustments.\nUser feedback: \n' +
-        rejectByUserMessage
-      );
+      return TOOL_FEEDBACK_MESSAGE.default + rejectByUserMessage;
   }
 };
 
