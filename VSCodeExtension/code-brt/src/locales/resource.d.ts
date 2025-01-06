@@ -298,7 +298,8 @@ interface Resources {
         "version": "0.4.12",
         "notes": [
           "Fix: Fix the float button position in the chat window",
-          "Feat: Adjust the human-in-loop feedback user prefix prompt, now it is better to understand by the model"
+          "Feat: Adjust the human-in-loop feedback user prefix prompt, now it is better to understand by the model",
+          "Add: Add Moonshot AI (Kimi) as a new model provider"
         ]
       },
       {
