@@ -8,8 +8,12 @@ export const TOOL_FEEDBACK_MESSAGE: {
     'Feedback Details:\n',
   attemptCompletion:
     '[Task Adjustment Needed] \n' +
-    'Suggestion Received: The user has provided feedback requiring adjustments to the task execution. \n' +
-    'Action Required: Review the feedback, update the process, and rework the task.\n\n' +
+    'Status: The task was marked as complete, but the user provided feedback requiring adjustments. \n' +
+    'Action Required: \n' +
+    '- Review the feedback carefully.\n' +
+    '- Analyze any gaps or issues based on user comments.\n' +
+    '- Update the process and rework the task as necessary.\n' +
+    '- Provide a follow-up confirmation after adjustments.\n\n' +
     'Feedback Details:\n',
   default:
     '[Execution Rejected with Feedback] \n' +
