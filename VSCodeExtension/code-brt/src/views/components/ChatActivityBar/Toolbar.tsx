@@ -163,7 +163,7 @@ export const Toolbar: React.FC<ToolbarProps> = ({ setTheme }) => {
   };
 
   const saveAndSwapLanguage = (language: 'en-US' | 'zh-TW' | 'zh-CN') => {
-    i18n.changeLanguage(language);
+    void i18n.changeLanguage(language);
     dispatch(updateAndSaveSetting({ key: 'language', value: language }));
   };
 

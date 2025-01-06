@@ -264,6 +264,12 @@
           "description": "OpenAI API Key",
           "markdownDescription": "API key for OpenAI model"
         },
+        "code-brt.moonshotApiKey": {
+          "type": "string",
+          "default": "",
+          "description": "Moonshot API Key",
+          "markdownDescription": "API key for Moonshot model"
+        },
         "code-brt.cohereApiKey": {
           "type": "string",
           "default": "",

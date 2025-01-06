@@ -151,6 +151,7 @@ export type ModelServiceSettings = {
   cohereAvailableModels: string[];
   groqAvailableModels: string[];
   huggingFaceAvailableModels: string[];
+  moonshotAvailableModels: string[];
   ollamaClientHost: string;
   ollamaAvailableModels: string[];
   lastUsedModelService: ModelServiceType;
@@ -249,11 +250,12 @@ export type ExtensionSettingsWorkspace = {
 export type ExtensionSettingsCrossDevice = {
   language: SupportedLanguage;
   anthropicApiKey: string;
-  cohereApiKey: string;
+  openaiApiKey: string;
+  moonshotApiKey: string;
   geminiApiKey: string;
+  cohereApiKey: string;
   groqApiKey: string;
   huggingFaceApiKey: string;
-  openaiApiKey: string;
   openRouterApiKey: string;
   doubleEnterSendMessages: boolean;
   themePrimaryColor: string;

@@ -48,7 +48,7 @@ const FormGroup = styled(Form.Item)`
   margin-bottom: 15px;
 `;
 
-const PAID_PLAN_ONLY = ['anthropic', 'openai'];
+const PAID_PLAN_ONLY = ['anthropic', 'openai', 'moonshot'];
 const SUPPORTED_OFFLINE = ['ollama', 'gptSoVits'];
 
 // Define the desired order of settings
@@ -63,6 +63,7 @@ const SETTINGS_GROUPS: {
     keys: [
       'anthropicApiKey',
       'openaiApiKey',
+      'moonshotApiKey',
       'geminiApiKey',
       'cohereApiKey',
       'groqApiKey',
@@ -388,7 +389,7 @@ export const SettingsBar: React.FC<SettingSidebarProps> = ({
                     <Select
                       value={value as string}
                       onSelect={(value) => {
-                        i18n.changeLanguage(value);
+                        void i18n.changeLanguage(value);
                         dispatch(updateAndSaveSetting({ key, value }));
                       }}
                       options={[

@@ -34,12 +34,13 @@ export const EditModelListBar: React.FC<EditModelListBarProps> = ({
     [key in `${Exclude<ModelServiceType, 'custom' | 'openRouter'>}AvailableModels`]: string[];
   }>({
     anthropicAvailableModels: [],
-    cohereAvailableModels: [],
+    openaiAvailableModels: [],
+    moonshotAvailableModels: [],
     geminiAvailableModels: [],
+    cohereAvailableModels: [],
     groqAvailableModels: [],
     huggingFaceAvailableModels: [],
     ollamaAvailableModels: [],
-    openaiAvailableModels: [],
   });
   const [isLoading, setIsLoading] = useState(true);
 

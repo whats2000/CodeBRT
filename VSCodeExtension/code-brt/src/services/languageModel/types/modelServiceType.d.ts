@@ -12,6 +12,7 @@ export type ModelServiceType =
   | 'huggingFace'
   | 'ollama'
   | 'openRouter'
+  | 'moonshot'
   | 'custom';
 
 /**
