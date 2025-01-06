@@ -3,7 +3,7 @@
   "private": true,
   "displayName": "CodeBRT",
   "description": "CodeBRT, a all-in-one AI assistant for developers",
-  "version": "0.4.11",
+  "version": "0.4.12",
   "icon": "static/icon.ico",
   "engines": {
     "vscode": "^1.96.0",
@@ -263,6 +263,12 @@
           "default": "",
           "description": "OpenAI API Key",
           "markdownDescription": "API key for OpenAI model"
+        },
+        "code-brt.moonshotApiKey": {
+          "type": "string",
+          "default": "",
+          "description": "Moonshot API Key",
+          "markdownDescription": "API key for Moonshot model"
         },
         "code-brt.cohereApiKey": {
           "type": "string",

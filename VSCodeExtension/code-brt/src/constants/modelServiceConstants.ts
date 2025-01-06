@@ -9,6 +9,7 @@ export const AVAILABLE_MODEL_SERVICES: ModelServiceType[] = [
   'anthropic',
   'gemini',
   'openai',
+  'moonshot',
   'cohere',
   'groq',
   'huggingFace',
@@ -52,6 +53,12 @@ export const MODEL_SERVICE_CONSTANTS: {
     description: 'OpenAI API Key',
     apiLink: 'https://platform.openai.com/api-keys',
     color: 'cyan',
+  },
+  moonshot: {
+    name: 'Moonshot (Kimi)',
+    description: 'Moonshot API Key',
+    apiLink: 'https://platform.moonshot.cn/console/api-keys',
+    color: 'geekblue',
   },
   cohere: {
     name: 'Cohere',

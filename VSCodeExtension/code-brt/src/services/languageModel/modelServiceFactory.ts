@@ -15,6 +15,7 @@ import { HuggingFaceService } from './huggingFaceService';
 import { OllamaService } from './ollamaService';
 import { CustomApiService } from './customApiService';
 import { OpenRouterService } from './openRouterService';
+import { MoonshotService } from './moonshotService';
 
 export class ModelServiceFactory {
   constructor(
@@ -42,6 +43,8 @@ export class ModelServiceFactory {
         return new CustomApiService(this.ctx, this.settingsManager);
       case 'openRouter':
         return new OpenRouterService(this.ctx, this.settingsManager);
+      case 'moonshot':
+        return new MoonshotService(this.ctx, this.settingsManager);
       default:
         throw new Error(`Unsupported model: ${modelKey}`);
     }

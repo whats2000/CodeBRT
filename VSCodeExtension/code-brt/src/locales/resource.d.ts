@@ -14,8 +14,11 @@ interface Resources {
     "agentTools": "Agent Tools",
     "modelAdvanceSettings": "Model Advance Settings",
     "learnMore": "Learn More",
+    "close": "Close",
     "closeAndSave": "Close and Save",
     "showActions": "Show Actions",
+    "showLess": "Show Less",
+    "showMore": "Show More",
     "notSet": "Not Set",
     "voice": "Voice",
     "github": "GitHub",
@@ -281,32 +284,37 @@ interface Resources {
       "rollback": "Rollback",
       "fixIt": "Fix It",
       "retry": "Retry"
+    },
+    "inputMessageArea": {
+      "pasteImagesOrMention": "Paste images, @problem, #file/directory",
+      "workspaceProblem": "Workspace Problem",
+      "terminalProblem": "Terminal Problem"
     }
   },
   "updateNotes": {
     "title": "What's New",
     "notes": [
       {
-        "version": "0.4.7",
+        "version": "0.4.12",
         "notes": [
-          "Now CodeBRT will support two new language localizations: Traditional Chinese and Simplified Chinese"
+          "Fix: Fix the float button position in the chat window",
+          "Feat: Adjust the human-in-loop feedback user prefix prompt, now it is better to understand by the model",
+          "Add: Add Moonshot AI (Kimi) as a new model provider"
         ]
       },
       {
-        "version": "0.4.6",
+        "version": "0.4.11",
         "notes": [
-          "Fixed can not save some settings when the workspace is not open",
-          "Add a fuser when the write to file operation content contains omission comment or mark as partial code",
-          "Add a right click menu to fast open the chat activity bar, toggle inline code completion",
-          "Add a send to chat at menu when select text in editor",
-          "Fix the Gemini response string may contain `\"` and \"\\r\\n\" that will break the code when write to file"
+          "Add: Add mentions, which can direct mention issue, file or folder in chat",
+          "Fix: Add a try error for set settings when the settings.json is unable to write"
         ]
       },
       {
-        "version": "0.4.4",
+        "version": "0.4.10",
         "notes": [
-          "Add more languages for code completion",
-          "Fix the update note name"
+          "Add: Add missing i18n in some UI components",
+          "Fix: Fix not able to provide image when feedback to the model",
+          "Feat: Now the default prompt will use \"Step Agent Prompt\" instead of \"You are a helpful assistant\""
         ]
       }
     ]
