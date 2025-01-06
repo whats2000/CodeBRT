@@ -347,19 +347,19 @@ export const allInOneToolSchema: (enabledTools: {
       ],
     );
     availableToolsInstructions += `- **executeCommand**: { "command": string, "relativePath"?: string, "timeoutDuration"?: number (default: 10000) }
-  - Purpose: Execute a CLI command in the current working directory. **Required**: "command"
+  - Purpose: Execute a CLI command in the relative working directory. **Required**: "command"
 
 - **readFile**: { "relativeFilePath": string }
   - Purpose: Read content from a file at a specified path. **Required**: "relativeFilePath"
 
 - **writeToFile**: { "relativePath": string, "content": string, "isCodePartial": boolean }
-  - Purpose: Write specified content to a file, creating directories if needed. If the content is partial, set "isCodePartial" to true. **Required**: "relativePath", "content", "isCodePartial"
+  - Purpose: Write specified content to a file, creating directories if needed. If the content is partial, set "isCodePartial" to true, otherwise the code must be complete. **Required**: "relativePath", "content", "isCodePartial"
 
 - **searchFiles**: { "relativePath": string, "regex": string, "filePattern"?: string (default: "*") }
   - Purpose: Search for a regex pattern in files within the specified directory. **Required**: "relativePath", "regex"
 
 - **listFiles**: { "relativePath": string, "recursive"?: boolean (default: false) }
-  - Purpose: List files and directories in the specified path. **Required**: "relativePath"
+  - Purpose: List files and directories in the specified directory. **Required**: "relativePath"
 
 - **listCodeDefinitionNames**: { "relativePath": string }
   - Purpose: List top-level code definitions (e.g., functions, classes) in the directory. **Required**: "relativePath"
@@ -371,7 +371,7 @@ export const allInOneToolSchema: (enabledTools: {
   - Purpose: Ask a follow-up question for further clarification. **Required**: "question"
 
 - **attemptCompletion**: { "result": string, "command"?: string }
-  - Purpose: Complete a task and optionally demonstrate with a command. **Required**: "result"
+  - Purpose: Tell user that you have done the task and optionally demonstrate with a command to start the code. Only use when you confirm the code is runnable. Otherwise, execute the code and debug with \`executeCommand\` first to ensure it works. **Required**: "result"
 `;
   }
 
