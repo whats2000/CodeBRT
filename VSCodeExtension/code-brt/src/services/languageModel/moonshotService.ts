@@ -71,7 +71,7 @@ export class MoonshotService extends AbstractOpenaiLikeService {
     return [
       ...this.availableModelNames,
       ...DEFAULT_SETTINGS.moonshotAvailableModels,
-    ];
+    ].filter((value, index, self) => self.indexOf(value) === index);
   }
 
   public async getResponse(
