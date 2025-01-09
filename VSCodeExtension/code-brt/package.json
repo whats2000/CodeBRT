@@ -146,10 +146,6 @@
   "contributes": {
     "commands": [
       {
-        "command": "code-brt.codeBRTOptions",
-        "title": "%command.codeBRTOptions%"
-      },
-      {
         "command": "code-brt.triggerInlineCompletion",
         "title": "%command.triggerInlineCompletion%"
       },
@@ -194,11 +190,6 @@
       ]
     },
     "keybindings": [
-      {
-        "command": "code-brt.openMainView",
-        "key": "ctrl+shift+z",
-        "mac": "cmd+shift+z"
-      },
       {
         "command": "code-brt.triggerInlineCompletion",
         "key": "ctrl+shift+x",
