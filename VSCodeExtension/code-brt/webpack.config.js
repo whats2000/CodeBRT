@@ -104,6 +104,18 @@ module.exports = (env, { mode }) => {
             to: 'package.json',
           },
           {
+            from: 'package.nls.json',
+            to: 'package.nls.json',
+          },
+          {
+            from: 'package.nls.zh-cn.json',
+            to: 'package.nls.zh-cn.json',
+          },
+          {
+            from: 'package.nls.zh-tw.json',
+            to: 'package.nls.zh-tw.json',
+          },
+          {
             from: path.join(treeWasmDir, 'tree-sitter.wasm'),
             to: path.join(treeWasmTargetDir, 'tree-sitter.wasm'),
           },

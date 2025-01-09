@@ -1,8 +1,8 @@
 {
   "name": "code-brt",
   "private": true,
-  "displayName": "CodeBRT",
-  "description": "CodeBRT, a all-in-one AI assistant for developers",
+  "displayName": "%displayName%",
+  "description": "%description%",
   "version": "0.4.12",
   "icon": "static/icon.ico",
   "engines": {
@@ -147,25 +147,25 @@
     "commands": [
       {
         "command": "code-brt.codeBRTOptions",
-        "title": "CodeBRT"
+        "title": "%command.codeBRTOptions%"
       },
       {
         "command": "code-brt.triggerInlineCompletion",
-        "title": "Trigger Inline Completion"
+        "title": "%command.triggerInlineCompletion%"
       },
       {
         "command": "code-brt.openMainView",
-        "title": "Open CodeBRT Chat"
+        "title": "%command.openMainView%"
       },
       {
         "command": "code-brt.sendCodeToChat",
-        "title": "Send Code to Chat"
+        "title": "%command.sendCodeToChat%"
       }
     ],
     "submenus": [
       {
         "id": "code-brt.codeBRTSubMenu",
-        "label": "CodeBRT"
+        "label": "%submenu.codeBRT%"
       }
     ],
     "menus": {
@@ -195,24 +195,35 @@
     },
     "keybindings": [
       {
+        "command": "code-brt.openMainView",
+        "key": "ctrl+shift+z",
+        "mac": "cmd+shift+z"
+      },
+      {
         "command": "code-brt.triggerInlineCompletion",
         "key": "ctrl+shift+x",
         "mac": "cmd+shift+x",
         "when": "editorTextFocus"
+      },
+      {
+        "command": "code-brt.sendCodeToChat",
+        "key": "ctrl+shift+c",
+        "mac": "cmd+shift+c",
+        "when": "editorHasSelection"
       }
     ],
     "viewsContainers": {
       "activitybar": [
         {
           "id": "chatActivityBarContainer",
-          "title": "CodeBRT Chat",
+          "title": "%view.chatActivityBarContainer%",
           "icon": "static/logo.svg"
         }
       ],
       "panel": [
         {
           "id": "workingPanelContainer",
-          "title": "CodeBRT Working Panel",
+          "title": "%view.workingPanelContainer%",
           "icon": "static/logo.svg"
         }
       ]
@@ -222,19 +233,19 @@
         {
           "id": "chatActivityBar",
           "type": "webview",
-          "name": "Chat"
+          "name": "%view.chatActivityBar%"
         }
       ],
       "workingPanelContainer": [
         {
           "id": "workPanel",
           "type": "webview",
-          "name": "Working Panel"
+          "name": "%view.workPanel%"
         }
       ]
     },
     "configuration": {
-      "title": "CodeBRT",
+      "title": "%config.title%",
       "properties": {
         "code-brt.language": {
           "type": "string",
@@ -244,60 +255,60 @@
             "zh-TW",
             "zh-CN"
           ],
-          "description": "Set the language for CodeBRT extension"
+          "description": "%config.language.description%"
         },
         "code-brt.geminiApiKey": {
           "type": "string",
           "default": "",
-          "description": "Gemini API Key",
-          "markdownDescription": "API key for Gemini model"
+          "description": "%config.geminiApiKey.description%",
+          "markdownDescription": "%config.geminiApiKey.markdownDescription%"
         },
         "code-brt.anthropicApiKey": {
           "type": "string",
           "default": "",
-          "description": "Anthropic API Key",
-          "markdownDescription": "API key for Anthropic model"
+          "description": "%config.anthropicApiKey.description%",
+          "markdownDescription": "%config.anthropicApiKey.markdownDescription%"
         },
         "code-brt.openaiApiKey": {
           "type": "string",
           "default": "",
-          "description": "OpenAI API Key",
-          "markdownDescription": "API key for OpenAI model"
+          "description": "%config.openaiApiKey.description%",
+          "markdownDescription": "%config.openaiApiKey.markdownDescription%"
         },
         "code-brt.moonshotApiKey": {
           "type": "string",
           "default": "",
-          "description": "Moonshot API Key",
-          "markdownDescription": "API key for Moonshot model"
+          "description": "%config.moonshotApiKey.description%",
+          "markdownDescription": "%config.moonshotApiKey.markdownDescription%"
         },
         "code-brt.cohereApiKey": {
           "type": "string",
           "default": "",
-          "description": "Cohere API Key",
-          "markdownDescription": "API key for Cohere model"
+          "description": "%config.cohereApiKey.description%",
+          "markdownDescription": "%config.cohereApiKey.markdownDescription%"
         },
         "code-brt.groqApiKey": {
           "type": "string",
           "default": "",
-          "description": "Open Source LLM API Key",
-          "markdownDescription": "API key for Open Source LLM model"
+          "description": "%config.groqApiKey.description%",
+          "markdownDescription": "%config.groqApiKey.markdownDescription%"
         },
         "code-brt.huggingFaceApiKey": {
           "type": "string",
           "default": "",
-          "description": "HuggingFace API Key",
-          "markdownDescription": "API key for HuggingFace model"
+          "description": "%config.huggingFaceApiKey.description%",
+          "markdownDescription": "%config.huggingFaceApiKey.markdownDescription%"
         },
         "code-brt.openRouterApiKey": {
           "type": "string",
           "default": "",
-          "description": "OpenRouter API Key",
-          "markdownDescription": "API key for OpenRouter model"
+          "description": "%config.openRouterApiKey.description%",
+          "markdownDescription": "%config.openRouterApiKey.markdownDescription%"
         },
         "code-brt.themePrimaryColor": {
           "type": "string",
           "default": "#007ACC",
-          "description": "Primary color for the theme"
+          "description": "%config.themePrimaryColor.description%"
         },
         "code-brt.themeAlgorithm": {
           "type": [
@@ -312,35 +323,35 @@
               "compactAlgorithm"
             ],
             "enumDescriptions": [
-              "Dark algorithm",
-              "Light algorithm",
-              "Compact algorithm"
+              "%config.themeAlgorithm.darkAlgorithm%",
+              "%config.themeAlgorithm.defaultAlgorithm%",
+              "%config.themeAlgorithm.compactAlgorithm%"
             ]
           },
           "default": [
             "darkAlgorithm"
           ],
-          "description": "Algorithm for the theme",
-          "markdownDescription": "The algorithm to use for the theme. The `darkAlgorithm` is a dark theme with a dark background and light text. The `defaultAlgorithm` is a light theme with a light background and dark text. The `compactAlgorithm` is a compact theme with a dark background and light text.",
+          "description": "%config.themeAlgorithm.description%",
+          "markdownDescription": "%config.themeAlgorithm.markdownDescription%",
           "markdownEnumDescriptions": [
-            "Dark algorithm",
-            "Light algorithm",
-            "Compact algorithm"
+            "%config.themeAlgorithm.darkAlgorithm%",
+            "%config.themeAlgorithm.defaultAlgorithm%",
+            "%config.themeAlgorithm.compactAlgorithm%"
           ]
         },
         "code-brt.themeBorderRadius": {
           "type": "number",
           "default": 4,
-          "description": "Border radius for the theme",
-          "markdownDescription": "The border radius for the theme. The default value is 4.",
+          "description": "%config.themeBorderRadius.description%",
+          "markdownDescription": "%config.themeBorderRadius.markdownDescription%",
           "minimum": 0,
           "maximum": 100
         },
         "code-brt.hljsTheme": {
           "type": "string",
           "default": "darcula",
-          "description": "Highlight.js theme",
-          "markdownDescription": "The theme to use for syntax highlighting. The default value is `darcula`.",
+          "description": "%config.hljsTheme.description%",
+          "markdownDescription": "%config.hljsTheme.markdownDescription%",
           "enum": [
             "a11yDark",
             "a11yLight",
@@ -444,14 +455,14 @@
         "code-brt.lastUsedHistoryID": {
           "type": "string",
           "default": "",
-          "description": "Last used history ID",
-          "markdownDescription": "The ID of the last used history."
+          "description": "%config.lastUsedHistoryID.description%",
+          "markdownDescription": "%config.lastUsedHistoryID.markdownDescription%"
         },
         "code-brt.doubleEnterSendMessages": {
           "type": "boolean",
           "default": false,
-          "description": "Double enter to send messages for preventing accidental sending",
-          "markdownDescription": "Whether to use double enter to send messages for preventing accidental sending."
+          "description": "%config.doubleEnterSendMessages.description%",
+          "markdownDescription": "%config.doubleEnterSendMessages.markdownDescription%"
         }
       }
     }
