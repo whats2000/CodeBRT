@@ -344,7 +344,7 @@ export class HuggingFaceService extends AbstractLanguageModelService {
             updateStatus &&
               updateStatus(`[processing] I'm creating an action...`);
             completeToolCallsString +=
-              chunk.choices[0]?.delta.tool_calls.function.arguments;
+              chunk.choices[0]?.delta.tool_calls[0].function.arguments;
           }
 
           if (completeToolCallsString.length === 0) {

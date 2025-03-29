@@ -1,35 +1,35 @@
-import React, { useContext, useEffect, useState, useRef } from 'react';
+import React, { useContext, useEffect, useRef, useState } from 'react';
 import {
+  Button,
   Collapse,
   Descriptions,
-  Space,
-  Button,
-  Typography,
   Dropdown,
   MenuProps,
   Progress,
+  Space,
+  Typography,
 } from 'antd';
 import {
-  PlayCircleOutlined,
-  FileOutlined,
-  EditOutlined,
-  SearchOutlined,
-  UnorderedListOutlined,
-  CodeOutlined,
-  QuestionCircleOutlined,
   CheckCircleOutlined,
+  CodeOutlined,
+  EditOutlined,
+  FileOutlined,
   GlobalOutlined,
   LinkOutlined,
+  PlayCircleOutlined,
   PlaySquareOutlined,
+  QuestionCircleOutlined,
+  SearchOutlined,
   StopOutlined,
+  UnorderedListOutlined,
 } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
 
 import type {
   ConversationEntry,
-  WorkspaceToolType,
   NonWorkspaceToolType,
   ToolCallEntry,
+  WorkspaceToolType,
 } from '../../../../types';
 import type { AppDispatch, RootState } from '../../../redux';
 import { useDispatch, useSelector } from 'react-redux';
@@ -71,6 +71,9 @@ export const ToolActionContainer = React.memo<ToolActionContainerProps>(
     const AUTO_APPROVE_DELAY_SECONDS = 5;
     const timeoutRef = useRef<NodeJS.Timeout | null>(null);
     const intervalRef = useRef<NodeJS.Timeout | null>(null);
+    
+    // Add a reference to track if auto-approve has been initiated
+    const autoApproveInitiatedRef = useRef<boolean>(false);
 
     const dispatch = useDispatch<AppDispatch>();
 
@@ -123,6 +126,17 @@ export const ToolActionContainer = React.memo<ToolActionContainerProps>(
       return isToolTypeApproved;
     };
 
+    const isToolCallRecent = (toolCall: ToolCallEntry): boolean => {
+      if (!toolCall.create_time) return true; // If no timestamp, assume it's recent
+      
+      const createTime = new Date(toolCall.create_time).getTime();
+      const currentTime = new Date().getTime();
+      const millisecondsSinceCreation = currentTime - createTime;
+      
+      // Consider the tool call "recent" if it was created less than AUTO_APPROVE_DELAY_SECONDS + 1 seconds ago
+      return millisecondsSinceCreation < (AUTO_APPROVE_DELAY_SECONDS + 1) * 1000;
+    };
+
     const shouldShowActionButtons =
       showActionButtons &&
       entry.toolCalls &&
@@ -131,13 +145,17 @@ export const ToolActionContainer = React.memo<ToolActionContainerProps>(
 
     useEffect(() => {
       // Start auto-approve countdown if applicable
-      if (shouldShowActionButtons && entry.toolCalls && !isProcessing) {
+      if (shouldShowActionButtons && entry.toolCalls && !isProcessing && !autoApproveInitiatedRef.current) {
         const toolCall = entry.toolCalls[0];
 
-        if (shouldAutoApprove(toolCall)) {
+        // Only auto-approve if the tool call is eligible and was created recently
+        if (shouldAutoApprove(toolCall) && isToolCallRecent(toolCall)) {
+          // Mark that we've initiated auto-approve for this tool call
+          autoApproveInitiatedRef.current = true;
+          
           setAutoApproveCountdown(AUTO_APPROVE_DELAY_SECONDS);
 
-          const intervalId = setInterval(() => {
+          intervalRef.current = setInterval(() => {
             setAutoApproveCountdown((prev) => {
               if (prev === null || prev <= 0) {
                 if (intervalRef.current) {
@@ -149,9 +167,8 @@ export const ToolActionContainer = React.memo<ToolActionContainerProps>(
               return prev - 1;
             });
           }, 1000);
-          intervalRef.current = intervalId;
 
-          const timeoutId = setTimeout(() => {
+          timeoutRef.current = setTimeout(() => {
             void onApprove(entry);
             if (intervalRef.current) {
               clearInterval(intervalRef.current);
@@ -159,7 +176,6 @@ export const ToolActionContainer = React.memo<ToolActionContainerProps>(
             }
             timeoutRef.current = null;
           }, AUTO_APPROVE_DELAY_SECONDS * 1000);
-          timeoutRef.current = timeoutId;
 
           return () => {
             if (timeoutRef.current) {
@@ -353,9 +369,12 @@ export const ToolActionContainer = React.memo<ToolActionContainerProps>(
                     <Button
                       icon={<StopOutlined />}
                       onClick={cancelAutoApprove}
-                      type="default"
+                      type='default'
                     >
-                      {t('toolActionContainer.cancelAutoApprove', 'Cancel Auto')}
+                      {t(
+                        'toolActionContainer.cancelAutoApprove',
+                        'Cancel Auto',
+                      )}
                     </Button>
                   )}
                 </Space>

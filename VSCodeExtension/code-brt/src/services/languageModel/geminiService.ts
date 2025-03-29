@@ -402,7 +402,7 @@ export class GeminiService extends AbstractLanguageModelService {
 
     if (functionResponses && functionResponses.length > 0) {
       // As the gemini API doesn't support image tool responses, we add a model message to the
-      // conversation history ask for the follow up tool response image
+      // conversation history ask for the follow-up tool response image
       if (!(toolCallResponse?.images && toolCallResponse.images.length > 0)) {
         queryParts = functionResponses;
       } else {
@@ -573,7 +573,7 @@ export class GeminiService extends AbstractLanguageModelService {
 
         // Otherwise, add the tool call feedback to the conversation history and retry
         conversationHistory.push({
-          // As the get response might be invoke by handleToolResponse, the role should be function in this case
+          // As the get response might be invoked by handleToolResponse, the role should be function in this case
           // Otherwise, the role should be user
           role: queryParts[0].functionResponse ? 'function' : 'user',
           parts: queryParts,
