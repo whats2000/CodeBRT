@@ -139,6 +139,8 @@ type OpenRouterModelSettings = {
  * @property cohereAvailableModels - The available models for the Cohere API
  * @property groqAvailableModels - The available models for the Groq API
  * @property huggingFaceAvailableModels - The available models for the Hugging Face API
+ * @property deepseekAvailableModels - The available models for the Deepseek API
+ * @property moonshotAvailableModels - The available models for the Moonshot API
  * @property ollamaClientHost - The host URL for the Ollama client
  * @property ollamaAvailableModels - The available models for the Ollama API
  * @property lastUsedModelService - The last used model service
@@ -154,6 +156,7 @@ export type ModelServiceSettings = {
   cohereAvailableModels: string[];
   groqAvailableModels: string[];
   huggingFaceAvailableModels: string[];
+  deepseekAvailableModels: string[];
   moonshotAvailableModels: string[];
   ollamaClientHost: string;
   ollamaAvailableModels: string[];
@@ -258,6 +261,7 @@ export type ExtensionSettingsCrossDevice = {
   language: SupportedLanguage;
   anthropicApiKey: string;
   openaiApiKey: string;
+  deepseekApiKey: string;
   moonshotApiKey: string;
   geminiApiKey: string;
   cohereApiKey: string;

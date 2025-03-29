@@ -267,6 +267,12 @@
           "description": "%config.openaiApiKey.description%",
           "markdownDescription": "%config.openaiApiKey.markdownDescription%"
         },
+        "code-brt.deepseekApiKey": {
+          "type": "string",
+          "default": "",
+          "description": "%config.deepseekApiKey.description%",
+          "markdownDescription": "%config.deepseekApiKey.markdownDescription%"
+        },
         "code-brt.moonshotApiKey": {
           "type": "string",
           "default": "",

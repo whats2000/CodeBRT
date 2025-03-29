@@ -17,6 +17,8 @@
   "config.anthropicApiKey.markdownDescription": "Anthropic 模型的 API 金鑰",
   "config.openaiApiKey.description": "OpenAI API 金鑰",
   "config.openaiApiKey.markdownDescription": "OpenAI 模型的 API 金鑰",
+  "config.deepseekApiKey.description": "Deepseek API 金鑰",
+  "config.deepseekApiKey.markdownDescription": "Deepseek 模型的 API 金鑰",
   "config.moonshotApiKey.description": "Moonshot API 金鑰",
   "config.moonshotApiKey.markdownDescription": "Moonshot 模型的 API 金鑰",
   "config.cohereApiKey.description": "Cohere API 金鑰",

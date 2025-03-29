@@ -35,6 +35,7 @@ export const EditModelListBar: React.FC<EditModelListBarProps> = ({
   }>({
     anthropicAvailableModels: [],
     openaiAvailableModels: [],
+    deepseekAvailableModels: [],
     moonshotAvailableModels: [],
     geminiAvailableModels: [],
     cohereAvailableModels: [],

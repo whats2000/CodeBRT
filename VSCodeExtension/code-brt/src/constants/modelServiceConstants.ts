@@ -9,6 +9,7 @@ export const AVAILABLE_MODEL_SERVICES: ModelServiceType[] = [
   'anthropic',
   'gemini',
   'openai',
+  'deepseek',
   'moonshot',
   'cohere',
   'groq',
@@ -53,6 +54,12 @@ export const MODEL_SERVICE_CONSTANTS: {
     description: 'OpenAI API Key',
     apiLink: 'https://platform.openai.com/api-keys',
     color: 'cyan',
+  },
+  deepseek: {
+    name: 'Deepseek',
+    description: 'Deepseek API Key',
+    apiLink: 'https://platform.deepseek.com/api_keys',
+    color: 'blue',
   },
   moonshot: {
     name: 'Moonshot (Kimi)',

@@ -48,7 +48,7 @@ const FormGroup = styled(Form.Item)`
   margin-bottom: 15px;
 `;
 
-const PAID_PLAN_ONLY = ['anthropic', 'openai', 'moonshot'];
+const PAID_PLAN_ONLY = ['anthropic', 'openai', 'moonshot', 'deepseek'];
 const SUPPORTED_OFFLINE = ['ollama', 'gptSoVits'];
 
 // Define the desired order of settings
@@ -63,6 +63,7 @@ const SETTINGS_GROUPS: {
     keys: [
       'anthropicApiKey',
       'openaiApiKey',
+      'deepseekApiKey',
       'moonshotApiKey',
       'geminiApiKey',
       'cohereApiKey',

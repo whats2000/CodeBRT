@@ -13,6 +13,7 @@ export type ModelServiceType =
   | 'ollama'
   | 'openRouter'
   | 'moonshot'
+  | 'deepseek'
   | 'custom';
 
 /**

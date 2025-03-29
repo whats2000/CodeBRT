@@ -17,6 +17,8 @@
   "config.anthropicApiKey.markdownDescription": "API key for Anthropic model",
   "config.openaiApiKey.description": "OpenAI API Key",
   "config.openaiApiKey.markdownDescription": "API key for OpenAI model",
+  "config.deepseekApiKey.description": "Deepseek API Key",
+  "config.deepseekApiKey.markdownDescription": "API key for Deepseek model",
   "config.moonshotApiKey.description": "Moonshot API Key",
   "config.moonshotApiKey.markdownDescription": "API key for Moonshot model",
   "config.cohereApiKey.description": "Cohere API Key",
