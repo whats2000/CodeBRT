@@ -212,13 +212,11 @@ export type ToolServiceSettings = {
  * @property systemPrompts - An array of system prompts
  * @property retainContextWhenHidden - Indicates whether the context should be retained when the extension is hidden
  * @property autoApproveActions - An array of actions that should be automatically approved
- * @property autoExecuteActions - An array of actions that should be automatically executed
  */
 export type OtherLocalSettings = {
   systemPrompts: SystemPrompt[];
   retainContextWhenHidden: boolean;
   autoApproveActions: (WorkspaceToolType | NonWorkspaceToolType)[];
-  autoExecuteActions: (WorkspaceToolType | NonWorkspaceToolType)[];
 };
 
 /**

@@ -156,6 +156,14 @@
     "autoModelTooltip": "我們目前支援以下模型：<supportModels /> 填空模型範本。如果您有興趣，請在 GitHub 上幫助我們新增更多模型。",
     "autoDescription": "這將在您暫停輸入時使用。這意味著將更快地適用於簡單的程式碼片段。"
   },
+  "autoConfig": {
+    "title": "自動批准",
+    "description": "設定哪些工具應該被自動批准，無需您的確認。",
+    "autoApprove": "自動批准",
+    "autoApproveTooltip": "被批准的工具將在 AI 建議後執行，但仍會顯示在聊天歷史中",
+    "tools": "可用工具",
+    "selectTools": "選擇工具"
+  },
   "modelAdvanceSettingBar": {
     "descriptions": {
       "systemPrompt": "模型的系統提示詞（System Prompt）。這可以用來向模型引入上下文，例如描述到目前為止的對話內容。或者，您可以透過更改提示詞，使模型表現得更專業或更輕鬆。",

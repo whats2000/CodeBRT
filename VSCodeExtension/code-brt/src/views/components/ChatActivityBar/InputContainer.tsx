@@ -26,6 +26,7 @@ import { MentionsDisplay } from './InputContainer/MentionsDisplay';
 import { InputMessageArea } from './InputContainer/InputMessageArea';
 import { FileUploadSection } from './InputContainer/FileUploadSection';
 import { CancelOutlined } from '../../icons';
+import { AutoApproveConfig } from './InputContainer/AutoApproveConfig';
 
 const StyledInputContainer = styled.div<{ $token: GlobalToken }>`
   display: flex;
@@ -270,7 +271,7 @@ export const InputContainer = React.memo<InputContainerProps>(
             isToolResponse={isToolResponse}
           />
           <Flex justify={'space-between'}>
-            <div>
+            <Flex>
               <Button
                 ref={uploadFileButtonRef}
                 size={'small'}
@@ -295,7 +296,8 @@ export const InputContainer = React.memo<InputContainerProps>(
                 onClick={handleVoiceInput}
                 disabled={conversationHistory.isProcessing}
               />
-            </div>
+              <AutoApproveConfig />
+            </Flex>
             <Space>
               {inputMessage.length > 0 && (
                 <Typography.Text type={'secondary'}>

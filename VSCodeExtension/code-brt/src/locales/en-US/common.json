@@ -156,6 +156,14 @@
     "autoModelTooltip": "We currently support the model which are in <supportModels /> fill hole model template. Please help us to add more model in GitHub if you interested.",
     "autoDescription": "This will use when you typing pause for a moment. Which mean will faster suit for simple code snippet."
   },
+  "autoConfig": {
+    "title": "Auto Approve",
+    "description": "Configure which tools should be automatically approved without requiring your confirmation.",
+    "autoApprove": "Auto Approve",
+    "autoApproveTooltip": "Approved tools will be executed after AI suggests them, but will still show in the chat history",
+    "tools": "Available Tools",
+    "selectTools": "Select tools"
+  },
   "modelAdvanceSettingBar": {
     "descriptions": {
       "systemPrompt": "The system prompt for the model. This can be used to introduce context to the model, such as a description of the conversation so far. Or, you can make the model more professional or casual by changing the prompt.",
