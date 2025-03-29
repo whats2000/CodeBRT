@@ -56,6 +56,8 @@ export const webSearchTool: ToolServicesApi['webSearch'] = async ({
   maxCharsPerPage = Number(maxCharsPerPage) || 6000;
 
   const allResults: { title: string; url: string; snippet: string }[] = [];
+  const seenUrls = new Set<string>();
+
   const session = axios.create({
     headers: {
       'User-Agent':
@@ -74,15 +76,19 @@ export const webSearchTool: ToolServicesApi['webSearch'] = async ({
     const $ = cheerio.load(resp.data);
     const resultBlocks = $('.result');
 
-    for (const result of resultBlocks.toArray().slice(0, numResults)) {
+    for (const result of resultBlocks.toArray()) {
+      if (allResults.length >= numResults) break;
+
       const linkElement = $(result).find('a.result__a');
       const rawLink = linkElement.attr('href');
       const match = rawLink?.match(/uddg=([^&]+)/);
       const link = match ? decodeURIComponent(match[1]) : rawLink;
-      const title = linkElement.text();
-      const snippet = $(result).find('.result__snippet').text();
+      const title = linkElement.text().trim();
+      const snippet = $(result).find('.result__snippet').text().trim();
 
-      if (!link) continue;
+      if (!link || !title || !snippet || seenUrls.has(link)) continue;
+
+      seenUrls.add(link);
 
       updateStatus?.(`[processing] Reading page "${title}" from ${link}`);
 
