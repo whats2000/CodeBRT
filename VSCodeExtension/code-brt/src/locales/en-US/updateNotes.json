@@ -5,7 +5,7 @@
       "version": "0.4.13",
       "notes": [
         "Add: Add Deepseek as a model provider",
-        "Add: Add auto approve for tool actions",
+        "Add: Add auto approve for tool actions"
       ]
     },
     {
