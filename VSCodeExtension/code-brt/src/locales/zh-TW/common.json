@@ -162,7 +162,11 @@
     "autoApprove": "自動批准",
     "autoApproveTooltip": "被批准的工具將在 AI 建議後執行，但仍會顯示在聊天歷史中",
     "tools": "可用工具",
-    "selectTools": "選擇工具"
+    "selectTools": "選擇工具",
+    "commandBlacklist": "命令黑名單正則表達式",
+    "commandBlacklistTooltip": "匹配這些正則表達式模式的命令將永遠不會被自動執行（例如，\"sudo.*\"）",
+    "addBlacklistPattern": "添加正則表達式模式",
+    "add": "添加"
   },
   "modelAdvanceSettingBar": {
     "descriptions": {

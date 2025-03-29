@@ -71,6 +71,43 @@ export const DEFAULT_LOCAL_SETTINGS: ExtensionSettingsLocal = {
   systemPrompts: [],
   retainContextWhenHidden: false,
   autoApproveActions: [],
+  autoApproveExecuteCommandBlacklistRegex: [
+    // Linux / Unix dangerous
+    'sudo\\s+.*',
+    'rm\\s+-rf\\s+.*',
+    'rm\\s+-r\\s+.*',
+    'chmod\\s+777\\s+.*',
+    'mkfs\\..*',
+    'dd\\s+if=.*',
+    '>\\s*/dev/.*',
+    'eval\\s+.*',
+    ':\\(\\)\\s*\\{\\s*:\\|:\\s*;&\\s*\\};\\s*.*',
+
+    // Windows admin removal
+    'format\\s+.*',
+    'del\\s+/f\\s+/s\\s+/q\\s+.*',
+    'Remove-Item\\s+.*-Recurse\\s+-Force',
+
+    // Docker dangerous
+    'docker\\s+rm\\s+.*',
+    'docker\\s+rmi\\s+.*',
+    'docker\\s+volume\\s+rm\\s+.*',
+    'docker\\s+exec\\s+.*\\s+rm\\s+.*',
+
+    // Kubernetes dangerous
+    'kubectl\\s+delete\\s+.*',
+    'kubectl\\s+exec\\s+.*\\s+--\\s+rm\\s+.*',
+
+    // Git destructive
+    'git\\s+reset\\s+--hard',
+    'git\\s+clean\\s+-fd',
+
+    // Shell-based remote execution
+    'wget\\s+.*\\|\\s*sh',
+    'curl\\s+.*\\|\\s*sh',
+    'echo\\s+.*\\|\\s*base64\\s+-d\\s*\\|\\s*sh',
+    'base64\\s+-d\\s+.*\\|\\s*sh',
+  ],
   manualTriggerCodeCompletion: false,
   lastUsedManualCodeCompletionModelService: 'gemini',
   lastSelectedManualCodeCompletionModel: {

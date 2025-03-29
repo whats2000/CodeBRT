@@ -162,7 +162,11 @@
     "autoApprove": "Auto Approve",
     "autoApproveTooltip": "Approved tools will be executed after AI suggests them, but will still show in the chat history",
     "tools": "Available Tools",
-    "selectTools": "Select tools"
+    "selectTools": "Select tools",
+    "commandBlacklist": "Command Blacklist Regex",
+    "commandBlacklistTooltip": "Commands matching these regex patterns will never be auto-executed (e.g., \"sudo.*\")",
+    "addBlacklistPattern": "Add regex pattern",
+    "add": "Add"
   },
   "modelAdvanceSettingBar": {
     "descriptions": {
