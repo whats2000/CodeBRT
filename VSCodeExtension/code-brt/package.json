@@ -3,7 +3,7 @@
   "private": true,
   "displayName": "%displayName%",
   "description": "%description%",
-  "version": "0.4.12",
+  "version": "0.4.13",
   "icon": "static/icon.ico",
   "engines": {
     "vscode": "^1.98.0",

@@ -2,6 +2,13 @@
   "title": "What's New",
   "notes": [
     {
+      "version": "0.4.13",
+      "notes": [
+        "Add: Add Deepseek as a model provider",
+        "Add: Add auto approve for tool actions",
+      ]
+    },
+    {
       "version": "0.4.12",
       "notes": [
         "Fix: Fix the float button position in the chat window",
@@ -14,14 +21,6 @@
       "notes": [
         "Add: Add mentions, which can direct mention issue, file or folder in chat",
         "Fix: Add a try error for set settings when the settings.json is unable to write"
-      ]
-    },
-    {
-      "version": "0.4.10",
-      "notes": [
-        "Add: Add missing i18n in some UI components",
-        "Fix: Fix not able to provide image when feedback to the model",
-        "Feat: Now the default prompt will use \"Step Agent Prompt\" instead of \"You are a helpful assistant\""
       ]
     }
   ]
