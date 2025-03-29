@@ -1,8 +1,3 @@
-/**
- * This file is referenced to https://github.com/KingNish24/OpenGPT-4o/blob/main/chatbot.py,
- * And I have made some changes to the original code to make it work with the TypeScript codebase.
- * License: MIT
- */
 import axios from 'axios';
 import * as cheerio from 'cheerio';
 
@@ -57,13 +52,8 @@ export const webSearchTool: ToolServicesApi['webSearch'] = async ({
   updateStatus,
 }) => {
   const term = query;
-  try {
-    maxCharsPerPage = Number(maxCharsPerPage);
-    numResults = Number(numResults);
-  } catch {
-    maxCharsPerPage = 6000;
-    numResults = 4;
-  }
+  numResults = Number(numResults) || 4;
+  maxCharsPerPage = Number(maxCharsPerPage) || 6000;
 
   const allResults: { title: string; url: string; snippet: string }[] = [];
   const session = axios.create({
@@ -75,20 +65,26 @@ export const webSearchTool: ToolServicesApi['webSearch'] = async ({
 
   try {
     updateStatus?.(`[processing] Searching Web with keyword "${term}"`);
-    const resp = await session.get('https://www.google.com/search', {
-      params: { q: term, num: numResults, udm: 14 },
-      timeout: 5000,
-    });
-    const $ = cheerio.load(resp.data);
-    const resultBlocks = $('div.g');
 
-    for (const result of resultBlocks.toArray()) {
-      const linkElement = $(result).find('a[href]').first();
-      const link = linkElement.attr('href');
-      const title = $(result).find('h3').text();
-      updateStatus?.(`[processing] Reading page "${title}" from ${link}`);
+    const resp = await session.get('https://html.duckduckgo.com/html/', {
+      params: { q: term },
+      timeout: 15000,
+    });
+
+    const $ = cheerio.load(resp.data);
+    const resultBlocks = $('.result');
+
+    for (const result of resultBlocks.toArray().slice(0, numResults)) {
+      const linkElement = $(result).find('a.result__a');
+      const rawLink = linkElement.attr('href');
+      const match = rawLink?.match(/uddg=([^&]+)/);
+      const link = match ? decodeURIComponent(match[1]) : rawLink;
+      const title = linkElement.text();
+      const snippet = $(result).find('.result__snippet').text();
 
       if (!link) continue;
+
+      updateStatus?.(`[processing] Reading page "${title}" from ${link}`);
 
       try {
         const webpage = await session.get(link, { timeout: 5000 });
@@ -102,13 +98,18 @@ export const webSearchTool: ToolServicesApi['webSearch'] = async ({
           visibleText.length > maxCharsPerPage
             ? visibleText.substring(0, maxCharsPerPage)
             : visibleText;
+
         allResults.push({ title, url: link, snippet: truncatedText });
       } catch (error) {
+        const truncatedSnippet =
+          snippet.length > maxCharsPerPage
+            ? snippet.substring(0, maxCharsPerPage)
+            : snippet;
+
         allResults.push({
           title,
           url: link,
-          snippet:
-            'Scraping is restricted. Use `urlFetcher` with the provided URL instead.',
+          snippet: truncatedSnippet,
         });
       }
     }
