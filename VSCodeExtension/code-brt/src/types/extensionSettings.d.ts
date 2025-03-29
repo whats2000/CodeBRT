@@ -5,7 +5,10 @@ import {
   VoiceToTextServiceType,
 } from '../services/voice/types';
 import { ModelServiceType } from '../services/languageModel/types';
-import { NonWorkspaceToolType } from '../services/tools/types';
+import {
+  NonWorkspaceToolType,
+  WorkspaceToolType,
+} from '../services/tools/types';
 import { SupportedLanguage } from '../locales/i18n';
 
 /**
@@ -208,10 +211,14 @@ export type ToolServiceSettings = {
  * Other local settings that are not related to the services.
  * @property systemPrompts - An array of system prompts
  * @property retainContextWhenHidden - Indicates whether the context should be retained when the extension is hidden
+ * @property autoApproveActions - An array of actions that should be automatically approved
+ * @property autoExecuteActions - An array of actions that should be automatically executed
  */
 export type OtherLocalSettings = {
   systemPrompts: SystemPrompt[];
   retainContextWhenHidden: boolean;
+  autoApproveActions: (WorkspaceToolType | NonWorkspaceToolType)[];
+  autoExecuteActions: (WorkspaceToolType | NonWorkspaceToolType)[];
 };
 
 /**

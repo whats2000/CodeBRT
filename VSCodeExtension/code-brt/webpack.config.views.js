@@ -24,6 +24,9 @@ module.exports = (env, { mode }) => {
     resolve: {
       roots: [__dirname],
       extensions: ['.js', '.jsx', '.ts', '.tsx'],
+      alias: {
+        src: path.resolve(__dirname, 'src'),
+      },
     },
     optimization: {
       minimize: !isDev,

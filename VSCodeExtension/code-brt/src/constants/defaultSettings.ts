@@ -70,6 +70,8 @@ export const DEFAULT_LOCAL_SETTINGS: ExtensionSettingsLocal = {
   },
   systemPrompts: [],
   retainContextWhenHidden: false,
+  autoApproveActions: [],
+  autoExecuteActions: [],
   manualTriggerCodeCompletion: false,
   lastUsedManualCodeCompletionModelService: 'gemini',
   lastSelectedManualCodeCompletionModel: {
