@@ -278,6 +278,7 @@
   "toolActionContainer": {
     "approve": "批准",
     "reject": "拒绝",
+    "cancelAutoApprove": "取消自动批准",
     "runCommand": "运行命令",
     "rejectByUserMessage": "我拒绝了您发出的 {{toolName}} 工具调用请求。\n**原因**：\n{{reason}}",
     "rejectionReasons": {

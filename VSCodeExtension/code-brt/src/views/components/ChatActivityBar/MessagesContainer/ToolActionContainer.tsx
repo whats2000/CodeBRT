@@ -1,4 +1,4 @@
-import React, { useContext } from 'react';
+import React, { useContext, useEffect, useState, useRef } from 'react';
 import {
   Collapse,
   Descriptions,
@@ -7,6 +7,7 @@ import {
   Typography,
   Dropdown,
   MenuProps,
+  Progress,
 } from 'antd';
 import {
   PlayCircleOutlined,
@@ -20,6 +21,7 @@ import {
   GlobalOutlined,
   LinkOutlined,
   PlaySquareOutlined,
+  StopOutlined,
 } from '@ant-design/icons';
 import { useTranslation } from 'react-i18next';
 
@@ -63,6 +65,12 @@ export const ToolActionContainer = React.memo<ToolActionContainerProps>(
   ({ entry, showActionButtons, tempIdRef }) => {
     const { t } = useTranslation('common');
     const { callApi } = useContext(WebviewContext);
+    const [autoApproveCountdown, setAutoApproveCountdown] = useState<
+      number | null
+    >(null);
+    const AUTO_APPROVE_DELAY_SECONDS = 5;
+    const timeoutRef = useRef<NodeJS.Timeout | null>(null);
+    const intervalRef = useRef<NodeJS.Timeout | null>(null);
 
     const dispatch = useDispatch<AppDispatch>();
 
@@ -73,6 +81,8 @@ export const ToolActionContainer = React.memo<ToolActionContainerProps>(
       (state: RootState) => state.modelService,
     );
 
+    const { settings } = useSelector((state: RootState) => state.settings);
+
     const REJECTION_REASONS = [
       'today',
       'incorrectParameters',
@@ -82,11 +92,100 @@ export const ToolActionContainer = React.memo<ToolActionContainerProps>(
       'other',
     ];
 
+    const shouldAutoApprove = (toolCall: ToolCallEntry): boolean => {
+      if (!settings?.autoApproveActions || !toolCall) {
+        return false;
+      }
+
+      // Check if this tool type is in the auto-approve list
+      const isToolTypeApproved = settings.autoApproveActions.includes(
+        toolCall.toolName as WorkspaceToolType | NonWorkspaceToolType,
+      );
+
+      // Additional check for executeCommand
+      if (isToolTypeApproved && toolCall.toolName === 'executeCommand') {
+        const command = toolCall.parameters.command as string;
+
+        // Check against blacklist regex patterns
+        return !settings.autoApproveExecuteCommandBlacklistRegex?.some(
+          (pattern) => {
+            try {
+              const regex = new RegExp(pattern);
+              return regex.test(command);
+            } catch (e) {
+              // If regex is invalid, skip this pattern
+              return false;
+            }
+          },
+        );
+      }
+
+      return isToolTypeApproved;
+    };
+
     const shouldShowActionButtons =
       showActionButtons &&
       entry.toolCalls &&
       entry.toolCalls?.[0].toolName !== 'askFollowUpQuestion' &&
       entry.toolCalls?.[0].toolName !== 'attemptCompletion';
+
+    useEffect(() => {
+      // Start auto-approve countdown if applicable
+      if (shouldShowActionButtons && entry.toolCalls && !isProcessing) {
+        const toolCall = entry.toolCalls[0];
+
+        if (shouldAutoApprove(toolCall)) {
+          setAutoApproveCountdown(AUTO_APPROVE_DELAY_SECONDS);
+
+          const intervalId = setInterval(() => {
+            setAutoApproveCountdown((prev) => {
+              if (prev === null || prev <= 0) {
+                if (intervalRef.current) {
+                  clearInterval(intervalRef.current);
+                  intervalRef.current = null;
+                }
+                return null;
+              }
+              return prev - 1;
+            });
+          }, 1000);
+          intervalRef.current = intervalId;
+
+          const timeoutId = setTimeout(() => {
+            void onApprove(entry);
+            if (intervalRef.current) {
+              clearInterval(intervalRef.current);
+              intervalRef.current = null;
+            }
+            timeoutRef.current = null;
+          }, AUTO_APPROVE_DELAY_SECONDS * 1000);
+          timeoutRef.current = timeoutId;
+
+          return () => {
+            if (timeoutRef.current) {
+              clearTimeout(timeoutRef.current);
+              timeoutRef.current = null;
+            }
+            if (intervalRef.current) {
+              clearInterval(intervalRef.current);
+              intervalRef.current = null;
+            }
+          };
+        }
+      }
+    }, [entry, shouldShowActionButtons, isProcessing]);
+
+    const cancelAutoApprove = () => {
+      if (timeoutRef.current) {
+        clearTimeout(timeoutRef.current);
+        timeoutRef.current = null;
+      }
+      if (intervalRef.current) {
+        clearInterval(intervalRef.current);
+        intervalRef.current = null;
+      }
+      setAutoApproveCountdown(null);
+    };
 
     const onApprove = async (entry: ConversationEntry) => {
       const toolCall = entry.toolCalls?.[0];
@@ -233,20 +332,45 @@ export const ToolActionContainer = React.memo<ToolActionContainerProps>(
 
             {/* Approve and Reject buttons */}
             {shouldShowActionButtons && (
-              <Space wrap={true}>
-                <Button
-                  type='primary'
-                  ghost={true}
-                  onClick={() => onApprove(entry)}
-                  loading={isProcessing}
-                >
-                  {t('toolActionContainer.approve')}
-                </Button>
-                <Dropdown menu={{ items: rejectionMenu }} trigger={['hover']}>
-                  <Button type='default' danger>
-                    {t('toolActionContainer.reject')}
+              <Space wrap={true} direction='vertical' style={{ width: '100%' }}>
+                <Space wrap={true}>
+                  <Button
+                    type='primary'
+                    ghost={true}
+                    onClick={() => onApprove(entry)}
+                    loading={isProcessing}
+                  >
+                    {autoApproveCountdown !== null
+                      ? `${t('toolActionContainer.approve')} (${autoApproveCountdown}s)`
+                      : t('toolActionContainer.approve')}
                   </Button>
-                </Dropdown>
+                  <Dropdown menu={{ items: rejectionMenu }} trigger={['hover']}>
+                    <Button type='default' danger>
+                      {t('toolActionContainer.reject')}
+                    </Button>
+                  </Dropdown>
+                  {autoApproveCountdown !== null && (
+                    <Button
+                      icon={<StopOutlined />}
+                      onClick={cancelAutoApprove}
+                      type="default"
+                    >
+                      {t('toolActionContainer.cancelAutoApprove', 'Cancel Auto')}
+                    </Button>
+                  )}
+                </Space>
+                {autoApproveCountdown !== null && (
+                  <Progress
+                    percent={
+                      ((AUTO_APPROVE_DELAY_SECONDS - autoApproveCountdown) /
+                        AUTO_APPROVE_DELAY_SECONDS) *
+                      100
+                    }
+                    showInfo={false}
+                    size='small'
+                    status='active'
+                  />
+                )}
               </Space>
             )}
             {toolCall.toolName === 'attemptCompletion' &&

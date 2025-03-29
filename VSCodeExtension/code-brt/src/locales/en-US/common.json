@@ -279,6 +279,7 @@
     "approve": "Approve",
     "reject": "Reject",
     "runCommand": "Run Command",
+    "cancelAutoApprove": "Cancel Auto",
     "rejectByUserMessage": "I reject the {{toolName}} tool call request that you made. \n**Reason**: \n{{reason}}",
     "rejectionReasons": {
       "today": "Today is {{date}}",
