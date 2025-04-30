@@ -177,5 +177,4 @@ CodeBRT is built on various open-source tools and frameworks. Special thanks to 
 
 ---
 
-**License**: [GNU GENERAL PUBLIC](https://github.com/whats2000/CodeBRT/blob/main/LICENSE.md)
-
+**License**: [Apache 2.0 © 2025 whats2000](https://github.com/whats2000/CodeBRT/blob/main/LICENSE.md)

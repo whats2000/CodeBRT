@@ -169,4 +169,4 @@ CodeBRT 建立在各種開源工具和框架之上。特別感謝以下：
 
 ---
 
-**授權**：[GNU 通用公共授權](https://github.com/whats2000/CodeBRT/blob/main/LICENSE.md)
+**授權**：[Apache 2.0 © 2025 whats2000](https://github.com/whats2000/CodeBRT/blob/main/LICENSE.md)
